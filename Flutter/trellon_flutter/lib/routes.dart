@@ -6,17 +6,23 @@ import 'features/auth/presentation/pages/register_page.dart';
 import 'features/auth/presentation/pages/verify_page.dart';
 
 class AppRoutes {
-  static const String home = '/home';
-  static const String login = '/login';
-  static const String register = '/register';
-  static const String verify = '/verify';
-  static const String boardDetail = '/board-detail';
+  static const String home           = '/home';
+  static const String login          = '/login';
+  static const String register       = '/register';
+  static const String verify         = '/verify';
+  static const String boardDetail    = '/board-detail';
+  static const String workspaceMenu  = '/workspace-menu';
+  static const String cardDetail     = '/card-detail';
 
   static Map<String, WidgetBuilder> routes = {
-    login: (context) => const LoginPage(),
-    register: (context) => const RegisterPage(),
-    verify: (context) => const VerifyPage(),
-    home: (context) => const MainShell(),
-    boardDetail: (context) => const BoardDetailPage(),
+    login:         (context) => const LoginPage(),
+    register:      (context) => const RegisterPage(),
+    verify:        (context) => const VerifyPage(),
+    home:          (context) => const MainShell(),
+    boardDetail:   (context) => const BoardDetailPage(),
+    // Phase 10: WorkspaceMenuPage sẽ thêm vào sau
+    // workspaceMenu: (context) => const WorkspaceMenuPage(),
+    // Phase 7: CardDetailPage sẽ thêm vào sau
+    // cardDetail:   (context) => const CardDetailPage(),
   };
 }

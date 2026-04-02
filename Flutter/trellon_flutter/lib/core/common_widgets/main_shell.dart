@@ -1,11 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../../features/board/presentation/pages/board_list_page.dart';
-import '../../../features/inbox/presentation/pages/inbox_page.dart';
-import '../../../features/planner/presentation/pages/planner_page.dart';
 import '../../../features/activity/presentation/pages/activity_page.dart';
 import '../../../features/profile/presentation/pages/profile_page.dart';
 import '../constants/app_colors.dart';
+
+// Placeholder cho Home Overview (Phase 5 sẽ thay)
+class _HomeOverviewPlaceholder extends StatelessWidget {
+  const _HomeOverviewPlaceholder();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(
+      body: Center(child: Text('Home Overview\n(Phase 5)')),
+    );
+  }
+}
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
@@ -14,24 +25,63 @@ class MainShell extends StatefulWidget {
   State<MainShell> createState() => _MainShellState();
 }
 
-class _MainShellState extends State<MainShell> {
+class _MainShellState extends State<MainShell>
+    with SingleTickerProviderStateMixin {
   int _currentIndex = 0;
 
+  // 4 tabs: Home, Boards, Notifications, Account
+  // Phase 5-9 sẽ thay từng Placeholder bằng màn hình thật
   final List<Widget> _pages = const [
-    BoardListPage(),
-    InboxPage(),
-    PlannerPage(),
-    ActivityPage(),
-    ProfilePage(),
+    _HomeOverviewPlaceholder(), // Tab 0 – Home (Phase 5)
+    BoardListPage(),            // Tab 1 – Boards (Phase 6)
+    ActivityPage(),             // Tab 2 – Notifications (Phase 8)
+    ProfilePage(),              // Tab 3 – Account (Phase 9)
+  ];
+
+  static const List<_NavDestination> _destinations = [
+    _NavDestination(
+      icon: Icons.home_outlined,
+      activeIcon: Icons.home_rounded,
+      label: 'Trang chủ',
+    ),
+    _NavDestination(
+      icon: Icons.dashboard_outlined,
+      activeIcon: Icons.dashboard_rounded,
+      label: 'Bảng',
+    ),
+    _NavDestination(
+      icon: Icons.notifications_outlined,
+      activeIcon: Icons.notifications_rounded,
+      label: 'Thông báo',
+    ),
+    _NavDestination(
+      icon: Icons.person_outline_rounded,
+      activeIcon: Icons.person_rounded,
+      label: 'Tài khoản',
+    ),
   ];
 
   @override
-  Widget build(BuildContext context) {
+  void initState() {
+    super.initState();
+    _setSystemUI();
+  }
+
+  void _setSystemUI() {
     SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.light,
+      statusBarIconBrightness: Brightness.dark,
+      systemNavigationBarColor: AppColors.navBackground,
+      systemNavigationBarIconBrightness: Brightness.dark,
     ));
+  }
 
+  void _onTap(int index) {
+    setState(() => _currentIndex = index);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: IndexedStack(
@@ -44,47 +94,60 @@ class _MainShellState extends State<MainShell> {
 
   Widget _buildBottomNavBar() {
     return Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: AppColors.navBackground,
-        border: Border(
-          top: BorderSide(color: AppColors.border, width: 0.5),
-        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF191C1E).withValues(alpha: 0.06),
+            blurRadius: 16,
+            offset: const Offset(0, -4),
+          ),
+        ],
       ),
       child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 4),
+        top: false,
+        child: SizedBox(
+          height: 64,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _NavItem(icon: Icons.dashboard_outlined, activeIcon: Icons.dashboard, label: 'Bảng', index: 0, currentIndex: _currentIndex, onTap: _onTap),
-              _NavItem(icon: Icons.inbox_outlined, activeIcon: Icons.inbox, label: 'Hộp thư đến', index: 1, currentIndex: _currentIndex, onTap: _onTap),
-              _NavItem(icon: Icons.calendar_month_outlined, activeIcon: Icons.calendar_month, label: 'Kế hoạch', index: 2, currentIndex: _currentIndex, onTap: _onTap),
-              _NavItem(icon: Icons.notifications_outlined, activeIcon: Icons.notifications, label: 'Hoạt động', index: 3, currentIndex: _currentIndex, onTap: _onTap),
-              _NavItem(icon: Icons.account_circle_outlined, activeIcon: Icons.account_circle, label: 'Tài khoản', index: 4, currentIndex: _currentIndex, onTap: _onTap),
-            ],
+            children: List.generate(
+              _destinations.length,
+              (i) => _NavItem(
+                destination: _destinations[i],
+                index: i,
+                currentIndex: _currentIndex,
+                onTap: _onTap,
+              ),
+            ),
           ),
         ),
       ),
     );
   }
-
-  void _onTap(int index) {
-    setState(() => _currentIndex = index);
-  }
 }
 
-class _NavItem extends StatelessWidget {
+// ── Data model ──────────────────────────────────────────────────────────────
+class _NavDestination {
   final IconData icon;
   final IconData activeIcon;
   final String label;
+
+  const _NavDestination({
+    required this.icon,
+    required this.activeIcon,
+    required this.label,
+  });
+}
+
+// ── Nav item với pill indicator theo mockup ──────────────────────────────────
+class _NavItem extends StatelessWidget {
+  final _NavDestination destination;
   final int index;
   final int currentIndex;
   final void Function(int) onTap;
 
   const _NavItem({
-    required this.icon,
-    required this.activeIcon,
-    required this.label,
+    required this.destination,
     required this.index,
     required this.currentIndex,
     required this.onTap,
@@ -93,31 +156,45 @@ class _NavItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool isSelected = index == currentIndex;
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: () => onTap(index),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+
+    return Expanded(
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () => onTap(index),
         child: Column(
-          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            AnimatedSwitcher(
+            // Pill-shaped active indicator (theo mockup: bg-blue-100 rounded-2xl)
+            AnimatedContainer(
               duration: const Duration(milliseconds: 200),
-              child: Icon(
-                isSelected ? activeIcon : icon,
-                key: ValueKey(isSelected),
-                color: isSelected ? AppColors.navSelected : AppColors.navUnselected,
-                size: 24,
+              curve: Curves.easeInOut,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? AppColors.navSelectedBg // blue-100 = #DBEAFE
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 150),
+                child: Icon(
+                  isSelected ? destination.activeIcon : destination.icon,
+                  key: ValueKey(isSelected),
+                  color: isSelected
+                      ? AppColors.navSelected   // blue-800 = #1D4ED8
+                      : AppColors.navUnselected, // slate-500 = #64748B
+                  size: 24,
+                ),
               ),
             ),
-            const SizedBox(height: 3),
+            const SizedBox(height: 2),
+            // Label
             Text(
-              label,
-              style: TextStyle(
+              destination.label,
+              style: GoogleFonts.inter(
                 fontSize: 10,
-                color: isSelected ? AppColors.navSelected : AppColors.navUnselected,
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                color: isSelected ? AppColors.navSelected : AppColors.navUnselected,
               ),
             ),
           ],
