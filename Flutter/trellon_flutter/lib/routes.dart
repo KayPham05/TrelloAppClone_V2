@@ -5,6 +5,7 @@ import 'features/auth/presentation/pages/login_page.dart';
 import 'features/auth/presentation/pages/register_page.dart';
 import 'features/auth/presentation/pages/verify_page.dart';
 import 'features/card/presentation/pages/card_detail_page.dart';
+import 'features/board/presentation/pages/workspace_menu_page.dart';
 
 class AppRoutes {
   static const String home           = '/home';
@@ -22,7 +23,6 @@ class AppRoutes {
     home:          (context) => const MainShell(),
     boardDetail:   (context) => const BoardDetailPage(),
     cardDetail:    (context) => const CardDetailPage(),
-    // Phase 10: WorkspaceMenuPage sẽ thêm vào sau
-    // workspaceMenu: (context) => const WorkspaceMenuPage(),
+    workspaceMenu: (context) => const WorkspaceMenuPage(),
   };
 }
