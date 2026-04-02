@@ -220,4 +220,6 @@ test-results/
 *.zip
 *.rar
 *.7z
+.agent
+ANTIGRAVITY.md
 ```
