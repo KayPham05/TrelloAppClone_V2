@@ -379,12 +379,7 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
 
   Widget _buildCard(_MockCard card) {
     return GestureDetector(
-      onTap: () {
-        // Phase 7: Navigate to CardDetailPage
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Chi tiết thẻ (Phase 7)')),
-        );
-      },
+      onTap: () => Navigator.pushNamed(context, '/card-detail'),
       child: Container(
         margin: const EdgeInsets.only(bottom: 8),
         decoration: BoxDecoration(
