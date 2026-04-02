@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'core/constants/app_theme.dart';
 import 'routes.dart';
 
 void main() async {
@@ -14,21 +15,11 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Trello Clone',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData.dark().copyWith(
-        scaffoldBackgroundColor: const Color(0xFF1D2125),
-        colorScheme: const ColorScheme.dark(
-          primary: Color(0xFF579DFF),
-          surface: Color(0xFF282E33),
-        ),
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Color(0xFF1D2125),
-          elevation: 0,
-          scrolledUnderElevation: 0,
-        ),
-      ),
+      theme: AppTheme.light,
       routes: AppRoutes.routes,
+      // Mặc định vào trang đăng nhập.
+      // Sau này sẽ kiểm tra trạng thái đăng nhập để redirect tương ứng.
       initialRoute: '/login',
     );
   }
 }
-
