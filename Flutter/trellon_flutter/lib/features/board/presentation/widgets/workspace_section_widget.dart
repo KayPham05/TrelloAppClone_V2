@@ -3,7 +3,6 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/utils/color_utils.dart';
 import '../../domain/entities/board_entity.dart';
 import '../../domain/entities/workspace_entity.dart';
-import '../pages/board_detail_page.dart';
 
 class WorkspaceSectionWidget extends StatelessWidget {
   final WorkspaceEntity workspace;
@@ -76,12 +75,7 @@ class BoardRowWidget extends StatelessWidget {
     final color = ColorUtils.hexToColor(board.coverColor ?? '#0079BF');
     return InkWell(
       onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => BoardDetailPage(board: board),
-          ),
-        );
+        Navigator.pushNamed(context, '/board-detail');
       },
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
