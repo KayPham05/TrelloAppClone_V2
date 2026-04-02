@@ -1,22 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../features/board/presentation/pages/home_overview_page.dart';
 import '../../../features/board/presentation/pages/board_list_page.dart';
 import '../../../features/activity/presentation/pages/activity_page.dart';
 import '../../../features/profile/presentation/pages/profile_page.dart';
 import '../constants/app_colors.dart';
 
-// Placeholder cho Home Overview (Phase 5 sẽ thay)
-class _HomeOverviewPlaceholder extends StatelessWidget {
-  const _HomeOverviewPlaceholder();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(child: Text('Home Overview\n(Phase 5)')),
-    );
-  }
-}
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
@@ -30,12 +20,11 @@ class _MainShellState extends State<MainShell>
   int _currentIndex = 0;
 
   // 4 tabs: Home, Boards, Notifications, Account
-  // Phase 5-9 sẽ thay từng Placeholder bằng màn hình thật
   final List<Widget> _pages = const [
-    _HomeOverviewPlaceholder(), // Tab 0 – Home (Phase 5)
-    BoardListPage(),            // Tab 1 – Boards (Phase 6)
-    ActivityPage(),             // Tab 2 – Notifications (Phase 8)
-    ProfilePage(),              // Tab 3 – Account (Phase 9)
+    HomeOverviewPage(),  // Tab 0 – Home (Phase 5) ✅
+    BoardListPage(),     // Tab 1 – Boards (Phase 6)
+    ActivityPage(),      // Tab 2 – Notifications (Phase 8)
+    ProfilePage(),       // Tab 3 – Account (Phase 9)
   ];
 
   static const List<_NavDestination> _destinations = [
