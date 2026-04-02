@@ -61,85 +61,101 @@ class WorkspaceMenuPage extends StatelessWidget {
     );
   }
 
-  // ── Header ─────────────────────────────────────────────────────────────
   Widget _buildWorkspaceHeader() {
     return LayoutBuilder(
       builder: (context, constraints) {
         final isNarrow = constraints.maxWidth < 600;
         
-        final content = [
-          Row(
-            children: [
-              Container(
-                width: 64, height: 64,
-                decoration: BoxDecoration(color: AppColors.primaryContainer, borderRadius: BorderRadius.circular(16)),
-                child: const Icon(Icons.group_work_rounded, color: AppColors.onPrimaryContainer, size: 36),
-              ),
-              const SizedBox(width: 20),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Text('Đội Marketing',
+        final mainInfo = Row(
+          children: [
+            Container(
+              width: 64, height: 64,
+              decoration: BoxDecoration(color: AppColors.primaryContainer, borderRadius: BorderRadius.circular(16)),
+              child: const Icon(Icons.group_work_rounded, color: AppColors.onPrimaryContainer, size: 36),
+            ),
+            const SizedBox(width: 20),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text('Đội Marketing',
                           style: GoogleFonts.inter(fontSize: 24, fontWeight: FontWeight.w700, color: AppColors.onSurface, letterSpacing: -0.5),
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        const SizedBox(width: 8),
-                        const Icon(Icons.settings_rounded, color: AppColors.outline, size: 20),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        Icon(Icons.lock_rounded, size: 14, color: AppColors.onSurfaceVariant),
-                        const SizedBox(width: 4),
-                        Text('Riêng tư', style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.onSurfaceVariant)),
-                        const SizedBox(width: 12),
-                        Container(width: 4, height: 4, decoration: const BoxDecoration(color: AppColors.outlineVariant, shape: BoxShape.circle)),
-                        const SizedBox(width: 12),
-                        Text('Gói Miễn phí', style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.onSurfaceVariant)),
-                      ],
-                    ),
-                  ],
-                ),
+                      ),
+                      const SizedBox(width: 8),
+                      const Icon(Icons.settings_rounded, color: AppColors.outline, size: 20),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Icon(Icons.lock_rounded, size: 14, color: AppColors.onSurfaceVariant),
+                      const SizedBox(width: 4),
+                      Text('Riêng tư', style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.onSurfaceVariant)),
+                      const SizedBox(width: 12),
+                      Container(width: 4, height: 4, decoration: const BoxDecoration(color: AppColors.outlineVariant, shape: BoxShape.circle)),
+                      const SizedBox(width: 12),
+                      Text('Gói Miễn phí', style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.onSurfaceVariant)),
+                    ],
+                  ),
+                ],
               ),
-            ],
-          ),
-          if (isNarrow) const SizedBox(height: 16),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ElevatedButton.icon(
-                onPressed: () {},
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primaryContainer,
-                  foregroundColor: AppColors.onPrimary,
-                  elevation: 0,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-                icon: const Icon(Icons.person_add_rounded, size: 18),
-                label: Text('Mời', style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600)),
+            ),
+          ],
+        );
+        
+        final actions = Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ElevatedButton.icon(
+              onPressed: () {},
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primaryContainer,
+                foregroundColor: AppColors.onPrimary,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
-              const SizedBox(width: 12),
-              IconButton(
-                onPressed: () {},
-                style: IconButton.styleFrom(
-                  backgroundColor: AppColors.surfaceContainerLow,
-                  foregroundColor: AppColors.onSurfaceVariant,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  padding: const EdgeInsets.all(12),
-                ),
-                icon: const Icon(Icons.more_horiz_rounded),
+              icon: const Icon(Icons.person_add_rounded, size: 18),
+              label: Text('Mời', style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600)),
+            ),
+            const SizedBox(width: 12),
+            IconButton(
+              onPressed: () {},
+              style: IconButton.styleFrom(
+                backgroundColor: AppColors.surfaceContainerLow,
+                foregroundColor: AppColors.onSurfaceVariant,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                padding: const EdgeInsets.all(12),
               ),
-            ],
-          ),
-        ];
+              icon: const Icon(Icons.more_horiz_rounded),
+            ),
+          ],
+        );
 
-        return isNarrow
-            ? Column(crossAxisAlignment: CrossAxisAlignment.start, children: content)
-            : Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: content);
+        if (isNarrow) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              mainInfo,
+              const SizedBox(height: 16),
+              actions,
+            ],
+          );
+        } else {
+          return Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(child: mainInfo),
+              const SizedBox(width: 16),
+              actions,
+            ],
+          );
+        }
       },
     );
   }
