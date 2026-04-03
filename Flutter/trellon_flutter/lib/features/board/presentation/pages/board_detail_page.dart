@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'dart:math' as math;
 import '../../../../core/constants/app_colors.dart';
 
 // ── Mock Data Models ──────────────────────────────────────────────────────
@@ -42,69 +43,73 @@ class _MockList {
 }
 
 final _mockBoardData = [
-  _MockList(title: 'Cần làm', cards: [
-    _MockCard(
-      title: 'Tài liệu thiết kế hệ thống giao diện',
-      labels: [_MockLabel(Color(0xFF3B82F6)), _MockLabel(Color(0xFF10B981))],
-      avatarInitials: ['A'],
-      hasNotes: true,
-      commentCount: 3,
-    ),
-    _MockCard(
-      title: 'Xem lại mockup trang landing hi-fi',
-      avatarInitials: ['B', 'C'],
-      dueDate: '12/10',
-      isOverdue: true,
-    ),
-    _MockCard(
-      title: 'Lập kế hoạch ngân sách Q4',
-      attachmentCount: 1,
-    ),
-    _MockCard(
-      title: 'Xem lại chiến lược mạng xã hội',
-      labels: [_MockLabel(Color(0xFFF59E0B))],
-    ),
-  ]),
-  _MockList(title: 'Đang làm', cards: [
-    _MockCard(
-      title: 'Tích hợp API cổng thanh toán',
-      isHighlighted: true,
-      highlightColor: Color(0xFF2563EB),
-      avatarInitials: ['D', 'E'],
-      dueDate: '15/10',
-    ),
-    _MockCard(
-      title: 'Thiết kế onboarding người dùng',
-      labels: [_MockLabel(Color(0xFF8B5CF6))],
-      avatarInitials: ['F'],
-      commentCount: 6,
-    ),
-    _MockCard(
-      title: 'Viết unit test cho auth module',
-      avatarInitials: ['A'],
-      hasNotes: true,
-    ),
-    _MockCard(
-      title: 'Cập nhật chính sách bảo mật',
-    ),
-  ]),
-  _MockList(title: 'Hoàn thành', cards: [
-    _MockCard(
-      title: 'Thiết lập CI/CD pipeline',
-      avatarInitials: ['B'],
-      labels: [_MockLabel(Color(0xFF059669))],
-    ),
-    _MockCard(
-      title: 'Tái cấu trúc lớp service backend',
-      avatarInitials: ['G'],
-      commentCount: 4,
-    ),
-    _MockCard(
-      title: 'Phỏng vấn người dùng về UX',
-      labels: [_MockLabel(Color(0xFFEC4899)), _MockLabel(Color(0xFF6366F1))],
-      avatarInitials: ['A', 'H'],
-    ),
-  ]),
+  _MockList(
+    title: 'Cần làm',
+    cards: [
+      _MockCard(
+        title: 'Tài liệu thiết kế hệ thống giao diện',
+        labels: [_MockLabel(Color(0xFF3B82F6)), _MockLabel(Color(0xFF10B981))],
+        avatarInitials: ['A'],
+        hasNotes: true,
+        commentCount: 3,
+      ),
+      _MockCard(
+        title: 'Xem lại mockup trang landing hi-fi',
+        avatarInitials: ['B', 'C'],
+        dueDate: '12/10',
+        isOverdue: true,
+      ),
+      _MockCard(title: 'Lập kế hoạch ngân sách Q4', attachmentCount: 1),
+      _MockCard(
+        title: 'Xem lại chiến lược mạng xã hội',
+        labels: [_MockLabel(Color(0xFFF59E0B))],
+      ),
+    ],
+  ),
+  _MockList(
+    title: 'Đang làm',
+    cards: [
+      _MockCard(
+        title: 'Tích hợp API cổng thanh toán',
+        isHighlighted: true,
+        highlightColor: Color(0xFF2563EB),
+        avatarInitials: ['D', 'E'],
+        dueDate: '15/10',
+      ),
+      _MockCard(
+        title: 'Thiết kế onboarding người dùng',
+        labels: [_MockLabel(Color(0xFF8B5CF6))],
+        avatarInitials: ['F'],
+        commentCount: 6,
+      ),
+      _MockCard(
+        title: 'Viết unit test cho auth module',
+        avatarInitials: ['A'],
+        hasNotes: true,
+      ),
+      _MockCard(title: 'Cập nhật chính sách bảo mật'),
+    ],
+  ),
+  _MockList(
+    title: 'Hoàn thành',
+    cards: [
+      _MockCard(
+        title: 'Thiết lập CI/CD pipeline',
+        avatarInitials: ['B'],
+        labels: [_MockLabel(Color(0xFF059669))],
+      ),
+      _MockCard(
+        title: 'Tái cấu trúc lớp service backend',
+        avatarInitials: ['G'],
+        commentCount: 4,
+      ),
+      _MockCard(
+        title: 'Phỏng vấn người dùng về UX',
+        labels: [_MockLabel(Color(0xFFEC4899)), _MockLabel(Color(0xFF6366F1))],
+        avatarInitials: ['A', 'H'],
+      ),
+    ],
+  ),
 ];
 
 // ── Page ──────────────────────────────────────────────────────────────────
@@ -118,8 +123,54 @@ class BoardDetailPage extends StatefulWidget {
 
 class _BoardDetailPageState extends State<BoardDetailPage> {
   bool _isStarred = false;
+  final ScrollController _boardScrollController = ScrollController();
+  final int _lazyLoadStep = 2;
+  int _visibleListCount = 0;
+  bool _isLoadingMore = false;
   final String _boardName = 'Phát triển sản phẩm 2024';
   final Color _boardColor = AppColors.primaryContainer; // #0052CC
+
+  @override
+  void initState() {
+    super.initState();
+    _visibleListCount = math.min(_lazyLoadStep, _mockBoardData.length);
+    _boardScrollController.addListener(_onBoardScroll);
+  }
+
+  @override
+  void dispose() {
+    _boardScrollController
+      ..removeListener(_onBoardScroll)
+      ..dispose();
+    super.dispose();
+  }
+
+  void _onBoardScroll() {
+    if (!_boardScrollController.hasClients) return;
+    if (_isLoadingMore) return;
+    if (_visibleListCount >= _mockBoardData.length) return;
+
+    final position = _boardScrollController.position;
+    if (position.pixels >= position.maxScrollExtent - 220) {
+      _loadMoreColumns();
+    }
+  }
+
+  Future<void> _loadMoreColumns() async {
+    if (_visibleListCount >= _mockBoardData.length) return;
+    setState(() => _isLoadingMore = true);
+
+    await Future<void>.delayed(const Duration(milliseconds: 120));
+    if (!mounted) return;
+
+    setState(() {
+      _visibleListCount = math.min(
+        _visibleListCount + _lazyLoadStep,
+        _mockBoardData.length,
+      );
+      _isLoadingMore = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -146,10 +197,17 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
       child: Row(
         children: [
           IconButton(
-            icon: const Icon(Icons.arrow_back_rounded, color: Color(0xFF1D4ED8)),
+            icon: const Icon(
+              Icons.arrow_back_rounded,
+              color: Color(0xFF1D4ED8),
+            ),
             onPressed: () => Navigator.pop(context),
           ),
-          const Icon(Icons.grid_view_rounded, color: Color(0xFF1D4ED8), size: 22),
+          const Icon(
+            Icons.grid_view_rounded,
+            color: Color(0xFF1D4ED8),
+            size: 22,
+          ),
           const SizedBox(width: 8),
           Text(
             'Workspace',
@@ -213,7 +271,11 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
           ),
           const SizedBox(width: 8),
           // Vertical divider
-          Container(width: 1, height: 20, color: Colors.white.withValues(alpha: 0.3)),
+          Container(
+            width: 1,
+            height: 20,
+            color: Colors.white.withValues(alpha: 0.3),
+          ),
           const SizedBox(width: 8),
           // Favourite button
           GestureDetector(
@@ -228,7 +290,9 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(
-                    _isStarred ? Icons.star_rounded : Icons.star_outline_rounded,
+                    _isStarred
+                        ? Icons.star_rounded
+                        : Icons.star_outline_rounded,
                     color: Colors.white,
                     size: 16,
                   ),
@@ -272,15 +336,30 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
 
   // ── Kanban Columns ────────────────────────────────────────────────────────
   Widget _buildKanbanColumns() {
+    final hasMore = _visibleListCount < _mockBoardData.length;
+    final visibleColumns = _mockBoardData
+        .take(_visibleListCount)
+        .toList(growable: false);
+
     return ListView.builder(
+      controller: _boardScrollController,
       scrollDirection: Axis.horizontal,
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
-      itemCount: _mockBoardData.length + 1,
+      itemCount: visibleColumns.length + (hasMore ? 2 : 1),
       itemBuilder: (context, index) {
-        if (index == _mockBoardData.length) {
+        if (index < visibleColumns.length) {
+          return RepaintBoundary(child: _buildColumn(visibleColumns[index]));
+        }
+        if (hasMore && index == visibleColumns.length) {
+          return _buildLoadMoreIndicator();
+        }
+        if (hasMore && index == visibleColumns.length + 1) {
           return _buildAddListButton();
         }
-        return _buildColumn(_mockBoardData[index]);
+        if (!hasMore && index == visibleColumns.length) {
+          return _buildAddListButton();
+        }
+        return const SizedBox.shrink();
       },
     );
   }
@@ -314,7 +393,10 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 7,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.surfaceContainerHighest,
                     borderRadius: BorderRadius.circular(99),
@@ -334,20 +416,21 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
 
           // Cards in scrollable area
           Flexible(
-            child: SingleChildScrollView(
+            child: ListView.builder(
               padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
-              child: Column(
-                children: [
-                  ...list.cards.map((card) => _buildCard(card)),
-                ],
-              ),
+              itemCount: list.cards.length,
+              itemBuilder: (context, index) {
+                return RepaintBoundary(child: _buildCard(list.cards[index]));
+              },
             ),
           ),
 
           // "Add a card" at bottom
           GestureDetector(
             onTap: () => ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Thêm thẻ mới (chưa tích hợp backend)')),
+              const SnackBar(
+                content: Text('Thêm thẻ mới (chưa tích hợp backend)'),
+              ),
             ),
             child: Container(
               margin: const EdgeInsets.fromLTRB(8, 0, 8, 8),
@@ -358,7 +441,11 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.add_rounded, size: 18, color: AppColors.onSurfaceVariant),
+                  const Icon(
+                    Icons.add_rounded,
+                    size: 18,
+                    color: AppColors.onSurfaceVariant,
+                  ),
                   const SizedBox(width: 6),
                   Text(
                     'Thêm thẻ',
@@ -406,14 +493,16 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
                 Wrap(
                   spacing: 4,
                   children: card.labels
-                      .map((l) => Container(
-                            width: 28,
-                            height: 6,
-                            decoration: BoxDecoration(
-                              color: l.color,
-                              borderRadius: BorderRadius.circular(99),
-                            ),
-                          ))
+                      .map(
+                        (l) => Container(
+                          width: 28,
+                          height: 6,
+                          decoration: BoxDecoration(
+                            color: l.color,
+                            borderRadius: BorderRadius.circular(99),
+                          ),
+                        ),
+                      )
                       .toList(),
                 ),
                 const SizedBox(height: 8),
@@ -460,26 +549,46 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
                       ],
                       // Notes icon
                       if (card.hasNotes ?? false) ...[
-                        const Icon(Icons.notes_rounded, size: 14, color: AppColors.onSurfaceVariant),
+                        const Icon(
+                          Icons.notes_rounded,
+                          size: 14,
+                          color: AppColors.onSurfaceVariant,
+                        ),
                         const SizedBox(width: 4),
                       ],
                       // Comments
                       if (card.commentCount != null) ...[
-                        const Icon(Icons.chat_bubble_outline_rounded, size: 13, color: AppColors.onSurfaceVariant),
+                        const Icon(
+                          Icons.chat_bubble_outline_rounded,
+                          size: 13,
+                          color: AppColors.onSurfaceVariant,
+                        ),
                         const SizedBox(width: 2),
                         Text(
                           '${card.commentCount}',
-                          style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.onSurfaceVariant),
+                          style: GoogleFonts.inter(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.onSurfaceVariant,
+                          ),
                         ),
                         const SizedBox(width: 6),
                       ],
                       // Attachments
                       if (card.attachmentCount != null) ...[
-                        const Icon(Icons.attach_file_rounded, size: 13, color: AppColors.onSurfaceVariant),
+                        const Icon(
+                          Icons.attach_file_rounded,
+                          size: 13,
+                          color: AppColors.onSurfaceVariant,
+                        ),
                         const SizedBox(width: 2),
                         Text(
                           '${card.attachmentCount}',
-                          style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.onSurfaceVariant),
+                          style: GoogleFonts.inter(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.onSurfaceVariant,
+                          ),
                         ),
                       ],
                       const Spacer(),
@@ -511,7 +620,9 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
           Icon(
             Icons.schedule_rounded,
             size: 11,
-            color: isOverdue ? const Color(0xFFDC2626) : AppColors.onSurfaceVariant,
+            color: isOverdue
+                ? const Color(0xFFDC2626)
+                : AppColors.onSurfaceVariant,
           ),
           const SizedBox(width: 3),
           Text(
@@ -519,7 +630,9 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
             style: GoogleFonts.inter(
               fontSize: 10,
               fontWeight: FontWeight.w700,
-              color: isOverdue ? const Color(0xFFDC2626) : AppColors.onSurfaceVariant,
+              color: isOverdue
+                  ? const Color(0xFFDC2626)
+                  : AppColors.onSurfaceVariant,
             ),
           ),
         ],
@@ -591,7 +704,10 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
         decoration: BoxDecoration(
           color: Colors.white.withValues(alpha: 0.18),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.3), width: 1),
+          border: Border.all(
+            color: Colors.white.withValues(alpha: 0.3),
+            width: 1,
+          ),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -608,6 +724,19 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildLoadMoreIndicator() {
+    return Container(
+      width: 120,
+      margin: const EdgeInsets.only(right: 12),
+      alignment: Alignment.center,
+      child: const SizedBox(
+        width: 22,
+        height: 22,
+        child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white),
       ),
     );
   }

@@ -39,35 +39,49 @@ class CardDetailPage extends StatefulWidget {
 
 class _CardDetailPageState extends State<CardDetailPage> {
   bool _dueDateChecked = false;
+  final ValueNotifier<int> _checklistVersionNotifier = ValueNotifier<int>(0);
   final _commentController = TextEditingController();
 
   final List<_ChecklistItem> _checklistItems = [
-    _ChecklistItem(title: 'Xây dựng hệ thống màu sắc (surface đến surface-bright)', checked: false),
+    _ChecklistItem(
+      title: 'Xây dựng hệ thống màu sắc (surface đến surface-bright)',
+      checked: false,
+    ),
     _ChecklistItem(title: 'Áp dụng hệ thống font Inter', checked: true),
     _ChecklistItem(title: 'Kiểm tra tất cả border 1px', checked: true),
-    _ChecklistItem(title: 'Thiết kế responsive cho mobile & tablet', checked: false),
+    _ChecklistItem(
+      title: 'Thiết kế responsive cho mobile & tablet',
+      checked: false,
+    ),
     _ChecklistItem(title: 'Review với design lead', checked: false),
   ];
 
   final List<_ActivityItem> _activities = const [
     _ActivityItem(
-      initial: 'S', avatarColor: Color(0xFF8B5CF6),
-      authorName: 'Sarah Chen', action: 'đã cập nhật mô tả',
+      initial: 'S',
+      avatarColor: Color(0xFF8B5CF6),
+      authorName: 'Sarah Chen',
+      action: 'đã cập nhật mô tả',
       time: '22 Th10 lúc 2:45 CH',
     ),
     _ActivityItem(
-      initial: 'M', avatarColor: Color(0xFF0C56D0),
-      authorName: 'Marcus Wright', action: 'đã bình luận:',
-      comment: 'Tôi đã tải lên moodboard mới cho hướng thiết kế editorial. Cho tôi biết nếu độ tương phản màu xanh chính có vẻ ổn.',
+      initial: 'M',
+      avatarColor: Color(0xFF0C56D0),
+      authorName: 'Marcus Wright',
+      action: 'đã bình luận:',
+      comment:
+          'Tôi đã tải lên moodboard mới cho hướng thiết kế editorial. Cho tôi biết nếu độ tương phản màu xanh chính có vẻ ổn.',
       time: '22 Th10 lúc 3:12 CH',
     ),
   ];
 
   int get _checkedCount => _checklistItems.where((i) => i.checked).length;
-  double get _progress => _checklistItems.isEmpty ? 0 : _checkedCount / _checklistItems.length;
+  double get _progress =>
+      _checklistItems.isEmpty ? 0 : _checkedCount / _checklistItems.length;
 
   @override
   void dispose() {
+    _checklistVersionNotifier.dispose();
     _commentController.dispose();
     super.dispose();
   }
@@ -132,13 +146,25 @@ class _CardDetailPageState extends State<CardDetailPage> {
       child: Row(
         children: [
           IconButton(
-            icon: const Icon(Icons.arrow_back_rounded, color: Color(0xFF1D4ED8)),
+            icon: const Icon(
+              Icons.arrow_back_rounded,
+              color: Color(0xFF1D4ED8),
+            ),
             onPressed: () => Navigator.pop(context),
           ),
-          const Icon(Icons.grid_view_rounded, color: Color(0xFF1D4ED8), size: 22),
+          const Icon(
+            Icons.grid_view_rounded,
+            color: Color(0xFF1D4ED8),
+            size: 22,
+          ),
           const SizedBox(width: 8),
-          Text('Workspace',
-            style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w700, color: const Color(0xFF1E3A8A)),
+          Text(
+            'Workspace',
+            style: GoogleFonts.inter(
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              color: const Color(0xFF1E3A8A),
+            ),
           ),
           const Spacer(),
           IconButton(
@@ -146,12 +172,21 @@ class _CardDetailPageState extends State<CardDetailPage> {
             onPressed: () {},
           ),
           Container(
-            width: 30, height: 30,
+            width: 30,
+            height: 30,
             margin: const EdgeInsets.only(right: 8),
-            decoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
+            decoration: const BoxDecoration(
+              color: AppColors.primary,
+              shape: BoxShape.circle,
+            ),
             child: Center(
-              child: Text('JS',
-                style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w700, color: Colors.white),
+              child: Text(
+                'JS',
+                style: GoogleFonts.inter(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                ),
               ),
             ),
           ),
@@ -166,7 +201,11 @@ class _CardDetailPageState extends State<CardDetailPage> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Icon(Icons.subtitles_outlined, color: AppColors.onSurfaceVariant, size: 22),
+        const Icon(
+          Icons.subtitles_outlined,
+          color: AppColors.onSurfaceVariant,
+          size: 22,
+        ),
         const SizedBox(width: 12),
         Expanded(
           child: Column(
@@ -174,12 +213,20 @@ class _CardDetailPageState extends State<CardDetailPage> {
             children: [
               Text(
                 'Xây dựng hệ thống thiết kế workspace phong cách editorial',
-                style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.onSurface, height: 1.3),
+                style: GoogleFonts.inter(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.onSurface,
+                  height: 1.3,
+                ),
               ),
               const SizedBox(height: 4),
               Text.rich(
                 TextSpan(
-                  style: GoogleFonts.inter(fontSize: 13, color: AppColors.onSurfaceVariant),
+                  style: GoogleFonts.inter(
+                    fontSize: 13,
+                    color: AppColors.onSurfaceVariant,
+                  ),
                   children: [
                     const TextSpan(text: 'trong cột '),
                     TextSpan(
@@ -199,7 +246,11 @@ class _CardDetailPageState extends State<CardDetailPage> {
         ),
         IconButton(
           onPressed: () => Navigator.pop(context),
-          icon: const Icon(Icons.close_rounded, color: AppColors.onSurfaceVariant, size: 20),
+          icon: const Icon(
+            Icons.close_rounded,
+            color: AppColors.onSurfaceVariant,
+            size: 20,
+          ),
         ),
       ],
     );
@@ -257,7 +308,10 @@ class _CardDetailPageState extends State<CardDetailPage> {
               GestureDetector(
                 onTap: () => setState(() => _dueDateChecked = !_dueDateChecked),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 8,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.surfaceContainerLow,
                     borderRadius: BorderRadius.circular(8),
@@ -266,34 +320,57 @@ class _CardDetailPageState extends State<CardDetailPage> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Container(
-                        width: 14, height: 14,
+                        width: 14,
+                        height: 14,
                         decoration: BoxDecoration(
-                          color: _dueDateChecked ? AppColors.primaryContainer : Colors.transparent,
+                          color: _dueDateChecked
+                              ? AppColors.primaryContainer
+                              : Colors.transparent,
                           border: Border.all(
-                            color: _dueDateChecked ? AppColors.primaryContainer : AppColors.outlineVariant,
+                            color: _dueDateChecked
+                                ? AppColors.primaryContainer
+                                : AppColors.outlineVariant,
                             width: 2,
                           ),
                           borderRadius: BorderRadius.circular(3),
                         ),
                         child: _dueDateChecked
-                            ? const Icon(Icons.check_rounded, color: Colors.white, size: 10)
+                            ? const Icon(
+                                Icons.check_rounded,
+                                color: Colors.white,
+                                size: 10,
+                              )
                             : null,
                       ),
                       const SizedBox(width: 6),
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('24/10/2023',
-                            style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w500, color: AppColors.onSurface),
+                          Text(
+                            '24/10/2023',
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.onSurface,
+                            ),
                           ),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 4,
+                              vertical: 1,
+                            ),
                             decoration: BoxDecoration(
                               color: AppColors.error,
                               borderRadius: BorderRadius.circular(3),
                             ),
-                            child: Text('QUÁ HẠN',
-                              style: GoogleFonts.inter(fontSize: 8, fontWeight: FontWeight.w700, color: Colors.white, letterSpacing: 0.5),
+                            child: Text(
+                              'QUÁ HẠN',
+                              style: GoogleFonts.inter(
+                                fontSize: 8,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                                letterSpacing: 0.5,
+                              ),
                             ),
                           ),
                         ],
@@ -315,7 +392,11 @@ class _CardDetailPageState extends State<CardDetailPage> {
       children: [
         Row(
           children: [
-            const Icon(Icons.notes_rounded, color: AppColors.onSurfaceVariant, size: 20),
+            const Icon(
+              Icons.notes_rounded,
+              color: AppColors.onSurfaceVariant,
+              size: 20,
+            ),
             const SizedBox(width: 10),
             Text('Mô tả', style: _sectionTitleStyle()),
             const Spacer(),
@@ -325,8 +406,13 @@ class _CardDetailPageState extends State<CardDetailPage> {
                 padding: EdgeInsets.zero,
                 minimumSize: const Size(0, 0),
               ),
-              child: Text('Chỉnh sửa',
-                style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.primary),
+              child: Text(
+                'Chỉnh sửa',
+                style: GoogleFonts.inter(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.primary,
+                ),
               ),
             ),
           ],
@@ -346,7 +432,11 @@ class _CardDetailPageState extends State<CardDetailPage> {
               ),
               child: Text(
                 'UI mới phải chuyển đổi từ dạng lưới truyền thống sang không gian làm việc editorial cao cấp. Tập trung vào sự chuyển sắc tông màu thay vì đường viền cứng. Dùng surface-container-lowest cho các card để tạo chiều sâu và rõ ràng...',
-                style: GoogleFonts.inter(fontSize: 13, color: AppColors.onSurfaceVariant, height: 1.6),
+                style: GoogleFonts.inter(
+                  fontSize: 13,
+                  color: AppColors.onSurfaceVariant,
+                  height: 1.6,
+                ),
               ),
             ),
           ),
@@ -356,100 +446,134 @@ class _CardDetailPageState extends State<CardDetailPage> {
   }
 
   Widget _buildChecklistSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
+    return ValueListenableBuilder<int>(
+      valueListenable: _checklistVersionNotifier,
+      builder: (context, _, child) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Icon(Icons.task_alt_rounded, color: AppColors.onSurfaceVariant, size: 20),
-            const SizedBox(width: 10),
-            Text('Danh sách kiểm tra', style: _sectionTitleStyle()),
-            const Spacer(),
-            Text(
-              '${(_progress * 100).round()}%',
-              style: GoogleFonts.inter(fontSize: 13, color: AppColors.onSurfaceVariant),
+            Row(
+              children: [
+                const Icon(
+                  Icons.task_alt_rounded,
+                  color: AppColors.onSurfaceVariant,
+                  size: 20,
+                ),
+                const SizedBox(width: 10),
+                Text('Danh sách kiểm tra', style: _sectionTitleStyle()),
+                const Spacer(),
+                Text(
+                  '${(_progress * 100).round()}%',
+                  style: GoogleFonts.inter(
+                    fontSize: 13,
+                    color: AppColors.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Padding(
+              padding: const EdgeInsets.only(left: 30),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Progress bar
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(99),
+                    child: LinearProgressIndicator(
+                      value: _progress,
+                      minHeight: 8,
+                      backgroundColor: AppColors.surfaceContainer,
+                      color: AppColors.primaryContainer,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  // Checklist items
+                  ...List.generate(_checklistItems.length, (i) {
+                    final item = _checklistItems[i];
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          GestureDetector(
+                            onTap: () {
+                              item.checked = !item.checked;
+                              _checklistVersionNotifier.value++;
+                            },
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 150),
+                              width: 20,
+                              height: 20,
+                              decoration: BoxDecoration(
+                                color: item.checked
+                                    ? AppColors.primaryContainer
+                                    : Colors.transparent,
+                                border: Border.all(
+                                  color: item.checked
+                                      ? AppColors.primaryContainer
+                                      : AppColors.outlineVariant,
+                                  width: 2,
+                                ),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: item.checked
+                                  ? const Icon(
+                                      Icons.check_rounded,
+                                      color: Colors.white,
+                                      size: 13,
+                                    )
+                                  : null,
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              item.title,
+                              style: GoogleFonts.inter(
+                                fontSize: 13,
+                                color: item.checked
+                                    ? AppColors.onSurfaceVariant
+                                    : AppColors.onSurface,
+                                decoration: item.checked
+                                    ? TextDecoration.lineThrough
+                                    : null,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
+                  // Add item button
+                  const SizedBox(height: 4),
+                  GestureDetector(
+                    onTap: () {},
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.surfaceContainer,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        'Thêm mục',
+                        style: GoogleFonts.inter(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.onSurface,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
-        ),
-        const SizedBox(height: 10),
-        Padding(
-          padding: const EdgeInsets.only(left: 30),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Progress bar
-              ClipRRect(
-                borderRadius: BorderRadius.circular(99),
-                child: LinearProgressIndicator(
-                  value: _progress,
-                  minHeight: 8,
-                  backgroundColor: AppColors.surfaceContainer,
-                  color: AppColors.primaryContainer,
-                ),
-              ),
-              const SizedBox(height: 14),
-              // Checklist items
-              ...List.generate(_checklistItems.length, (i) {
-                final item = _checklistItems[i];
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      GestureDetector(
-                        onTap: () => setState(() => item.checked = !item.checked),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 150),
-                          width: 20, height: 20,
-                          decoration: BoxDecoration(
-                            color: item.checked ? AppColors.primaryContainer : Colors.transparent,
-                            border: Border.all(
-                              color: item.checked ? AppColors.primaryContainer : AppColors.outlineVariant,
-                              width: 2,
-                            ),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: item.checked
-                              ? const Icon(Icons.check_rounded, color: Colors.white, size: 13)
-                              : null,
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          item.title,
-                          style: GoogleFonts.inter(
-                            fontSize: 13,
-                            color: item.checked
-                                ? AppColors.onSurfaceVariant
-                                : AppColors.onSurface,
-                            decoration: item.checked ? TextDecoration.lineThrough : null,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              }),
-              // Add item button
-              const SizedBox(height: 4),
-              GestureDetector(
-                onTap: () {},
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: AppColors.surfaceContainer,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text('Thêm mục',
-                    style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.onSurface),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
+        );
+      },
     );
   }
 
@@ -459,7 +583,11 @@ class _CardDetailPageState extends State<CardDetailPage> {
       children: [
         Row(
           children: [
-            const Icon(Icons.attach_file_rounded, color: AppColors.onSurfaceVariant, size: 20),
+            const Icon(
+              Icons.attach_file_rounded,
+              color: AppColors.onSurfaceVariant,
+              size: 20,
+            ),
             const SizedBox(width: 10),
             Text('Đính kèm', style: _sectionTitleStyle()),
           ],
@@ -480,33 +608,56 @@ class _CardDetailPageState extends State<CardDetailPage> {
                   children: [
                     // Thumbnail
                     Container(
-                      width: 80, height: 56,
+                      width: 80,
+                      height: 56,
                       decoration: BoxDecoration(
                         color: AppColors.surfaceContainerHigh,
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: const Icon(Icons.image_outlined, color: AppColors.onSurfaceVariant, size: 28),
+                      child: const Icon(
+                        Icons.image_outlined,
+                        color: AppColors.onSurfaceVariant,
+                        size: 28,
+                      ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('workspace_moodboard_v2.png',
-                            style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.onSurface),
+                          Text(
+                            'workspace_moodboard_v2.png',
+                            style: GoogleFonts.inter(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.onSurface,
+                            ),
                           ),
                           const SizedBox(height: 2),
                           Text.rich(
                             TextSpan(
-                              style: GoogleFonts.inter(fontSize: 11, color: AppColors.onSurfaceVariant),
+                              style: GoogleFonts.inter(
+                                fontSize: 11,
+                                color: AppColors.onSurfaceVariant,
+                              ),
                               children: [
                                 const TextSpan(text: 'Thêm 2 giờ trước • '),
-                                TextSpan(text: 'Bình luận',
-                                  style: GoogleFonts.inter(fontSize: 11, decoration: TextDecoration.underline, color: AppColors.primary),
+                                TextSpan(
+                                  text: 'Bình luận',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 11,
+                                    decoration: TextDecoration.underline,
+                                    color: AppColors.primary,
+                                  ),
                                 ),
                                 const TextSpan(text: ' • '),
-                                TextSpan(text: 'Xóa',
-                                  style: GoogleFonts.inter(fontSize: 11, decoration: TextDecoration.underline, color: AppColors.error),
+                                TextSpan(
+                                  text: 'Xóa',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 11,
+                                    decoration: TextDecoration.underline,
+                                    color: AppColors.error,
+                                  ),
                                 ),
                               ],
                             ),
@@ -522,13 +673,21 @@ class _CardDetailPageState extends State<CardDetailPage> {
               GestureDetector(
                 onTap: () {},
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.surfaceContainer,
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Text('Thêm đính kèm',
-                    style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.onSurface),
+                  child: Text(
+                    'Thêm đính kèm',
+                    style: GoogleFonts.inter(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.onSurface,
+                    ),
                   ),
                 ),
               ),
@@ -545,20 +704,32 @@ class _CardDetailPageState extends State<CardDetailPage> {
       children: [
         Row(
           children: [
-            const Icon(Icons.list_alt_rounded, color: AppColors.onSurfaceVariant, size: 20),
+            const Icon(
+              Icons.list_alt_rounded,
+              color: AppColors.onSurfaceVariant,
+              size: 20,
+            ),
             const SizedBox(width: 10),
             Text('Hoạt động', style: _sectionTitleStyle()),
             const Spacer(),
             GestureDetector(
               onTap: () {},
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.surfaceContainer,
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Text('Xem chi tiết',
-                  style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w500, color: AppColors.onSurface),
+                child: Text(
+                  'Xem chi tiết',
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.onSurface,
+                  ),
                 ),
               ),
             ),
@@ -571,27 +742,49 @@ class _CardDetailPageState extends State<CardDetailPage> {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Container(
-              width: 32, height: 32,
-              decoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
+              width: 32,
+              height: 32,
+              decoration: const BoxDecoration(
+                color: AppColors.primary,
+                shape: BoxShape.circle,
+              ),
               child: Center(
-                child: Text('JS', style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w700, color: Colors.white)),
+                child: Text(
+                  'JS',
+                  style: GoogleFonts.inter(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
+                ),
               ),
             ),
             const SizedBox(width: 10),
             Expanded(
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 10,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.surfaceContainerLow,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.outlineVariant.withValues(alpha: 0.2)),
+                  border: Border.all(
+                    color: AppColors.outlineVariant.withValues(alpha: 0.2),
+                  ),
                 ),
                 child: TextField(
                   controller: _commentController,
-                  style: GoogleFonts.inter(fontSize: 13, color: AppColors.onSurface),
+                  style: GoogleFonts.inter(
+                    fontSize: 13,
+                    color: AppColors.onSurface,
+                  ),
                   decoration: InputDecoration.collapsed(
                     hintText: 'Viết bình luận...',
-                    hintStyle: GoogleFonts.inter(fontSize: 13, color: AppColors.onSurfaceVariant),
+                    hintStyle: GoogleFonts.inter(
+                      fontSize: 13,
+                      color: AppColors.onSurfaceVariant,
+                    ),
                   ),
                 ),
               ),
@@ -601,78 +794,116 @@ class _CardDetailPageState extends State<CardDetailPage> {
         const SizedBox(height: 20),
 
         // Activity items
-        ..._activities.map((a) => Padding(
-          padding: const EdgeInsets.only(bottom: 20),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 32, height: 32,
-                decoration: BoxDecoration(color: a.avatarColor, shape: BoxShape.circle),
-                child: Center(
-                  child: Text(a.initial,
-                    style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.white),
+        ..._activities.map(
+          (a) => Padding(
+            padding: const EdgeInsets.only(bottom: 20),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: a.avatarColor,
+                    shape: BoxShape.circle,
                   ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text.rich(
-                      TextSpan(
-                        children: [
-                          TextSpan(
-                            text: a.authorName,
-                            style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.onSurface),
-                          ),
-                          TextSpan(
-                            text: ' ${a.action}',
-                            style: GoogleFonts.inter(fontSize: 13, color: AppColors.onSurfaceVariant),
-                          ),
-                        ],
+                  child: Center(
+                    child: Text(
+                      a.initial,
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
                       ),
                     ),
-                    if (a.comment != null) ...[
-                      const SizedBox(height: 6),
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: AppColors.outlineVariant.withValues(alpha: 0.3)),
-                          boxShadow: const [
-                            BoxShadow(color: Color(0x06191C1E), blurRadius: 4, offset: Offset(0, 1)),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text.rich(
+                        TextSpan(
+                          children: [
+                            TextSpan(
+                              text: a.authorName,
+                              style: GoogleFonts.inter(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.onSurface,
+                              ),
+                            ),
+                            TextSpan(
+                              text: ' ${a.action}',
+                              style: GoogleFonts.inter(
+                                fontSize: 13,
+                                color: AppColors.onSurfaceVariant,
+                              ),
+                            ),
                           ],
                         ),
-                        child: Text(a.comment!,
-                          style: GoogleFonts.inter(fontSize: 13, color: AppColors.onSurface, height: 1.5),
+                      ),
+                      if (a.comment != null) ...[
+                        const SizedBox(height: 6),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: AppColors.outlineVariant.withValues(
+                                alpha: 0.3,
+                              ),
+                            ),
+                            boxShadow: const [
+                              BoxShadow(
+                                color: Color(0x06191C1E),
+                                blurRadius: 4,
+                                offset: Offset(0, 1),
+                              ),
+                            ],
+                          ),
+                          child: Text(
+                            a.comment!,
+                            style: GoogleFonts.inter(
+                              fontSize: 13,
+                              color: AppColors.onSurface,
+                              height: 1.5,
+                            ),
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 4),
+                      Text.rich(
+                        TextSpan(
+                          style: GoogleFonts.inter(
+                            fontSize: 11,
+                            color: AppColors.onSurfaceVariant,
+                          ),
+                          children: [
+                            TextSpan(text: a.time),
+                            if (a.comment != null) ...[
+                              const TextSpan(text: ' • '),
+                              TextSpan(
+                                text: 'Trả lời',
+                                style: GoogleFonts.inter(
+                                  fontSize: 11,
+                                  decoration: TextDecoration.underline,
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                            ],
+                          ],
                         ),
                       ),
                     ],
-                    const SizedBox(height: 4),
-                    Text.rich(
-                      TextSpan(
-                        style: GoogleFonts.inter(fontSize: 11, color: AppColors.onSurfaceVariant),
-                        children: [
-                          TextSpan(text: a.time),
-                          if (a.comment != null) ...[
-                            const TextSpan(text: ' • '),
-                            TextSpan(
-                              text: 'Trả lời',
-                              style: GoogleFonts.inter(fontSize: 11, decoration: TextDecoration.underline, color: AppColors.primary),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        )),
+        ),
       ],
     );
   }
@@ -683,22 +914,34 @@ class _CardDetailPageState extends State<CardDetailPage> {
     return Text(
       text,
       style: GoogleFonts.inter(
-        fontSize: 10, fontWeight: FontWeight.w600,
-        color: AppColors.onSurfaceVariant, letterSpacing: 0.8,
+        fontSize: 10,
+        fontWeight: FontWeight.w600,
+        color: AppColors.onSurfaceVariant,
+        letterSpacing: 0.8,
       ),
     );
   }
 
   TextStyle _sectionTitleStyle() => GoogleFonts.inter(
-    fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.onSurface,
+    fontSize: 15,
+    fontWeight: FontWeight.w700,
+    color: AppColors.onSurface,
   );
 
   Widget _avatarChip(String initial, Color color) {
     return Container(
-      width: 30, height: 30,
+      width: 30,
+      height: 30,
       decoration: BoxDecoration(color: color, shape: BoxShape.circle),
       child: Center(
-        child: Text(initial, style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white)),
+        child: Text(
+          initial,
+          style: GoogleFonts.inter(
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+            color: Colors.white,
+          ),
+        ),
       ),
     );
   }
@@ -706,12 +949,17 @@ class _CardDetailPageState extends State<CardDetailPage> {
   Widget _addChip({bool small = false}) {
     final size = small ? 28.0 : 30.0;
     return Container(
-      width: size, height: size,
+      width: size,
+      height: size,
       decoration: BoxDecoration(
         color: AppColors.surfaceContainer,
         shape: BoxShape.circle,
       ),
-      child: const Icon(Icons.add_rounded, color: AppColors.onSurfaceVariant, size: 16),
+      child: const Icon(
+        Icons.add_rounded,
+        color: AppColors.onSurfaceVariant,
+        size: 16,
+      ),
     );
   }
 
@@ -724,12 +972,22 @@ class _CardDetailPageState extends State<CardDetailPage> {
         borderRadius: BorderRadius.circular(4),
       ),
       child: Center(
-        child: Text(text, style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w500, color: Colors.white)),
+        child: Text(
+          text,
+          style: GoogleFonts.inter(
+            fontSize: 11,
+            fontWeight: FontWeight.w500,
+            color: Colors.white,
+          ),
+        ),
       ),
     );
   }
 
   Widget _buildDivider() {
-    return Divider(color: AppColors.outlineVariant.withValues(alpha: 0.3), height: 1);
+    return Divider(
+      color: AppColors.outlineVariant.withValues(alpha: 0.3),
+      height: 1,
+    );
   }
 }

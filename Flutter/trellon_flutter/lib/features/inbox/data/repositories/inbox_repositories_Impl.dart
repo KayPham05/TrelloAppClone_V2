@@ -2,8 +2,19 @@ import 'package:apptreolon/core/constants/api_endpoints.dart';
 import 'package:apptreolon/features/card/domain/entities/card_entity.dart';
 import 'package:apptreolon/features/inbox/domain/repositories/i_inbox_repositories.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 
 import '../../../card/data/models/card_model.dart';
+
+List<CardEntity> _parseInboxCards(List<dynamic> rawCards) {
+  return rawCards
+      .map(
+        (item) => CardModel.fromJson(
+          Map<String, dynamic>.from(item as Map),
+        ).toEntity(),
+      )
+      .toList(growable: false);
+}
 
 class InboxRepositoriesImpl extends InboxRepositories {
   final Dio dio;
@@ -15,7 +26,7 @@ class InboxRepositoriesImpl extends InboxRepositories {
       final response = await dio.get('${ApiEndpoints.userInbox}/$userUId');
       if (response.statusCode == 200 || response.statusCode == 201) {
         final List<dynamic> data = response.data;
-        return data.map((json) => CardModel.fromJson(json).toEntity()).toList();
+        return compute(_parseInboxCards, data);
       }
       throw Exception("Lỗi lấy dữ liệu");
     } on DioException catch (e) {
@@ -30,7 +41,10 @@ class InboxRepositoriesImpl extends InboxRepositories {
   }
 
   @override
-  Future<CardEntity> addInboxCard({required String userUId, required String cardTitle}) async {
+  Future<CardEntity> addInboxCard({
+    required String userUId,
+    required String cardTitle,
+  }) async {
     try {
       final response = await dio.post(
         '${ApiEndpoints.card}/$userUId/inbox',

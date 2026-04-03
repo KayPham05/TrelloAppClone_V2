@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_debounce/easy_debounce.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/constants/app_colors.dart';
 
@@ -59,15 +60,27 @@ class _HomeOverviewPageState extends State<HomeOverviewPage> {
   void initState() {
     super.initState();
     _boards = List.from(_mockBoards);
-    _searchController.addListener(() {
-      setState(() => _searchQuery = _searchController.text.toLowerCase());
-    });
+    _searchController.addListener(_onSearchChanged);
   }
 
   @override
   void dispose() {
+    EasyDebounce.cancel('home-overview-search');
     _searchController.dispose();
     super.dispose();
+  }
+
+  void _onSearchChanged() {
+    EasyDebounce.debounce(
+      'home-overview-search',
+      const Duration(milliseconds: 300),
+      () {
+        if (!mounted) return;
+        final nextQuery = _searchController.text.toLowerCase();
+        if (nextQuery == _searchQuery) return;
+        setState(() => _searchQuery = nextQuery);
+      },
+    );
   }
 
   List<_MockBoard> get _starredBoards =>
