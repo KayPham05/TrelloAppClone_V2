@@ -15,11 +15,31 @@ class _MockBoard {
 }
 
 final List<_MockBoard> _mockBoards = [
-  _MockBoard(title: 'Product Roadmap 2024',   color: Color(0xFF0C56D0), isStarred: true),
-  _MockBoard(title: 'Team Spirit & Culture',   color: Color(0xFF16A34A), isStarred: true),
-  _MockBoard(title: 'Mobile App Design',       color: Color(0xFF7C3AED), isStarred: false),
-  _MockBoard(title: 'Backlog & Maintenance',   color: Color(0xFF0F766E), isStarred: false),
-  _MockBoard(title: 'Marketing Q4 2024',       color: Color(0xFFB45309), isStarred: false),
+  _MockBoard(
+    title: 'Product Roadmap 2024',
+    color: Color(0xFF0C56D0),
+    isStarred: true,
+  ),
+  _MockBoard(
+    title: 'Team Spirit & Culture',
+    color: Color(0xFF16A34A),
+    isStarred: true,
+  ),
+  _MockBoard(
+    title: 'Mobile App Design',
+    color: Color(0xFF7C3AED),
+    isStarred: false,
+  ),
+  _MockBoard(
+    title: 'Backlog & Maintenance',
+    color: Color(0xFF0F766E),
+    isStarred: false,
+  ),
+  _MockBoard(
+    title: 'Marketing Q4 2024',
+    color: Color(0xFFB45309),
+    isStarred: false,
+  ),
 ];
 
 // ── Page ───────────────────────────────────────────────────────────────────
@@ -61,11 +81,13 @@ class _HomeOverviewPageState extends State<HomeOverviewPage> {
   }
 
   void _toggleStar(int index) {
-    setState(() => _boards[index] = _MockBoard(
-          title: _boards[index].title,
-          color: _boards[index].color,
-          isStarred: !_boards[index].isStarred,
-        ));
+    setState(
+      () => _boards[index] = _MockBoard(
+        title: _boards[index].title,
+        color: _boards[index].color,
+        isStarred: !_boards[index].isStarred,
+      ),
+    );
   }
 
   void _showCreateBoardDialog() {
@@ -90,7 +112,8 @@ class _HomeOverviewPageState extends State<HomeOverviewPage> {
                     padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
                     sliver: SliverList(
                       delegate: SliverChildListDelegate([
-                        if (_starredBoards.isNotEmpty && _searchQuery.isEmpty) ...[
+                        if (_starredBoards.isNotEmpty &&
+                            _searchQuery.isEmpty) ...[
                           _buildSectionHeader(
                             icon: Icons.star_rounded,
                             iconColor: const Color(0xFFF59E0B),
@@ -107,8 +130,7 @@ class _HomeOverviewPageState extends State<HomeOverviewPage> {
                         ),
                         const SizedBox(height: 12),
                         _buildBoardGrid(_filteredBoards, isStarred: false),
-                        if (_filteredBoards.isEmpty)
-                          _buildEmptySearch(),
+                        if (_filteredBoards.isEmpty) _buildEmptySearch(),
                       ]),
                     ),
                   ),
@@ -129,15 +151,28 @@ class _HomeOverviewPageState extends State<HomeOverviewPage> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         children: [
-          const Icon(Icons.grid_view_rounded, color: Color(0xFF1D4ED8), size: 24),
-          const SizedBox(width: 10),
-          Text(
-            'Workspace',
-            style: GoogleFonts.inter(
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
-              color: const Color(0xFF1E3A8A), // blue-900
-              letterSpacing: -0.3,
+          IconButton(
+            onPressed: () => Navigator.pushNamed(context, '/workspace-menu'),
+            icon: const Icon(
+              Icons.grid_view_rounded,
+              color: Color(0xFF1D4ED8),
+              size: 24,
+            ),
+            tooltip: 'Workspace menu',
+            visualDensity: VisualDensity.compact,
+            splashRadius: 20,
+          ),
+          const SizedBox(width: 4),
+          GestureDetector(
+            onTap: () => Navigator.pushNamed(context, '/workspace-menu'),
+            child: Text(
+              'Workspace',
+              style: GoogleFonts.inter(
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFF1E3A8A), // blue-900
+                letterSpacing: -0.3,
+              ),
             ),
           ),
           const Spacer(),
@@ -160,17 +195,36 @@ class _HomeOverviewPageState extends State<HomeOverviewPage> {
         style: GoogleFonts.inter(fontSize: 13, color: AppColors.onSurface),
         decoration: InputDecoration(
           hintText: 'Tìm kiếm bảng',
-          hintStyle: GoogleFonts.inter(fontSize: 13, color: AppColors.onSurfaceVariant),
-          prefixIcon: const Icon(Icons.search_rounded, color: AppColors.onSurfaceVariant, size: 18),
+          hintStyle: GoogleFonts.inter(
+            fontSize: 13,
+            color: AppColors.onSurfaceVariant,
+          ),
+          prefixIcon: const Icon(
+            Icons.search_rounded,
+            color: AppColors.onSurfaceVariant,
+            size: 18,
+          ),
           filled: true,
           fillColor: AppColors.surfaceContainerLow,
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
-          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: BorderSide.none,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: BorderSide.none,
+          ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8),
-            borderSide: const BorderSide(color: AppColors.primaryContainer, width: 1.5),
+            borderSide: const BorderSide(
+              color: AppColors.primaryContainer,
+              width: 1.5,
+            ),
           ),
-          contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 12),
+          contentPadding: const EdgeInsets.symmetric(
+            vertical: 0,
+            horizontal: 12,
+          ),
           isDense: true,
         ),
       ),
@@ -285,7 +339,9 @@ class _HomeOverviewPageState extends State<HomeOverviewPage> {
                         if (globalIndex >= 0) _toggleStar(globalIndex);
                       },
                       child: Icon(
-                        board.isStarred ? Icons.star_rounded : Icons.star_outline_rounded,
+                        board.isStarred
+                            ? Icons.star_rounded
+                            : Icons.star_outline_rounded,
                         color: board.isStarred
                             ? const Color(0xFFF59E0B) // amber-500
                             : AppColors.onSurfaceVariant,
@@ -343,11 +399,18 @@ class _HomeOverviewPageState extends State<HomeOverviewPage> {
       padding: const EdgeInsets.symmetric(vertical: 40),
       child: Column(
         children: [
-          Icon(Icons.search_off_rounded, size: 48, color: AppColors.outlineVariant),
+          Icon(
+            Icons.search_off_rounded,
+            size: 48,
+            color: AppColors.outlineVariant,
+          ),
           const SizedBox(height: 12),
           Text(
             'Không tìm thấy bảng nào',
-            style: GoogleFonts.inter(fontSize: 14, color: AppColors.onSurfaceVariant),
+            style: GoogleFonts.inter(
+              fontSize: 14,
+              color: AppColors.onSurfaceVariant,
+            ),
           ),
         ],
       ),
