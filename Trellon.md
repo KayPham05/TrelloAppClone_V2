@@ -67,7 +67,7 @@ TrelloAppClone_V2/
 │   ├── appsettings.json            # Cấu hình chuỗi kết nối và thông số cấu hình khác
 │   └── Program.cs                  # DI Setup và Middleware 
 │
-├── Fluter/trellon_fluter/          # Mobile Frontend App
+├── Flutter/trellon_flutter/          # Mobile Frontend App
 │   ├── lib/
 │   │   ├── core/                   # Shared Modules dùng chung cho ứng dụng
 │   │   │   ├── common_widgets/
