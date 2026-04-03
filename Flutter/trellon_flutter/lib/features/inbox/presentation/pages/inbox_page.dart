@@ -1,12 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/app_colors.dart';
-import '../../../../core/network/dio_client.dart';
-import '../../../../core/data_sources/user_local_data_source.dart';
-import 'package:apptreolon/features/card/domain/entities/card_entity.dart';
-import '../../domain/usecases/add_inbox_card_usecase.dart';
-import '../../domain/usecases/get_user_inbox_card.dart';
-import '../../data/repositories/inbox_repositories_Impl.dart';
+import '../../../../init_dependencies.dart';
 import '../bloc/inbox_cubit.dart';
 import '../bloc/inbox_state.dart';
 import '../widgets/add_input_widget.dart';
@@ -17,13 +12,8 @@ class InboxPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final inboxRepo = InboxRepositoriesImpl(dio: DioClient().instance);
     return BlocProvider(
-      create: (context) => InboxCubit(
-        getInboxCardsUseCase: GetInboxCardUseCase(inboxRepo),
-        addInboxCardUseCase: AddInboxCardUseCase(inboxRepo),
-        userLocalDataSource: UserLocalDataSource(),
-      ),
+      create: (context) => serviceLocator<InboxCubit>(),
       child: const InboxView(),
     );
   }
@@ -42,12 +32,11 @@ class _InboxViewState extends State<InboxView> {
   @override
   void initState() {
     super.initState();
-    // Gọi tải dữ liệu khi trang vừa mở
     context.read<InboxCubit>().fetchInboxCards();
   }
 
   void _onToggleComplete(int index, bool newValue) {
-
+    // Logic for toggling complete
   }
 
   void _onSubmittedNewCard(String val) {
