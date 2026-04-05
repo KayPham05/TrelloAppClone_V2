@@ -28,6 +28,7 @@ class InboxView extends StatefulWidget {
 
 class _InboxViewState extends State<InboxView> {
   final TextEditingController _addController = TextEditingController();
+  final ScrollController _inboxScrollController = ScrollController();
 
   @override
   void initState() {
@@ -44,6 +45,13 @@ class _InboxViewState extends State<InboxView> {
       context.read<InboxCubit>().addCardToInbox(val.trim());
       _addController.clear();
     }
+  }
+
+  @override
+  void dispose() {
+    _addController.dispose();
+    _inboxScrollController.dispose();
+    super.dispose();
   }
 
   @override
@@ -69,11 +77,17 @@ class _InboxViewState extends State<InboxView> {
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.view_list_outlined, color: AppColors.textPrimary),
+                    icon: const Icon(
+                      Icons.view_list_outlined,
+                      color: AppColors.textPrimary,
+                    ),
                     onPressed: () {},
                   ),
                   IconButton(
-                    icon: const Icon(Icons.more_horiz, color: AppColors.textPrimary),
+                    icon: const Icon(
+                      Icons.more_horiz,
+                      color: AppColors.textPrimary,
+                    ),
                     onPressed: () {},
                   ),
                 ],
@@ -92,7 +106,10 @@ class _InboxViewState extends State<InboxView> {
                   decoration: InputDecoration(
                     hintText: 'Tìm kiếm',
                     hintStyle: TextStyle(color: AppColors.textSecondary),
-                    prefixIcon: Icon(Icons.search, color: AppColors.textSecondary),
+                    prefixIcon: Icon(
+                      Icons.search,
+                      color: AppColors.textSecondary,
+                    ),
                     border: InputBorder.none,
                     contentPadding: EdgeInsets.symmetric(vertical: 14),
                   ),
@@ -104,31 +121,45 @@ class _InboxViewState extends State<InboxView> {
             Expanded(
               child: BlocBuilder<InboxCubit, InboxState>(
                 builder: (context, state) {
-                   if (state is InboxLoading || state is InboxInitial) {
-                      return const Center(child: CircularProgressIndicator());
-                   } else if (state is InboxError) {
-                      return Center(child: Text(state.message, style: const TextStyle(color: Colors.red)));
-                   } else if (state is InboxEmpty) {
-                      return const Center(child: Text("Hộp thư của bạn đang trống", style: TextStyle(color: AppColors.textSecondary)));
-                   } else if (state is InboxLoaded) {
-                      final items = state.cards;
-                      return ListView.builder(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        itemCount: items.length + 1,
-                        itemBuilder: (ctx, i) {
-                          if (i == items.length) {
-                            return const SizedBox(height: 80);
-                          }
-                          return InboxItemWidget(
+                  if (state is InboxLoading || state is InboxInitial) {
+                    return const Center(child: CircularProgressIndicator());
+                  } else if (state is InboxError) {
+                    return Center(
+                      child: Text(
+                        state.message,
+                        style: const TextStyle(color: Colors.red),
+                      ),
+                    );
+                  } else if (state is InboxEmpty) {
+                    return const Center(
+                      child: Text(
+                        "Hộp thư của bạn đang trống",
+                        style: TextStyle(color: AppColors.textSecondary),
+                      ),
+                    );
+                  } else if (state is InboxLoaded) {
+                    final items = state.cards;
+                    return ListView.builder(
+                      controller: _inboxScrollController,
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      itemCount: items.length + 1,
+                      itemBuilder: (ctx, i) {
+                        if (i == items.length) {
+                          return const SizedBox(height: 80);
+                        }
+                        return RepaintBoundary(
+                          child: InboxItemWidget(
                             item: items[i],
                             index: i,
                             totalCount: items.length,
-                            onToggleComplete: (val) => _onToggleComplete(i, val),
-                          );
-                        },
-                      );
-                   }
-                   return const SizedBox.shrink();
+                            onToggleComplete: (val) =>
+                                _onToggleComplete(i, val),
+                          ),
+                        );
+                      },
+                    );
+                  }
+                  return const SizedBox.shrink();
                 },
               ),
             ),
