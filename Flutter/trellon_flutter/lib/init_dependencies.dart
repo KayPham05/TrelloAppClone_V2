@@ -15,6 +15,11 @@ import 'features/inbox/domain/repositories/i_inbox_repositories.dart';
 import 'features/inbox/domain/usecases/get_user_inbox_card.dart';
 import 'features/inbox/domain/usecases/add_inbox_card_usecase.dart';
 import 'features/inbox/presentation/bloc/inbox_cubit.dart';
+import 'features/card/data/repositories/card_repository_impl.dart';
+import 'features/card/domain/repositories/i_card_repository.dart';
+import 'features/card/domain/usecases/delete_card_usecase.dart';
+import 'features/card/domain/usecases/update_card_status_usecase.dart';
+import 'features/card/presentation/cubit/card_detail_cubit.dart';
 
 final serviceLocator = GetIt.instance;
 
@@ -25,6 +30,21 @@ Future<void> initDependencies() async {
 
   _initAuth();
   _initInbox();
+  _initCard();
+}
+
+void _initCard() {
+  // Repository
+  serviceLocator.registerLazySingleton<ICardRepository>(
+    () => CardRepositoryImpl(dio: serviceLocator<Dio>()),
+  );
+
+  // UseCases
+  serviceLocator.registerLazySingleton(() => DeleteCardUseCase(serviceLocator()));
+  serviceLocator.registerLazySingleton(() => UpdateCardStatusUseCase(serviceLocator()));
+
+  // Cubit
+  serviceLocator.registerFactory(() => CardDetailCubit(serviceLocator()));
 }
 
 void _initAuth() {
@@ -69,6 +89,8 @@ void _initInbox() {
     () => InboxCubit(
       getInboxCardsUseCase: serviceLocator(),
       addInboxCardUseCase: serviceLocator(),
+      deleteCardUseCase: serviceLocator(),
+      updateCardStatusUseCase: serviceLocator(),
       userLocalDataSource: serviceLocator(),
     ),
   );

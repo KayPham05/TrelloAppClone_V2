@@ -1,5 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/data_sources/user_local_data_source.dart';
+import '../../../card/domain/usecases/delete_card_usecase.dart';
+import '../../../card/domain/usecases/update_card_status_usecase.dart';
 import '../../domain/usecases/add_inbox_card_usecase.dart';
 import '../../domain/usecases/get_user_inbox_card.dart';
 import 'inbox_state.dart';
@@ -7,11 +9,15 @@ import 'inbox_state.dart';
 class InboxCubit extends Cubit<InboxState> {
   final GetInboxCardUseCase getInboxCardsUseCase;
   final AddInboxCardUseCase addInboxCardUseCase;
+  final DeleteCardUseCase deleteCardUseCase;
+  final UpdateCardStatusUseCase updateCardStatusUseCase;
   final UserLocalDataSource userLocalDataSource;
 
   InboxCubit({
     required this.getInboxCardsUseCase,
     required this.addInboxCardUseCase,
+    required this.deleteCardUseCase,
+    required this.updateCardStatusUseCase,
     required this.userLocalDataSource,
   }) : super(InboxInitial());
 
@@ -59,6 +65,27 @@ class InboxCubit extends Cubit<InboxState> {
       if (currentState is InboxLoaded) {
         emit(currentState);
       }
+    }
+  }
+
+  Future<void> deleteCard(String cardId) async {
+    try {
+      await deleteCardUseCase.call(cardId: cardId);
+      await fetchInboxCards();
+    } catch (e) {
+      emit(InboxError(message: "Không thể xóa: ${e.toString()}"));
+      await fetchInboxCards();
+    }
+  }
+
+  Future<void> toggleCardStatus(String cardId, bool isCompleted) async {
+    try {
+      final newStatus = isCompleted ? 'Completed' : 'To Do';
+      await updateCardStatusUseCase.call(cardId: cardId, newStatus: newStatus);
+      await fetchInboxCards();
+    } catch (e) {
+      emit(InboxError(message: "Không thể cập nhật trạng thái: ${e.toString()}"));
+      await fetchInboxCards();
     }
   }
 }

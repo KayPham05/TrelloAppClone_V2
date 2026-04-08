@@ -60,25 +60,29 @@ builder.Services.AddDbContext<TodoDbContext>(option =>
     option.UseSqlServer(builder.Configuration.GetConnectionString("TodosDatabase"));
 });
 
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowAll", policy =>
-    {
-        policy.AllowAnyOrigin()
-              .AllowAnyHeader()
-              .AllowAnyMethod();
-    });
-});
 //builder.Services.AddCors(options =>
 //{
-//    options.AddPolicy("AllowFrontend", policy =>
+//    options.AddPolicy("AllowAll", policy =>
 //    {
-//        policy.WithOrigins("http://localhost:3000") // React chạy ở đây
+//        policy.AllowAnyOrigin()
 //              .AllowAnyHeader()
-//              .AllowAnyMethod()
-//              .AllowCredentials(); // Cho phép gửi cookie
+//              .AllowAnyMethod();
 //    });
 //});
+// ================== CORS ==================
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        policy.WithOrigins(
+                "http://localhost:5173"   // React Vite
+              )
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
+    });
+});
+
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
@@ -93,7 +97,7 @@ var app = builder.Build();
 
 
 //cấu hình CROSS
-app.UseCors("AllowAll");
+app.UseCors("AllowFrontend");
 
 //app.UseHttpsRedirection();
 app.UseAuthentication();

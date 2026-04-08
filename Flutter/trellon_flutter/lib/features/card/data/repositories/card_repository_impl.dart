@@ -136,4 +136,84 @@ class CardRepositoryImpl implements ICardRepository {
       throw Exception('Lỗi kết nối server: $e');
     }
   }
+
+  @override
+  Future<List<CommentEntity>> getComments({required String cardId}) async {
+    try {
+      final response = await dio.get('${ApiEndpoints.comments}/card/$cardId');
+      if (response.statusCode == 200) {
+        final List<dynamic> data = response.data;
+        return data.map((json) {
+          return CommentEntity(
+            id: json['commentUId'] ?? '',
+            content: json['content'] ?? '',
+            createdAt: json['createdAt'] != null ? DateTime.tryParse(json['createdAt']) ?? DateTime.now() : DateTime.now(),
+            userUId: json['userUId'] ?? '',
+            authorName: json['authorName'], // Assuming backend might return this
+          );
+        }).toList();
+      }
+      throw Exception('Lỗi khi lấy bình luận');
+    } catch (e) {
+      throw Exception('Lỗi kết nối server: $e');
+    }
+  }
+
+  @override
+  Future<CommentEntity> addComment({required String cardId, required String content, required String userUId}) async {
+    try {
+      final response = await dio.post(ApiEndpoints.comments, data: {
+        'cardUId': cardId,
+        'content': content,
+        'userUId': userUId,
+      });
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final json = response.data;
+        return CommentEntity(
+          id: json['commentUId'] ?? '',
+          content: json['content'] ?? '',
+          createdAt: json['createdAt'] != null ? DateTime.tryParse(json['createdAt']) ?? DateTime.now() : DateTime.now(),
+          userUId: json['userUId'] ?? '',
+        );
+      }
+      throw Exception('Lỗi khi thêm bình luận');
+    } catch (e) {
+      throw Exception('Lỗi kết nối server: $e');
+    }
+  }
+
+  @override
+  Future<List<CardMemberEntity>> getCardMembers({required String cardId}) async {
+    try {
+      final response = await dio.get('${ApiEndpoints.cardMember}/$cardId');
+      if (response.statusCode == 200) {
+        final List<dynamic> data = response.data;
+        return data.map((json) {
+          return CardMemberEntity(
+            id: json['id'] ?? json['cardMemberUId'] ?? '',
+            userUId: json['userUId'] ?? '',
+            userName: json['userName'] ?? json['fullName'],
+          );
+        }).toList();
+      }
+      return [];
+    } catch (e) {
+      if (e is DioException && e.response?.statusCode == 404) return [];
+      throw Exception('Lỗi kết nối server khi lấy thành viên: $e');
+    }
+  }
+
+  @override
+  Future<List<TodoItemEntity>> getTodoItems({required String cardId}) async {
+    try {
+      final response = await dio.get('${ApiEndpoints.todoItem}/$cardId');
+      if (response.statusCode == 200) {
+        final List<dynamic> data = response.data;
+        return data.map((json) => TodoItemModel.fromJson(json).toEntity()).toList();
+      }
+      return [];
+    } catch (e) {
+      throw Exception('Lỗi kết nối server khi lấy danh sách việc: $e');
+    }
+  }
 }

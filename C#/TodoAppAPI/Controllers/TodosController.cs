@@ -144,5 +144,28 @@ namespace TodoAppAPI.Controllers
                 $"updated status of card '{card.Title}' to '{newStatus}'");
             return Ok(new { message = "Cập nhật status cho Card thành công." });
         }
+
+        public class AddFileRequest
+        {
+            public string Url { get; set; } = string.Empty;
+            public string FileName { get; set; } = string.Empty;
+        }
+
+        [HttpPost("{cardUId}/add-file")]
+        public async Task<IActionResult> AddFileToCard(string cardUId, [FromBody] AddFileRequest request)
+        {
+            if (string.IsNullOrEmpty(request.Url) || string.IsNullOrEmpty(request.FileName))
+                return BadRequest("File URL và FileName không được trống.");
+
+            var fileUrl = await _cardService.AddFileToCardAsync(cardUId, request.Url, request.FileName);
+
+            if (fileUrl != null)
+            {
+                _ = _activity.AddActivity(" ", $"added file '{request.FileName}' to card '{cardUId}'");
+                return Ok(fileUrl);
+            }
+
+            return NotFound("Không tìm thấy card hoặc có lỗi xảy ra.");
+        }
     }
 }

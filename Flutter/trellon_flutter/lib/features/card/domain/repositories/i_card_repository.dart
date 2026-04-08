@@ -11,4 +11,9 @@ abstract class ICardRepository {
   Future<CardEntity> addTodoItem({required String cardId, required String todoTitle});
   Future<CardEntity> updateTodoItem({required String cardId, required String todoId, required bool isCompleted});
   Future<CardEntity> updateDueDate({required String cardId, required DateTime dueDate});
+
+  Future<List<CommentEntity>> getComments({required String cardId});
+  Future<CommentEntity> addComment({required String cardId, required String content, required String userUId});
+  Future<List<CardMemberEntity>> getCardMembers({required String cardId});
+  Future<List<TodoItemEntity>> getTodoItems({required String cardId});
 }

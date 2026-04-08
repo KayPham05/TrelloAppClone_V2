@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using TodoAppAPI.Configurations;
 using TodoAppAPI.Models;
 
@@ -38,6 +38,7 @@ namespace TodoAppAPI.Data
             modelBuilder.ApplyConfiguration(new UserSessionConfiguration());
             modelBuilder.ApplyConfiguration(new UserOtpConfiguration());
             modelBuilder.ApplyConfiguration(new NotificationConfiguration());
+            modelBuilder.ApplyConfiguration(new FileUrlConfiguration());
             DatabaseSeeder.SeedData(modelBuilder);
         }
 
@@ -58,5 +59,6 @@ namespace TodoAppAPI.Data
         public DbSet<UserSession> UserSessions { get; set; }
         public DbSet<UserOtp> UserOtps { get; set; }
         public DbSet<Notification> Notifications { get; set; }
+        public DbSet<FileUrl> FileUrls { get; set; }
     }
 }

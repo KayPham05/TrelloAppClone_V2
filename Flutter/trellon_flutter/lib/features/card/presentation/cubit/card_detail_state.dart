@@ -1,0 +1,48 @@
+import 'package:equatable/equatable.dart';
+import '../../domain/entities/card_entity.dart';
+
+abstract class CardDetailState extends Equatable {
+  @override
+  List<Object?> get props => [];
+}
+
+class CardDetailLoading extends CardDetailState {}
+
+class CardDetailLoaded extends CardDetailState {
+  final CardEntity card;
+  final List<TodoItemEntity> todos;
+  final List<CardMemberEntity> members;
+  final List<CommentEntity> comments;
+
+  CardDetailLoaded({
+    required this.card,
+    required this.todos,
+    required this.members,
+    required this.comments,
+  });
+
+  CardDetailLoaded copyWith({
+    CardEntity? card,
+    List<TodoItemEntity>? todos,
+    List<CardMemberEntity>? members,
+    List<CommentEntity>? comments,
+  }) {
+    return CardDetailLoaded(
+      card: card ?? this.card,
+      todos: todos ?? this.todos,
+      members: members ?? this.members,
+      comments: comments ?? this.comments,
+    );
+  }
+
+  @override
+  List<Object?> get props => [card, todos, members, comments];
+}
+
+class CardDetailError extends CardDetailState {
+  final String message;
+  CardDetailError(this.message);
+
+  @override
+  List<Object?> get props => [message];
+}

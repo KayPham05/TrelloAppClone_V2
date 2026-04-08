@@ -13,5 +13,6 @@ namespace TodoAppAPI.Interfaces
         Task<bool> UpdateListUid(string cardUId, string? newListUId, string userUId);
         Task<bool> UpdateStatus(string cardUId, string newStatus);
         Task<CardDTO?> AddCardToInboxAsync(string userUId, Card card);
+        Task<FileUrl?> AddFileToCardAsync(string cardUId, string url, string fileName);
     }
 }
