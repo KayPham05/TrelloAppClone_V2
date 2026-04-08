@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../features/board/presentation/pages/home_overview_page.dart';
 import '../../../features/board/presentation/pages/board_list_page.dart';
+import '../../../features/inbox/presentation/pages/inbox_page.dart';
+import '../../../features/planner/presentation/pages/planner_page.dart';
 import '../../../features/activity/presentation/pages/activity_page.dart';
 import '../../../features/profile/presentation/pages/profile_page.dart';
 import '../constants/app_colors.dart';
@@ -19,29 +21,35 @@ class _MainShellState extends State<MainShell>
     with SingleTickerProviderStateMixin {
   int _currentIndex = 0;
 
-  // 4 tabs: Home, Boards, Notifications, Account
+  // 5 tabs: Boards, Inbox, Planner, Notifications/Activity, Account
   final List<Widget> _pages = const [
-    HomeOverviewPage(),  // Tab 0 – Home (Phase 5) ✅
-    BoardListPage(),     // Tab 1 – Boards (Phase 6)
-    ActivityPage(),      // Tab 2 – Notifications (Phase 8)
-    ProfilePage(),       // Tab 3 – Account (Phase 9)
+    BoardListPage(),     // Tab 0 – Boards
+    InboxPage(),         // Tab 1 – Inbox
+    PlannerPage(),       // Tab 2 – Planner
+    ActivityPage(),      // Tab 3 – Notifications
+    ProfilePage(),       // Tab 4 – Account
   ];
 
   static const List<_NavDestination> _destinations = [
-    _NavDestination(
-      icon: Icons.home_outlined,
-      activeIcon: Icons.home_rounded,
-      label: 'Trang chủ',
-    ),
     _NavDestination(
       icon: Icons.dashboard_outlined,
       activeIcon: Icons.dashboard_rounded,
       label: 'Bảng',
     ),
     _NavDestination(
+      icon: Icons.inbox_outlined,
+      activeIcon: Icons.inbox_rounded,
+      label: 'Hộp thư đến',
+    ),
+    _NavDestination(
+      icon: Icons.calendar_today_outlined,
+      activeIcon: Icons.calendar_month_rounded,
+      label: 'Lập kế hoạch',
+    ),
+    _NavDestination(
       icon: Icons.notifications_outlined,
       activeIcon: Icons.notifications_rounded,
-      label: 'Thông báo',
+      label: 'Hoạt động',
     ),
     _NavDestination(
       icon: Icons.person_outline_rounded,

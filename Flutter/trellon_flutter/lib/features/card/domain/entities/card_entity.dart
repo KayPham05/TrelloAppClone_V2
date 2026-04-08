@@ -61,3 +61,31 @@ class CardEntity {
     );
   }
 }
+
+class CommentEntity {
+  final String id;
+  final String content;
+  final DateTime createdAt;
+  final String userUId;
+  final String? authorName; // Mapped later from local DB or backend response
+
+  const CommentEntity({
+    required this.id,
+    required this.content,
+    required this.createdAt,
+    required this.userUId,
+    this.authorName,
+  });
+}
+
+class CardMemberEntity {
+  final String id;
+  final String userUId;
+  final String? userName;
+
+  const CardMemberEntity({
+    required this.id,
+    required this.userUId,
+    this.userName,
+  });
+}

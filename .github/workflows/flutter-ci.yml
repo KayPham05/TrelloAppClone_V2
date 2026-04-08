@@ -1,0 +1,33 @@
+name: Flutter CI
+
+on: 
+    push: 
+        branches: [ "main" ]
+        paths: 
+        - 'Flutter/trellon_flutter/**'  
+    pull_request:
+        branches: [ "main" ]
+        paths: 
+        - 'Flutter/trellon_flutter/**'  
+jobs:
+    flutter_test:
+        runs-on: windows-latest
+        steps:
+        - name: checkout code
+          uses: actions/checkout@v4
+        - name: setup flutter
+          uses: subosito/flutter-action@v2
+          with:
+            flutter-version: '3.41.5'
+        - name: install dependencies
+          run: |
+            cd Flutter/trellon_flutter
+            flutter pub get
+        - name: Analyze code
+          run: |
+            cd Flutter/trellon_flutter
+            flutter analyze
+        - name: run tests
+          run: |
+            cd Flutter/trellon_flutter
+            flutter test

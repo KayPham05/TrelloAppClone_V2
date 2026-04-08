@@ -200,5 +200,32 @@ namespace TodoAppAPI.Service
                 return null;
             }
         }
+
+        public async Task<FileUrl?> AddFileToCardAsync(string cardUId, string url, string fileName)
+        {
+            try
+            {
+                var card = await _dbContext.Todos.FirstOrDefaultAsync(c => c.CardUId == cardUId);
+                if (card == null) return null;
+
+                var fileUrl = new FileUrl
+                {
+                    CardUId = cardUId,
+                    Url = url,
+                    FileName = fileName,
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                _dbContext.FileUrls.Add(fileUrl);
+                await _dbContext.SaveChangesAsync();
+
+                return fileUrl;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Lỗi khi thêm file vào Card: {ex.Message}");
+                return null;
+            }
+        }
     }
 }
