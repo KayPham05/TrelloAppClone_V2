@@ -5,24 +5,6 @@ namespace TodoAppAPI.Data
 {
     public static class DatabaseSeeder
     {
-        // ===== STATIC VALUES - KHÔNG THAY ĐỔI =====
-        private static readonly DateTime SeedDate = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-
-        private static readonly string User1Id = "550e8400-e29b-41d4-a716-446655440001";
-        private static readonly string User2Id = "550e8400-e29b-41d4-a716-446655440002";
-
-        private static readonly string Board1Id = "660e8400-e29b-41d4-a716-446655440001";
-        private static readonly string Board2Id = "660e8400-e29b-41d4-a716-446655440002";
-
-        private static readonly string List1Id = "770e8400-e29b-41d4-a716-446655440001";
-        private static readonly string List2Id = "770e8400-e29b-41d4-a716-446655440002";
-        private static readonly string List3Id = "770e8400-e29b-41d4-a716-446655440003";
-        private static readonly string List4Id = "770e8400-e29b-41d4-a716-446655440004";
-
-        private static readonly string WorkspaceId = "880e8400-e29b-41d4-a716-446655440001";
-        private static readonly string WorkspaceMember1Id = "990e8400-e29b-41d4-a716-446655440001";
-        private static readonly string WorkspaceMember2Id = "990e8400-e29b-41d4-a716-446655440002";
-
         public static void SeedData(ModelBuilder modelBuilder)
         {
             // 1. Seed Roles
