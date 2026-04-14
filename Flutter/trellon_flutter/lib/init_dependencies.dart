@@ -19,6 +19,11 @@ import 'features/card/data/repositories/card_repository_impl.dart';
 import 'features/card/domain/repositories/i_card_repository.dart';
 import 'features/card/domain/usecases/delete_card_usecase.dart';
 import 'features/card/domain/usecases/update_card_status_usecase.dart';
+import 'features/card/domain/usecases/add_card_comment_usecase.dart';
+import 'features/card/domain/usecases/upload_attachment_usecase.dart';
+import 'features/card/domain/usecases/get_attachments_usecase.dart';
+import 'features/card/domain/usecases/delete_attachment_usecase.dart';
+import 'features/card/domain/usecases/update_attachment_description_usecase.dart';
 import 'features/card/presentation/cubit/card_detail_cubit.dart';
 
 final serviceLocator = GetIt.instance;
@@ -42,9 +47,21 @@ void _initCard() {
   // UseCases
   serviceLocator.registerLazySingleton(() => DeleteCardUseCase(serviceLocator()));
   serviceLocator.registerLazySingleton(() => UpdateCardStatusUseCase(serviceLocator()));
+  serviceLocator.registerLazySingleton(() => AddCardCommentUseCase(serviceLocator()));
+  serviceLocator.registerLazySingleton(() => UploadAttachmentUseCase(serviceLocator()));
+  serviceLocator.registerLazySingleton(() => GetAttachmentsUseCase(serviceLocator()));
+  serviceLocator.registerLazySingleton(() => DeleteAttachmentUseCase(serviceLocator()));
+  serviceLocator.registerLazySingleton(() => UpdateAttachmentDescriptionUseCase(serviceLocator()));
 
   // Cubit
-  serviceLocator.registerFactory(() => CardDetailCubit(serviceLocator()));
+  serviceLocator.registerFactory(() => CardDetailCubit(
+    serviceLocator(),
+    serviceLocator(),
+    serviceLocator(),
+    serviceLocator(),
+    serviceLocator(),
+    serviceLocator(),
+  ));
 }
 
 void _initAuth() {

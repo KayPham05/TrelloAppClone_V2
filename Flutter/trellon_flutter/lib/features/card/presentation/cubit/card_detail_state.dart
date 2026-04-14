@@ -13,12 +13,16 @@ class CardDetailLoaded extends CardDetailState {
   final List<TodoItemEntity> todos;
   final List<CardMemberEntity> members;
   final List<CommentEntity> comments;
+  final bool isUploadingAttachment;
+  final String? attachmentError;
 
   CardDetailLoaded({
     required this.card,
     required this.todos,
     required this.members,
     required this.comments,
+    this.isUploadingAttachment = false,
+    this.attachmentError,
   });
 
   CardDetailLoaded copyWith({
@@ -26,17 +30,22 @@ class CardDetailLoaded extends CardDetailState {
     List<TodoItemEntity>? todos,
     List<CardMemberEntity>? members,
     List<CommentEntity>? comments,
+    bool? isUploadingAttachment,
+    String? attachmentError,
+    bool clearAttachmentError = false,
   }) {
     return CardDetailLoaded(
       card: card ?? this.card,
       todos: todos ?? this.todos,
       members: members ?? this.members,
       comments: comments ?? this.comments,
+      isUploadingAttachment: isUploadingAttachment ?? this.isUploadingAttachment,
+      attachmentError: clearAttachmentError ? null : (attachmentError ?? this.attachmentError),
     );
   }
 
   @override
-  List<Object?> get props => [card, todos, members, comments];
+  List<Object?> get props => [card, todos, members, comments, isUploadingAttachment, attachmentError];
 }
 
 class CardDetailError extends CardDetailState {

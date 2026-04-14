@@ -38,7 +38,7 @@ class CardRepositoryImpl implements ICardRepository {
 
       final response = await dio.put('${ApiEndpoints.card}/$cardId', data: data);
       if (response.statusCode == 200) {
-        return CardModel.fromJson(response.data).toEntity();
+        return const CardEntity(id: '', title: '', position: 0); // dummy response
       }
       throw Exception('Lỗi khi cập nhật thẻ');
     } catch (e) {
@@ -88,9 +88,9 @@ class CardRepositoryImpl implements ICardRepository {
   @override
   Future<CardEntity> updateStatus({required String cardId, required String newStatus}) async {
     try {
-      final response = await dio.put('${ApiEndpoints.card}/$cardId/status', data: {'status': newStatus});
+      final response = await dio.put('${ApiEndpoints.card}/$cardId/update-status?newStatus=$newStatus');
       if (response.statusCode == 200) {
-        return CardModel.fromJson(response.data).toEntity();
+        return const CardEntity(id: '', title: '', position: 0);
       }
       throw Exception('Lỗi khi cập nhật trạng thái');
     } catch (e) {
@@ -101,9 +101,12 @@ class CardRepositoryImpl implements ICardRepository {
   @override
   Future<CardEntity> addTodoItem({required String cardId, required String todoTitle}) async {
     try {
-      final response = await dio.post('${ApiEndpoints.card}/$cardId/todos', data: {'title': todoTitle});
+      final response = await dio.post('${ApiEndpoints.todoItem}/add', data: {
+        'cardUId': cardId,
+        'content': todoTitle
+      });
       if (response.statusCode == 200 || response.statusCode == 201) {
-        return CardModel.fromJson(response.data).toEntity();
+        return const CardEntity(id: '', title: '', position: 0); // Dummy, caller handles refetch
       }
       throw Exception('Lỗi khi thêm Todo');
     } catch (e) {
@@ -114,9 +117,9 @@ class CardRepositoryImpl implements ICardRepository {
   @override
   Future<CardEntity> updateTodoItem({required String cardId, required String todoId, required bool isCompleted}) async {
     try {
-      final response = await dio.put('${ApiEndpoints.card}/$cardId/todos/$todoId', data: {'isCompleted': isCompleted});
+      final response = await dio.put('${ApiEndpoints.todoItem}/$todoId/update-status?status=${isCompleted ? "completed" : "active"}');
       if (response.statusCode == 200) {
-        return CardModel.fromJson(response.data).toEntity();
+        return const CardEntity(id: '', title: '', position: 0); // Dummy, caller handles refetch
       }
       throw Exception('Lỗi khi cập nhật Todo');
     } catch (e) {
@@ -149,7 +152,7 @@ class CardRepositoryImpl implements ICardRepository {
             content: json['content'] ?? '',
             createdAt: json['createdAt'] != null ? DateTime.tryParse(json['createdAt']) ?? DateTime.now() : DateTime.now(),
             userUId: json['userUId'] ?? '',
-            authorName: json['authorName'], // Assuming backend might return this
+            authorName: json['user'] != null ? json['user']['userName'] : json['userName'],
           );
         }).toList();
       }
@@ -174,6 +177,7 @@ class CardRepositoryImpl implements ICardRepository {
           content: json['content'] ?? '',
           createdAt: json['createdAt'] != null ? DateTime.tryParse(json['createdAt']) ?? DateTime.now() : DateTime.now(),
           userUId: json['userUId'] ?? '',
+          authorName: json['user'] != null ? json['user']['userName'] : json['userName'],
         );
       }
       throw Exception('Lỗi khi thêm bình luận');
@@ -214,6 +218,74 @@ class CardRepositoryImpl implements ICardRepository {
       return [];
     } catch (e) {
       throw Exception('Lỗi kết nối server khi lấy danh sách việc: $e');
+    }
+  }
+
+  @override
+  Future<List<FileUrlEntity>> getAttachments({required String cardId}) async {
+    try {
+      final response = await dio.get('${ApiEndpoints.card}/$cardId/attachments');
+      if (response.statusCode == 200) {
+        final List<dynamic> data = response.data;
+        return data.map((json) => FileUrlModel.fromJson(json).toEntity()).toList();
+      }
+      return [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  @override
+  Future<FileUrlEntity> uploadAttachment({required String cardId, required String filePath, String? description}) async {
+    try {
+      String fileName = filePath.split('/').last;
+      FormData formData = FormData.fromMap({
+        "file": await MultipartFile.fromFile(filePath, filename: fileName),
+        if (description != null && description.isNotEmpty) "description": description,
+      });
+
+      final response = await dio.post(
+        '${ApiEndpoints.card}/$cardId/attachments',
+        data: formData,
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return FileUrlModel.fromJson(response.data).toEntity();
+      }
+      if (response.statusCode == 409) {
+        throw Exception('DUPLICATE');
+      }
+      throw Exception('Lỗi khi tải lên tập tin đính kèm');
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 409) throw Exception('DUPLICATE');
+      throw Exception('Lỗi kết nối server: $e');
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> deleteAttachment({required String cardId, required String fileId}) async {
+    try {
+      final response = await dio.delete('${ApiEndpoints.card}/$cardId/attachments/$fileId');
+      if (response.statusCode != 200 && response.statusCode != 204) {
+        throw Exception('Lỗi khi xóa tệp đính kèm');
+      }
+    } catch (e) {
+      throw Exception('Lỗi kết nối server: $e');
+    }
+  }
+
+  @override
+  Future<void> updateAttachmentDescription({required String cardId, required String fileId, String? description}) async {
+    try {
+      final queryParam = description != null ? '?description=${Uri.encodeQueryComponent(description)}' : '';
+      final response = await dio.put('${ApiEndpoints.card}/$cardId/attachments/$fileId/description$queryParam');
+      if (response.statusCode != 200) {
+        throw Exception('Lỗi khi cập nhật mô tả tệp đính kèm');
+      }
+    } catch (e) {
+      throw Exception('Lỗi kết nối server: $e');
     }
   }
 }

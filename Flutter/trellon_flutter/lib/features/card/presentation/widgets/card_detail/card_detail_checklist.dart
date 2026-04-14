@@ -1,15 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../../core/constants/app_colors.dart';
+
 class CardDetailChecklistItem {
+  final String id;
   final String title;
   bool checked;
-  CardDetailChecklistItem({required this.title, this.checked = false});
+  CardDetailChecklistItem({required this.id, required this.title, this.checked = false});
 }
 
 class CardDetailChecklist extends StatefulWidget {
   final List<CardDetailChecklistItem> initialItems;
-  const CardDetailChecklist({super.key, required this.initialItems});
+  final void Function(String id, bool checked)? onCheckChanged;
+  final ValueChanged<String>? onAddTodo;
+
+  const CardDetailChecklist({
+    super.key, 
+    required this.initialItems,
+    this.onCheckChanged,
+    this.onAddTodo,
+  });
 
   @override
   State<CardDetailChecklist> createState() => _CardDetailChecklistState();
@@ -17,11 +27,27 @@ class CardDetailChecklist extends StatefulWidget {
 
 class _CardDetailChecklistState extends State<CardDetailChecklist> {
   late List<CardDetailChecklistItem> _items;
+  bool _isAdding = false;
+  final TextEditingController _addController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     _items = widget.initialItems;
+  }
+
+  @override
+  void didUpdateWidget(CardDetailChecklist oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.initialItems != oldWidget.initialItems) {
+      _items = widget.initialItems;
+    }
+  }
+
+  @override
+  void dispose() {
+    _addController.dispose();
+    super.dispose();
   }
 
   double get _progress =>
@@ -62,29 +88,37 @@ class _CardDetailChecklistState extends State<CardDetailChecklist> {
                   ),
                 ),
                 const Spacer(),
-                Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF1D4ED8).withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(100),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.add,
-                            size: 14, color: Color(0xFF1D4ED8)),
-                        const SizedBox(width: 4),
-                        Text(
-                          'THÊM',
-                          style: GoogleFonts.inter(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                            color: const Color(0xFF1D4ED8),
-                          ),
+                if (!_isAdding)
+                  GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _isAdding = true;
+                      });
+                    },
+                    child: Container(
+                        padding:
+                            const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF1D4ED8).withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(100),
                         ),
-                      ],
-                    ))
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.add,
+                                size: 14, color: Color(0xFF1D4ED8)),
+                            const SizedBox(width: 4),
+                            Text(
+                              'THÊM',
+                              style: GoogleFonts.inter(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                                color: const Color(0xFF1D4ED8),
+                              ),
+                            ),
+                          ],
+                        )),
+                  )
               ],
             ),
             const SizedBox(height: 20),
@@ -109,6 +143,9 @@ class _CardDetailChecklistState extends State<CardDetailChecklist> {
                               setState(() {
                                 item.checked = !item.checked;
                               });
+                              if (widget.onCheckChanged != null) {
+                                widget.onCheckChanged!(item.id, item.checked);
+                              }
                             },
                             child: AnimatedContainer(
                               duration: const Duration(milliseconds: 200),
@@ -150,8 +187,74 @@ class _CardDetailChecklistState extends State<CardDetailChecklist> {
                           )
                         ],
                       ),
-                    ))
-                .toList(),
+                    )),
+            if (_isAdding)
+              Padding(
+                padding: const EdgeInsets.only(top: 8.0),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _addController,
+                        style: GoogleFonts.inter(
+                          fontSize: 13,
+                          color: AppColors.onSurface,
+                        ),
+                        decoration: InputDecoration(
+                          hintText: 'Thêm mục mới...',
+                          hintStyle: GoogleFonts.inter(
+                            fontSize: 13,
+                            color: AppColors.onSurfaceVariant,
+                          ),
+                          isDense: true,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide(color: AppColors.outlineVariant),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: const BorderSide(color: Color(0xFF1D4ED8)),
+                          ),
+                        ),
+                        onSubmitted: (value) {
+                          if (value.isNotEmpty && widget.onAddTodo != null) {
+                            widget.onAddTodo!(value);
+                          }
+                          setState(() {
+                            _isAdding = false;
+                            _addController.clear();
+                          });
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    IconButton(
+                      icon: const Icon(Icons.close, size: 20),
+                      color: AppColors.onSurfaceVariant,
+                      onPressed: () {
+                        setState(() {
+                          _isAdding = false;
+                          _addController.clear();
+                        });
+                      },
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.check, size: 20),
+                      color: const Color(0xFF1D4ED8),
+                      onPressed: () {
+                        if (_addController.text.isNotEmpty && widget.onAddTodo != null) {
+                          widget.onAddTodo!(_addController.text);
+                        }
+                        setState(() {
+                          _isAdding = false;
+                          _addController.clear();
+                        });
+                      },
+                    ),
+                  ],
+                ),
+              ),
           ],
         ),
       ),

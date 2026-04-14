@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -7,6 +7,7 @@ using TodoAppAPI.Interfaces;
 using TodoAppAPI.Models;
 using TodoAppAPI.Service;
 using TodoAppAPI.Service.JWT;
+using TodoAppAPI.Service.Cloudinary;
 using TodoAppAPI.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -31,6 +32,10 @@ builder.Services.AddScoped<EmailService>();
 builder.Services.AddScoped<IActivity, ActivityService>();
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
+
+// Cloudinary
+builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection("CloudinarySettings"));
+builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
