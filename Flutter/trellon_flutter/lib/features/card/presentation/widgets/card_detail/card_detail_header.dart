@@ -49,15 +49,21 @@ class CardDetailTopBar extends StatelessWidget {
 class CardDetailTitle extends StatelessWidget {
   final String title;
   final String status;
+  final ValueChanged<String>? onStatusToggle;
 
   const CardDetailTitle({
     super.key,
     required this.title,
     required this.status,
+    this.onStatusToggle,
   });
 
   @override
   Widget build(BuildContext context) {
+    // Basic logic to determine if we are in "completed" state visually
+    final isCompleted = status.toLowerCase() == 'hoan_thanh' || status.toLowerCase() == 'hoàn thành' || status.toLowerCase() == 'completed';
+    final displayText = isCompleted ? 'HOÀN THÀNH' : status.toUpperCase();
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
@@ -81,19 +87,34 @@ class CardDetailTitle extends StatelessWidget {
           const SizedBox(height: 16),
           Row(
             children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: AppColors.surfaceContainerLow,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Text(
-                  status.toUpperCase(),
-                  style: GoogleFonts.inter(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.onSurfaceVariant,
-                    letterSpacing: 0.5,
+              GestureDetector(
+                onTap: () {
+                  if (onStatusToggle != null) {
+                    onStatusToggle!(isCompleted ? 'dang_lam' : 'hoan_thanh');
+                  }
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: isCompleted ? Colors.green : AppColors.surfaceContainerLow,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Row(
+                    children: [
+                      if (isCompleted) ...[
+                        const Icon(Icons.check_circle, size: 12, color: Colors.white),
+                        const SizedBox(width: 4),
+                      ],
+                      Text(
+                        displayText,
+                        style: GoogleFonts.inter(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          color: isCompleted ? Colors.white : AppColors.onSurfaceVariant,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),

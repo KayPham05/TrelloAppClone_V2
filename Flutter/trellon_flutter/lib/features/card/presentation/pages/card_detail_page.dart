@@ -53,14 +53,23 @@ class _CardDetailPageState extends State<CardDetailPage> {
                          child: Column(
                            crossAxisAlignment: CrossAxisAlignment.stretch,
                            children: [
-                              CardDetailTitle(title: state.card.title, status: state.card.status),
+                              CardDetailTitle(
+                                title: state.card.title,
+                                status: state.card.status,
+                                onStatusToggle: (newStatus) => context.read<CardDetailCubit>().updateStatus(newStatus),
+                              ),
                               const SizedBox(height: 32),
                               CardDetailMetaGrid(members: state.members, dueDate: state.card.dueDate),
                               const SizedBox(height: 32),
-                              CardDetailDescription(description: state.card.description ?? ''),
+                              CardDetailDescription(
+                                description: state.card.description ?? '',
+                                onSave: (newDesc) => context.read<CardDetailCubit>().updateDescription(newDesc),
+                              ),
                               const SizedBox(height: 32),
                               CardDetailChecklist(
-                                initialItems: state.todos.map((t) => CardDetailChecklistItem(title: t.title, checked: t.isCompleted)).toList(),
+                                initialItems: state.todos.map((t) => CardDetailChecklistItem(id: t.id, title: t.title, checked: t.isCompleted)).toList(),
+                                onCheckChanged: (id, isCompleted) => context.read<CardDetailCubit>().toggleTodoItem(id, isCompleted),
+                                onAddTodo: (content) => context.read<CardDetailCubit>().addTodoItem(content),
                               ),
                               const SizedBox(height: 32),
                               const CardDetailAttachments(),

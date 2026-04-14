@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../../core/constants/app_colors.dart';
+import '../../cubit/card_detail_cubit.dart';
 
 
 class CardActivityItemData {
@@ -50,8 +52,7 @@ class CardDetailActivityList extends StatelessWidget {
               .map((item) => Padding(
                     padding: const EdgeInsets.only(bottom: 16),
                     child: _buildCommentItem(item),
-                  ))
-              .toList(),
+                  )),
           const SizedBox(height: 8),
           const CardDetailCommentInput(),
         ],
@@ -137,8 +138,30 @@ class CardDetailActivityList extends StatelessWidget {
   }
 }
 
-class CardDetailCommentInput extends StatelessWidget {
+class CardDetailCommentInput extends StatefulWidget {
   const CardDetailCommentInput({super.key});
+
+  @override
+  State<CardDetailCommentInput> createState() => _CardDetailCommentInputState();
+}
+
+class _CardDetailCommentInputState extends State<CardDetailCommentInput> {
+  final TextEditingController _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _submitComment() {
+    final text = _controller.text.trim();
+    if (text.isNotEmpty) {
+      context.read<CardDetailCubit>().addComment(text);
+      _controller.clear();
+      FocusScope.of(context).unfocus();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -177,12 +200,23 @@ class CardDetailCommentInput extends StatelessWidget {
           ),
           const SizedBox(width: 12),
           Expanded(
-            child: Text(
-              'Viết bình luận...',
+            child: TextField(
+              controller: _controller,
               style: GoogleFonts.inter(
                 fontSize: 13,
-                color: AppColors.onSurfaceVariant,
+                color: AppColors.onSurface,
               ),
+              decoration: InputDecoration(
+                hintText: 'Viết bình luận...',
+                hintStyle: GoogleFonts.inter(
+                  fontSize: 13,
+                  color: AppColors.onSurfaceVariant,
+                ),
+                border: InputBorder.none,
+                isDense: true,
+                contentPadding: EdgeInsets.zero,
+              ),
+              onSubmitted: (_) => _submitComment(),
             ),
           ),
           IconButton(
@@ -201,14 +235,17 @@ class CardDetailCommentInput extends StatelessWidget {
             onPressed: () {},
           ),
           const SizedBox(width: 12),
-          Container(
-            margin: const EdgeInsets.only(right: 4),
-            padding: const EdgeInsets.all(10),
-            decoration: const BoxDecoration(
-              color: Color(0xFF1D4ED8),
-              shape: BoxShape.circle,
+          GestureDetector(
+            onTap: _submitComment,
+            child: Container(
+              margin: const EdgeInsets.only(right: 4),
+              padding: const EdgeInsets.all(10),
+              decoration: const BoxDecoration(
+                color: Color(0xFF1D4ED8),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.send_rounded, size: 14, color: Colors.white),
             ),
-            child: const Icon(Icons.send_rounded, size: 14, color: Colors.white),
           )
         ],
       ),

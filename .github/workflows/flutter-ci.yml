@@ -11,7 +11,7 @@ on:
         - 'Flutter/trellon_flutter/**'  
 jobs:
     flutter_test:
-        runs-on: windows-latest
+        runs-on: ubuntu-latest
         steps:
         - name: checkout code
           uses: actions/checkout@v4
@@ -25,7 +25,7 @@ jobs:
             flutter pub get
         - name: Analyze code
           run: |
-            cd Flutter/trellon_flutter
+            cd Flutter/trelon_flutter
             flutter analyze
         - name: run tests
           run: |
