@@ -1,116 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'dart:math' as math;
+
 import '../../../../core/constants/app_colors.dart';
-
-// ── Mock Data Models ──────────────────────────────────────────────────────
-
-class _MockLabel {
-  final Color color;
-  const _MockLabel(this.color);
-}
-
-class _MockCard {
-  final String title;
-  final List<_MockLabel> labels;
-  final List<String> avatarInitials;
-  final String? dueDate;
-  final bool isOverdue;
-  final int? commentCount;
-  final int? attachmentCount;
-  final bool? hasNotes;
-  final bool isHighlighted;
-  final Color? highlightColor;
-
-  const _MockCard({
-    required this.title,
-    this.labels = const [],
-    this.avatarInitials = const [],
-    this.dueDate,
-    this.isOverdue = false,
-    this.commentCount,
-    this.attachmentCount,
-    this.hasNotes = false,
-    this.isHighlighted = false,
-    this.highlightColor,
-  });
-}
-
-class _MockList {
-  final String title;
-  final List<_MockCard> cards;
-  const _MockList({required this.title, required this.cards});
-}
-
-final _mockBoardData = [
-  _MockList(
-    title: 'Cần làm',
-    cards: [
-      _MockCard(
-        title: 'Tài liệu thiết kế hệ thống giao diện',
-        labels: [_MockLabel(Color(0xFF3B82F6)), _MockLabel(Color(0xFF10B981))],
-        avatarInitials: ['A'],
-        hasNotes: true,
-        commentCount: 3,
-      ),
-      _MockCard(
-        title: 'Xem lại mockup trang landing hi-fi',
-        avatarInitials: ['B', 'C'],
-        dueDate: '12/10',
-        isOverdue: true,
-      ),
-      _MockCard(title: 'Lập kế hoạch ngân sách Q4', attachmentCount: 1),
-      _MockCard(
-        title: 'Xem lại chiến lược mạng xã hội',
-        labels: [_MockLabel(Color(0xFFF59E0B))],
-      ),
-    ],
-  ),
-  _MockList(
-    title: 'Đang làm',
-    cards: [
-      _MockCard(
-        title: 'Tích hợp API cổng thanh toán',
-        isHighlighted: true,
-        highlightColor: Color(0xFF2563EB),
-        avatarInitials: ['D', 'E'],
-        dueDate: '15/10',
-      ),
-      _MockCard(
-        title: 'Thiết kế onboarding người dùng',
-        labels: [_MockLabel(Color(0xFF8B5CF6))],
-        avatarInitials: ['F'],
-        commentCount: 6,
-      ),
-      _MockCard(
-        title: 'Viết unit test cho auth module',
-        avatarInitials: ['A'],
-        hasNotes: true,
-      ),
-      _MockCard(title: 'Cập nhật chính sách bảo mật'),
-    ],
-  ),
-  _MockList(
-    title: 'Hoàn thành',
-    cards: [
-      _MockCard(
-        title: 'Thiết lập CI/CD pipeline',
-        avatarInitials: ['B'],
-        labels: [_MockLabel(Color(0xFF059669))],
-      ),
-      _MockCard(
-        title: 'Tái cấu trúc lớp service backend',
-        avatarInitials: ['G'],
-        commentCount: 4,
-      ),
-      _MockCard(
-        title: 'Phỏng vấn người dùng về UX',
-        labels: [_MockLabel(Color(0xFFEC4899)), _MockLabel(Color(0xFF6366F1))],
-        avatarInitials: ['A', 'H'],
-      ),
-    ],
-  ),
-];
+import '../../../../init_dependencies.dart';
+import '../../domain/entities/board_entity.dart';
+import '../../domain/entities/list_entity.dart';
+import '../../../card/domain/entities/card_entity.dart';
+import '../cubit/board_detail_cubit.dart';
+import '../cubit/board_detail_state.dart';
+import '../models/drag_data_models.dart';
 
 // ── Page ──────────────────────────────────────────────────────────────────
 
@@ -124,66 +23,51 @@ class BoardDetailPage extends StatefulWidget {
 class _BoardDetailPageState extends State<BoardDetailPage> {
   bool _isStarred = false;
   final ScrollController _boardScrollController = ScrollController();
-  final int _lazyLoadStep = 2;
-  int _visibleListCount = 0;
-  bool _isLoadingMore = false;
+  final TransformationController _transformationController = TransformationController();
+  
   final String _boardName = 'Phát triển sản phẩm 2024';
   final Color _boardColor = AppColors.primaryContainer; // #0052CC
 
   @override
   void initState() {
     super.initState();
-    _visibleListCount = math.min(_lazyLoadStep, _mockBoardData.length);
-    _boardScrollController.addListener(_onBoardScroll);
   }
 
   @override
   void dispose() {
-    _boardScrollController
-      ..removeListener(_onBoardScroll)
-      ..dispose();
+    _boardScrollController.dispose();
+    _transformationController.dispose();
     super.dispose();
-  }
-
-  void _onBoardScroll() {
-    if (!_boardScrollController.hasClients) return;
-    if (_isLoadingMore) return;
-    if (_visibleListCount >= _mockBoardData.length) return;
-
-    final position = _boardScrollController.position;
-    if (position.pixels >= position.maxScrollExtent - 220) {
-      _loadMoreColumns();
-    }
-  }
-
-  Future<void> _loadMoreColumns() async {
-    if (_visibleListCount >= _mockBoardData.length) return;
-    setState(() => _isLoadingMore = true);
-
-    await Future<void>.delayed(const Duration(milliseconds: 120));
-    if (!mounted) return;
-
-    setState(() {
-      _visibleListCount = math.min(
-        _visibleListCount + _lazyLoadStep,
-        _mockBoardData.length,
-      );
-      _isLoadingMore = false;
-    });
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: _boardColor,
-      body: SafeArea(
-        bottom: false,
-        child: Column(
-          children: [
-            _buildTopBar(context),
-            _buildBoardSubBar(),
-            Expanded(child: _buildKanbanColumns()),
-          ],
+    return BlocProvider(
+      create: (context) => serviceLocator<BoardDetailCubit>()..loadBoard('board_1', 'Phát triển sản phẩm 2024'),
+      child: Scaffold(
+        backgroundColor: _boardColor,
+        body: SafeArea(
+          bottom: false,
+          child: Column(
+            children: [
+              _buildTopBar(context),
+              _buildBoardSubBar(),
+              Expanded(
+                child: BlocBuilder<BoardDetailCubit, BoardDetailState>(
+                  builder: (context, state) {
+                    if (state is BoardDetailLoading || state is BoardDetailInitial) {
+                      return const Center(child: CircularProgressIndicator(color: Colors.white));
+                    } else if (state is BoardDetailError) {
+                      return Center(child: Text(state.message, style: const TextStyle(color: Colors.white)));
+                    } else if (state is BoardDetailLoaded) {
+                      return _buildBoardArea(state, context);
+                    }
+                    return const SizedBox.shrink();
+                  },
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -335,36 +219,31 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
   }
 
   // ── Kanban Columns ────────────────────────────────────────────────────────
-  Widget _buildKanbanColumns() {
-    final hasMore = _visibleListCount < _mockBoardData.length;
-    final visibleColumns = _mockBoardData
-        .take(_visibleListCount)
-        .toList(growable: false);
-
-    return ListView.builder(
-      controller: _boardScrollController,
-      scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
-      itemCount: visibleColumns.length + (hasMore ? 2 : 1),
-      itemBuilder: (context, index) {
-        if (index < visibleColumns.length) {
-          return RepaintBoundary(child: _buildColumn(visibleColumns[index]));
-        }
-        if (hasMore && index == visibleColumns.length) {
-          return _buildLoadMoreIndicator();
-        }
-        if (hasMore && index == visibleColumns.length + 1) {
-          return _buildAddListButton();
-        }
-        if (!hasMore && index == visibleColumns.length) {
-          return _buildAddListButton();
-        }
-        return const SizedBox.shrink();
-      },
+  Widget _buildBoardArea(BoardDetailLoaded state, BuildContext context) {
+    return InteractiveViewer(
+      transformationController: _transformationController,
+      panEnabled: !state.isDragging,
+      scaleEnabled: !state.isDragging,
+      minScale: 0.5,
+      maxScale: 2.0,
+      constrained: false, // Để board rộng hơn màn hình
+      child: Container(
+        padding: const EdgeInsets.only(right: 200, bottom: 200),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ...state.lists.map((list) => _buildColumn(list, state.boardId, context)),
+              _buildAddListButton(context),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
-  Widget _buildColumn(_MockList list) {
+  Widget _buildColumn(ListEntity list, String boardId, BuildContext context) {
     return Container(
       width: 280,
       margin: const EdgeInsets.only(right: 12),
@@ -383,7 +262,7 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
               children: [
                 Expanded(
                   child: Text(
-                    list.title.toUpperCase(),
+                    list.name.toUpperCase(),
                     style: GoogleFonts.inter(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
@@ -417,10 +296,12 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
           // Cards in scrollable area
           Flexible(
             child: ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(), // Important when embedded in row/scroll view
               padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
               itemCount: list.cards.length,
               itemBuilder: (context, index) {
-                return RepaintBoundary(child: _buildCard(list.cards[index]));
+                return RepaintBoundary(child: _buildCard(list.cards[index], list.id, boardId));
               },
             ),
           ),
@@ -464,7 +345,7 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
     );
   }
 
-  Widget _buildCard(_MockCard card) {
+  Widget _buildCard(CardEntity card, String sourceListId, String boardId) {
     return GestureDetector(
       onTap: () => Navigator.pushNamed(context, '/card-detail'),
       child: Container(
@@ -472,9 +353,6 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
         decoration: BoxDecoration(
           color: AppColors.surfaceContainerLowest,
           borderRadius: BorderRadius.circular(8),
-          border: card.isHighlighted
-              ? Border(left: BorderSide(color: card.highlightColor!, width: 3))
-              : null,
           boxShadow: const [
             BoxShadow(
               color: Color(0x0F191C1E),
@@ -488,39 +366,6 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Labels
-              if (card.labels.isNotEmpty) ...[
-                Wrap(
-                  spacing: 4,
-                  children: card.labels
-                      .map(
-                        (l) => Container(
-                          width: 28,
-                          height: 6,
-                          decoration: BoxDecoration(
-                            color: l.color,
-                            borderRadius: BorderRadius.circular(99),
-                          ),
-                        ),
-                      )
-                      .toList(),
-                ),
-                const SizedBox(height: 8),
-              ],
-
-              // Highlighted label
-              if (card.isHighlighted && card.highlightColor != null) ...[
-                Text(
-                  'Đang xử lý',
-                  style: GoogleFonts.inter(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: card.highlightColor,
-                  ),
-                ),
-                const SizedBox(height: 4),
-              ],
-
               // Title
               Text(
                 card.title,
@@ -531,73 +376,6 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
                   height: 1.35,
                 ),
               ),
-
-              // Meta row (due date, icons, avatars)
-              if (card.dueDate != null ||
-                  card.commentCount != null ||
-                  card.attachmentCount != null ||
-                  (card.hasNotes ?? false) ||
-                  card.avatarInitials.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(top: 10),
-                  child: Row(
-                    children: [
-                      // Due date chip
-                      if (card.dueDate != null) ...[
-                        _buildDueDateChip(card.dueDate!, card.isOverdue),
-                        const SizedBox(width: 6),
-                      ],
-                      // Notes icon
-                      if (card.hasNotes ?? false) ...[
-                        const Icon(
-                          Icons.notes_rounded,
-                          size: 14,
-                          color: AppColors.onSurfaceVariant,
-                        ),
-                        const SizedBox(width: 4),
-                      ],
-                      // Comments
-                      if (card.commentCount != null) ...[
-                        const Icon(
-                          Icons.chat_bubble_outline_rounded,
-                          size: 13,
-                          color: AppColors.onSurfaceVariant,
-                        ),
-                        const SizedBox(width: 2),
-                        Text(
-                          '${card.commentCount}',
-                          style: GoogleFonts.inter(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.onSurfaceVariant,
-                          ),
-                        ),
-                        const SizedBox(width: 6),
-                      ],
-                      // Attachments
-                      if (card.attachmentCount != null) ...[
-                        const Icon(
-                          Icons.attach_file_rounded,
-                          size: 13,
-                          color: AppColors.onSurfaceVariant,
-                        ),
-                        const SizedBox(width: 2),
-                        Text(
-                          '${card.attachmentCount}',
-                          style: GoogleFonts.inter(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.onSurfaceVariant,
-                          ),
-                        ),
-                      ],
-                      const Spacer(),
-                      // Avatar stack
-                      if (card.avatarInitials.isNotEmpty)
-                        _buildAvatarStack(card.avatarInitials),
-                    ],
-                  ),
-                ),
             ],
           ),
         ),
@@ -605,94 +383,8 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
     );
   }
 
-  Widget _buildDueDateChip(String date, bool isOverdue) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-      decoration: BoxDecoration(
-        color: isOverdue
-            ? const Color(0xFFFEF2F2) // red-50
-            : AppColors.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.schedule_rounded,
-            size: 11,
-            color: isOverdue
-                ? const Color(0xFFDC2626)
-                : AppColors.onSurfaceVariant,
-          ),
-          const SizedBox(width: 3),
-          Text(
-            date,
-            style: GoogleFonts.inter(
-              fontSize: 10,
-              fontWeight: FontWeight.w700,
-              color: isOverdue
-                  ? const Color(0xFFDC2626)
-                  : AppColors.onSurfaceVariant,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAvatarStack(List<String> initials) {
-    const double size = 22;
-    const double overlap = 8;
-    final double width = size + (initials.length - 1) * (size - overlap);
-
-    return SizedBox(
-      width: width,
-      height: size,
-      child: Stack(
-        children: List.generate(initials.length, (i) {
-          return Positioned(
-            left: i * (size - overlap),
-            child: Container(
-              width: size,
-              height: size,
-              decoration: BoxDecoration(
-                color: _avatarColor(initials[i]),
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.white, width: 1.5),
-              ),
-              child: Center(
-                child: Text(
-                  initials[i],
-                  style: GoogleFonts.inter(
-                    fontSize: 8,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ),
-          );
-        }),
-      ),
-    );
-  }
-
-  Color _avatarColor(String initial) {
-    const colors = [
-      Color(0xFF3B82F6),
-      Color(0xFF10B981),
-      Color(0xFF8B5CF6),
-      Color(0xFFF59E0B),
-      Color(0xFFEC4899),
-      Color(0xFF06B6D4),
-      Color(0xFFEF4444),
-      Color(0xFF6366F1),
-    ];
-    return colors[initial.codeUnitAt(0) % colors.length];
-  }
-
   // ── "Add another list" button ─────────────────────────────────────────
-  Widget _buildAddListButton() {
+  Widget _buildAddListButton(BuildContext context) {
     return GestureDetector(
       onTap: () => ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Thêm cột mới (chưa tích hợp backend)')),
@@ -724,19 +416,6 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildLoadMoreIndicator() {
-    return Container(
-      width: 120,
-      margin: const EdgeInsets.only(right: 12),
-      alignment: Alignment.center,
-      child: const SizedBox(
-        width: 22,
-        height: 22,
-        child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white),
       ),
     );
   }
