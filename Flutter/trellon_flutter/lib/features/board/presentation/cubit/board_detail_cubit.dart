@@ -70,20 +70,6 @@ class BoardDetailCubit extends Cubit<BoardDetailState> {
     }
   }
 
-  void startDragging() {
-    if (state is BoardDetailLoaded) {
-      final currentState = state as BoardDetailLoaded;
-      emit(currentState.copyWith(isDragging: true));
-    }
-  }
-
-  void endDragging() {
-    if (state is BoardDetailLoaded) {
-      final currentState = state as BoardDetailLoaded;
-      emit(currentState.copyWith(isDragging: false));
-    }
-  }
-
   void clearTransientError() {
     if (state is BoardDetailLoaded) {
       final currentState = state as BoardDetailLoaded;
@@ -150,6 +136,43 @@ class BoardDetailCubit extends Cubit<BoardDetailState> {
         emit(currentState.copyWith(
           lists: _previousLists,
           transientError: 'Lỗi di chuyển thẻ. Đã hoàn tác.',
+        ));
+      }
+    } finally {
+      _previousLists = null;
+    }
+  }
+
+  void moveList({
+    required ListEntity list,
+    required int insertIndex,
+  }) {
+    if (state is! BoardDetailLoaded) return;
+    final currentState = state as BoardDetailLoaded;
+
+    _previousLists = List.from(currentState.lists);
+
+    try {
+      final newLists = List<ListEntity>.from(currentState.lists);
+      
+      newLists.removeWhere((l) => l.id == list.id);
+      
+      final safeIndex = (insertIndex >= 0 && insertIndex <= newLists.length)
+          ? insertIndex
+          : newLists.length;
+          
+      newLists.insert(safeIndex, list);
+      
+      for (var i = 0; i < newLists.length; i++) {
+        newLists[i] = newLists[i].copyWith(position: i);
+      }
+      
+      emit(currentState.copyWith(lists: newLists));
+    } catch (e) {
+      if (_previousLists != null) {
+        emit(currentState.copyWith(
+          lists: _previousLists,
+          transientError: 'Lỗi di chuyển cột. Đã hoàn tác.',
         ));
       }
     } finally {
