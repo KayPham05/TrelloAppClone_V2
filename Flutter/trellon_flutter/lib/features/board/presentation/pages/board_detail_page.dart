@@ -8,6 +8,7 @@ import '../../../card/domain/entities/card_entity.dart';
 import '../cubit/board_detail_cubit.dart';
 import '../cubit/board_detail_state.dart';
 import '../models/drag_data_models.dart';
+import '../widgets/list_menu_bottom_sheet.dart';
 
 class BoardDetailPage extends StatefulWidget {
   const BoardDetailPage({super.key});
@@ -24,6 +25,8 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
   
   // Tỉ lệ scale cho chế độ zoom
   double get _s => _isDetailMode ? 1.0 : 0.65;
+  
+  List<ListEntity>? _localLists;
 
   // ── Cubit reference ────────────────────────────────────────────────────────
   BoardDetailCubit? _cubit;
@@ -67,7 +70,23 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
                 child: Stack(
                   children: [
                     // ── Main board content ──────────────────────────────────
-                    BlocBuilder<BoardDetailCubit, BoardDetailState>(
+                    BlocConsumer<BoardDetailCubit, BoardDetailState>(
+                      listenWhen: (prev, curr) {
+                        return curr is BoardDetailLoaded;
+                      },
+                      listener: (ctx, state) {
+                        if (state is BoardDetailLoaded) {
+                          if (state.transientError != null) {
+                            ScaffoldMessenger.of(ctx).showSnackBar(
+                              SnackBar(content: Text(state.transientError!)),
+                            );
+                            _cubit?.clearTransientError();
+                          }
+                          setState(() {
+                            _localLists = List.from(state.lists);
+                          });
+                        }
+                      },
                       buildWhen: (prev, curr) {
                         if (prev is BoardDetailLoaded &&
                             curr is BoardDetailLoaded) {
@@ -140,6 +159,7 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
 
   // ── Board Area (ReorderableListView chiều ngang) ───────────────────────────
   Widget _buildBoardArea(BoardDetailLoaded state) {
+    final listsToRender = _localLists ?? state.lists;
     return ReorderableListView.builder(
       scrollDirection: Axis.horizontal,
       padding: EdgeInsets.fromLTRB(16 * _s, 16 * _s, 16 * _s, 120),
@@ -158,9 +178,9 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
           ),
         );
       },
-      itemCount: state.lists.length,
+      itemCount: listsToRender.length,
       itemBuilder: (context, index) {
-        final list = state.lists[index];
+        final list = listsToRender[index];
         return Align(
           key: ValueKey(list.id),
           alignment: Alignment.topCenter, // Căn lên đỉnh – không stretch hết chiều cao
@@ -179,11 +199,14 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
       onReorder: (oldIndex, newIndex) {
         int targetIdx = newIndex;
         if (oldIndex < newIndex) targetIdx--;
-        final list = state.lists[oldIndex];
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (!mounted) return;
-          _cubit?.moveList(list: list, insertIndex: targetIdx);
+        final list = listsToRender[oldIndex];
+        
+        setState(() {
+          final item = _localLists!.removeAt(oldIndex);
+          _localLists!.insert(targetIdx, item);
         });
+        
+        _cubit?.moveList(list: list, insertIndex: targetIdx);
       },
     );
   }
@@ -269,25 +292,29 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
               overflow: TextOverflow.ellipsis,
             ),
           ),
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 7 * _s, vertical: 2 * _s),
-            decoration: BoxDecoration(
-              color: AppColors.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(99),
-            ),
-            child: Text(
-              '${list.cards.length}',
-              style: GoogleFonts.inter(
-                fontSize: 10 * _s,
-                fontWeight: FontWeight.w700,
-                color: AppColors.onSurfaceVariant,
-              ),
+          GestureDetector(
+            onTap: () {
+              showModalBottomSheet(
+                context: context,
+                backgroundColor: AppColors.surfaceContainerLow,
+                shape: const RoundedRectangleBorder(
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+                ),
+                builder: (context) => ListMenuBottomSheet(list: list),
+              );
+            },
+            child: Icon(
+              Icons.more_horiz_rounded,
+              size: 22 * _s,
+              color: AppColors.onSurfaceVariant,
             ),
           ),
         ],
       ),
     );
   }
+
+
 
   // ── Card Slot (N+1 dọc) ───────────────────────────────────────────────────
   Widget _buildCardSlot(String targetListId, int insertIndex) {
@@ -313,16 +340,13 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
           targetIdx--;
         }
         
-        // Delay emit đến sau frame hiện tại
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (!mounted) return;
-          _cubit?.moveCard(
-            card: card,
-            sourceListId: sourceListId,
-            targetListId: targetListId,
-            insertIndex: targetIdx,
-          );
-        });
+        // Cập nhật ngay, loại bỏ delay frame
+        _cubit?.moveCard(
+          card: card,
+          sourceListId: sourceListId,
+          targetListId: targetListId,
+          insertIndex: targetIdx,
+        );
       },
       builder: (context, candidateData, rejectedData) {
         final isHovered = candidateData.isNotEmpty;
