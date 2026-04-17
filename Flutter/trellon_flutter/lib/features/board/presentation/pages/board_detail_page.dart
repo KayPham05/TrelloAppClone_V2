@@ -9,6 +9,7 @@ import '../cubit/board_detail_cubit.dart';
 import '../cubit/board_detail_state.dart';
 import '../models/drag_data_models.dart';
 import '../widgets/list_menu_bottom_sheet.dart';
+import '../widgets/zoom_controls_widget.dart';
 
 class BoardDetailPage extends StatefulWidget {
   const BoardDetailPage({super.key});
@@ -117,41 +118,16 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
                     Positioned(
                       right: 16,
                       bottom: 32,
-                      child: _buildZoomButton(),
+                      child: ZoomControlsWidget(
+                        isDetailMode: _isDetailMode,
+                        onToggleZoom: _toggleZoom,
+                      ),
                     ),
                   ],
                 ),
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-
-  // ── Zoom button ────────────────────────────────────────────────────────────
-  Widget _buildZoomButton() {
-    return GestureDetector(
-      onTap: _toggleZoom,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        width: 56,
-        height: 56,
-        decoration: BoxDecoration(
-          color: const Color(0xFF90CA4B), // Trello Mobile Lime Green
-          shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.3),
-              blurRadius: 8,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Icon(
-          _isDetailMode ? Icons.zoom_out_rounded : Icons.zoom_in_rounded,
-          color: Colors.black87,
-          size: 28,
         ),
       ),
     );
