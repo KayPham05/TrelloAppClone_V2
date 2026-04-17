@@ -20,7 +20,10 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
   bool _isStarred = false;
 
   // ── Zoom toggle ────────────────────────────────────────────────────────────
-  bool _isDetailMode = true; // true = detail (1x), false = overview (thu nhỏ)
+  bool _isDetailMode = false; // true = detail (1x), false = overview (thu nhỏ)
+  
+  // Tỉ lệ scale cho chế độ zoom
+  double get _s => _isDetailMode ? 1.0 : 0.65;
 
   // ── Cubit reference ────────────────────────────────────────────────────────
   BoardDetailCubit? _cubit;
@@ -113,36 +116,23 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
       onTap: _toggleZoom,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        width: 56,
+        height: 56,
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
+          color: const Color(0xFF90CA4B), // Trello Mobile Lime Green
+          shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.18),
-              blurRadius: 14,
+              color: Colors.black.withValues(alpha: 0.3),
+              blurRadius: 8,
               offset: const Offset(0, 4),
             ),
           ],
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              _isDetailMode ? Icons.zoom_out_rounded : Icons.zoom_in_rounded,
-              color: AppColors.primary,
-              size: 20,
-            ),
-            const SizedBox(width: 6),
-            Text(
-              _isDetailMode ? 'Tổng quan' : 'Chi tiết',
-              style: GoogleFonts.inter(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: AppColors.primary,
-              ),
-            ),
-          ],
+        child: Icon(
+          _isDetailMode ? Icons.zoom_out_rounded : Icons.zoom_in_rounded,
+          color: Colors.black87,
+          size: 28,
         ),
       ),
     );
@@ -152,10 +142,10 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
   Widget _buildBoardArea(BoardDetailLoaded state) {
     return ReorderableListView.builder(
       scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
+      padding: EdgeInsets.fromLTRB(16 * _s, 16 * _s, 16 * _s, 120),
       buildDefaultDragHandles: false,
-      // Giảm tốc độ auto-scroll khi drag gần edge (mặc định quá nhanh)
-      autoScrollerVelocityScalar: 30,
+      // Giảm tốc độ auto-scroll khi drag gần edge
+      autoScrollerVelocityScalar: 2.0,
       proxyDecorator: (child, index, animation) {
         return Material(
           color: Colors.transparent,
@@ -175,7 +165,7 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
           key: ValueKey(list.id),
           alignment: Alignment.topCenter, // Căn lên đỉnh – không stretch hết chiều cao
           child: Container(
-            margin: const EdgeInsets.only(right: 16),
+            margin: EdgeInsets.only(right: 16 * _s),
             child: RepaintBoundary(
               child: _buildColumnUI(list, index, state.boardId),
             ),
@@ -200,7 +190,7 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
 
   // ── Column UI ──────────────────────────────────────────────────────────────
   Widget _buildColumnUI(ListEntity list, int columnIndex, String boardId) {
-    final double colWidth = _isDetailMode ? 280.0 : 160.0;
+    final double colWidth = 280.0 * _s;
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 250),
@@ -209,7 +199,7 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
       // KHÔNG set height cứng – để Column tự tính, shrink theo số card
       decoration: BoxDecoration(
         color: AppColors.surfaceContainer,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(12 * _s),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.1),
@@ -230,26 +220,28 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
               child: _buildColumnHeader(list),
             ),
           ),
-          // ── Cards: dùng shrinkWrap, không dùng Flexible ──
-          ListView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            padding: EdgeInsets.zero,
-            itemCount: list.cards.length * 2 + 1,
-            itemBuilder: (_, index) {
-              if (index % 2 == 0) {
-                return _buildCardSlot(list.id, index ~/ 2);
-              } else {
-                return RepaintBoundary(
-                  child: _buildDraggableCard(
-                    list.cards[index ~/ 2],
-                    list.id,
-                    index ~/ 2,
-                    boardId,
-                  ),
-                );
-              }
-            },
+          // ── Cards: dùng shrinkWrap, CÓ dùng Flexible để cuộn mượt ──
+          Flexible(
+            child: ListView.builder(
+              shrinkWrap: true,
+              padding: EdgeInsets.zero,
+              physics: const ClampingScrollPhysics(),
+              itemCount: list.cards.length * 2 + 1,
+              itemBuilder: (_, index) {
+                if (index % 2 == 0) {
+                  return _buildCardSlot(list.id, index ~/ 2);
+                } else {
+                  return RepaintBoundary(
+                    child: _buildDraggableCard(
+                      list.cards[index ~/ 2],
+                      list.id,
+                      index ~/ 2,
+                      boardId,
+                    ),
+                  );
+                }
+              },
+            ),
           ),
           // ── Add card button ──
           _buildAddCardButton(list.id),
@@ -261,24 +253,24 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
   Widget _buildColumnHeader(ListEntity list) {
     return Container(
       color: Colors.transparent, // Phải có background để bắt sự kiện drag kéo thả
-      padding: const EdgeInsets.fromLTRB(14, 14, 8, 10),
+      padding: EdgeInsets.fromLTRB(14 * _s, 14 * _s, 8 * _s, 10 * _s),
       child: Row(
         children: [
           Expanded(
             child: Text(
               list.name.toUpperCase(),
               style: GoogleFonts.inter(
-                fontSize: _isDetailMode ? 11 : 10,
+                fontSize: 13 * _s,
                 fontWeight: FontWeight.w700,
                 color: AppColors.onSurface,
-                letterSpacing: 0.8,
+                letterSpacing: 0.8 * _s,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
           ),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+            padding: EdgeInsets.symmetric(horizontal: 7 * _s, vertical: 2 * _s),
             decoration: BoxDecoration(
               color: AppColors.surfaceContainerHighest,
               borderRadius: BorderRadius.circular(99),
@@ -286,7 +278,7 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
             child: Text(
               '${list.cards.length}',
               style: GoogleFonts.inter(
-                fontSize: 10,
+                fontSize: 10 * _s,
                 fontWeight: FontWeight.w700,
                 color: AppColors.onSurfaceVariant,
               ),
@@ -332,25 +324,25 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
           );
         });
       },
-      builder: (_, candidateData, __) {
+      builder: (context, candidateData, rejectedData) {
         final isHovered = candidateData.isNotEmpty;
-        final double slotHeightNormal = 8.0; 
-        final double slotHeightHovered = _isDetailMode ? 52.0 : 28.0;
+        final double slotHeightNormal = 8.0 * _s; 
+        final double slotHeightHovered = 52.0 * _s;
 
         return AnimatedContainer(
           duration: const Duration(milliseconds: 180),
           curve: Curves.easeOut,
           height: isHovered ? slotHeightHovered : slotHeightNormal,
-          margin: const EdgeInsets.symmetric(horizontal: 8),
+          margin: EdgeInsets.symmetric(horizontal: 8 * _s),
           decoration: BoxDecoration(
             color: isHovered
                 ? AppColors.primary.withValues(alpha: 0.12)
                 : Colors.transparent,
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(8 * _s),
             border: isHovered
                 ? Border.all(
                     color: AppColors.primary.withValues(alpha: 0.45),
-                    width: 1.5,
+                    width: 1.5 * _s,
                   )
                 : null,
           ),
@@ -366,7 +358,7 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
     int sourceIndex,
     String boardId,
   ) {
-    final double cardWidth = _isDetailMode ? 264.0 : 144.0;
+    final double cardWidth = 264.0 * _s;
     
     return LongPressDraggable<CardDragData>(
       data: CardDragData(
@@ -378,8 +370,8 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
       ),
       delay: const Duration(milliseconds: 250),
       onDragStarted: _onDragStart,
-      onDragEnd: (_) => _onDragEnd(),
-      onDraggableCanceled: (_, __) => _onDragEnd(),
+      onDragEnd: (details) => _onDragEnd(),
+      onDraggableCanceled: (velocity, offset) => _onDragEnd(),
       feedback: Material(
         color: Colors.transparent,
         child: Transform.rotate(
@@ -395,14 +387,14 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
       ),
       // Ghost placeholder khi đang kéo
       childWhenDragging: Container(
-        height: _isDetailMode ? 52 : 28,
-        margin: const EdgeInsets.fromLTRB(8, 0, 8, 0),
+        height: 52 * _s,
+        margin: EdgeInsets.fromLTRB(8 * _s, 0, 8 * _s, 0),
         decoration: BoxDecoration(
           color: AppColors.surfaceContainerHighest.withValues(alpha: 0.4),
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(8 * _s),
           border: Border.all(
             color: AppColors.primary.withValues(alpha: 0.25),
-            width: 1.5,
+            width: 1.5 * _s,
           ),
         ),
       ),
@@ -411,46 +403,41 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
   }
 
   Widget _buildCardUI(CardEntity card, {bool elevated = false}) {
-    // Khi overview: thu nhỏ font + padding nhưng vẫn hiển thị text (giống Trello Mobile)
-    final double fontSize = _isDetailMode ? 13.0 : 10.5;
-    final double paddingVal = _isDetailMode ? 10.0 : 6.0;
-
+    // Dùng _s để scale đều mọi thứ
     return GestureDetector(
       onTap: () => Navigator.pushNamed(context, '/card-detail'),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 250),
-        margin: const EdgeInsets.fromLTRB(8, 0, 8, 0),
+        margin: EdgeInsets.fromLTRB(8 * _s, 0, 8 * _s, 0),
         decoration: BoxDecoration(
           color: AppColors.surfaceContainerLowest,
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(8 * _s),
           boxShadow: elevated
               ? [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.22),
-                    blurRadius: 14,
-                    offset: const Offset(0, 6),
+                    blurRadius: 14 * _s,
+                    offset: Offset(0, 6 * _s),
                   ),
                 ]
               : [
-                  const BoxShadow(
-                    color: Color(0x0F191C1E),
-                    blurRadius: 4,
-                    offset: Offset(0, 2),
+                  BoxShadow(
+                    color: const Color(0x0F191C1E),
+                    blurRadius: 4 * _s,
+                    offset: Offset(0, 2 * _s),
                   ),
                 ],
         ),
-        padding: EdgeInsets.all(paddingVal),
-        // Luôn hiển thị text, chỉ thu nhỏ khi overview
+        padding: EdgeInsets.all(12 * _s),
         child: Text(
           card.title,
           style: GoogleFonts.inter(
-            fontSize: fontSize,
+            fontSize: 14.0 * _s,
             fontWeight: FontWeight.w500,
             color: AppColors.onSurface,
             height: 1.35,
           ),
-          maxLines: _isDetailMode ? 3 : 2,
-          overflow: TextOverflow.ellipsis,
+          maxLines: null,
         ),
       ),
     );
@@ -463,21 +450,21 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
             content: Text('Thêm thẻ mới (chưa tích hợp backend)')),
       ),
       child: Container(
-        margin: const EdgeInsets.fromLTRB(8, 4, 8, 8),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        margin: EdgeInsets.fromLTRB(8 * _s, 4 * _s, 8 * _s, 8 * _s),
+        padding: EdgeInsets.symmetric(horizontal: 10 * _s, vertical: 8 * _s),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(8 * _s),
           color: Colors.transparent,
         ),
         child: Row(
           children: [
-            const Icon(Icons.add_rounded,
-                size: 18, color: AppColors.onSurfaceVariant),
-            const SizedBox(width: 6),
+            Icon(Icons.add_rounded,
+                size: 18 * _s, color: AppColors.onSurfaceVariant),
+            SizedBox(width: 6 * _s),
             Text(
               'Thêm thẻ',
               style: GoogleFonts.inter(
-                fontSize: 13,
+                fontSize: 13 * _s,
                 fontWeight: FontWeight.w500,
                 color: AppColors.onSurfaceVariant,
               ),
@@ -624,24 +611,24 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
         const SnackBar(content: Text('Thêm cột mới (chưa tích hợp backend)')),
       ),
       child: Container(
-        width: 200,
-        margin: const EdgeInsets.only(left: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        width: 200 * _s,
+        margin: EdgeInsets.only(left: 8 * _s),
+        padding: EdgeInsets.symmetric(horizontal: 14 * _s, vertical: 12 * _s),
         decoration: BoxDecoration(
           color: Colors.white.withValues(alpha: 0.18),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(12 * _s),
           border: Border.all(
-              color: Colors.white.withValues(alpha: 0.3), width: 1),
+              color: Colors.white.withValues(alpha: 0.3), width: 1 * _s),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.add_rounded, color: Colors.white, size: 18),
-            const SizedBox(width: 6),
+            Icon(Icons.add_rounded, color: Colors.white, size: 18 * _s),
+            SizedBox(width: 6 * _s),
             Text(
               'Thêm cột mới',
               style: GoogleFonts.inter(
-                fontSize: 13,
+                fontSize: 13 * _s,
                 fontWeight: FontWeight.w600,
                 color: Colors.white,
               ),
