@@ -19,6 +19,51 @@ jobs:
         with:
           fetch-depth: 0
 
+      # ===== FLUTTER SETUP & TEST =====
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.x'
+          channel: 'stable'
+
+      - name: Get Flutter dependencies
+        run: flutter pub get
+        continue-on-error: true
+
+      - name: Run Flutter tests with coverage
+        run: |
+          if [ -d "test" ]; then
+            flutter test --coverage
+          else
+            echo "No Flutter tests found, skipping..."
+          fi
+        continue-on-error: true
+
+      # ===== .NET SETUP & TEST =====
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.x'
+
+      - name: Restore .NET dependencies
+        run: |
+          if ls *.sln 1> /dev/null 2>&1; then
+            dotnet restore
+          else
+            echo "No .NET solution found, skipping..."
+          fi
+        continue-on-error: true
+
+      - name: Run .NET tests with coverage
+        run: |
+          if ls *.sln 1> /dev/null 2>&1; then
+            dotnet test --collect:"XPlat Code Coverage" --results-directory ./coverage -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
+          else
+            echo "No .NET tests found, skipping..."
+          fi
+        continue-on-error: true
+
+      # ===== SONARCLOUD SCAN =====
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@v3.1.0
         env:
