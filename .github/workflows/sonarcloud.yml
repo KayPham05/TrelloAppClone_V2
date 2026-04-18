@@ -27,13 +27,18 @@ jobs:
           channel: 'stable'
 
       - name: Get Flutter dependencies
+        working-directory: Flutter/trellon_flutter
         run: flutter pub get
         continue-on-error: true
 
       - name: Run Flutter tests with coverage
+        working-directory: Flutter/trellon_flutter
         run: |
           if [ -d "test" ]; then
             flutter test --coverage
+            # Di chuyển coverage report về root (2 cấp lên)
+            mkdir -p ../../coverage
+            cp coverage/lcov.info ../../coverage/
           else
             echo "No Flutter tests found, skipping..."
           fi
@@ -46,20 +51,24 @@ jobs:
           dotnet-version: '8.x'
 
       - name: Restore .NET dependencies
-        run: |
-          if ls *.sln 1> /dev/null 2>&1; then
-            dotnet restore
-          else
-            echo "No .NET solution found, skipping..."
-          fi
+        working-directory: C#/TodoAppAPI
+        run: dotnet restore
+        continue-on-error: true
+
+      - name: Build .NET project
+        working-directory: C#/TodoAppAPI
+        run: dotnet build --no-restore
         continue-on-error: true
 
       - name: Run .NET tests with coverage
+        working-directory: C#/TodoAppAPI
         run: |
-          if ls *.sln 1> /dev/null 2>&1; then
-            dotnet test --collect:"XPlat Code Coverage" --results-directory ./coverage -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
+          if ls *.csproj 1> /dev/null 2>&1 || ls **/*.csproj 1> /dev/null 2>&1; then
+            dotnet test --no-build --collect:"XPlat Code Coverage" \
+              --results-directory ../../coverage/dotnet \
+              -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
           else
-            echo "No .NET tests found, skipping..."
+            echo "No .NET test projects found, skipping..."
           fi
         continue-on-error: true
 
