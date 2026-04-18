@@ -29,7 +29,7 @@ jobs:
       - name: Get Flutter dependencies
         working-directory: Flutter/trellon_flutter
         run: flutter pub get
-        continue-on-error: true
+        continue-on-error: false
 
       - name: Run Flutter tests with coverage
         working-directory: Flutter/trellon_flutter
@@ -42,7 +42,7 @@ jobs:
           else
             echo "No Flutter tests found, skipping..."
           fi
-        continue-on-error: true
+        continue-on-error: false
 
       # ===== .NET SETUP & TEST =====
       - name: Setup .NET
@@ -53,12 +53,12 @@ jobs:
       - name: Restore .NET dependencies
         working-directory: C#/TodoAppAPI
         run: dotnet restore
-        continue-on-error: true
+        continue-on-error: false
 
       - name: Build .NET project
         working-directory: C#/TodoAppAPI
         run: dotnet build --no-restore
-        continue-on-error: true
+        continue-on-error: false
 
       - name: Run .NET tests with coverage
         working-directory: C#/TodoAppAPI
@@ -70,7 +70,7 @@ jobs:
           else
             echo "No .NET test projects found, skipping..."
           fi
-        continue-on-error: true
+        continue-on-error: false
 
       # ===== SONARCLOUD SCAN =====
       - name: SonarCloud Scan
