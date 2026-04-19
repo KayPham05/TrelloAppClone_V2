@@ -1,3 +1,6 @@
+import 'package:apptreolon/features/profile/presentation/pages/change_pass_page.dart';
+import 'package:apptreolon/features/profile/presentation/pages/profile_page.dart';
+import 'package:apptreolon/features/profile/presentation/pages/security_page.dart';
 import 'package:flutter/material.dart';
 import 'core/common_widgets/main_shell.dart';
 import 'features/board/presentation/pages/board_detail_page.dart';
@@ -15,6 +18,10 @@ class AppRoutes {
   static const String boardDetail    = '/board-detail';
   static const String workspaceMenu  = '/workspace-menu';
   static const String cardDetail     = '/card-detail';
+  static const String userProfile    = '/user-profile';
+  static const String securityPage   = '/security';
+  static const String changePassPage   = '/change-password';
+  
 
   static Map<String, WidgetBuilder> routes = {
     login:         (context) => const LoginPage(),
@@ -24,5 +31,8 @@ class AppRoutes {
     boardDetail:   (context) => const BoardDetailPage(),
     cardDetail:    (context) => const CardDetailPage(),
     workspaceMenu: (context) => const WorkspaceMenuPage(),
+    userProfile:   (context) => const ProfilePage(),
+    securityPage:  (context) => const SecurityPage(),
+    changePassPage: (context) => ChangePassword()
   };
 }

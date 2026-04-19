@@ -1,3 +1,5 @@
+import 'package:apptreolon/features/profile/presentation/widgets/setting_item_widget.dart';
+import 'package:apptreolon/routes.dart';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -24,7 +26,7 @@ class ProfilePage extends StatelessWidget {
                     const SizedBox(height: 40),
                     _buildWorkspacesGroup(context),
                     const SizedBox(height: 24),
-                    _buildAccountSettingsGroup(),
+                    _buildAccountSettingsGroup(context),
                     const SizedBox(height: 24),
                     _buildPreferencesGroup(),
                     const SizedBox(height: 24),
@@ -164,7 +166,7 @@ class ProfilePage extends StatelessWidget {
                 true,
                 true,
                 () {
-                  Navigator.pushNamed(context, '/workspace-menu');
+                  Navigator.pushNamed(context, AppRoutes.workspaceMenu);
                 },
               ),
               _buildDivider(),
@@ -187,7 +189,7 @@ class ProfilePage extends StatelessWidget {
     );
   }
 
-  Widget _buildAccountSettingsGroup() {
+  Widget _buildAccountSettingsGroup(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -200,20 +202,23 @@ class ProfilePage extends StatelessWidget {
           ),
           child: Column(
             children: [
-              _buildSettingItem(
-                Icons.person_rounded,
-                'Thông tin cá nhân',
-                'Tên, email và ảnh',
-                AppColors.primaryContainer.withValues(alpha: 0.1),
-                AppColors.primaryContainer,
+              SettingItem(
+                icon: Icons.person_rounded,
+                title: 'Thông tin cá nhân',
+                subtitle: 'Tên, email và ảnh',
+                iconBgColor:  AppColors.primaryContainer.withValues(alpha: 0.1),
+                iconColor:  AppColors.primaryContainer,
               ),
               _buildDivider(),
-              _buildSettingItem(
-                Icons.security_rounded,
-                'Bảo mật',
-                'Mật khẩu và 2FA',
-                AppColors.primaryContainer.withValues(alpha: 0.1),
-                AppColors.primaryContainer,
+              SettingItem(
+                icon: Icons.security_rounded,
+                title: 'Bảo mật',
+                subtitle: 'Mật khẩu và 2FA',
+                iconBgColor:   AppColors.primaryContainer.withValues(alpha: 0.1),
+                iconColor:  AppColors.primaryContainer,
+                onTap: (){
+                  Navigator.pushNamed(context, AppRoutes.securityPage);
+                },
               ),
             ],
           ),
@@ -235,12 +240,12 @@ class ProfilePage extends StatelessWidget {
           ),
           child: Column(
             children: [
-              _buildSettingItem(
-                Icons.dark_mode_rounded,
-                'Giao diện',
-                'Hệ thống, Sáng, Tối',
-                const Color(0xFFD2E0FC),
-                const Color(0xFF0D1C30),
+              SettingItem(
+                icon: Icons.dark_mode_rounded,
+                title: 'Giao diện',
+                subtitle: 'Hệ thống, Sáng, Tối',
+                iconBgColor: const Color(0xFFD2E0FC),
+                iconColor: const Color(0xFF0D1C30),
                 trailing: Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 10,
@@ -261,20 +266,26 @@ class ProfilePage extends StatelessWidget {
                 ),
               ),
               _buildDivider(),
-              _buildSettingItem(
-                Icons.notifications_rounded,
-                'Thông báo',
-                'Desktop, Email, Mobile',
-                const Color(0xFFD2E0FC),
-                const Color(0xFF0D1C30),
+              SettingItem(
+                icon: Icons.notifications_rounded,
+                title: 'Thông báo',
+                subtitle: 'Desktop, Email, Mobile',
+                iconBgColor: const Color(0xFFD2E0FC),
+                iconColor: const Color(0xFF0D1C30),
+                onTap: (){
+
+                },
               ),
               _buildDivider(),
-              _buildSettingItem(
-                Icons.language_rounded,
-                'Ngôn ngữ',
-                'Tiếng Việt',
-                const Color(0xFFD2E0FC),
-                const Color(0xFF0D1C30),
+              SettingItem(
+                icon: Icons.language_rounded,
+                title: 'Ngôn ngữ',
+                subtitle: 'Tiếng Việt',
+                iconBgColor: const Color(0xFFD2E0FC),
+                iconColor: const Color(0xFF0D1C30),
+                onTap: (){
+                  
+                },
               ),
             ],
           ),
@@ -296,23 +307,27 @@ class ProfilePage extends StatelessWidget {
           ),
           child: Column(
             children: [
-              _buildSettingItem(
-                Icons.help_rounded,
-                'Trung tâm trợ giúp',
-                null,
-                AppColors.surfaceContainerHigh,
-                AppColors.onSurfaceVariant,
-                showChevron: false,
+              SettingItem(
+                icon: Icons.help_rounded,
+                title: 'Trung tâm trợ giúp',
+                iconBgColor: AppColors.surfaceContainerHigh,
+                iconColor: AppColors.onSurfaceVariant,
+                onTap: () {
+                  
+                },
               ),
+              SettingItem(
+                icon: Icons.logout_rounded,
+                title: 'Đăng xuất',
+                iconBgColor: Color(0xFFFFDAD6).withValues(alpha: 0.2),
+                iconColor: AppColors.error,
+                onTap: () {
+                  // Viết code chuyển sang màn hình Đổi mật khẩu ở đây
+                  print('Đang mở màn hình đổi mật khẩu...');
+                },
+              ),
+              
               _buildDivider(),
-              _buildSettingItem(
-                Icons.logout_rounded,
-                'Đăng xuất',
-                null,
-                const Color(0xFFFFDAD6).withValues(alpha: 0.2),
-                AppColors.error,
-                showChevron: false,
-              ),
             ],
           ),
         ),
@@ -455,67 +470,5 @@ class ProfilePage extends StatelessWidget {
     );
   }
 
-  Widget _buildSettingItem(
-    IconData icon,
-    String title,
-    String? subtitle,
-    Color iconBgColor,
-    Color iconColor, {
-    Widget? trailing,
-    bool showChevron = true,
-  }) {
-    return InkWell(
-      onTap: () {},
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: iconBgColor,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(icon, color: iconColor, size: 20),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: GoogleFonts.inter(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.onSurface,
-                    ),
-                  ),
-                  if (subtitle != null) ...[
-                    const SizedBox(height: 2),
-                    Text(
-                      subtitle,
-                      style: GoogleFonts.inter(
-                        fontSize: 12,
-                        color: AppColors.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-            trailing ??
-                (showChevron
-                    ? const Icon(
-                        Icons.chevron_right_rounded,
-                        color: AppColors.outlineVariant,
-                        size: 24,
-                      )
-                    : const SizedBox.shrink()),
-          ],
-        ),
-      ),
-    );
-  }
+  
 }
