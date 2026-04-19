@@ -1,4 +1,4 @@
-﻿namespace TodoAppAPI.Models
+namespace TodoAppAPI.Models
 {
     public class Card
     {
@@ -21,5 +21,6 @@
         public ICollection<Comment>? Comments { get; set; }
         public ICollection<UserInboxCard>? UserInboxCards { get; set; } // ← Changed to nullable
         public virtual ICollection<CardMember>? CardMembers { get; set; }
+        public virtual ICollection<FileUrl>? FileUrls { get; set; }
     }
 }

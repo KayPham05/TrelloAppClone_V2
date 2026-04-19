@@ -16,10 +16,12 @@ namespace TodoAppAPI.Controllers
     {
         private readonly ICardsService _cardService;
         private readonly IActivity _activity;
-        public TodosController(ICardsService todosService, IActivity activity)
+        private readonly ICloudinaryService _cloudinaryService;
+        public TodosController(ICardsService todosService, IActivity activity, ICloudinaryService cloudinaryService)
         {
             _cardService = todosService;
             _activity = activity;
+            _cloudinaryService = cloudinaryService;
         }
 
         // GET: api/<TodosController>
@@ -143,6 +145,80 @@ namespace TodoAppAPI.Controllers
             _ = _activity.AddActivity(" ",
                 $"updated status of card '{card.Title}' to '{newStatus}'");
             return Ok(new { message = "Cập nhật status cho Card thành công." });
+        }
+
+        [HttpGet("{cardUId}/attachments")]
+        public async Task<IActionResult> GetAttachments(string cardUId)
+        {
+            var attachments = await _cardService.GetAttachmentsByCardAsync(cardUId);
+            return Ok(attachments);
+        }
+
+        [HttpDelete("{cardUId}/attachments/{fileUId}")]
+        public async Task<IActionResult> DeleteAttachment(string cardUId, string fileUId)
+        {
+            var success = await _cardService.DeleteAttachmentAsync(fileUId);
+            if (!success) return NotFound("Không tìm thấy tệp đính kèm.");
+            _ = _activity.AddActivity(" ", $"deleted attachment '{fileUId}' from card '{cardUId}'");
+            return Ok(new { message = "Đã xóa tệp đính kèm." });
+        }
+
+        [HttpPut("{cardUId}/attachments/{fileUId}/description")]
+        public async Task<IActionResult> UpdateAttachmentDescription(string cardUId, string fileUId, [FromQuery] string? description)
+        {
+            var success = await _cardService.UpdateAttachmentDescriptionAsync(fileUId, description);
+            if (!success) return NotFound("Không tìm thấy tệp đính kèm.");
+            _ = _activity.AddActivity(" ", $"updated description for attachment '{fileUId}' in card '{cardUId}'");
+            return Ok(new { message = "Đã cập nhật mô tả tệp đính kèm." });
+        }
+
+        public class AddFileRequest
+        {
+            public string Url { get; set; } = string.Empty;
+            public string FileName { get; set; } = string.Empty;
+            public string? Description { get; set; }
+        }
+
+        [HttpPost("{cardUId}/add-file")]
+        public async Task<IActionResult> AddFileToCard(string cardUId, [FromBody] AddFileRequest request)
+        {
+            if (string.IsNullOrEmpty(request.Url) || string.IsNullOrEmpty(request.FileName))
+                return BadRequest("File URL và FileName không được trống.");
+
+            var (fileUrl, isDuplicate) = await _cardService.AddFileToCardAsync(cardUId, request.Url, request.FileName, request.Description);
+
+            if (isDuplicate) return Conflict(new { message = "Tệp này đã được đính kèm trước đó." });
+            if (fileUrl != null)
+            {
+                _ = _activity.AddActivity(" ", $"added file '{request.FileName}' to card '{cardUId}'");
+                return Ok(fileUrl);
+            }
+
+            return NotFound("Không tìm thấy card hoặc có lỗi xảy ra.");
+        }
+
+        [HttpPost("{cardUId}/attachments")]
+        public async Task<IActionResult> UploadAttachment(string cardUId, IFormFile file, [FromForm] string? description = null)
+        {
+            if (file == null || file.Length == 0)
+                return BadRequest("File không hợp lệ hoặc rỗng.");
+
+            // 1. Upload to Cloudinary
+            var uploadResult = await _cloudinaryService.UploadFileAsync(file);
+            if (uploadResult == null)
+                return StatusCode(500, "Lỗi khi upload file lên Cloudinary.");
+
+            // 2. Save file URL to database
+            var (fileUrl, isDuplicate) = await _cardService.AddFileToCardAsync(cardUId, uploadResult.Value.Url, uploadResult.Value.FileName, description);
+
+            if (isDuplicate) return Conflict(new { message = "Tệp này đã được đính kèm trước đó." });
+            if (fileUrl != null)
+            {
+                _ = _activity.AddActivity(" ", $"attached file '{uploadResult.Value.FileName}' to card '{cardUId}'");
+                return Ok(fileUrl);
+            }
+
+            return NotFound("Không tìm thấy card hoặc có lỗi xảy ra khi lưu trữ thông tin file.");
         }
     }
 }

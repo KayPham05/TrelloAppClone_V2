@@ -200,5 +200,91 @@ namespace TodoAppAPI.Service
                 return null;
             }
         }
+
+        public async Task<(FileUrl? FileUrl, bool IsDuplicate)> AddFileToCardAsync(string cardUId, string url, string fileName, string? description = null)
+        {
+            try
+            {
+                var card = await _dbContext.Todos.FirstOrDefaultAsync(c => c.CardUId == cardUId);
+                if (card == null) return (null, false);
+
+                // Check for duplicate URL
+                var exists = await _dbContext.FileUrls
+                    .AnyAsync(f => f.CardUId == cardUId && f.Url == url);
+                if (exists) return (null, true);
+
+                var fileUrl = new FileUrl
+                {
+                    CardUId = cardUId,
+                    Url = url,
+                    FileName = fileName,
+                    Description = description,
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                _dbContext.FileUrls.Add(fileUrl);
+                await _dbContext.SaveChangesAsync();
+
+                return (fileUrl, false);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Lỗi khi thêm file vào Card: {ex.Message}");
+                return (null, false);
+            }
+        }
+
+        public async Task<List<FileUrl>> GetAttachmentsByCardAsync(string cardUId)
+        {
+            try
+            {
+                return await _dbContext.FileUrls
+                    .Where(f => f.CardUId == cardUId)
+                    .OrderByDescending(f => f.CreatedAt)
+                    .ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Lỗi khi lấy attachments: {ex.Message}");
+                return new List<FileUrl>();
+            }
+        }
+
+        public async Task<bool> DeleteAttachmentAsync(string fileUId)
+        {
+            try
+            {
+                var fileUrl = await _dbContext.FileUrls.FirstOrDefaultAsync(f => f.FileUId == fileUId);
+                if (fileUrl == null) return false;
+
+                _dbContext.FileUrls.Remove(fileUrl);
+                await _dbContext.SaveChangesAsync();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Lỗi khi xóa attachment: {ex.Message}");
+                return false;
+            }
+        }
+
+        public async Task<bool> UpdateAttachmentDescriptionAsync(string fileUId, string? description)
+        {
+            try
+            {
+                var file = await _dbContext.FileUrls.FirstOrDefaultAsync(f => f.FileUId == fileUId);
+                if (file == null) return false;
+
+                file.Description = description;
+                _dbContext.FileUrls.Update(file);
+                await _dbContext.SaveChangesAsync();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Lỗi khi cập nhật mô tả attachment: {ex.Message}");
+                return false;
+            }
+        }
     }
 }

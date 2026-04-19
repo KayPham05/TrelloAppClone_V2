@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../init_dependencies.dart';
+import '../../../card/presentation/widgets/card_overview_widget.dart';
 import '../bloc/inbox_cubit.dart';
 import '../bloc/inbox_state.dart';
 import '../widgets/add_input_widget.dart';
-import '../widgets/inbox_item_widget.dart';
+
 
 class InboxPage extends StatelessWidget {
   const InboxPage({super.key});
@@ -37,7 +38,7 @@ class _InboxViewState extends State<InboxView> {
   }
 
   void _onToggleComplete(int index, bool newValue) {
-    // Logic for toggling complete
+    // Deprecated for ID based
   }
 
   void _onSubmittedNewCard(String val) {
@@ -63,60 +64,79 @@ class _InboxViewState extends State<InboxView> {
           children: [
             // ── App Bar ──────────────────────────────────────────────────
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 8, 8),
+              padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
               child: Row(
                 children: [
-                  const Expanded(
+                   Expanded(
                     child: Text(
                       'Hộp thư đến',
-                      style: TextStyle(
-                        color: AppColors.textWhite,
-                        fontSize: 28,
+                      style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                        color: AppColors.onSurface,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
-                  IconButton(
-                    icon: const Icon(
-                      Icons.view_list_outlined,
-                      color: AppColors.textPrimary,
+                  Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(color: AppColors.surfaceVariant),
+                      borderRadius: BorderRadius.circular(16),
+                      color: Colors.white,
                     ),
-                    onPressed: () {},
+                    child: IconButton(
+                      icon: const Icon(
+                        Icons.tune,
+                        color: AppColors.onSurfaceVariant,
+                      ),
+                      onPressed: () {},
+                    ),
                   ),
-                  IconButton(
-                    icon: const Icon(
-                      Icons.more_horiz,
-                      color: AppColors.textPrimary,
+                  const SizedBox(width: 12),
+                  Container(
+                     decoration: BoxDecoration(
+                      border: Border.all(color: AppColors.surfaceVariant),
+                      borderRadius: BorderRadius.circular(16),
+                      color: Colors.white,
                     ),
-                    onPressed: () {},
+                    child: IconButton(
+                      icon: const Icon(
+                        Icons.more_horiz,
+                        color: AppColors.onSurfaceVariant,
+                      ),
+                      onPressed: () {},
+                    ),
                   ),
                 ],
               ),
             ),
             // ── Search ───────────────────────────────────────────────────
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
               child: Container(
                 decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(10),
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: AppColors.surfaceVariant),
                 ),
                 child: const TextField(
                   style: TextStyle(color: AppColors.textPrimary),
                   decoration: InputDecoration(
                     hintText: 'Tìm kiếm',
-                    hintStyle: TextStyle(color: AppColors.textSecondary),
+                    hintStyle: TextStyle(color: AppColors.outline),
                     prefixIcon: Icon(
                       Icons.search,
-                      color: AppColors.textSecondary,
+                      color: AppColors.outline,
                     ),
                     border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
                     contentPadding: EdgeInsets.symmetric(vertical: 14),
+                    fillColor: Colors.transparent,
+                    filled: true,
                   ),
                 ),
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 24),
             // ── Items List ───────────────────────────────────────────────
             Expanded(
               child: BlocBuilder<InboxCubit, InboxState>(
@@ -139,24 +159,49 @@ class _InboxViewState extends State<InboxView> {
                     );
                   } else if (state is InboxLoaded) {
                     final items = state.cards;
-                    return ListView.builder(
+                    return SingleChildScrollView(
                       controller: _inboxScrollController,
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      itemCount: items.length + 1,
-                      itemBuilder: (ctx, i) {
-                        if (i == items.length) {
-                          return const SizedBox(height: 80);
-                        }
-                        return RepaintBoundary(
-                          child: InboxItemWidget(
-                            item: items[i],
-                            index: i,
-                            totalCount: items.length,
-                            onToggleComplete: (val) =>
-                                _onToggleComplete(i, val),
-                          ),
-                        );
-                      },
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(24),
+                          border: Border.all(color: AppColors.surfaceVariant),
+                        ),
+                        child: Column(
+                          children: [
+                            for (int i = 0; i < items.length; i++) ...[
+                              Dismissible(
+                                key: Key(items[i].id),
+                                direction: DismissDirection.endToStart,
+                                background: Container(
+                                  alignment: Alignment.centerRight,
+                                  padding: const EdgeInsets.only(right: 20),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.error,
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  child: const Icon(Icons.delete_outline, color: Colors.white),
+                                ),
+                                onDismissed: (direction) {
+                                  context.read<InboxCubit>().deleteCard(items[i].id);
+                                },
+                                child: RepaintBoundary(
+                                  child: CardOverviewWidget(
+                                    card: items[i],
+                                    onTap: () {},
+                                    onToggleComplete: (val) {
+                                      context.read<InboxCubit>().toggleCardStatus(items[i].id, val);
+                                    },
+                                  ),
+                                ),
+                              ),
+                              if (i < items.length - 1) const SizedBox(height: 8),
+                            ],
+                          ],
+                        ),
+                      ),
                     );
                   }
                   return const SizedBox.shrink();

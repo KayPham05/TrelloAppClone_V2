@@ -14,18 +14,11 @@ class AddInputWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border.withOpacity(0.5)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.25),
-            blurRadius: 12,
-            offset: const Offset(0, -2),
-          ),
-        ],
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(32),
+        border: Border.all(color: AppColors.surfaceVariant),
       ),
       child: Row(
         children: [
@@ -35,17 +28,22 @@ class AddInputWidget extends StatelessWidget {
               style: const TextStyle(color: AppColors.textPrimary),
               decoration: const InputDecoration(
                 hintText: 'Thêm thẻ',
-                hintStyle: TextStyle(color: AppColors.textSecondary),
+                hintStyle: TextStyle(color: AppColors.outline),
                 border: InputBorder.none,
-                contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                fillColor: Colors.transparent,
+                filled: true,
+                contentPadding: EdgeInsets.symmetric(horizontal: 24, vertical: 16),
               ),
               onSubmitted: onSubmitted,
             ),
           ),
           IconButton(
-            icon: const Icon(Icons.attachment, color: AppColors.textSecondary),
+            icon: const Icon(Icons.attachment, color: AppColors.outlineVariant),
             onPressed: () {},
           ),
+          const SizedBox(width: 8),
         ],
       ),
     );

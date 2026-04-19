@@ -18,6 +18,29 @@ class TodoItemEntity {
   }
 }
 
+class FileUrlEntity {
+  final String id;
+  final String url;
+  final String fileName;
+  final String? description;
+
+  const FileUrlEntity({
+    required this.id,
+    required this.url,
+    required this.fileName,
+    this.description,
+  });
+
+  FileUrlEntity copyWith({String? id, String? url, String? fileName, String? description}) {
+    return FileUrlEntity(
+      id: id ?? this.id,
+      url: url ?? this.url,
+      fileName: fileName ?? this.fileName,
+      description: description ?? this.description,
+    );
+  }
+}
+
 class CardEntity {
   final String id;
   final String title;
@@ -27,6 +50,7 @@ class CardEntity {
   final String status;
   final String? listId;
   final List<TodoItemEntity> todoItems;
+  final List<FileUrlEntity> fileUrls;
 
   const CardEntity({
     required this.id,
@@ -37,6 +61,7 @@ class CardEntity {
     this.status = 'New',
     this.listId,
     this.todoItems = const [],
+    this.fileUrls = const [],
   });
 
   CardEntity copyWith({
@@ -48,6 +73,7 @@ class CardEntity {
     String? status,
     String? listId,
     List<TodoItemEntity>? todoItems,
+    List<FileUrlEntity>? fileUrls,
   }) {
     return CardEntity(
       id: id ?? this.id,
@@ -58,6 +84,35 @@ class CardEntity {
       status: status ?? this.status,
       listId: listId ?? this.listId,
       todoItems: todoItems ?? this.todoItems,
+      fileUrls: fileUrls ?? this.fileUrls,
     );
   }
+}
+
+class CommentEntity {
+  final String id;
+  final String content;
+  final DateTime createdAt;
+  final String userUId;
+  final String? authorName; // Mapped later from local DB or backend response
+
+  const CommentEntity({
+    required this.id,
+    required this.content,
+    required this.createdAt,
+    required this.userUId,
+    this.authorName,
+  });
+}
+
+class CardMemberEntity {
+  final String id;
+  final String userUId;
+  final String? userName;
+
+  const CardMemberEntity({
+    required this.id,
+    required this.userUId,
+    this.userName,
+  });
 }

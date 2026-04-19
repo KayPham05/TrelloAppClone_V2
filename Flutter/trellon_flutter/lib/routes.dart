@@ -7,7 +7,6 @@ import 'features/board/presentation/pages/board_detail_page.dart';
 import 'features/auth/presentation/pages/login_page.dart';
 import 'features/auth/presentation/pages/register_page.dart';
 import 'features/auth/presentation/pages/verify_page.dart';
-import 'features/card/presentation/pages/card_detail_page.dart';
 import 'features/board/presentation/pages/workspace_menu_page.dart';
 
 class AppRoutes {
@@ -29,7 +28,6 @@ class AppRoutes {
     verify:        (context) => const VerifyPage(),
     home:          (context) => const MainShell(),
     boardDetail:   (context) => const BoardDetailPage(),
-    cardDetail:    (context) => const CardDetailPage(),
     workspaceMenu: (context) => const WorkspaceMenuPage(),
     userProfile:   (context) => const ProfilePage(),
     securityPage:  (context) => const SecurityPage(),

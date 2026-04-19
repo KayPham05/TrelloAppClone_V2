@@ -13,8 +13,8 @@ class TodoItemModel {
 
   factory TodoItemModel.fromJson(Map<String, dynamic> json) {
     return TodoItemModel(
-      id: json['todoUId'] ?? json['id'] ?? '',
-      title: json['title'] ?? '',
+      id: json['todoItemUId'] ?? json['todoUId'] ?? json['id'] ?? '',
+      title: json['content'] ?? json['title'] ?? '',
       isCompleted: json['isCompleted'] ?? false,
     );
   }
@@ -36,6 +36,38 @@ class TodoItemModel {
   }
 }
 
+class FileUrlModel {
+  final String id;
+  final String url;
+  final String fileName;
+  final String? description;
+
+  FileUrlModel({
+    required this.id,
+    required this.url,
+    required this.fileName,
+    this.description,
+  });
+
+  factory FileUrlModel.fromJson(Map<String, dynamic> json) {
+    return FileUrlModel(
+      id: json['fileUId'] ?? json['id'] ?? '',
+      url: json['url'] ?? '',
+      fileName: json['fileName'] ?? '',
+      description: json['description'],
+    );
+  }
+
+  FileUrlEntity toEntity() {
+    return FileUrlEntity(
+      id: id,
+      url: url,
+      fileName: fileName,
+      description: description,
+    );
+  }
+}
+
 class CardModel {
   final String id;
   final String title;
@@ -45,6 +77,7 @@ class CardModel {
   final String status;
   final String? listId;
   final List<TodoItemModel> todoItems;
+  final List<FileUrlModel> fileUrls;
 
   CardModel({
     required this.id,
@@ -55,12 +88,18 @@ class CardModel {
     this.status = 'New',
     this.listId,
     this.todoItems = const [],
+    this.fileUrls = const [],
   });
 
   factory CardModel.fromJson(Map<String, dynamic> json) {
-    var todosFromJson = json['todos'] as List?;
+    var todosFromJson = json['todos'] ?? json['todoItems'] as List?;
     List<TodoItemModel> todoList = todosFromJson != null
-        ? todosFromJson.map((i) => TodoItemModel.fromJson(i)).toList()
+        ? (todosFromJson as List).map((i) => TodoItemModel.fromJson(i)).toList()
+        : [];
+
+    var filesFromJson = json['fileUrls'] as List?;
+    List<FileUrlModel> fileList = filesFromJson != null
+        ? filesFromJson.map((i) => FileUrlModel.fromJson(i)).toList()
         : [];
 
     return CardModel(
@@ -72,6 +111,7 @@ class CardModel {
       status: json['status'] ?? 'New',
       listId: json['listUId'] ?? json['listId'],
       todoItems: todoList,
+      fileUrls: fileList,
     );
   }
 
@@ -85,6 +125,7 @@ class CardModel {
       status: status,
       listId: listId,
       todoItems: todoItems.map((e) => e.toEntity()).toList(),
+      fileUrls: fileUrls.map((e) => e.toEntity()).toList(),
     );
   }
 }

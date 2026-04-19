@@ -22,20 +22,10 @@ class InboxItemWidget extends StatelessWidget {
     final bool isLast = index == totalCount - 1;
     final bool isCompleted = item.status == 'Completed';
 
-    BorderRadius radius = BorderRadius.only(
-      topLeft: isFirst ? const Radius.circular(12) : Radius.zero,
-      topRight: isFirst ? const Radius.circular(12) : Radius.zero,
-      bottomLeft: isLast ? const Radius.circular(12) : Radius.zero,
-      bottomRight: isLast ? const Radius.circular(12) : Radius.zero,
-    );
-
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: radius,
-        border: !isLast
-            ? const Border(bottom: BorderSide(color: AppColors.border, width: 0.5))
-            : null,
+        color: AppColors.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(16),
       ),
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
@@ -50,7 +40,7 @@ class InboxItemWidget extends StatelessWidget {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               border: Border.all(
-                color: isCompleted ? AppColors.success : AppColors.textSecondary,
+                color: isCompleted ? AppColors.success : AppColors.outlineVariant,
                 width: 2,
               ),
               color: isCompleted ? AppColors.success.withOpacity(0.15) : Colors.transparent,
@@ -63,9 +53,10 @@ class InboxItemWidget extends StatelessWidget {
         title: Text(
           item.title,
           style: TextStyle(
-            color: isCompleted ? AppColors.textSecondary : AppColors.textPrimary,
+            color: isCompleted ? AppColors.textSecondary : AppColors.onSurface,
             decoration: isCompleted ? TextDecoration.lineThrough : null,
-            fontSize: 15,
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
           ),
         ),
         subtitle: (item.dueDate != null || item.todoItems.isNotEmpty)
@@ -91,7 +82,7 @@ class InboxItemWidget extends StatelessWidget {
                 ],
               )
             : null,
-        trailing: const Icon(Icons.chevron_right, color: AppColors.textSecondary, size: 16),
+        trailing: null,
         onTap: () => _showCardOptions(context),
       ),
     );

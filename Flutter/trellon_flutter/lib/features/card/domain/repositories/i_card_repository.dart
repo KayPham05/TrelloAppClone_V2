@@ -11,4 +11,14 @@ abstract class ICardRepository {
   Future<CardEntity> addTodoItem({required String cardId, required String todoTitle});
   Future<CardEntity> updateTodoItem({required String cardId, required String todoId, required bool isCompleted});
   Future<CardEntity> updateDueDate({required String cardId, required DateTime dueDate});
+
+  Future<List<CommentEntity>> getComments({required String cardId});
+  Future<CommentEntity> addComment({required String cardId, required String content, required String userUId});
+  Future<List<CardMemberEntity>> getCardMembers({required String cardId});
+  Future<List<TodoItemEntity>> getTodoItems({required String cardId});
+  
+  Future<List<FileUrlEntity>> getAttachments({required String cardId});
+  Future<FileUrlEntity> uploadAttachment({required String cardId, required String filePath, String? description});
+  Future<void> deleteAttachment({required String cardId, required String fileId});
+  Future<void> updateAttachmentDescription({required String cardId, required String fileId, String? description});
 }
