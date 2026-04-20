@@ -47,6 +47,7 @@ import 'features/workspace/domain/usecases/delete_workspace_usecase.dart';
 import 'features/workspace/domain/usecases/add_workspace_member_usecase.dart';
 import 'features/workspace/domain/usecases/get_workspace_boards_usecase.dart';
 import 'features/workspace/presentation/cubit/workspace_cubit.dart';
+import 'features/card/domain/usecases/update_list_uid_usecase.dart';
 
 final serviceLocator = GetIt.instance;
 
@@ -133,6 +134,7 @@ void _initBoard() {
     dataSource: serviceLocator(),
     userLocalDataSource: serviceLocator(),
   ));
+  _initBoard();
 }
 
 void _initCard() {
@@ -150,6 +152,7 @@ void _initCard() {
   serviceLocator.registerLazySingleton(() => DeleteAttachmentUseCase(serviceLocator()));
   serviceLocator.registerLazySingleton(() => UpdateAttachmentDescriptionUseCase(serviceLocator()));
   serviceLocator.registerLazySingleton(() => UploadCardCoverUseCase(serviceLocator()));
+  serviceLocator.registerLazySingleton(() => UpdateListUIdUseCase(serviceLocator()));
 
   // Cubit
   serviceLocator.registerFactory(() => CardDetailCubit(
@@ -210,6 +213,14 @@ void _initInbox() {
       deleteCardUseCase: serviceLocator(),
       updateCardStatusUseCase: serviceLocator(),
       userLocalDataSource: serviceLocator(),
+    ),
+  );
+}
+
+void _initBoard() {
+  serviceLocator.registerFactory(
+    () => BoardDetailCubit(
+      updateListUIdUseCase: serviceLocator(),
     ),
   );
 }

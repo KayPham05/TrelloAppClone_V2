@@ -11,7 +11,6 @@ class VerifyPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Sử dụng serviceLocator thay vì tạo thủ công
     return BlocProvider(
       create: (context) => serviceLocator<VerifyCubit>(),
       child: const VerifyView(),
@@ -27,9 +26,13 @@ class VerifyView extends StatefulWidget {
 }
 
 class _VerifyViewState extends State<VerifyView> {
-  final List<TextEditingController> _controllers = List.generate(6, (_) => TextEditingController());
+  // Dùng List controller & focusNode riêng biệt cho từng ô OTP
+  final List<TextEditingController> _controllers =
+      List.generate(6, (_) => TextEditingController());
   final List<FocusNode> _focusNodes = List.generate(6, (_) => FocusNode());
+
   late String _email;
+  bool _emailLoaded = false;
 
   @override
   void didChangeDependencies() {
@@ -52,13 +55,14 @@ class _VerifyViewState extends State<VerifyView> {
   String get _fullOtp => _controllers.map((c) => c.text).join();
 
   void _handleVerify() {
-    if (_fullOtp.length < 6) {
+    final otp = _fullOtp;
+    if (otp.length < 6) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Vui lòng nhập đủ 6 số')),
       );
       return;
     }
-    context.read<VerifyCubit>().verify(email: _email, code: _fullOtp);
+    context.read<VerifyCubit>().verify(email: _email, code: otp);
   }
 
   @override
@@ -73,7 +77,10 @@ class _VerifyViewState extends State<VerifyView> {
           );
         } else if (state is VerifyError) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.message), backgroundColor: AppColors.error),
+            SnackBar(
+              content: Text(state.message),
+              backgroundColor: AppColors.error,
+            ),
           );
         }
       },
@@ -136,11 +143,20 @@ class _VerifyViewState extends State<VerifyView> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primaryContainer,
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
-                  child: isLoading 
-                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                    : const Text('Xác minh'),
+                  child: isLoading
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Text('Xác minh'),
                 ),
               );
             },
@@ -183,7 +199,8 @@ class _VerifyViewState extends State<VerifyView> {
     );
   }
 
-  Widget _buildOtpGrid() {
+  /// 6 ô nhập OTP — mỗi ô là TextField độc lập (không dùng Form/TextFormField)
+  Widget _buildOtpRow() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: List.generate(6, (i) {

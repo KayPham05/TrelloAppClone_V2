@@ -1,5 +1,8 @@
 class ApiEndpoints {
-  static const String baseUrl = 'http://192.168.1.6:5293/v1/api/';
+  static const String baseUrl = String.fromEnvironment(
+    'API_BASE_URL',
+    defaultValue: 'http://192.168.1.5:5293/v1/api',
+  );
   static const String register = 'auth/register';
   static const String login = 'auth/login';
   static const String refreshToken = 'auth/refresh-token';

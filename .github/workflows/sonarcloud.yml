@@ -1,0 +1,80 @@
+name: SonarCloud Analysis
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  sonarcloud:
+    name: SonarCloud
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # ===== FLUTTER SETUP & TEST =====
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.x'
+          channel: 'stable'
+
+      - name: Get Flutter dependencies
+        working-directory: Flutter/trellon_flutter
+        run: flutter pub get
+        continue-on-error: false
+
+      - name: Run Flutter tests with coverage
+        working-directory: Flutter/trellon_flutter
+        run: |
+          if [ -d "test" ]; then
+            flutter test --coverage
+            # Di chuyển coverage report về root (2 cấp lên)
+            mkdir -p ../../coverage
+            cp coverage/lcov.info ../../coverage/
+          else
+            echo "No Flutter tests found, skipping..."
+          fi
+        continue-on-error: false
+
+      # ===== .NET SETUP & TEST =====
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.x'
+
+      - name: Restore .NET dependencies
+        working-directory: C#/TodoAppAPI
+        run: dotnet restore
+        continue-on-error: false
+
+      - name: Build .NET project
+        working-directory: C#/TodoAppAPI
+        run: dotnet build --no-restore
+        continue-on-error: false
+
+      - name: Run .NET tests with coverage
+        working-directory: C#/TodoAppAPI
+        run: |
+          if ls *.csproj 1> /dev/null 2>&1 || ls **/*.csproj 1> /dev/null 2>&1; then
+            dotnet test --no-build --collect:"XPlat Code Coverage" \
+              --results-directory ../../coverage/dotnet \
+              -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
+          else
+            echo "No .NET test projects found, skipping..."
+          fi
+        continue-on-error: false
+
+      # ===== SONARCLOUD SCAN =====
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@v3.1.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

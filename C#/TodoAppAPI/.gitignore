@@ -1,0 +1,19 @@
+# Build outputs
+bin/
+obj/
+publish/
+
+# User / IDE files
+*.rsuser
+
+# NuGet
+*.nupkg
+.nuget/
+packages/
+
+# Local development settings
+appsettings.Development.json
+
+# Optional local overrides
+appsettings.Local.json
+appsettings.*.local.json

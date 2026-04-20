@@ -41,7 +41,13 @@ class AuthRepositoryImpl implements AuthRepository {
       }
       throw Exception("Đăng ký không thành công");
     } on DioException catch (e) {
-      final errorMsg = e.response?.data['message'] ?? "Lỗi kết nối Server";
+      final data = e.response?.data;
+      String errorMsg = "Lỗi kết nối Server";
+      if (data is Map) {
+        errorMsg = data['message'] ?? errorMsg;
+      } else if (data is String) {
+        errorMsg = data.trim();
+      }
       throw Exception(errorMsg);
     }
   }
@@ -85,7 +91,13 @@ class AuthRepositoryImpl implements AuthRepository {
       }
       throw Exception("Đăng nhập không thành công");
     } on DioException catch (e) {
-      final errorMsg = e.response?.data['message'] ?? "Lỗi kết nối Server";
+      final data = e.response?.data;
+      String errorMsg = "Lỗi kết nối Server";
+      if (data is Map) {
+        errorMsg = data['message'] ?? errorMsg;
+      } else if (data is String) {
+        errorMsg = data.trim();
+      }
       throw Exception(errorMsg);
     }
   }
