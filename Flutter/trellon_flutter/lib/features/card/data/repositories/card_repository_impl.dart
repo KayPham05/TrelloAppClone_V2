@@ -11,6 +11,19 @@ class CardRepositoryImpl implements ICardRepository {
   CardRepositoryImpl({required this.dio});
 
   @override
+  Future<CardEntity> getCard(String cardId) async {
+    try {
+      final response = await dio.get('${ApiEndpoints.card}/$cardId');
+      if (response.statusCode == 200) {
+        return CardModel.fromJson(response.data).toEntity();
+      }
+      throw Exception('Card không tồn tại');
+    } catch (e) {
+      throw Exception('Lỗi khi lấy thông tin card: $e');
+    }
+  }
+
+  @override
   Future<CardEntity> addCard({required String listId, required String title, required int position}) async {
     try {
       final response = await dio.post(ApiEndpoints.card, data: {
@@ -28,13 +41,14 @@ class CardRepositoryImpl implements ICardRepository {
   }
 
   @override
-  Future<CardEntity> updateCard({required String cardId, required String title, String? description, DateTime? dueDate}) async {
+  Future<CardEntity> updateCard({required String cardId, required String title, String? description, DateTime? dueDate, String? backgroundUrl}) async {
     try {
       final data = {
         'title': title,
       };
       if (description != null) data['description'] = description;
       if (dueDate != null) data['dueDate'] = dueDate.toIso8601String();
+      if (backgroundUrl != null) data['backgroundUrl'] = backgroundUrl;
 
       final response = await dio.put('${ApiEndpoints.card}/$cardId', data: data);
       if (response.statusCode == 200) {
@@ -260,7 +274,31 @@ class CardRepositoryImpl implements ICardRepository {
       if (e.response?.statusCode == 409) throw Exception('DUPLICATE');
       throw Exception('Lỗi kết nối server: $e');
     } catch (e) {
+      throw Exception('Lỗi kết nối server: $e');
+    } catch (e) {
       rethrow;
+    }
+  }
+
+  @override
+  Future<String> uploadCardCover({required String cardId, required String filePath}) async {
+    try {
+      String fileName = filePath.split('/').last;
+      FormData formData = FormData.fromMap({
+        "file": await MultipartFile.fromFile(filePath, filename: fileName),
+      });
+
+      final response = await dio.post(
+        '${ApiEndpoints.card}/$cardId/upload-background',
+        data: formData,
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return response.data['url'] ?? '';
+      }
+      throw Exception('Lỗi khi tải lên ảnh bìa');
+    } catch (e) {
+      throw Exception('Lỗi kết nối server: $e');
     }
   }
 

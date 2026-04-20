@@ -1,4 +1,4 @@
-﻿using TodoAppAPI.DTOs;
+using TodoAppAPI.DTOs;
 using TodoAppAPI.Models;
 
 namespace TodoAppAPI.Interfaces
@@ -14,5 +14,6 @@ namespace TodoAppAPI.Interfaces
         Task<UserSession?> GetUserSessionByUserId(string userUId);
         Task<bool> SendTwoFactorOtpAsync(string email);
         Task<VerifyTwoFactorResponse> VerifyTwoFactorSetupAsync(string email, string otp);
+        Task<AuthResponse> CheckAndResendVerificationCodeAsync(string email);
     }
 }

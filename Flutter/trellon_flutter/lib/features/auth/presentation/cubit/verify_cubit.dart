@@ -8,6 +8,7 @@ part 'verify_state.dart';
 class VerifyCubit extends Cubit<VerifyState> {
   final VerifyCodeUseCase verifyCodeUseCase;
   final ResendCodeUseCase resendCodeUseCase;
+  final CheckOtpStatusUseCase checkOtpStatusUseCase;
 
   Timer? _countdownTimer;
   int _secondsRemaining = 0;
@@ -15,7 +16,24 @@ class VerifyCubit extends Cubit<VerifyState> {
   VerifyCubit({
     required this.verifyCodeUseCase,
     required this.resendCodeUseCase,
+    required this.checkOtpStatusUseCase,
   }) : super(VerifyInitial());
+
+  Future<void> checkOtpStatus(String email) async {
+    try {
+      final remainingSeconds = await checkOtpStatusUseCase(email: email);
+      if (remainingSeconds > 0) {
+        startCountdown(seconds: remainingSeconds);
+      } else {
+        // Nếu backend trả về 0 (hoặc lỗi), nó đã tự động gửi lại mã rồi, 
+        // nên chúng ta bắt đầu countdown mới 5p
+        startCountdown(seconds: 300);
+      }
+    } catch (e) {
+      // Bỏ qua lỗi check status để không làm phiền UX quá mức
+      startCountdown(seconds: 0);
+    }
+  }
 
   /// Bắt đầu đếm ngược sau khi mã được gửi lần đầu
   void startCountdown({int seconds = 60}) {

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../init_dependencies.dart';
+import '../../../card/presentation/pages/card_detail_page.dart';
 import '../../../card/presentation/widgets/card_overview_widget.dart';
 import '../bloc/inbox_cubit.dart';
 import '../bloc/inbox_state.dart';
@@ -190,7 +191,17 @@ class _InboxViewState extends State<InboxView> {
                                 child: RepaintBoundary(
                                   child: CardOverviewWidget(
                                     card: items[i],
-                                    onTap: () {},
+                                    onTap: () async {
+                                      await Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => CardDetailPage(card: items[i]),
+                                        ),
+                                      );
+                                      if (context.mounted) {
+                                        context.read<InboxCubit>().fetchInboxCards();
+                                      }
+                                    },
                                     onToggleComplete: (val) {
                                       context.read<InboxCubit>().toggleCardStatus(items[i].id, val);
                                     },

@@ -58,6 +58,9 @@ namespace TodoAppAPI.Migrations
                         .HasMaxLength(128)
                         .HasColumnType("nvarchar(128)");
 
+                    b.Property<string>("BackgroundUrl")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("BoardName")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -143,6 +146,9 @@ namespace TodoAppAPI.Migrations
                     b.Property<string>("CardUId")
                         .HasMaxLength(128)
                         .HasColumnType("nvarchar(128)");
+
+                    b.Property<string>("BackgroundUrl")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()

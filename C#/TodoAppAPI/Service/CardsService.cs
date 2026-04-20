@@ -76,6 +76,7 @@ namespace TodoAppAPI.Service
                 existing.DueDate = card.DueDate;
                 existing.Position = card.Position;
                 existing.ListUId = card.ListUId;
+                existing.BackgroundUrl = card.BackgroundUrl;
                 _dbContext.Update(existing);
                 _dbContext.SaveChanges();
                 return true;
@@ -190,7 +191,8 @@ namespace TodoAppAPI.Service
                     Position = card.Position,
                     CreatedAt = card.CreatedAt,
                     Status = card.Status,
-                    ListUId = card.ListUId
+                    ListUId = card.ListUId,
+                    BackgroundUrl = card.BackgroundUrl
                 };
             }
             catch (Exception ex)

@@ -34,9 +34,11 @@ namespace TodoAppAPI.Controllers
 
         // GET api/<TodosController>/5
         [HttpGet("{id}")]
-        public string Get(int id)
+        public IActionResult Get(string id)
         {
-            return "value";
+            var card = _cardService.GetById(id);
+            if (card == null) return NotFound("Card không tồn tại");
+            return Ok(card);
         }
 
         // POST api/<TodosController>
@@ -219,6 +221,23 @@ namespace TodoAppAPI.Controllers
             }
 
             return NotFound("Không tìm thấy card hoặc có lỗi xảy ra khi lưu trữ thông tin file.");
+        }
+        
+        [HttpPost("{uid}/upload-background")]
+        public async Task<IActionResult> UploadBackground(string uid, IFormFile file)
+        {
+            var card = _cardService.GetById(uid);
+            if (card == null) return NotFound(new { message = "Card không tồn tại." });
+
+            var result = await _cloudinaryService.UploadFileAsync(file);
+            if (result == null) return BadRequest("Lỗi khi tải ảnh lên Cloudinary.");
+
+            // Update card with new background URL directly
+            card.BackgroundUrl = result.Value.Url;
+            
+            _cardService.UpdateCard(card);
+            
+            return Ok(new { url = result.Value.Url });
         }
     }
 }

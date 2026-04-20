@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using TodoAppAPI.Models;
 
@@ -32,6 +32,8 @@ namespace TodoAppAPI.Configurations
                    .IsRequired()
                    .HasMaxLength(50)
                    .HasDefaultValue("To Do");
+
+            builder.Property(x => x.BackgroundUrl);
 
             // List → Card: CASCADE (nullable for inbox cards)
             builder.HasOne(x => x.List)

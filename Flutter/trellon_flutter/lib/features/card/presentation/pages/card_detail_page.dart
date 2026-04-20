@@ -11,6 +11,8 @@ import '../widgets/card_detail/card_detail_description.dart';
 import '../widgets/card_detail/card_detail_checklist.dart';
 import '../widgets/card_detail/card_detail_attachments.dart';
 import '../widgets/card_detail/card_detail_activity.dart';
+import '../../../../core/widgets/cover_picker_bottom_sheet.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class CardDetailPage extends StatefulWidget {
   final CardEntity card;
@@ -47,16 +49,41 @@ class _CardDetailPageState extends State<CardDetailPage> {
               return Stack(
                  children: [
                     // List of contents
-                    Positioned.fill(
+                     Positioned.fill(
                       child: SingleChildScrollView(
-                         padding: const EdgeInsets.fromLTRB(0, 80, 0, 100),
+                         padding: EdgeInsets.fromLTRB(0, state.card.backgroundUrl != null && state.card.backgroundUrl!.isNotEmpty ? 0 : 80, 0, 100),
                          child: Column(
                            crossAxisAlignment: CrossAxisAlignment.stretch,
                            children: [
-                              CardDetailTitle(
-                                title: state.card.title,
-                                status: state.card.status,
-                                onStatusToggle: (newStatus) => context.read<CardDetailCubit>().updateStatus(newStatus),
+                              if (state.card.backgroundUrl != null && state.card.backgroundUrl!.isNotEmpty)
+                                GestureDetector(
+                                  onTap: () {
+                                    CoverPickerBottomSheet.show(
+                                      context,
+                                      onTemplateSelected: (url) {
+                                        context.read<CardDetailCubit>().updateBackgroundUrl(url);
+                                      },
+                                      onImagePicked: (file) {
+                                        context.read<CardDetailCubit>().uploadCover(file.path);
+                                      },
+                                    );
+                                  },
+                                  child: CachedNetworkImage(
+                                    imageUrl: state.card.backgroundUrl!,
+                                    height: 180,
+                                    width: double.infinity,
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                              if (state.card.backgroundUrl == null || state.card.backgroundUrl!.isEmpty)
+                                const SizedBox(height: 80),
+                              Padding(
+                                padding: const EdgeInsets.only(top: 16),
+                                child: CardDetailTitle(
+                                  title: state.card.title,
+                                  status: state.card.status,
+                                  onStatusToggle: (newStatus) => context.read<CardDetailCubit>().updateStatus(newStatus),
+                                ),
                               ),
                               const SizedBox(height: 32),
                               CardDetailMetaGrid(members: state.members, dueDate: state.card.dueDate),
@@ -86,12 +113,48 @@ class _CardDetailPageState extends State<CardDetailPage> {
                          ),
                       ),
                     ),
-                    // Top App Bar overlapping
+                     // Top App Bar overlapping
                     Positioned(
                       top: 0,
                       left: 0,
                       right: 0,
-                      child: CardDetailTopBar(title: state.card.title),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              Colors.black.withOpacity(0.5),
+                              Colors.transparent,
+                            ],
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            const SizedBox(width: 8),
+                            IconButton(
+                              icon: const Icon(Icons.arrow_back, color: Colors.white),
+                              onPressed: () => Navigator.pop(context),
+                            ),
+                            const Spacer(),
+                            IconButton(
+                              icon: const Icon(Icons.image, color: Colors.white),
+                              onPressed: () {
+                                CoverPickerBottomSheet.show(
+                                  context,
+                                  onTemplateSelected: (url) {
+                                    context.read<CardDetailCubit>().updateBackgroundUrl(url);
+                                  },
+                                  onImagePicked: (file) {
+                                    context.read<CardDetailCubit>().uploadCover(file.path);
+                                  },
+                                );
+                              },
+                            ),
+                            const SizedBox(width: 8),
+                          ],
+                        ),
+                      ),
                     ),
                  ]
               );

@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Microsoft.EntityFrameworkCore;
 using TodoAppAPI.Models;
 
@@ -47,6 +47,8 @@ namespace TodoAppAPI.Configurations
                    .HasForeignKey(x => x.WorkspaceUId)
                    .OnDelete(DeleteBehavior.Restrict) // ← Restrict
                    .IsRequired(false);
+
+            builder.Property(x => x.BackgroundUrl);
 
             builder.HasIndex(x => new { x.UserUId, x.IsPersonal });
         }

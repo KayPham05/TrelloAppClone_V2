@@ -76,6 +76,7 @@ class CardModel {
   final int position;
   final String status;
   final String? listId;
+  final String? backgroundUrl;
   final List<TodoItemModel> todoItems;
   final List<FileUrlModel> fileUrls;
 
@@ -87,6 +88,7 @@ class CardModel {
     required this.position,
     this.status = 'New',
     this.listId,
+    this.backgroundUrl,
     this.todoItems = const [],
     this.fileUrls = const [],
   });
@@ -110,6 +112,7 @@ class CardModel {
       position: json['position'] ?? 0,
       status: json['status'] ?? 'New',
       listId: json['listUId'] ?? json['listId'],
+      backgroundUrl: json['backgroundUrl'],
       todoItems: todoList,
       fileUrls: fileList,
     );
@@ -124,6 +127,7 @@ class CardModel {
       position: position,
       status: status,
       listId: listId,
+      backgroundUrl: backgroundUrl,
       todoItems: todoItems.map((e) => e.toEntity()).toList(),
       fileUrls: fileUrls.map((e) => e.toEntity()).toList(),
     );

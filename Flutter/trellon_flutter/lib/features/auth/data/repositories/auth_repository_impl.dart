@@ -149,4 +149,20 @@ class AuthRepositoryImpl implements AuthRepository {
       throw Exception(errorMsg);
     }
   }
+
+  @override
+  Future<int> checkOtpStatus({required String email}) async {
+    try {
+      final response = await dio.get(
+        '${ApiEndpoints.checkOtpStatus}?email=${Uri.encodeComponent(email)}',
+      );
+      if (response.statusCode == 200) {
+        final data = response.data;
+        return data['expiresInSeconds'] ?? 0;
+      }
+      return 0;
+    } on DioException {
+      return 0;
+    }
+  }
 }

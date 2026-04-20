@@ -9,6 +9,7 @@ namespace TodoAppAPI.Models
         public int Position { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.Now;
         public string Status { get; set; } = "To Do";
+        public string? BackgroundUrl { get; set; }
 
         // FK - List (nullable for inbox cards)
         public string? ListUId { get; set; } // ← Changed to nullable, removed default value

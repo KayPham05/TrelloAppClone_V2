@@ -6,7 +6,9 @@ import '../../domain/usecases/add_card_comment_usecase.dart';
 import '../../domain/usecases/upload_attachment_usecase.dart';
 import '../../domain/usecases/get_attachments_usecase.dart';
 import '../../domain/usecases/delete_attachment_usecase.dart';
+import '../../domain/usecases/delete_attachment_usecase.dart';
 import '../../domain/usecases/update_attachment_description_usecase.dart';
+import '../../domain/usecases/upload_card_cover_usecase.dart';
 import '../../../../core/data_sources/user_local_data_source.dart';
 
 class CardDetailCubit extends Cubit<CardDetailState> {
@@ -16,6 +18,7 @@ class CardDetailCubit extends Cubit<CardDetailState> {
   final GetAttachmentsUseCase getAttachmentsUseCase;
   final DeleteAttachmentUseCase deleteAttachmentUseCase;
   final UpdateAttachmentDescriptionUseCase updateAttachmentDescriptionUseCase;
+  final UploadCardCoverUseCase uploadCardCoverUseCase;
 
   CardDetailCubit(
     this.repository,
@@ -24,11 +27,15 @@ class CardDetailCubit extends Cubit<CardDetailState> {
     this.getAttachmentsUseCase,
     this.deleteAttachmentUseCase,
     this.updateAttachmentDescriptionUseCase,
+    this.uploadCardCoverUseCase,
   ) : super(CardDetailLoading());
 
   Future<void> loadCardDetails(CardEntity card) async {
     emit(CardDetailLoading());
     try {
+      // Refresh the card from the server to get the latest backgroundUrl etc.
+      final latestCard = await repository.getCard(card.id);
+      
       final futures = await Future.wait([
         repository.getTodoItems(cardId: card.id),
         repository.getCardMembers(cardId: card.id),
@@ -37,7 +44,7 @@ class CardDetailCubit extends Cubit<CardDetailState> {
       ]);
 
       emit(CardDetailLoaded(
-        card: card.copyWith(fileUrls: futures[3] as List<FileUrlEntity>),
+        card: latestCard.copyWith(fileUrls: futures[3] as List<FileUrlEntity>),
         todos: futures[0] as List<TodoItemEntity>,
         members: futures[1] as List<CardMemberEntity>,
         comments: futures[2] as List<CommentEntity>,
@@ -112,6 +119,37 @@ class CardDetailCubit extends Cubit<CardDetailState> {
         emit(currentState.copyWith(card: currentState.card.copyWith(description: newDescription)));
       } catch (e) {
         // Handle error silently or surface
+      }
+    }
+  }
+
+  Future<void> updateBackgroundUrl(String newBackgroundUrl) async {
+    final currentState = state;
+    if (currentState is CardDetailLoaded) {
+      try {
+        await repository.updateCard(
+          cardId: currentState.card.id, 
+          title: currentState.card.title,
+          backgroundUrl: newBackgroundUrl,
+        );
+        emit(currentState.copyWith(card: currentState.card.copyWith(backgroundUrl: newBackgroundUrl)));
+      } catch (e) {
+        // Handle error silently or surface
+      }
+    }
+  }
+
+  Future<void> uploadCover(String filePath) async {
+    final currentState = state;
+    if (currentState is CardDetailLoaded) {
+      try {
+        final backgroundUrl = await uploadCardCoverUseCase.call(
+          cardId: currentState.card.id,
+          filePath: filePath,
+        );
+        await updateBackgroundUrl(backgroundUrl);
+      } catch (e) {
+        // surface error or ignore
       }
     }
   }

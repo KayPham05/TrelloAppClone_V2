@@ -49,6 +49,7 @@ class CardEntity {
   final int position;
   final String status;
   final String? listId;
+  final String? backgroundUrl;
   final List<TodoItemEntity> todoItems;
   final List<FileUrlEntity> fileUrls;
 
@@ -60,6 +61,7 @@ class CardEntity {
     required this.position,
     this.status = 'New',
     this.listId,
+    this.backgroundUrl,
     this.todoItems = const [],
     this.fileUrls = const [],
   });
@@ -72,6 +74,7 @@ class CardEntity {
     int? position,
     String? status,
     String? listId,
+    String? backgroundUrl,
     List<TodoItemEntity>? todoItems,
     List<FileUrlEntity>? fileUrls,
   }) {
@@ -83,6 +86,7 @@ class CardEntity {
       position: position ?? this.position,
       status: status ?? this.status,
       listId: listId ?? this.listId,
+      backgroundUrl: backgroundUrl ?? this.backgroundUrl,
       todoItems: todoItems ?? this.todoItems,
       fileUrls: fileUrls ?? this.fileUrls,
     );

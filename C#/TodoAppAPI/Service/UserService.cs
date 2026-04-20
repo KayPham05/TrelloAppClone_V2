@@ -1,4 +1,4 @@
-﻿using System.Net.WebSockets;
+using System.Net.WebSockets;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
 using TodoAppAPI.Data;
@@ -171,6 +171,38 @@ namespace TodoAppAPI.Service
                 user.StatusAccount = "Logout";
                 await _context.SaveChangesAsync();
             }
+        }
+
+        public async Task<AuthResponse> GetVerificationStatusAndResendIfExpiredAsync(string email)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+            if (user == null) return new AuthResponse { Message = "Account not found!" };
+
+            if (user.IsEmailVerified) return new AuthResponse { Message = "Email already verified!" };
+
+            var now = DateTime.UtcNow;
+
+            // Nếu chưa có thời gian hết hạn hoặc đã hết hạn
+            if (user.VerificationTokenExpiresAt == null || user.VerificationTokenExpiresAt <= now)
+            {
+                await ResendVerificationCodeAsync(email);
+                return new AuthResponse
+                {
+                    Message = "Mã xác thực đã hết hạn và đã được gửi lại tự động.",
+                    Email = email,
+                    RequiresVerification = true,
+                    ExpiresInSeconds = 300 // Thường là 5 phút trong ResendVerificationCodeAsync
+                };
+            }
+
+            var remaining = (int)(user.VerificationTokenExpiresAt.Value - now).TotalSeconds;
+            return new AuthResponse
+            {
+                Message = "Mã xác thực vẫn còn hiệu lực.",
+                Email = email,
+                RequiresVerification = true,
+                ExpiresInSeconds = remaining
+            };
         }
     }
 }

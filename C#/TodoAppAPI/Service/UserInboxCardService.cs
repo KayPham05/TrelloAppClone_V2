@@ -51,7 +51,8 @@ namespace TodoAppAPI.Service
                                 Position = uic.Card.Position,
                                 CreatedAt = uic.Card.CreatedAt,
                                 Status = uic.Card.Status,
-                                ListUId = uic.Card.ListUId
+                                ListUId = uic.Card.ListUId,
+                                BackgroundUrl = uic.Card.BackgroundUrl
                             }).ToListAsync();
             return cards;
 

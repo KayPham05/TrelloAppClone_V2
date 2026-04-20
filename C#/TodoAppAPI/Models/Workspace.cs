@@ -1,4 +1,4 @@
-﻿namespace TodoAppAPI.Models
+namespace TodoAppAPI.Models
 {
     public class Workspace
     {
