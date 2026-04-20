@@ -37,10 +37,16 @@ builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection("CloudinarySettings"));
 builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
 
+// 1. JWT Security Validation
+var jwtKey = builder.Configuration["Jwt:Key"];
+if (string.IsNullOrEmpty(jwtKey) || jwtKey == "REPLACE_WITH_YOUR_OWN_SECRET_MIN_32_CHARS" || jwtKey.Length < 32)
+{
+    throw new Exception("CRITICAL ERROR: Invalid JWT Key. Vui lòng cập nhật Jwt:Key trong appsettings.Development.json thành một mã bí mật từ 32 ký tự trở lên để chạy ứng dụng.");
+}
+
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
-        var key = builder.Configuration["Jwt:Key"];
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
@@ -49,10 +55,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateIssuerSigningKey = true,
             ValidIssuer = builder.Configuration["Jwt:Issuer"],
             ValidAudience = builder.Configuration["Jwt:Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key)),
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
             ClockSkew = TimeSpan.Zero
         };
-
     });
 
 builder.Services.AddAuthorization();
@@ -79,12 +84,17 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins(
-                "http://localhost:5173"   // React Vite
-              )
+        policy.WithOrigins("http://localhost:5173")
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();
+    });
+
+    options.AddPolicy("AllowAllMobile", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyHeader()
+              .AllowAnyMethod();
     });
 });
 
@@ -101,8 +111,15 @@ var app = builder.Build();
     app.UseSwaggerUI();
 
 
-//cấu hình CROSS
-app.UseCors("AllowFrontend");
+// 3. Sử dụng CORS
+if (app.Environment.IsDevelopment())
+{
+    app.UseCors("AllowAllMobile");
+}
+else 
+{
+    app.UseCors("AllowFrontend");
+}
 
 //app.UseHttpsRedirection();
 app.UseAuthentication();

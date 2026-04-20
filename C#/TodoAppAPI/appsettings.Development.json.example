@@ -1,4 +1,7 @@
 {
+  "ConnectionStrings": {
+    "TodosDatabase": "Server=TEN_MAY_CUA_BAN;Database=TodosDB;Trusted_Connection=True;TrustServerCertificate=True"
+  },
   "Logging": {
     "LogLevel": {
       "Default": "Information",
@@ -6,7 +9,7 @@
     }
   },
   "Jwt": {
-    "Key": "CHANGE_ME_IN_ENV_OR_DEV_SETTINGS",
+    "Key": "REPLACE_WITH_YOUR_OWN_SECRET_MIN_32_CHARS",
     "Issuer": "TodoAppAPI",
     "Audience": "TodoAppClient",
     "AccessTokenExpiryMinutes": 15
