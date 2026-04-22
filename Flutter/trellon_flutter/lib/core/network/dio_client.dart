@@ -9,8 +9,11 @@ class DioClient {
   late Dio _dio;
   late CookieJar cookieJar;
 
-  DioClient() {
-    cookieJar = CookieJar();
+  /// [persistentCookieJar] — nếu truyền vào thì dùng PersistCookieJar
+  /// (lưu cookie xuống disk), ngược lại fallback về in-memory CookieJar.
+  DioClient({CookieJar? persistentCookieJar}) {
+    cookieJar = persistentCookieJar ?? CookieJar();
+
     _dio = Dio(
       BaseOptions(
         baseUrl: ApiEndpoints.baseUrl,

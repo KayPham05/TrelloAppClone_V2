@@ -1,4 +1,4 @@
-﻿namespace TodoAppAPI.DTOs
+namespace TodoAppAPI.DTOs
 {
     public class AuthResponse
     {
@@ -12,5 +12,6 @@
         public bool RequiresVerification { get; set; }
         public bool IsTwoFactorEnabled { get; set; }
         public bool IsMember { get; set; }
+        public int? ExpiresInSeconds { get; set; }
     }
 }

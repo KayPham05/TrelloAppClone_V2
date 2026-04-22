@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using TodoAppAPI.DTOs;
 using TodoAppAPI.Interfaces;
 
@@ -135,21 +135,18 @@ namespace TodoAppAPI.Controllers
         [HttpGet("get-verification-status")]
         public async Task<IActionResult> GetVerificationStatus([FromQuery] string email)
         {
-            var user = await _userService.GetUserByEmail(email);
-            if (user == null) return NotFound("Không tìm thấy tài khoản.");
+            if (string.IsNullOrEmpty(email))
+                return BadRequest("Email không hợp lệ");
 
-            if (user.IsEmailVerified)
-                return Ok(new { verified = true });
-
-            if (user.VerificationTokenExpiresAt == null)
-                return Ok(new { verified = false, remainingSeconds = 0 });
-
-            var remaining = (int)(user.VerificationTokenExpiresAt.Value - DateTime.UtcNow).TotalSeconds;
-            return Ok(new
+            try
             {
-                verified = false,
-                remainingSeconds = Math.Max(0, remaining)
-            });
+                var result = await _userService.GetVerificationStatusAndResendIfExpiredAsync(email);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         [HttpPost("toggle-2fa")]

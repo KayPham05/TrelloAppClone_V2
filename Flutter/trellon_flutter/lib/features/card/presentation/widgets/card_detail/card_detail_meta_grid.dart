@@ -2,11 +2,25 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../../core/constants/app_colors.dart';
 import '../../../domain/entities/card_entity.dart';
+import 'label_picker_sheet.dart';
 
 class CardDetailMetaGrid extends StatelessWidget {
   final List<CardMemberEntity> members;
+  final List<CardLabelEntity> labels;
   final DateTime? dueDate;
-  const CardDetailMetaGrid({super.key, required this.members, this.dueDate});
+  final VoidCallback onAddMember;
+  final VoidCallback onAddLabel;
+  final Function(DateTime) onDateChanged;
+
+  const CardDetailMetaGrid({
+    super.key,
+    required this.members,
+    required this.labels,
+    this.dueDate,
+    required this.onAddMember,
+    required this.onAddLabel,
+    required this.onDateChanged,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +40,10 @@ class CardDetailMetaGrid extends StatelessWidget {
                   content: Row(
                     children: [
                       if(members.isEmpty)
-                        _buildAddButton(label: 'THÊM')
+                        GestureDetector(
+                          onTap: onAddMember,
+                          child: _buildAddButton(label: 'THÊM'),
+                        )
                       else ...[
                         for (int i = 0; i < (members.length > 3 ? 3 : members.length); i++)
                           _buildAvatar(
@@ -36,7 +53,10 @@ class CardDetailMetaGrid extends StatelessWidget {
                             overlap: i > 0,
                           ),
                         const SizedBox(width: 8),
-                        _buildAddButton(label: members.length > 3 ? '+${members.length - 3}' : null),
+                        GestureDetector(
+                          onTap: onAddMember,
+                          child: _buildAddButton(label: members.length > 3 ? '+${members.length - 3}' : null),
+                        ),
                       ],
                     ],
                   ),
@@ -53,64 +73,80 @@ class CardDetailMetaGrid extends StatelessWidget {
               runSpacing: 8,
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
-                _buildLabelChip('DESIGN', const Color(0xFFDBEAFE),
-                    const Color(0xFF1D4ED8)), // light blue
-                _buildLabelChip('URGENT', const Color(0xFFF3E8FF),
-                    const Color(0xFF7E22CE)), // light purple
-                _buildAddButton(isSmall: true),
+                ...labels.map((l) {
+                  final color = _parseHexColor(l.colorCode);
+                  return _buildLabelChip(l.title, color.withOpacity(0.2), color);
+                }),
+                GestureDetector(
+                  onTap: onAddLabel,
+                  child: _buildAddButton(isSmall: true),
+                ),
               ],
             ),
           ),
           const SizedBox(height: 24),
           // Due Date (Lịch trình)
-          _buildMetaSection(
-            title: 'LỊCH TRÌNH',
-            icon: Icons.calendar_today_rounded,
-            content: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Ngày bắt đầu',
-                      style: GoogleFonts.inter(
-                        fontSize: 12,
-                        color: AppColors.onSurfaceVariant,
+          GestureDetector(
+            onTap: () async {
+              final date = await showDatePicker(
+                context: context,
+                initialDate: dueDate ?? DateTime.now(),
+                firstDate: DateTime.now().subtract(const Duration(days: 365)),
+                lastDate: DateTime.now().add(const Duration(days: 365 * 2)),
+              );
+              if (date != null) {
+                onDateChanged(date);
+              }
+            },
+            child: _buildMetaSection(
+              title: 'LỊCH TRÌNH',
+              icon: Icons.calendar_today_rounded,
+              content: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Ngày bắt đầu',
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          color: AppColors.onSurfaceVariant,
+                        ),
                       ),
-                    ),
-                    Text(
-                      '12 Tháng 10, 2023',
-                      style: GoogleFonts.inter(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: const Color(0xFF1D4ED8),
+                      Text(
+                        'Hôm nay',
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF1D4ED8),
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Ngày hết hạn',
-                      style: GoogleFonts.inter(
-                        fontSize: 12,
-                        color: AppColors.onSurfaceVariant,
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Ngày hết hạn',
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          color: AppColors.onSurfaceVariant,
+                        ),
                       ),
-                    ),
-                    Text(
-                      dueDate != null ? '${dueDate!.day}/${dueDate!.month}/${dueDate!.year}' : 'Chưa thiết lập',
-                      style: GoogleFonts.inter(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: dueDate == null ? AppColors.onSurfaceVariant : const Color(0xFFB91C1C),
+                      Text(
+                        dueDate != null ? '${dueDate!.day}/${dueDate!.month}/${dueDate!.year}' : 'Chưa thiết lập',
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: dueDate == null ? AppColors.onSurfaceVariant : const Color(0xFFB91C1C),
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              ],
+                    ],
+                  ),
+                ],
+              ),
             ),
           )
         ],
@@ -219,21 +255,36 @@ class CardDetailMetaGrid extends StatelessWidget {
   }
 
   Widget _buildLabelChip(String text, Color bgColor, Color textColor) {
+    final bool hasText = text.isNotEmpty;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      padding: hasText 
+          ? const EdgeInsets.symmetric(horizontal: 14, vertical: 8)
+          : const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      constraints: hasText ? null : const BoxConstraints(minWidth: 40, minHeight: 24),
       decoration: BoxDecoration(
         color: bgColor,
         borderRadius: BorderRadius.circular(100),
       ),
-      child: Text(
-        text,
-        style: GoogleFonts.inter(
-          fontSize: 10,
-          fontWeight: FontWeight.w700,
-          color: textColor,
-          letterSpacing: 0.5,
-        ),
-      ),
+      child: hasText 
+          ? Text(
+              text,
+              style: GoogleFonts.inter(
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                color: textColor,
+                letterSpacing: 0.5,
+              ),
+            )
+          : const SizedBox.shrink(),
     );
+  }
+
+  Color _parseHexColor(String hexString) {
+    if (hexString.isEmpty) return Colors.grey;
+    final buffer = StringBuffer();
+    if (hexString.length == 6 || hexString.length == 7) buffer.write('ff');
+    buffer.write(hexString.replaceFirst('#', ''));
+    int? colorValue = int.tryParse(buffer.toString(), radix: 16);
+    return colorValue != null ? Color(colorValue) : Colors.grey;
   }
 }

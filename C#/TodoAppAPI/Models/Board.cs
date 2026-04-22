@@ -1,4 +1,4 @@
-﻿namespace TodoAppAPI.Models
+namespace TodoAppAPI.Models
 {
     public class Board
     {
@@ -8,6 +8,7 @@
         public bool IsPersonal { get; set; } = false;
         public string Visibility { get; set; } = "Private";
         public string Status { get; set; } = "Active";
+        public string? BackgroundUrl { get; set; }
 
         // FK - Owner
         public string UserUId { get; set; } = string.Empty;

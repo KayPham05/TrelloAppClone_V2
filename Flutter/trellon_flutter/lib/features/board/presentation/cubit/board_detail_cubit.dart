@@ -1,81 +1,140 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'board_detail_state.dart';
-import '../../domain/entities/list_entity.dart';
+import '../../../../core/data_sources/user_local_data_source.dart';
+import '../../../card/data/models/card_model.dart';
 import '../../../card/domain/entities/card_entity.dart';
 import '../../../card/domain/usecases/update_list_uid_usecase.dart';
+import '../../data/datasources/board_detail_remote_data_source.dart';
+import '../../data/models/list_model.dart';
+import '../../domain/entities/list_entity.dart';
+import 'board_detail_state.dart';
 
 class BoardDetailCubit extends Cubit<BoardDetailState> {
+  final BoardDetailRemoteDataSource dataSource;
+  final UserLocalDataSource userLocalDataSource;
   final UpdateListUIdUseCase updateListUIdUseCase;
 
-  // History copy state mapping rollback when calling API error
+  // Rollback snapshot for optimistic updates
   List<ListEntity>? _previousLists;
 
   BoardDetailCubit({
+    required this.dataSource,
+    required this.userLocalDataSource,
     required this.updateListUIdUseCase,
   }) : super(BoardDetailInitial());
 
-  /// Load Fake Data (Domain Entity format) vì Backend chưa có API getAllList()
-  Future<void> loadBoard(String boardId, String boardName) async {
+  // ─── Load Board (Real API) ─────────────────────────────────────────────────
+
+  /// Loads lists and cards from backend in parallel, then groups cards into lists.
+  Future<void> loadBoard(String boardId, String boardName, {String? backgroundUrl}) async {
     emit(BoardDetailLoading());
     try {
-      await Future.delayed(const Duration(milliseconds: 500)); // fake delay
-      
-      // Mock data wrapped in domain entities
-      final mockLists = [
-        ListEntity(
-          id: 'list_1',
-          name: 'Cần làm',
-          position: 0,
-          boardId: boardId,
-          cards: [
-            CardEntity(id: 'card_1_1', title: 'Tài liệu thiết kế hệ thống giao diện', position: 0, listId: 'list_1', description: 'Có label'),
-            CardEntity(id: 'card_1_2', title: 'Xem lại mockup trang landing hi-fi', position: 1, listId: 'list_1', dueDate: DateTime.now()),
-            CardEntity(id: 'card_1_3', title: 'Lập kế hoạch ngân sách Q4', position: 2, listId: 'list_1'),
-            CardEntity(id: 'card_1_4', title: 'Xem lại chiến lược mạng xã hội', position: 3, listId: 'list_1'),
-          ],
-        ),
-        ListEntity(
-          id: 'list_2',
-          name: 'Đang làm',
-          position: 1,
-          boardId: boardId,
-          cards: [
-            CardEntity(id: 'card_2_1', title: 'Tích hợp API cổng thanh toán', position: 0, listId: 'list_2', dueDate: DateTime.now().add(const Duration(days: 2))),
-            CardEntity(id: 'card_2_2', title: 'Thiết kế onboarding người dùng', position: 1, listId: 'list_2'),
-            CardEntity(id: 'card_2_3', title: 'Viết unit test cho auth module', position: 2, listId: 'list_2'),
-            CardEntity(id: 'card_2_4', title: 'Cập nhật chính sách bảo mật', position: 3, listId: 'list_2'),
-          ],
-        ),
-        ListEntity(
-          id: 'list_3',
-          name: 'Hoàn thành',
-          position: 2,
-          boardId: boardId,
-          cards: [
-            CardEntity(id: 'card_3_1', title: 'Thiết lập CI/CD pipeline', position: 0, listId: 'list_3'),
-            CardEntity(id: 'card_3_2', title: 'Tái cấu trúc lớp service backend', position: 1, listId: 'list_3'),
-            CardEntity(id: 'card_3_3', title: 'Phỏng vấn người dùng về UX', position: 2, listId: 'list_3'),
-          ],
-        ),
-      ];
+      // Fetch lists AND cards in parallel
+      final results = await Future.wait([
+        dataSource.getLists(boardId),
+        dataSource.getCardsByBoard(boardId),
+      ]);
+
+      final listModels = results[0] as List<ListModel>;
+      final cardModels = results[1] as List<CardModel>;
+
+      // Convert cards to entities
+      final cards = cardModels.map((c) => c.toEntity()).toList();
+
+      // Group cards by their listId
+      final Map<String, List<CardEntity>> cardsByList = {};
+      for (final card in cards) {
+        final key = card.listId ?? '';
+        cardsByList.putIfAbsent(key, () => []).add(card);
+      }
+
+      // Build ListEntity list — each list gets its own cards, sorted by position
+      final lists = listModels.map((l) {
+        final listCards = List<CardEntity>.from(cardsByList[l.id] ?? [])
+          ..sort((a, b) => a.position.compareTo(b.position));
+        return ListEntity(
+          id: l.id,
+          name: l.name,
+          position: l.position,
+          status: l.status,
+          boardId: l.boardId,
+          cards: listCards,
+        );
+      }).toList()
+        ..sort((a, b) => a.position.compareTo(b.position));
 
       emit(BoardDetailLoaded(
         boardId: boardId,
         boardName: boardName,
-        lists: mockLists,
+        backgroundUrl: backgroundUrl,
+        lists: lists,
       ));
     } catch (e) {
       emit(BoardDetailError(e.toString()));
     }
   }
 
-  void clearTransientError() {
-    if (state is BoardDetailLoaded) {
-      final currentState = state as BoardDetailLoaded;
-      emit(currentState.copyWith(clearTransientError: true));
+  // ─── Create List ───────────────────────────────────────────────────────────
+
+  Future<void> createList(String name) async {
+    final current = state;
+    if (current is! BoardDetailLoaded) return;
+    try {
+      final userUId = await userLocalDataSource.getUserId() ?? '';
+      final position = current.lists.isEmpty ? 0 : current.lists.last.position + 1;
+      final newListModel = await dataSource.createList(
+        boardId: current.boardId,
+        name: name,
+        userUId: userUId,
+        position: position,
+      );
+      final newList = ListEntity(
+        id: newListModel.id,
+        name: newListModel.name,
+        position: newListModel.position,
+        status: newListModel.status,
+        boardId: newListModel.boardId,
+        cards: const [],
+      );
+      emit(current.copyWith(lists: [...current.lists, newList]));
+    } catch (_) {
+      // Silently fail — user stays in current state
     }
   }
+
+  // ─── Create Card ───────────────────────────────────────────────────────────
+
+  Future<void> createCard({required String listId, required String title}) async {
+    final current = state;
+    if (current is! BoardDetailLoaded) return;
+    try {
+      final listIndex = current.lists.indexWhere((l) => l.id == listId);
+      if (listIndex < 0) return;
+      final position = current.lists[listIndex].cards.length;
+      await dataSource.createCard(listId: listId, title: title, position: position);
+      // Reload to get the real card ID from backend
+      await loadBoard(current.boardId, current.boardName, backgroundUrl: current.backgroundUrl);
+    } catch (_) {
+      // Silently fail
+    }
+  }
+
+  // ─── Delete List ──────────────────────────────────────────────────────────
+
+  Future<void> deleteList(String listId) async {
+    final current = state;
+    if (current is! BoardDetailLoaded) return;
+    try {
+      final userUId = await userLocalDataSource.getUserId() ?? '';
+      await dataSource.deleteList(listId: listId, userUId: userUId);
+      final updated = current.lists.where((l) => l.id != listId).toList();
+      emit(current.copyWith(lists: updated));
+    } catch (_) {
+      // Silently fail
+    }
+  }
+
+  // ─── Move Card (Optimistic + API) ─────────────────────────────────────────
 
   void moveCard({
     required CardEntity card,
@@ -86,7 +145,6 @@ class BoardDetailCubit extends Cubit<BoardDetailState> {
     if (state is! BoardDetailLoaded) return;
     final currentState = state as BoardDetailLoaded;
 
-    // Lưu previous state cho rollback
     _previousLists = List.from(currentState.lists);
 
     try {
@@ -94,44 +152,35 @@ class BoardDetailCubit extends Cubit<BoardDetailState> {
 
       final sourceListIdx = newLists.indexWhere((l) => l.id == sourceListId);
       final targetListIdx = newLists.indexWhere((l) => l.id == targetListId);
-
       if (sourceListIdx == -1 || targetListIdx == -1) return;
 
+      // Remove from source
       final sourceList = newLists[sourceListIdx];
-      final sourceCards = List<CardEntity>.from(sourceList.cards);
-      sourceCards.removeWhere((c) => c.id == card.id);
-      
-      // Update source
+      final sourceCards = List<CardEntity>.from(sourceList.cards)
+        ..removeWhere((c) => c.id == card.id);
       newLists[sourceListIdx] = sourceList.copyWith(cards: sourceCards);
 
+      // Insert into target
       final targetList = newLists[targetListIdx];
       final targetCards = List<CardEntity>.from(targetList.cards);
-
-      // Thêm bài vào insertIndex
       final updatedCard = card.copyWith(listId: targetListId);
-      // Validate index
-      final safeIndex = (insertIndex >= 0 && insertIndex <= targetCards.length) 
-        ? insertIndex 
-        : targetCards.length;
-        
+      final safeIndex = (insertIndex >= 0 && insertIndex <= targetCards.length)
+          ? insertIndex
+          : targetCards.length;
       targetCards.insert(safeIndex, updatedCard);
-      
-      // Cập nhật các vị trí sau khi insert
+
+      // Re-number positions
       for (var i = 0; i < targetCards.length; i++) {
         targetCards[i] = targetCards[i].copyWith(position: i);
       }
-
-      // Update target
       newLists[targetListIdx] = targetList.copyWith(cards: targetCards);
 
-      // Phát state mới (Optimistic update)
+      // Optimistic update — immediate UI feedback
       emit(currentState.copyWith(lists: newLists));
 
-      // TODO: Gắn API call thực tế với updateListUIdUseCase và xử lí Fallback.
-      // Vì Backend không có List endpoints hiện tại, chúng ta giữ mock.
-
+      // API call — async, rollback on error
+      _persistMoveCard(card.id, targetListId, currentState);
     } catch (e) {
-      // Rollback
       if (_previousLists != null) {
         emit(currentState.copyWith(
           lists: _previousLists,
@@ -143,6 +192,24 @@ class BoardDetailCubit extends Cubit<BoardDetailState> {
     }
   }
 
+  Future<void> _persistMoveCard(
+    String cardId,
+    String newListId,
+    BoardDetailLoaded snapshotOnError,
+  ) async {
+    try {
+      final userUId = await userLocalDataSource.getUserId() ?? '';
+      await dataSource.moveCard(cardId: cardId, newListId: newListId, userUId: userUId);
+    } catch (_) {
+      // Rollback to snapshot
+      if (state is BoardDetailLoaded) {
+        emit(snapshotOnError.copyWith(transientError: 'Lỗi di chuyển thẻ. Đã hoàn tác.'));
+      }
+    }
+  }
+
+  // ─── Move List (Optimistic + API reorder) ─────────────────────────────────
+
   void moveList({
     required ListEntity list,
     required int insertIndex,
@@ -153,21 +220,24 @@ class BoardDetailCubit extends Cubit<BoardDetailState> {
     _previousLists = List.from(currentState.lists);
 
     try {
-      final newLists = List<ListEntity>.from(currentState.lists);
-      
-      newLists.removeWhere((l) => l.id == list.id);
-      
+      final newLists = List<ListEntity>.from(currentState.lists)
+        ..removeWhere((l) => l.id == list.id);
+
       final safeIndex = (insertIndex >= 0 && insertIndex <= newLists.length)
           ? insertIndex
           : newLists.length;
-          
       newLists.insert(safeIndex, list);
-      
+
+      // Re-number positions
       for (var i = 0; i < newLists.length; i++) {
         newLists[i] = newLists[i].copyWith(position: i);
       }
-      
+
+      // Optimistic update
       emit(currentState.copyWith(lists: newLists));
+
+      // API call async
+      _persistReorderLists(currentState.boardId, newLists, currentState);
     } catch (e) {
       if (_previousLists != null) {
         emit(currentState.copyWith(
@@ -177,6 +247,39 @@ class BoardDetailCubit extends Cubit<BoardDetailState> {
       }
     } finally {
       _previousLists = null;
+    }
+  }
+
+  Future<void> _persistReorderLists(
+    String boardId,
+    List<ListEntity> updatedLists,
+    BoardDetailLoaded snapshotOnError,
+  ) async {
+    try {
+      // Convert to ListModel for the data source
+      final listModels = updatedLists
+          .map((l) => ListModel(
+                id: l.id,
+                name: l.name,
+                position: l.position,
+                status: l.status,
+                boardId: l.boardId,
+              ))
+          .toList();
+      await dataSource.reorderLists(boardId: boardId, lists: listModels);
+    } catch (_) {
+      if (state is BoardDetailLoaded) {
+        emit(snapshotOnError.copyWith(transientError: 'Lỗi sắp xếp cột. Đã hoàn tác.'));
+      }
+    }
+  }
+
+  // ─── Transient Error Control ───────────────────────────────────────────────
+
+  void clearTransientError() {
+    if (state is BoardDetailLoaded) {
+      final currentState = state as BoardDetailLoaded;
+      emit(currentState.copyWith(clearTransientError: true));
     }
   }
 }

@@ -58,6 +58,9 @@ namespace TodoAppAPI.Migrations
                         .HasMaxLength(128)
                         .HasColumnType("nvarchar(128)");
 
+                    b.Property<string>("BackgroundUrl")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("BoardName")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -144,6 +147,9 @@ namespace TodoAppAPI.Migrations
                         .HasMaxLength(128)
                         .HasColumnType("nvarchar(128)");
 
+                    b.Property<string>("BackgroundUrl")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")
@@ -179,6 +185,38 @@ namespace TodoAppAPI.Migrations
                     b.HasIndex("ListUId");
 
                     b.ToTable("Cards", (string)null);
+                });
+
+            modelBuilder.Entity("TodoAppAPI.Models.CardLabel", b =>
+                {
+                    b.Property<string>("CardLabelUId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("CardUId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<string>("ColorCode")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("CardLabelUId");
+
+                    b.HasIndex("CardUId");
+
+                    b.ToTable("CardLabels");
                 });
 
             modelBuilder.Entity("TodoAppAPI.Models.CardMember", b =>
@@ -774,6 +812,17 @@ namespace TodoAppAPI.Migrations
                     b.Navigation("List");
                 });
 
+            modelBuilder.Entity("TodoAppAPI.Models.CardLabel", b =>
+                {
+                    b.HasOne("TodoAppAPI.Models.Card", "Card")
+                        .WithMany("CardLabels")
+                        .HasForeignKey("CardUId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Card");
+                });
+
             modelBuilder.Entity("TodoAppAPI.Models.CardMember", b =>
                 {
                     b.HasOne("TodoAppAPI.Models.Card", "Card")
@@ -972,6 +1021,8 @@ namespace TodoAppAPI.Migrations
             modelBuilder.Entity("TodoAppAPI.Models.Card", b =>
                 {
                     b.Navigation("Activities");
+
+                    b.Navigation("CardLabels");
 
                     b.Navigation("CardMembers");
 

@@ -8,6 +8,7 @@ class BoardEntity {
   final String workspaceName;
   final String? coverColor; // hex color string for UI
   final String status;
+  final String? backgroundUrl;
 
   const BoardEntity({
     required this.id,
@@ -18,5 +19,6 @@ class BoardEntity {
     required this.workspaceName,
     this.coverColor,
     this.status = 'Active',
+    this.backgroundUrl,
   });
 }

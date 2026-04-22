@@ -41,6 +41,18 @@ class FileUrlEntity {
   }
 }
 
+class CardLabelEntity {
+  final String id;
+  final String title;
+  final String colorCode;
+
+  const CardLabelEntity({
+    required this.id,
+    required this.title,
+    required this.colorCode,
+  });
+}
+
 class CardEntity {
   final String id;
   final String title;
@@ -49,8 +61,12 @@ class CardEntity {
   final int position;
   final String status;
   final String? listId;
+  final String? backgroundUrl;
   final List<TodoItemEntity> todoItems;
   final List<FileUrlEntity> fileUrls;
+  final List<CardLabelEntity> labels;
+  final List<CommentEntity> comments;
+  final List<CardMemberEntity> members;
 
   const CardEntity({
     required this.id,
@@ -60,8 +76,12 @@ class CardEntity {
     required this.position,
     this.status = 'New',
     this.listId,
+    this.backgroundUrl,
     this.todoItems = const [],
     this.fileUrls = const [],
+    this.labels = const [],
+    this.comments = const [],
+    this.members = const [],
   });
 
   CardEntity copyWith({
@@ -72,8 +92,12 @@ class CardEntity {
     int? position,
     String? status,
     String? listId,
+    String? backgroundUrl,
     List<TodoItemEntity>? todoItems,
     List<FileUrlEntity>? fileUrls,
+    List<CardLabelEntity>? labels,
+    List<CommentEntity>? comments,
+    List<CardMemberEntity>? members,
   }) {
     return CardEntity(
       id: id ?? this.id,
@@ -83,8 +107,12 @@ class CardEntity {
       position: position ?? this.position,
       status: status ?? this.status,
       listId: listId ?? this.listId,
+      backgroundUrl: backgroundUrl ?? this.backgroundUrl,
       todoItems: todoItems ?? this.todoItems,
       fileUrls: fileUrls ?? this.fileUrls,
+      labels: labels ?? this.labels,
+      comments: comments ?? this.comments,
+      members: members ?? this.members,
     );
   }
 }

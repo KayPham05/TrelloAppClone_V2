@@ -37,14 +37,11 @@ class _VerifyViewState extends State<VerifyView> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (!_emailLoaded) {
-      final args = ModalRoute.of(context)?.settings.arguments;
-      if (args is String) {
-        _email = args;
-        _emailLoaded = true;
-        // Bắt đầu đếm ngược 5 phút khi vào trang
-        context.read<VerifyCubit>().startCountdown(seconds: 300);
-      }
+    final args = ModalRoute.of(context)!.settings.arguments;
+    if (args is String) {
+      _email = args;
+      // Kiểm tra trạng thái mã OTP ngay khi vào trang (tự động gửi lại nếu hết hạn)
+      context.read<VerifyCubit>().checkOtpStatus(_email);
     }
   }
 
@@ -68,38 +65,12 @@ class _VerifyViewState extends State<VerifyView> {
     context.read<VerifyCubit>().verify(email: _email, code: otp);
   }
 
-  /// Chuyển focus sang ô kế tiếp khi nhập, hoặc ô trước khi xóa
-  void _onOtpChanged(int index, String value) {
-    if (value.isNotEmpty) {
-      // Nhập xong, nhảy sang ô tiếp theo
-      if (index < 5) {
-        _focusNodes[index + 1].requestFocus();
-      } else {
-        // Ô cuối: ẩn bàn phím
-        _focusNodes[index].unfocus();
-      }
-    }
-    setState(() {});
-  }
-
-  /// Xử lý phím Backspace khi controller rỗng → quay về ô trước
-  void _onKeyEvent(int index, KeyEvent event) {
-    if (event is KeyDownEvent &&
-        event.logicalKey == LogicalKeyboardKey.backspace &&
-        _controllers[index].text.isEmpty &&
-        index > 0) {
-      _focusNodes[index - 1].requestFocus();
-      _controllers[index - 1].clear();
-      setState(() {});
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return BlocListener<VerifyCubit, VerifyState>(
       listener: (context, state) {
         if (state is VerifySuccess) {
-          Navigator.pushReplacementNamed(context, '/home');
+          Navigator.pushReplacementNamed(context, '/introduction');
         } else if (state is ResendSuccess) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Đã gửi lại mã xác minh thành công')),
@@ -118,7 +89,7 @@ class _VerifyViewState extends State<VerifyView> {
         body: SafeArea(
           child: SingleChildScrollView(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
+              padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Column(
                 children: [
                   const SizedBox(height: 60),
@@ -133,59 +104,38 @@ class _VerifyViewState extends State<VerifyView> {
   }
 
   Widget _buildVerifyCard() {
-    return BlocBuilder<VerifyCubit, VerifyState>(
-      builder: (context, state) {
-        final isLoading = state is VerifyLoading;
-        final isResending = state is ResendLoading;
-
-        // Tính seconds còn lại
-        int seconds = 0;
-        if (state is VerifyCountdown) {
-          seconds = state.seconds;
-        }
-        // VerifyCountdownDone → seconds = 0
-
-        // Nút "Gửi lại mã" chỉ bật khi còn dưới 4 phút (< 240 giây)
-        // VÀ đồng hồ đã kết thúc (VerifyCountdownDone, tức seconds == 0)
-        final canResend = !isResending && seconds == 0;
-
-        return Container(
-          padding: const EdgeInsets.all(28),
-          decoration: BoxDecoration(
-            color: AppColors.surfaceContainerLowest,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: AppColors.cardShadow,
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 28),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceContainerLowest,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: AppColors.cardShadow,
+      ),
+      child: Column(
+        children: [
+          Text(
+            'Xác minh Email',
+            style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.bold),
           ),
-          child: Column(
-            children: [
-              // ─── Tiêu đề ───
-              Text(
-                'Xác minh Email',
-                style: GoogleFonts.inter(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // ─── Email ───
-              Text(
-                'Mã xác minh đã được gửi đến:',
-                textAlign: TextAlign.center,
-                style: GoogleFonts.inter(color: AppColors.onSurfaceVariant),
-              ),
-              Text(
-                _emailLoaded ? _email : '',
-                style: GoogleFonts.inter(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 24),
-
-              // ─── 6 ô OTP ───
-              _buildOtpRow(),
-              const SizedBox(height: 24),
-
-              // ─── Nút Xác minh ───
-              SizedBox(
+          const SizedBox(height: 16),
+          Text(
+            'Mã xác minh đã được gửi đến:',
+            textAlign: TextAlign.center,
+            style: GoogleFonts.inter(color: AppColors.onSurfaceVariant),
+          ),
+          Text(
+            _email,
+            style: GoogleFonts.inter(fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 24),
+          _buildOtpRow(),
+          const SizedBox(height: 24),
+          BlocBuilder<VerifyCubit, VerifyState>(
+            buildWhen: (previous, current) => 
+                current is VerifyLoading || current is VerifyError || current is VerifyInitial,
+            builder: (context, state) {
+              final isLoading = state is VerifyLoading;
+              return SizedBox(
                 width: double.infinity,
                 height: 48,
                 child: ElevatedButton(
@@ -208,74 +158,44 @@ class _VerifyViewState extends State<VerifyView> {
                         )
                       : const Text('Xác minh'),
                 ),
-              ),
-              const SizedBox(height: 16),
+              );
+            },
+          ),
+          const SizedBox(height: 16),
+          BlocBuilder<VerifyCubit, VerifyState>(
+            buildWhen: (previous, current) => 
+                current is VerifyCountdown || current is VerifyCountdownDone || current is ResendLoading || current is ResendSuccess,
+            builder: (context, state) {
+              int seconds = 0;
+              if (state is VerifyCountdown) {
+                seconds = state.seconds;
+              }
+              final isResending = state is ResendLoading;
 
-              // ─── Đồng hồ đếm ngược ───
-              Text(
-                seconds > 0
-                    ? 'Mã hết hạn sau: ${seconds ~/ 60}:${(seconds % 60).toString().padLeft(2, '0')}'
-                    : 'Mã đã hết hạn',
-                style: GoogleFonts.inter(
-                  color: AppColors.error,
-                  fontSize: 13,
-                ),
-              ),
-              const SizedBox(height: 8),
-
-              // ─── Nút Gửi lại mã ───
-              // Chỉ bật khi mã đã hết hạn (seconds == 0)
-              TextButton(
-                onPressed: canResend
-                    ? () {
-                        context.read<VerifyCubit>().resend(email: _email);
-                      }
-                    : () {
-                        // Vẫn còn thời gian → thông báo
-                        if (seconds >= 240) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                'Chỉ có thể gửi lại mã khi còn dưới 4 phút',
-                              ),
-                            ),
-                          );
-                        }
-                      },
-                child: Text(
-                  isResending ? 'Đang gửi...' : 'Gửi lại mã',
-                  style: TextStyle(
-                    color: canResend
-                        ? AppColors.primary
-                        : AppColors.onSurfaceVariant,
+              return Column(
+                children: [
+                  Text(
+                    'Mã hết hạn sau: ${seconds ~/ 60}:${(seconds % 60).toString().padLeft(2, '0')}',
+                    style: GoogleFonts.inter(color: AppColors.error, fontSize: 13),
                   ),
-                ),
-              ),
-
-              const Divider(height: 24),
-
-              // ─── Nút Trở lại ───
-              SizedBox(
-                width: double.infinity,
-                height: 44,
-                child: OutlinedButton.icon(
-                  onPressed: () =>
-                      Navigator.pushReplacementNamed(context, '/login'),
-                  icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 16),
-                  label: const Text('Trở lại đăng nhập'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.onSurface,
-                    side: BorderSide(color: AppColors.onSurfaceVariant.withAlpha(80)),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+                  const SizedBox(height: 8),
+                  TextButton(
+                    onPressed: (isResending || seconds > 0) 
+                      ? null 
+                      : () => context.read<VerifyCubit>().resend(email: _email),
+                    child: Text(
+                      isResending ? 'Đang gửi...' : 'Gửi lại mã',
+                      style: TextStyle(
+                        color: (isResending || seconds > 0) ? AppColors.onSurfaceVariant : AppColors.primary,
+                      ),
                     ),
                   ),
-                ),
-              ),
-            ],
+                ],
+              );
+            },
           ),
-        );
-      },
+        ],
+      ),
     );
   }
 
@@ -284,46 +204,46 @@ class _VerifyViewState extends State<VerifyView> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: List.generate(6, (i) {
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4),
-          child: SizedBox(
-            width: 44,
-            height: 52,
-            child: KeyboardListener(
-              focusNode: FocusNode(),
-              onKeyEvent: (event) => _onKeyEvent(i, event),
-              child: TextField(
-                controller: _controllers[i],
-                focusNode: _focusNodes[i],
-                textAlign: TextAlign.center,
-                keyboardType: TextInputType.number,
-                maxLength: 1,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                style: GoogleFonts.inter(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                ),
-                decoration: InputDecoration(
-                  counterText: '',
-                  filled: true,
-                  fillColor: AppColors.surfaceContainerLow,
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(
-                      color: AppColors.onSurfaceVariant.withAlpha(60),
-                    ),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(
-                      color: AppColors.primary,
-                      width: 2,
-                    ),
-                  ),
-                ),
-                onChanged: (v) => _onOtpChanged(i, v),
+        return Container(
+          margin: const EdgeInsets.symmetric(horizontal: 4),
+          width: 40,
+          child: TextFormField(
+            controller: _controllers[i],
+            focusNode: _focusNodes[i],
+            autofocus: i == 0,
+            textAlign: TextAlign.center,
+            keyboardType: TextInputType.number,
+            maxLength: 1,
+            style: GoogleFonts.inter(
+              fontSize: 20, 
+              fontWeight: FontWeight.bold,
+              color: AppColors.onSurface,
+            ),
+            inputFormatters: [
+              FilteringTextInputFormatter.digitsOnly,
+            ],
+            decoration: InputDecoration(
+              counterText: '',
+              filled: true,
+              fillColor: AppColors.surfaceContainerLow,
+              contentPadding: EdgeInsets.zero,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8), 
+                borderSide: BorderSide.none,
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: AppColors.primaryContainer, width: 2),
               ),
             ),
+            onChanged: (v) {
+              if (v.length == 1 && i < 5) {
+                _focusNodes[i + 1].requestFocus();
+              } else if (v.isEmpty && i > 0) {
+                _focusNodes[i - 1].requestFocus();
+              }
+              setState(() {});
+            },
           ),
         );
       }),

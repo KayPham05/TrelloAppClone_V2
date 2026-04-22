@@ -9,6 +9,8 @@ namespace TodoAppAPI.DTOs
         public int Position { get; set; }
         public DateTime CreatedAt { get; set; }
         public string Status { get; set; } = string.Empty;
+        public string? BackgroundUrl { get; set; }
+
         public string? ListUId { get; set; }
     }
 }

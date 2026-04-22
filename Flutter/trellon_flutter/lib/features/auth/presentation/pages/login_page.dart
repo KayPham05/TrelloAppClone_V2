@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/data_sources/user_local_data_source.dart';
 import '../../../../init_dependencies.dart';
 import '../cubit/login_cubit.dart';
 
@@ -48,9 +49,15 @@ class _LoginViewState extends State<LoginView> {
   @override
   Widget build(BuildContext context) {
     return BlocListener<LoginCubit, LoginState>(
-      listener: (context, state) {
+      listener: (context, state) async {
         if (state is LoginSuccess) {
-          Navigator.pushReplacementNamed(context, '/home');
+          final localDataSource = serviceLocator<UserLocalDataSource>();
+          final hasSeen = await localDataSource.getHasSeenIntroduction();
+          if (!hasSeen) {
+            if (context.mounted) Navigator.pushReplacementNamed(context, '/introduction');
+          } else {
+            if (context.mounted) Navigator.pushReplacementNamed(context, '/home');
+          }
         } else if (state is LoginRequiresVerification) {
           Navigator.pushReplacementNamed(context, '/verify', arguments: state.email);
         } else if (state is LoginError) {

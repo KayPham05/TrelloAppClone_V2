@@ -20,4 +20,6 @@ abstract class AuthRepository {
   });
 
   Future<void> resendCode({required String email});
+
+  Future<int> checkOtpStatus({required String email});
 }

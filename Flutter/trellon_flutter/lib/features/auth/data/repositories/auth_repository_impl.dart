@@ -72,7 +72,7 @@ class AuthRepositoryImpl implements AuthRepository {
         final requiresVerification = data['requiresVerification'] as bool? ?? false;
 
         // Email chưa verify → trả entity với flag để cubit xử lý
-        if (requiresVerification || (token == null || token.isEmpty)) {
+        if (requiresVerification) {
           return UserEntity(
             id: '',
             userName: '',
@@ -159,6 +159,22 @@ class AuthRepositoryImpl implements AuthRepository {
         errorMsg = "Lỗi kết nối Server";
       }
       throw Exception(errorMsg);
+    }
+  }
+
+  @override
+  Future<int> checkOtpStatus({required String email}) async {
+    try {
+      final response = await dio.get(
+        '${ApiEndpoints.checkOtpStatus}?email=${Uri.encodeComponent(email)}',
+      );
+      if (response.statusCode == 200) {
+        final data = response.data;
+        return data['expiresInSeconds'] ?? 0;
+      }
+      return 0;
+    } on DioException {
+      return 0;
     }
   }
 }

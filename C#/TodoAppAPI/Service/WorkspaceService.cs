@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using TodoAppAPI.Data;
 using TodoAppAPI.DTOs;
 using TodoAppAPI.Interfaces;
@@ -97,6 +97,7 @@ namespace TodoAppAPI.Service
 
             workspace.Name = name;
             workspace.Description = description;
+            
 
             await _context.SaveChangesAsync();
             return true;
@@ -115,6 +116,8 @@ namespace TodoAppAPI.Service
                     CreatedAt = w.CreatedAt,
                     Status = w.Status,
                     OwnerName = w.Owner.UserName,
+                    OwnerUId = w.OwnerUId,
+                    Type = "team", // Default to team for these workspaces
                     Members = w.Members.Select(m => new MemberDTO
                     {
                         UserUId = m.UserUId,

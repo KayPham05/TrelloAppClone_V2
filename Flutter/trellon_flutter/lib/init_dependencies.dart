@@ -1,5 +1,7 @@
 import 'package:get_it/get_it.dart';
 import 'package:dio/dio.dart';
+import 'package:cookie_jar/cookie_jar.dart';
+import 'package:path_provider/path_provider.dart';
 import 'core/network/dio_client.dart';
 import 'core/data_sources/user_local_data_source.dart';
 import 'features/auth/data/repositories/auth_repository_impl.dart';
@@ -24,20 +26,115 @@ import 'features/card/domain/usecases/upload_attachment_usecase.dart';
 import 'features/card/domain/usecases/get_attachments_usecase.dart';
 import 'features/card/domain/usecases/delete_attachment_usecase.dart';
 import 'features/card/domain/usecases/update_attachment_description_usecase.dart';
+import 'features/card/domain/usecases/upload_card_cover_usecase.dart';
 import 'features/card/presentation/cubit/card_detail_cubit.dart';
-import 'features/card/domain/usecases/update_list_uid_usecase.dart';
+import 'features/board/data/datasources/board_remote_data_source.dart';
+import 'features/board/data/datasources/board_detail_remote_data_source.dart';
+import 'features/board/data/repositories/board_repository_impl.dart';
+import 'features/board/domain/repositories/board_repository.dart';
+import 'features/board/domain/usecases/get_recent_boards_usecase.dart';
+import 'features/board/domain/usecases/create_board_usecase.dart';
+import 'features/board/domain/usecases/get_personal_boards_usecase.dart';
+import 'features/board/presentation/cubit/board_cubit.dart';
 import 'features/board/presentation/cubit/board_detail_cubit.dart';
+import 'features/workspace/data/datasources/workspace_remote_data_source.dart';
+import 'features/workspace/data/repositories/workspace_repository_impl.dart';
+import 'features/workspace/domain/repositories/workspace_repository.dart';
+import 'features/workspace/domain/usecases/get_workspaces_usecase.dart';
+import 'features/workspace/domain/usecases/create_workspace_usecase.dart';
+import 'features/workspace/domain/usecases/update_workspace_usecase.dart';
+import 'features/workspace/domain/usecases/delete_workspace_usecase.dart';
+import 'features/workspace/domain/usecases/add_workspace_member_usecase.dart';
+import 'features/workspace/domain/usecases/get_workspace_boards_usecase.dart';
+import 'features/workspace/presentation/cubit/workspace_cubit.dart';
+import 'features/card/domain/usecases/update_list_uid_usecase.dart';
+
 final serviceLocator = GetIt.instance;
 
 Future<void> initDependencies() async {
-  // Core
-  serviceLocator.registerLazySingleton<Dio>(() => DioClient().instance);
+  // Core — khởi tạo PersistCookieJar để cookie refreshToken tồn tại qua restart
+  final appDir = await getApplicationDocumentsDirectory();
+  final cookieJar = PersistCookieJar(
+    storage: FileStorage('${appDir.path}/.cookies/'),
+  );
+  final dioClient = DioClient(persistentCookieJar: cookieJar);
+
+  serviceLocator.registerLazySingleton<Dio>(() => dioClient.instance);
   serviceLocator.registerLazySingleton<UserLocalDataSource>(() => UserLocalDataSource());
 
   _initAuth();
   _initInbox();
   _initCard();
   _initBoard();
+  _initWorkspace();
+}
+
+void _initWorkspace() {
+  // Data Source
+  serviceLocator.registerLazySingleton<WorkspaceRemoteDataSource>(
+    () => WorkspaceRemoteDataSource(client: serviceLocator<Dio>()),
+  );
+
+  // Repository
+  serviceLocator.registerLazySingleton<WorkspaceRepository>(
+    () => WorkspaceRepositoryImpl(remoteDataSource: serviceLocator<WorkspaceRemoteDataSource>()),
+  );
+
+  // UseCases
+  serviceLocator.registerLazySingleton(() => GetWorkspacesUseCase(serviceLocator()));
+  serviceLocator.registerLazySingleton(() => CreateWorkspaceUseCase(serviceLocator()));
+  serviceLocator.registerLazySingleton(() => UpdateWorkspaceUseCase(serviceLocator()));
+  serviceLocator.registerLazySingleton(() => DeleteWorkspaceUseCase(serviceLocator()));
+  serviceLocator.registerLazySingleton(() => AddWorkspaceMemberUseCase(serviceLocator()));
+  serviceLocator.registerLazySingleton(() => GetWorkspaceBoardsUseCase(serviceLocator()));
+
+  // Cubit
+  serviceLocator.registerFactory(() => WorkspaceCubit(
+    getWorkspacesUseCase: serviceLocator(),
+    createWorkspaceUseCase: serviceLocator(),
+    updateWorkspaceUseCase: serviceLocator(),
+    deleteWorkspaceUseCase: serviceLocator(),
+    addWorkspaceMemberUseCase: serviceLocator(),
+    createBoardUseCase: serviceLocator(),
+    userLocalDataSource: serviceLocator(),
+  ));
+}
+
+void _initBoard() {
+  // Data Source
+  serviceLocator.registerLazySingleton<BoardRemoteDataSource>(
+    () => BoardRemoteDataSourceImpl(client: serviceLocator<Dio>()),
+  );
+
+  serviceLocator.registerLazySingleton<BoardDetailRemoteDataSource>(
+    () => BoardDetailRemoteDataSource(dio: serviceLocator<Dio>()),
+  );
+
+  // Repository
+  serviceLocator.registerLazySingleton<BoardRepository>(
+    () => BoardRepositoryImpl(remoteDataSource: serviceLocator<BoardRemoteDataSource>()),
+  );
+
+  // UseCases
+  serviceLocator.registerLazySingleton(() => GetRecentBoardsUseCase(serviceLocator()));
+  serviceLocator.registerLazySingleton(() => CreateBoardUseCase(serviceLocator()));
+  serviceLocator.registerLazySingleton(() => GetPersonalBoardsUseCase(serviceLocator()));
+
+  // BoardCubit
+  serviceLocator.registerFactory(() => BoardCubit(
+    getPersonalBoardsUseCase: serviceLocator(),
+    getWorkspacesUseCase: serviceLocator(),
+    getRecentBoardsUseCase: serviceLocator(),
+    createBoardUseCase: serviceLocator(),
+    userLocalDataSource: serviceLocator(),
+  ));
+
+  // BoardDetailCubit — uses data source, userLocalDataSource, and updateListUIdUseCase
+  serviceLocator.registerFactory(() => BoardDetailCubit(
+    dataSource: serviceLocator<BoardDetailRemoteDataSource>(),
+    userLocalDataSource: serviceLocator<UserLocalDataSource>(),
+    updateListUIdUseCase: serviceLocator<UpdateListUIdUseCase>(),
+  ));
 }
 
 void _initCard() {
@@ -54,10 +151,12 @@ void _initCard() {
   serviceLocator.registerLazySingleton(() => GetAttachmentsUseCase(serviceLocator()));
   serviceLocator.registerLazySingleton(() => DeleteAttachmentUseCase(serviceLocator()));
   serviceLocator.registerLazySingleton(() => UpdateAttachmentDescriptionUseCase(serviceLocator()));
+  serviceLocator.registerLazySingleton(() => UploadCardCoverUseCase(serviceLocator()));
   serviceLocator.registerLazySingleton(() => UpdateListUIdUseCase(serviceLocator()));
 
   // Cubit
   serviceLocator.registerFactory(() => CardDetailCubit(
+    serviceLocator(),
     serviceLocator(),
     serviceLocator(),
     serviceLocator(),
@@ -78,6 +177,7 @@ void _initAuth() {
   serviceLocator.registerLazySingleton(() => RegisterUseCase(serviceLocator()));
   serviceLocator.registerLazySingleton(() => VerifyCodeUseCase(serviceLocator()));
   serviceLocator.registerLazySingleton(() => ResendCodeUseCase(serviceLocator()));
+  serviceLocator.registerLazySingleton(() => CheckOtpStatusUseCase(serviceLocator()));
 
   // Cubits
   serviceLocator.registerFactory(
@@ -90,6 +190,7 @@ void _initAuth() {
     () => VerifyCubit(
       verifyCodeUseCase: serviceLocator(),
       resendCodeUseCase: serviceLocator(),
+      checkOtpStatusUseCase: serviceLocator(),
     ),
   );
 }
@@ -116,10 +217,3 @@ void _initInbox() {
   );
 }
 
-void _initBoard() {
-  serviceLocator.registerFactory(
-    () => BoardDetailCubit(
-      updateListUIdUseCase: serviceLocator(),
-    ),
-  );
-}

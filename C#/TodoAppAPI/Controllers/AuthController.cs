@@ -1,4 +1,4 @@
-﻿using System.Net.Http.Json;
+using System.Net.Http.Json;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -42,6 +42,8 @@ namespace TodoAppAPI.Controllers
 
             if (!string.IsNullOrEmpty(result.Token))
                 await SetRefreshCookie(result.UserUId);
+            else if (!result.RequiresVerification && !result.Requires2FA)
+                return Unauthorized(result);
 
             return Ok(result);
         }
@@ -221,6 +223,25 @@ namespace TodoAppAPI.Controllers
             catch (Exception ex)
             {
                 _logger.LogError($"verify-2fa-setup error: {ex.Message}");
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [AllowAnonymous]
+        [HttpGet("check-otp-status")]
+        public async Task<IActionResult> CheckOtpStatus([FromQuery] string email)
+        {
+            if (string.IsNullOrEmpty(email))
+                return BadRequest(new { message = "Email không hợp lệ" });
+
+            try
+            {
+                var result = await _authService.CheckAndResendVerificationCodeAsync(email);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Check OTP status error: {ex.Message}");
                 return BadRequest(new { message = ex.Message });
             }
         }

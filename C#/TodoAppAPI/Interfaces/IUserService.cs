@@ -1,4 +1,4 @@
-﻿using TodoAppAPI.DTOs;
+using TodoAppAPI.DTOs;
 using TodoAppAPI.Models;
 
 namespace TodoAppAPI.Interfaces
@@ -24,5 +24,6 @@ namespace TodoAppAPI.Interfaces
         Task<string?> GetUserUserName(string userUId);
 
         Task<bool> ToggleTwoFactorAsync(string userUId, bool enabled);
+        Task<AuthResponse> GetVerificationStatusAndResendIfExpiredAsync(string email);
     }
 }

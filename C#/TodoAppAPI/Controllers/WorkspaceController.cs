@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TodoAppAPI.DTOs;
 using TodoAppAPI.Interfaces;
@@ -14,10 +14,12 @@ namespace TodoAppAPI.Controllers
     {
         private readonly IWorkspaceService _workspaceService;
         private readonly IActivity _activity;
-        public WorkspaceController(IWorkspaceService workspaceService, IActivity activity)
+        private readonly ICloudinaryService _cloudinaryService;
+        public WorkspaceController(IWorkspaceService workspaceService, IActivity activity, ICloudinaryService cloudinaryService)
         {
             _workspaceService = workspaceService;
             _activity = activity;
+            _cloudinaryService = cloudinaryService;
         }
         [HttpPost("create")]
         public async Task<IActionResult> CreateWorkspace([FromQuery] string creatorUserId, [FromQuery] string name, [FromQuery] string? description = null)

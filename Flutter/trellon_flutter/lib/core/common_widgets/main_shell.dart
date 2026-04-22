@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../features/board/presentation/pages/home_overview_page.dart';
 import '../../../features/board/presentation/pages/board_list_page.dart';
@@ -7,7 +8,11 @@ import '../../../features/inbox/presentation/pages/inbox_page.dart';
 import '../../../features/planner/presentation/pages/planner_page.dart';
 import '../../../features/activity/presentation/pages/activity_page.dart';
 import '../../../features/profile/presentation/pages/profile_page.dart';
+import '../../../features/workspace/presentation/cubit/workspace_cubit.dart';
+import '../../../init_dependencies.dart';
+import '../../../core/data_sources/user_local_data_source.dart';
 import '../constants/app_colors.dart';
+
 
 
 class MainShell extends StatefulWidget {
@@ -20,6 +25,8 @@ class MainShell extends StatefulWidget {
 class _MainShellState extends State<MainShell>
     with SingleTickerProviderStateMixin {
   int _currentIndex = 0;
+  late final WorkspaceCubit _workspaceCubit =
+      serviceLocator<WorkspaceCubit>();
 
   // 5 tabs: Boards, Inbox, Planner, Notifications/Activity, Account
   final List<Widget> _pages = const [
@@ -62,6 +69,14 @@ class _MainShellState extends State<MainShell>
   void initState() {
     super.initState();
     _setSystemUI();
+    _loadWorkspaces();
+  }
+
+  Future<void> _loadWorkspaces() async {
+    final uid = await serviceLocator<UserLocalDataSource>().getUserId();
+    if (uid != null && uid.isNotEmpty) {
+      _workspaceCubit.loadWorkspaces();
+    }
   }
 
   void _setSystemUI() {
@@ -79,13 +94,16 @@ class _MainShellState extends State<MainShell>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _pages,
+    return BlocProvider<WorkspaceCubit>.value(
+      value: _workspaceCubit,
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        body: IndexedStack(
+          index: _currentIndex,
+          children: _pages,
+        ),
+        bottomNavigationBar: _buildBottomNavBar(),
       ),
-      bottomNavigationBar: _buildBottomNavBar(),
     );
   }
 
