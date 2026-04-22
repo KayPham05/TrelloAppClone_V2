@@ -202,7 +202,8 @@ namespace TodoAppAPI.Service
                 Visibility = b.Visibility,
                 Status = b.Status,
                 UserUId = b.UserUId,
-                WorkspaceUId = b.WorkspaceUId
+                WorkspaceUId = b.WorkspaceUId,
+                BackgroundUrl = b.BackgroundUrl
             })
             .ToListAsync();
         }
@@ -219,7 +220,8 @@ namespace TodoAppAPI.Service
                     Visibility = b.Visibility,
                     Status = b.Status,
                     UserUId = b.UserUId,
-                    WorkspaceUId = b.WorkspaceUId
+                    WorkspaceUId = b.WorkspaceUId,
+                    BackgroundUrl = b.BackgroundUrl
                 })
                 .FirstOrDefaultAsync();
         }
@@ -239,6 +241,7 @@ namespace TodoAppAPI.Service
                 boardUpdate.Visibility = string.IsNullOrEmpty(board.Visibility) 
                     ? boardUpdate.Visibility
                     : board.Visibility;
+                boardUpdate.BackgroundUrl = board.BackgroundUrl;
                 _context.Boards.Update(boardUpdate);
                 await _context.SaveChangesAsync();
                 return true;

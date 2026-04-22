@@ -44,6 +44,8 @@ namespace TodoAppAPI.Controllers
 
             if (!string.IsNullOrEmpty(result.Token))
                 await SetRefreshCookie(result.UserUId);
+            else if (!result.RequiresVerification && !result.Requires2FA)
+                return Unauthorized(result);
 
             return Ok(result);
         }
@@ -300,6 +302,25 @@ namespace TodoAppAPI.Controllers
             {
                 _logger.LogError($"[2FA Enable Error] {ex.Message}");
                 return StatusCode(500, new { message = "Đã xảy ra lỗi khi kích hoạt 2FA." });
+            }
+        }
+
+        [AllowAnonymous]
+        [HttpGet("check-otp-status")]
+        public async Task<IActionResult> CheckOtpStatus([FromQuery] string email)
+        {
+            if (string.IsNullOrEmpty(email))
+                return BadRequest(new { message = "Email không hợp lệ" });
+
+            try
+            {
+                var result = await _authService.CheckAndResendVerificationCodeAsync(email);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Check OTP status error: {ex.Message}");
+                return BadRequest(new { message = ex.Message });
             }
         }
     }

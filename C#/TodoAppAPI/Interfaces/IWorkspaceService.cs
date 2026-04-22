@@ -1,4 +1,4 @@
-﻿using TodoAppAPI.DTOs;
+using TodoAppAPI.DTOs;
 using TodoAppAPI.Models;
 
 namespace TodoAppAPI.Interfaces

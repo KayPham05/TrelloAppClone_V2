@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TodoAppAPI.Interfaces;
 using TodoAppAPI.Models;
@@ -12,10 +12,12 @@ namespace TodoAppAPI.Controllers
     {
         private readonly IBoardService _boardService;
         private readonly IActivity _activity;
-        public BoardController(IBoardService boardService, IActivity activity)
+        private readonly ICloudinaryService _cloudinaryService;
+        public BoardController(IBoardService boardService, IActivity activity, ICloudinaryService cloudinaryService)
         {
             _boardService = boardService;
             _activity = activity;
+            _cloudinaryService = cloudinaryService;
         }
 
 
@@ -89,6 +91,29 @@ namespace TodoAppAPI.Controllers
                 return NotFound(new { message = "Không tìm thấy board để xóa." });
             _ = _activity.AddActivity("System", $"deleted board with UID '{uid}'");
             return Ok(new { message = "Xóa thành công." });
+        }
+
+        [HttpPost("{uid}/upload-background")]
+        public async Task<IActionResult> UploadBackground(string uid, IFormFile file)
+        {
+            var board = await _boardService.GetBoardByIdAsync(uid);
+            if (board == null) return NotFound(new { message = "Board không tồn tại." });
+
+            var result = await _cloudinaryService.UploadFileAsync(file);
+            if (result == null) return BadRequest("Lỗi khi tải ảnh lên Cloudinary.");
+
+            // Update board with new background URL
+            var boardToUpdate = new Board
+            {
+                BoardUId = uid,
+                BoardName = board.BoardName,
+                BackgroundUrl = result.Value.Url,
+                UserUId = board.UserUId
+            };
+            
+            await _boardService.UpdateBoardAsync(boardToUpdate);
+            
+            return Ok(new { url = result.Value.Url });
         }
     }
 }

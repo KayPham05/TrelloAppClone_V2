@@ -15,3 +15,11 @@ class ResendCodeUseCase {
   Future<void> call({required String email}) =>
       repository.resendCode(email: email);
 }
+
+class CheckOtpStatusUseCase {
+  final AuthRepository repository;
+  CheckOtpStatusUseCase(this.repository);
+
+  Future<int> call({required String email}) =>
+      repository.checkOtpStatus(email: email);
+}

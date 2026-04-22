@@ -1,95 +1,40 @@
-```gitignore
-# ============================================================================
-# 🔥 GLOBAL
-# ============================================================================
+# -----------------------------
+# OS / temporary files
+# -----------------------------
 .DS_Store
 Thumbs.db
 ehthumbs.db
 Desktop.ini
-*.log
+$RECYCLE.BIN/
 *.tmp
 *.swp
 *.swo
-*.bak
-*~
 *.stackdump
+*~
+*.orig
 
-# ============================================================================
-# 🧠 IDE
-# ============================================================================
+# -----------------------------
+# Logs
+# -----------------------------
+*.log
 
-# Visual Studio
+# -----------------------------
+# IDE / editors
+# -----------------------------
 .vs/
-*.user
-*.suo
-*.userosscache
-*.sln.docstates
-
-# VS Code (có thể bật nếu cần)
-# .vscode/
-
-# JetBrains (IntelliJ, Rider, Android Studio)
 .idea/
 *.iml
 *.ipr
 *.iws
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+# .vscode/
 
-# ============================================================================
-# ⚙️ C# / .NET
-# ============================================================================
-
-# Build
-bin/
-obj/
-
-# Publish
-publish/
-*.publishproj
-
-# User-specific
-*.rsuser
-
-# NuGet
-*.nupkg
-.nuget/
-packages/
-
-# Logs
-*.log
-
-# ASP.NET
-appsettings.Development.json
-
-# ============================================================================
-# 🐦 Flutter / Dart / Pub
-# ============================================================================
-
-**/doc/api/
-.dart_tool/
-.flutter-plugins
-.flutter-plugins-dependencies
-.packages
-.pub-cache/
-.pub/
-/build/
-/coverage/
-
-# ⚠️ Nếu là app thì nên giữ pubspec.lock → comment dòng dưới
-pubspec.lock
-
-# ============================================================================
-# ⚙️ Generated (build_runner, freezed,...)
-# ============================================================================
-*.g.dart
-*.freezed.dart
-*.mocks.dart
-*.config.dart
-*.gr.dart
-*.gm.dart
-
-# ============================================================================
-# 🔐 ENV / SECRET
-# ============================================================================
+# -----------------------------
+# Environment / secrets
+# -----------------------------
 .env
 .env.*
 !.env.example
@@ -99,127 +44,29 @@ pubspec.lock
 *.pem
 *.key
 *.pfx
-google-services.json
-GoogleService-Info.plist
 
-# ============================================================================
-# 🤖 AI / Agent
-# ============================================================================
+# -----------------------------
+# Local agent folders
+# -----------------------------
 .gemini/
 .agent/
 .agents/
+.agent
 
-# ============================================================================
-# 📦 Node (nếu có frontend)
-# ============================================================================
+# -----------------------------
+# Common dependencies / bundles
+# -----------------------------
 node_modules/
 dist/
-build/
 
-# ============================================================================
-# 📱 ANDROID
-# ============================================================================
-**/android/**/gradle-wrapper.jar
-**/android/.gradle/
-**/android/captures/
-**/android/gradlew
-**/android/gradlew.bat
-**/android/local.properties
-**/android/**/GeneratedPluginRegistrant.java
-**/android/app/debug/
-**/android/app/profile/
-**/android/app/release/
-**/android/key.properties
-
-# ============================================================================
-# 🍎 iOS
-# ============================================================================
-**/ios/**/*.mode1v3
-**/ios/**/*.mode2v3
-**/ios/**/*.moved-aside
-**/ios/**/*.pbxuser
-**/ios/**/*.perspectivev3
-**/ios/**/*sync/
-**/ios/**/.sconsign.dblite
-**/ios/**/.tags*
-**/ios/**/DerivedData/
-**/ios/**/Icon?
-**/ios/**/Pods/
-**/ios/**/.symlinks/
-**/ios/**/profile
-**/ios/**/xcuserdata
-**/ios/.generated/
-**/ios/Flutter/.last_build_id
-**/ios/Flutter/App.framework
-**/ios/Flutter/Flutter.framework
-**/ios/Flutter/Flutter.podspec
-**/ios/Flutter/Generated.xcconfig
-**/ios/Flutter/ephemeral/
-**/ios/Flutter/app.flx
-**/ios/Flutter/app.zip
-**/ios/Flutter/flutter_assets/
-**/ios/Flutter/flutter_export_environment.sh
-**/ios/ServiceDefinitions.json
-**/ios/Runner/GeneratedPluginRegistrant.*
-
-# ============================================================================
-# 🪟 WINDOWS
-# ============================================================================
-**/windows/flutter/generated_plugin_registrant.cc
-**/windows/flutter/generated_plugin_registrant.h
-**/windows/flutter/generated_plugins.cmake
-**/windows/flutter/ephemeral/
-
-# ============================================================================
-# 🐧 LINUX
-# ============================================================================
-**/linux/flutter/generated_plugin_registrant.cc
-**/linux/flutter/generated_plugin_registrant.h
-**/linux/flutter/generated_plugins.cmake
-**/linux/flutter/ephemeral/
-
-# ============================================================================
-# 🍏 macOS
-# ============================================================================
-**/macos/Flutter/GeneratedPluginRegistrant.swift
-**/macos/Flutter/ephemeral/
-
-# ============================================================================
-# 🌐 WEB
-# ============================================================================
-**/web/favicon.png.bak
-build/web/
-
-# ============================================================================
-# 🧪 TEST / COVERAGE
-# ============================================================================
-coverage/
-*.coverage
-*.coveragexml
-*.lcov
-test-results/
-
-# ============================================================================
-# ⚡ FASTLANE / CI
-# ============================================================================
-**/fastlane/report.xml
-**/fastlane/Preview.html
-**/fastlane/screenshots
-**/fastlane/test_output
-
-# ============================================================================
-# 📦 FVM
-# ============================================================================
-.fvm/flutter_sdk
-.fvm/fvm_config.json
-.fvmrc
-
-# ============================================================================
-# 📁 OTHERS
-# ============================================================================
+# -----------------------------
+# Archives
+# -----------------------------
 *.zip
 *.rar
 *.7z
-.agent
+
+# -----------------------------
+# Local project notes
+# -----------------------------
 ANTIGRAVITY.md
-maintest.dart```

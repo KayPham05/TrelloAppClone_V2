@@ -1,4 +1,4 @@
-﻿namespace TodoAppAPI.DTOs
+namespace TodoAppAPI.DTOs
 {
     public class UpdateWorkspaceDTO
     {

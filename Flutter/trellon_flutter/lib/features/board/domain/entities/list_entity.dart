@@ -17,4 +17,22 @@ class ListEntity {
     required this.boardId,
     required this.cards,
   });
+
+  ListEntity copyWith({
+    String? id,
+    String? name,
+    int? position,
+    String? status,
+    String? boardId,
+    List<CardEntity>? cards,
+  }) {
+    return ListEntity(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      position: position ?? this.position,
+      status: status ?? this.status,
+      boardId: boardId ?? this.boardId,
+      cards: cards ?? this.cards,
+    );
+  }
 }

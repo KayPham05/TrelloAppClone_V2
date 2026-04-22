@@ -13,5 +13,6 @@ namespace TodoAppAPI.DTOs
         public bool IsTwoFactorEnabled { get; set; }
         public bool IsMember { get; set; }
         public string? RefreshToken { get; set; }
+        public int? ExpiresInSeconds { get; set; }
     }
 }

@@ -1,0 +1,18 @@
+{
+  "ConnectionStrings": {
+    "TodosDatabase": "Server=TEN_MAY_CUA_BAN;Database=TodosDB;Trusted_Connection=True;TrustServerCertificate=True"
+  },
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  },
+  "Jwt": {
+    "Key": "REPLACE_WITH_YOUR_OWN_SECRET_MIN_32_CHARS",
+    "Issuer": "TodoAppAPI",
+    "Audience": "TodoAppClient",
+    "AccessTokenExpiryMinutes": 15
+  },
+  "AllowedHosts": "*"
+}

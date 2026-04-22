@@ -1,13 +1,16 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'core/constants/app_theme.dart';
 import 'routes.dart';
 import 'init_dependencies.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: ".env");
   await initDependencies();
   
   final prefs = await SharedPreferences.getInstance();
@@ -26,6 +29,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Trello Clone',
       debugShowCheckedModeBanner: false,
+      navigatorKey: navigatorKey,
       theme: AppTheme.light,
       routes: AppRoutes.routes,
       builder: (context, child) {

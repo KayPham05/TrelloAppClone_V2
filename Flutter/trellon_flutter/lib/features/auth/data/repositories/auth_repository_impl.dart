@@ -41,7 +41,13 @@ class AuthRepositoryImpl implements AuthRepository {
       }
       throw Exception("Đăng ký không thành công");
     } on DioException catch (e) {
-      final errorMsg = e.response?.data['message'] ?? "Lỗi kết nối Server";
+      final data = e.response?.data;
+      String errorMsg = "Lỗi kết nối Server";
+      if (data is Map) {
+        errorMsg = data['message'] ?? errorMsg;
+      } else if (data is String) {
+        errorMsg = data.trim();
+      }
       throw Exception(errorMsg);
     }
   }
@@ -90,7 +96,13 @@ class AuthRepositoryImpl implements AuthRepository {
       }
       throw Exception("Đăng nhập không thành công");
     } on DioException catch (e) {
-      final errorMsg = e.response?.data['message'] ?? "Lỗi kết nối Server";
+      final data = e.response?.data;
+      String errorMsg = "Lỗi kết nối Server";
+      if (data is Map) {
+        errorMsg = data['message'] ?? errorMsg;
+      } else if (data is String) {
+        errorMsg = data.trim();
+      }
       throw Exception(errorMsg);
     }
   }
@@ -152,6 +164,22 @@ class AuthRepositoryImpl implements AuthRepository {
         errorMsg = "Lỗi kết nối Server";
       }
       throw Exception(errorMsg);
+    }
+  }
+
+  @override
+  Future<int> checkOtpStatus({required String email}) async {
+    try {
+      final response = await dio.get(
+        '${ApiEndpoints.checkOtpStatus}?email=${Uri.encodeComponent(email)}',
+      );
+      if (response.statusCode == 200) {
+        final data = response.data;
+        return data['expiresInSeconds'] ?? 0;
+      }
+      return 0;
+    } on DioException {
+      return 0;
     }
   }
 }

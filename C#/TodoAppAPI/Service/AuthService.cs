@@ -327,5 +327,44 @@ namespace TodoAppAPI.Service
                 IsTwoFactorEnabled = true
             };
         }
+
+        public async Task<AuthResponse> CheckAndResendVerificationCodeAsync(string email)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+            if (user == null) return new AuthResponse { Message = "Account not found!" };
+
+            if (user.IsEmailVerified) return new AuthResponse { Message = "Email already verified!" };
+
+            var now = DateTime.UtcNow;
+            
+            // Nếu mã đã hết hạn (hoặc chưa từng có), tạo mã mới và gửi lại
+            if (user.VerificationTokenExpiresAt == null || user.VerificationTokenExpiresAt <= now)
+            {
+                var code = new Random().Next(100000, 999999).ToString();
+                user.VerificationTokenHash = BCrypt.Net.BCrypt.HashPassword(code);
+                user.VerificationTokenExpiresAt = now.AddMinutes(5);
+                
+                await _context.SaveChangesAsync();
+                await _emailService.SendVerificationEmailAsync(email, code);
+
+                return new AuthResponse
+                {
+                    Message = "A new verification code has been sent to your email.",
+                    Email = email,
+                    RequiresVerification = true,
+                    ExpiresInSeconds = 300
+                };
+            }
+
+            // Nếu mã vẫn còn hạn, trả về thời gian còn lại
+            var remaining = (int)(user.VerificationTokenExpiresAt.Value - now).TotalSeconds;
+            return new AuthResponse
+            {
+                Message = "Verification code is still valid.",
+                Email = email,
+                RequiresVerification = true,
+                ExpiresInSeconds = remaining
+            };
+        }
     }
 }

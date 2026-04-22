@@ -17,5 +17,6 @@ namespace TodoAppAPI.Interfaces
         Task<List<FileUrl>> GetAttachmentsByCardAsync(string cardUId);
         Task<bool> DeleteAttachmentAsync(string fileUId);
         Task<bool> UpdateAttachmentDescriptionAsync(string fileUId, string? description);
+        Task<bool> UpdateDueDateAsync(string cardUId, DateTime? dueDate);
     }
 }

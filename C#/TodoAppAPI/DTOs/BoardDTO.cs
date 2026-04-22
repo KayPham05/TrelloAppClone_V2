@@ -10,5 +10,6 @@ namespace TodoAppAPI.DTOs
         public string Status { get; set; } = string.Empty;
         public string UserUId { get; set; } = string.Empty;
         public string? WorkspaceUId { get; set; }
+        public string? BackgroundUrl { get; set; }
     }
 }

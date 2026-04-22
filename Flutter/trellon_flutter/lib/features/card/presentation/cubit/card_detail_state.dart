@@ -12,6 +12,7 @@ class CardDetailLoaded extends CardDetailState {
   final CardEntity card;
   final List<TodoItemEntity> todos;
   final List<CardMemberEntity> members;
+  final List<CardMemberEntity> potentialMembers;
   final List<CommentEntity> comments;
   final bool isUploadingAttachment;
   final String? attachmentError;
@@ -20,6 +21,7 @@ class CardDetailLoaded extends CardDetailState {
     required this.card,
     required this.todos,
     required this.members,
+    this.potentialMembers = const [],
     required this.comments,
     this.isUploadingAttachment = false,
     this.attachmentError,
@@ -29,6 +31,7 @@ class CardDetailLoaded extends CardDetailState {
     CardEntity? card,
     List<TodoItemEntity>? todos,
     List<CardMemberEntity>? members,
+    List<CardMemberEntity>? potentialMembers,
     List<CommentEntity>? comments,
     bool? isUploadingAttachment,
     String? attachmentError,
@@ -38,6 +41,7 @@ class CardDetailLoaded extends CardDetailState {
       card: card ?? this.card,
       todos: todos ?? this.todos,
       members: members ?? this.members,
+      potentialMembers: potentialMembers ?? this.potentialMembers,
       comments: comments ?? this.comments,
       isUploadingAttachment: isUploadingAttachment ?? this.isUploadingAttachment,
       attachmentError: clearAttachmentError ? null : (attachmentError ?? this.attachmentError),
@@ -45,7 +49,7 @@ class CardDetailLoaded extends CardDetailState {
   }
 
   @override
-  List<Object?> get props => [card, todos, members, comments, isUploadingAttachment, attachmentError];
+  List<Object?> get props => [card, todos, members, potentialMembers, comments, isUploadingAttachment, attachmentError];
 }
 
 class CardDetailError extends CardDetailState {

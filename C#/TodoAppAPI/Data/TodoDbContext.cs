@@ -40,6 +40,7 @@ namespace TodoAppAPI.Data
             modelBuilder.ApplyConfiguration(new NotificationConfiguration());
             modelBuilder.ApplyConfiguration(new FileUrlConfiguration());
             modelBuilder.ApplyConfiguration(new User2FABackupCodeConfiguration());
+            modelBuilder.ApplyConfiguration(new CardLabelConfiguration());
             DatabaseSeeder.SeedData(modelBuilder);
         }
 
@@ -62,5 +63,6 @@ namespace TodoAppAPI.Data
         public DbSet<Notification> Notifications { get; set; }
         public DbSet<FileUrl> FileUrls { get; set; }
         public DbSet<User2FABackupCode> User2FABackupCodes { get; set; }
+        public DbSet<CardLabel> CardLabels { get; set; }
     }
 }
