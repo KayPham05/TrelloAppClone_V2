@@ -3,10 +3,27 @@ import 'package:apptreolon/routes.dart';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:cookie_jar/cookie_jar.dart';
+import 'package:dio/dio.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../init_dependencies.dart';
+import '../../../../core/constants/api_endpoints.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
+
+  Future<Map<String, String>> _getUserInfo() async {
+    final prefs = await SharedPreferences.getInstance();
+    final nameStr = prefs.getString('user_name');
+    final emailStr = prefs.getString('user_email');
+    
+    final name = (nameStr == null || nameStr.isEmpty) ? 'Khách' : nameStr;
+    final email = (emailStr == null || emailStr.isEmpty) ? 'Chưa cập nhật' : emailStr;
+    
+    return {'name': name, 'email': email};
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +39,24 @@ class ProfilePage extends StatelessWidget {
                 padding: const EdgeInsets.fromLTRB(16, 24, 16, 80),
                 child: Column(
                   children: [
-                    _buildProfileHeader(),
+                    FutureBuilder<Map<String, String>>(
+                      future: _getUserInfo(),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const SizedBox(
+                            height: 150,
+                            child: Center(child: CircularProgressIndicator()),
+                          );
+                        }
+
+                        final name = snapshot.data?['name'] ?? 'Khách';
+                        final email =
+                            snapshot.data?['email'] ?? 'Chưa cập nhật';
+
+                        return _buildProfileHeader(name, email);
+                      },
+                    ),
                     const SizedBox(height: 40),
                     _buildWorkspacesGroup(context),
                     const SizedBox(height: 24),
@@ -30,7 +64,7 @@ class ProfilePage extends StatelessWidget {
                     const SizedBox(height: 24),
                     _buildPreferencesGroup(),
                     const SizedBox(height: 24),
-                    _buildSupportGroup(),
+                    _buildSupportGroup(context),
                   ],
                 ),
               ),
@@ -72,7 +106,8 @@ class ProfilePage extends StatelessWidget {
     );
   }
 
-  Widget _buildProfileHeader() {
+  // BỎ ASYNC VÀ FUTURE Ở ĐÂY, TRUYỀN THAM SỐ VÀO
+  Widget _buildProfileHeader(String name, String email) {
     return Column(
       children: [
         Stack(
@@ -87,7 +122,7 @@ class ProfilePage extends StatelessWidget {
                   color: AppColors.primaryContainer.withValues(alpha: 0.1),
                   width: 4,
                 ),
-                image: DecorationImage(
+                image: const DecorationImage(
                   image: CachedNetworkImageProvider(
                     'https://i.pravatar.cc/150?u=jordan',
                   ),
@@ -123,7 +158,7 @@ class ProfilePage extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         Text(
-          'Trần Nguyễn',
+          name, // HIỂN THỊ TÊN TỪ THAM SỐ
           style: GoogleFonts.inter(
             fontSize: 24,
             fontWeight: FontWeight.w700,
@@ -133,7 +168,7 @@ class ProfilePage extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         Text(
-          '@trannguyen_work',
+          email, // HIỂN THỊ EMAIL TỪ THAM SỐ
           style: GoogleFonts.inter(
             fontSize: 14,
             fontWeight: FontWeight.w500,
@@ -206,17 +241,17 @@ class ProfilePage extends StatelessWidget {
                 icon: Icons.person_rounded,
                 title: 'Thông tin cá nhân',
                 subtitle: 'Tên, email và ảnh',
-                iconBgColor:  AppColors.primaryContainer.withValues(alpha: 0.1),
-                iconColor:  AppColors.primaryContainer,
+                iconBgColor: AppColors.primaryContainer.withValues(alpha: 0.1),
+                iconColor: AppColors.primaryContainer,
               ),
               _buildDivider(),
               SettingItem(
                 icon: Icons.security_rounded,
                 title: 'Bảo mật',
                 subtitle: 'Mật khẩu và 2FA',
-                iconBgColor:   AppColors.primaryContainer.withValues(alpha: 0.1),
-                iconColor:  AppColors.primaryContainer,
-                onTap: (){
+                iconBgColor: AppColors.primaryContainer.withValues(alpha: 0.1),
+                iconColor: AppColors.primaryContainer,
+                onTap: () {
                   Navigator.pushNamed(context, AppRoutes.securityPage);
                 },
               ),
@@ -272,9 +307,7 @@ class ProfilePage extends StatelessWidget {
                 subtitle: 'Desktop, Email, Mobile',
                 iconBgColor: const Color(0xFFD2E0FC),
                 iconColor: const Color(0xFF0D1C30),
-                onTap: (){
-
-                },
+                onTap: () {},
               ),
               _buildDivider(),
               SettingItem(
@@ -283,9 +316,7 @@ class ProfilePage extends StatelessWidget {
                 subtitle: 'Tiếng Việt',
                 iconBgColor: const Color(0xFFD2E0FC),
                 iconColor: const Color(0xFF0D1C30),
-                onTap: (){
-                  
-                },
+                onTap: () {},
               ),
             ],
           ),
@@ -294,7 +325,7 @@ class ProfilePage extends StatelessWidget {
     );
   }
 
-  Widget _buildSupportGroup() {
+  Widget _buildSupportGroup(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -312,21 +343,17 @@ class ProfilePage extends StatelessWidget {
                 title: 'Trung tâm trợ giúp',
                 iconBgColor: AppColors.surfaceContainerHigh,
                 iconColor: AppColors.onSurfaceVariant,
-                onTap: () {
-                  
-                },
+                onTap: () {},
               ),
               SettingItem(
                 icon: Icons.logout_rounded,
                 title: 'Đăng xuất',
-                iconBgColor: Color(0xFFFFDAD6).withValues(alpha: 0.2),
+                iconBgColor: const Color(0xFFFFDAD6).withValues(alpha: 0.2),
                 iconColor: AppColors.error,
                 onTap: () {
-                  // Viết code chuyển sang màn hình Đổi mật khẩu ở đây
-                  print('Đang mở màn hình đổi mật khẩu...');
+                  _showLogoutDialog(context);
                 },
               ),
-              
               _buildDivider(),
             ],
           ),
@@ -470,5 +497,101 @@ class ProfilePage extends StatelessWidget {
     );
   }
 
-  
+  void _showLogoutDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: Text(
+            'Xác nhận',
+            style: GoogleFonts.inter(fontWeight: FontWeight.w700),
+          ),
+          content: Text(
+            'Bạn có chắc chắn muốn đăng xuất?',
+            style: GoogleFonts.inter(),
+          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: Text(
+                'Hủy',
+                style: GoogleFonts.inter(color: AppColors.onSurfaceVariant),
+              ),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.error,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              onPressed: () async {
+                // Đóng dialog xác nhận
+                Navigator.of(dialogContext).pop();
+
+                // Hiển thị vòng xoay loading mờ
+                showDialog(
+                  context: context,
+                  barrierDismissible: false,
+                  builder: (_) => const Center(child: CircularProgressIndicator()),
+                );
+
+                // 1. Gọi API Logout (Có thể fail nếu rớt mạng, không sao cả)
+                try {
+                  final prefs = await SharedPreferences.getInstance();
+                  final userUId = prefs.getString('user_uid');
+                  const secureStorage = FlutterSecureStorage();
+                  final refreshToken = await secureStorage.read(key: 'refresh_token');
+                  if (userUId != null && userUId.isNotEmpty) {
+                    final dio = serviceLocator<Dio>();
+                    await dio.post(
+                      '${ApiEndpoints.logout}?userUId=$userUId',
+                      data: {'refreshToken': refreshToken},
+                    );
+                  }
+                } catch (_) {}
+
+                // 2. Xóa các biến SharedPreferences
+                try {
+                  final prefs = await SharedPreferences.getInstance();
+                  await prefs.remove('user_uid');
+                  await prefs.remove('user_name');
+                  await prefs.remove('user_email');
+                  await prefs.setBool('isLogged', false);
+                } catch (_) {}
+
+                // 3. Xóa FlutterSecureStorage
+                try {
+                  const secureStorage = FlutterSecureStorage();
+                  await secureStorage.deleteAll();
+                } catch (_) {}
+
+                // 4. Xóa Cookie (Sử dụng try-catch riêng cực kỳ quan trọng vì GetIt có thể báo lỗi nếu CookieJar chưa đăng ký)
+                try {
+                  if (serviceLocator.isRegistered<CookieJar>()) {
+                    final cookieJar = serviceLocator<CookieJar>();
+                    await cookieJar.deleteAll();
+                  }
+                } catch (_) {}
+
+                // 5. Điều hướng về Login
+                if (context.mounted) {
+                  // Dùng rootNavigator để xóa sạch cả loading dialog nếu có và các trang trước đó
+                  Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil(
+                    AppRoutes.login,
+                    (route) => false,
+                  );
+                }
+              },
+              child: Text(
+                'Đăng xuất',
+                style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w600),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
 }

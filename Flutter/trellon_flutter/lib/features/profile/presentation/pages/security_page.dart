@@ -126,7 +126,10 @@ class SecurityPage extends StatelessWidget{
                 icon: Icons.shield_outlined,
                 title: 'Cài đặt xác thực hai lớp',
                 iconBgColor: AppColors.primaryContainer.withValues(alpha: 0.1),
-                iconColor: AppColors.primaryContainer
+                iconColor: AppColors.primaryContainer,
+                onTap: () {
+                  Navigator.pushNamed(context, AppRoutes.enable2FA);
+                },
               ),
             ],
           ),

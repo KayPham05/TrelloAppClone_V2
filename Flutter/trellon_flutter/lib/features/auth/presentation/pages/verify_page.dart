@@ -73,7 +73,10 @@ class _VerifyViewState extends State<VerifyView> {
     return BlocListener<VerifyCubit, VerifyState>(
       listener: (context, state) {
         if (state is VerifySuccess) {
-          Navigator.pushReplacementNamed(context, '/home');
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Xác thực thành công! Vui lòng đăng nhập.')),
+          );
+          Navigator.pushReplacementNamed(context, '/login');
         } else if (state is ResendSuccess) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Đã gửi lại mã xác minh thành công')),

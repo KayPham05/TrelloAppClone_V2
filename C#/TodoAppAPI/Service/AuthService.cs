@@ -1,4 +1,4 @@
-﻿using System.Web;
+using System.Web;
 using Microsoft.EntityFrameworkCore;
 using TodoAppAPI.Data;
 using TodoAppAPI.DTOs;
@@ -71,7 +71,7 @@ namespace TodoAppAPI.Service
                 {
                     Message = "Email has not been verified.",
                     Email = user.Email,
-                    RequiresVerification = true
+                    requiresVerification = true
                 };
             }
 
@@ -96,7 +96,7 @@ namespace TodoAppAPI.Service
                 return new AuthResponse
                 {
                     UserUId = user.UserUId,
-                    Requires2FA = true,
+                    requires2FA = true,
                     Email = user.Email,
                     Message = "OTP has been sent."
                 };
@@ -230,6 +230,7 @@ namespace TodoAppAPI.Service
                 Email = user.Email,
                 UserName = user.UserName,
                 Bio = user.Bio,
+                RefreshToken = refreshToken,
             };
         }
 

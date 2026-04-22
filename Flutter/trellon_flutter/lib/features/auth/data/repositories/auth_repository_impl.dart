@@ -63,15 +63,19 @@ class AuthRepositoryImpl implements AuthRepository {
       if (response.statusCode == 200) {
         final data = response.data;
         final token = data['token'] as String?;
+        final refreshToken = data['refreshToken'] as String?;
         final requiresVerification = data['requiresVerification'] as bool? ?? false;
+        final requires2FA = data['requires2FA'] as bool? ?? false;
 
-        // Email chưa verify → trả entity với flag để cubit xử lý
-        if (requiresVerification || (token == null || token.isEmpty)) {
+        // Email chưa verify hoặc Cần 2FA → trả entity với flag để cubit xử lý
+        if (requiresVerification || requires2FA || (token == null || token.isEmpty)) {
           return UserEntity(
-            id: '',
+            id: data['userUId'] ?? '', // Cần userUId để verify 2FA
+            userUId: data['userUId'] ?? '',
             userName: '',
             email: data['email'] ?? email,
-            requiresVerification: true,
+            requiresVerification: requiresVerification,
+            requires2FA: requires2FA,
           );
         }
 
@@ -81,6 +85,7 @@ class AuthRepositoryImpl implements AuthRepository {
           userName: data['userName'] ?? '',
           email: data['email'] ?? '',
           token: token,
+          refreshToken: refreshToken,
         );
       }
       throw Exception("Đăng nhập không thành công");
