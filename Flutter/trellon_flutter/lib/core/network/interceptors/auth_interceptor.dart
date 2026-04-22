@@ -5,6 +5,9 @@ import 'package:cookie_jar/cookie_jar.dart';
 import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../main.dart';
+
+
 class AuthInterceptor extends Interceptor {
   final Dio dio;
   final CookieJar cookieJar;
@@ -127,7 +130,8 @@ class AuthInterceptor extends Interceptor {
     await prefs.remove('user_uid');
     // Xóa hết cookie (refreshToken)
     await cookieJar.deleteAll();
-    // Điều hướng sẽ được xử lý ở UI layer thông qua NavigatorService hoặc StreamController
-    // TODO: Emit logout event nếu cần điều hướng toàn cục từ đây
+    
+    // Điều hướng toàn cục
+    navigatorKey.currentState?.pushNamedAndRemoveUntil('/login', (route) => false);
   }
 }

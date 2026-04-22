@@ -43,16 +43,15 @@ namespace TodoAppAPI.Controllers
 
         // POST api/<TodosController>
         [HttpPost]
-        public IActionResult Add(Card card)
+        public IActionResult Add([FromBody] Card card)
         {
             if (_cardService.AddCard(card))
             {
                 _ = _activity.AddActivity(" ", $"added card '{card.Title}' to list '{card.ListUId}'");
-                return Ok("Thêm card thành công");
+                return Ok(card);
             }
                 
-            return BadRequest("Không thể thêm card");
-
+            return BadRequest(new { message = "Không thể thêm card" });
         }
 
         [HttpPost("{userUId}/inbox")]
@@ -147,6 +146,23 @@ namespace TodoAppAPI.Controllers
             _ = _activity.AddActivity(" ",
                 $"updated status of card '{card.Title}' to '{newStatus}'");
             return Ok(new { message = "Cập nhật status cho Card thành công." });
+        }
+
+        [HttpPut("{cardUId}/duedate")]
+        public async Task<IActionResult> UpdateDueDate(string cardUId, [FromBody] UpdateDueDateRequest request)
+        {
+            var card = _cardService.GetById(cardUId);
+            if (card == null)
+                return NotFound("Card không tồn tại");
+
+            var success = await _cardService.UpdateDueDateAsync(cardUId, request.DueDate);
+            if (!success)
+                return BadRequest(new { message = "Không thể cập nhật ngày đến hạn cho Card." });
+
+            string dateStr = request.DueDate?.ToString("yyyy-MM-dd") ?? "none";
+            _ = _activity.AddActivity(" ", $"updated due date of card '{card.Title}' to '{dateStr}'");
+
+            return Ok(new { message = "Cập nhật ngày đến hạn thành công." });
         }
 
         [HttpGet("{cardUId}/attachments")]

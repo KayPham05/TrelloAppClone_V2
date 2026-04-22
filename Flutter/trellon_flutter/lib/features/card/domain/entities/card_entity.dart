@@ -41,6 +41,18 @@ class FileUrlEntity {
   }
 }
 
+class CardLabelEntity {
+  final String id;
+  final String title;
+  final String colorCode;
+
+  const CardLabelEntity({
+    required this.id,
+    required this.title,
+    required this.colorCode,
+  });
+}
+
 class CardEntity {
   final String id;
   final String title;
@@ -52,6 +64,9 @@ class CardEntity {
   final String? backgroundUrl;
   final List<TodoItemEntity> todoItems;
   final List<FileUrlEntity> fileUrls;
+  final List<CardLabelEntity> labels;
+  final List<CommentEntity> comments;
+  final List<CardMemberEntity> members;
 
   const CardEntity({
     required this.id,
@@ -64,6 +79,9 @@ class CardEntity {
     this.backgroundUrl,
     this.todoItems = const [],
     this.fileUrls = const [],
+    this.labels = const [],
+    this.comments = const [],
+    this.members = const [],
   });
 
   CardEntity copyWith({
@@ -77,6 +95,9 @@ class CardEntity {
     String? backgroundUrl,
     List<TodoItemEntity>? todoItems,
     List<FileUrlEntity>? fileUrls,
+    List<CardLabelEntity>? labels,
+    List<CommentEntity>? comments,
+    List<CardMemberEntity>? members,
   }) {
     return CardEntity(
       id: id ?? this.id,
@@ -89,6 +110,9 @@ class CardEntity {
       backgroundUrl: backgroundUrl ?? this.backgroundUrl,
       todoItems: todoItems ?? this.todoItems,
       fileUrls: fileUrls ?? this.fileUrls,
+      labels: labels ?? this.labels,
+      comments: comments ?? this.comments,
+      members: members ?? this.members,
     );
   }
 }

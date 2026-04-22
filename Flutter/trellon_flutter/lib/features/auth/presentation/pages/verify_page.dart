@@ -128,7 +128,7 @@ class _VerifyViewState extends State<VerifyView> {
             style: GoogleFonts.inter(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 24),
-          _buildOtpGrid(),
+          _buildOtpRow(),
           const SizedBox(height: 24),
           BlocBuilder<VerifyCubit, VerifyState>(
             buildWhen: (previous, current) => 

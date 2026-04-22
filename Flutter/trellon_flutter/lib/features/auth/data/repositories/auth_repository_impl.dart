@@ -72,7 +72,7 @@ class AuthRepositoryImpl implements AuthRepository {
         final requiresVerification = data['requiresVerification'] as bool? ?? false;
 
         // Email chưa verify → trả entity với flag để cubit xử lý
-        if (requiresVerification || (token == null || token.isEmpty)) {
+        if (requiresVerification) {
           return UserEntity(
             id: '',
             userName: '',

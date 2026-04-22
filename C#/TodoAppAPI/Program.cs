@@ -28,6 +28,7 @@ builder.Services.AddScoped<IUserRecentBoardService, UserBoardRecentService>();
 builder.Services.AddScoped<ITodoItemService, TodoItemService>();
 builder.Services.AddScoped<IBoardMemberService, BoardMemberService>();
 builder.Services.AddScoped<ICardMemberService, CardMemberService>();
+builder.Services.AddScoped<ICardLabelService, CardLabelService>();
 builder.Services.AddScoped<EmailService>();
 builder.Services.AddScoped<IActivity, ActivityService>();
 builder.Services.AddScoped<IJwtService, JwtService>();

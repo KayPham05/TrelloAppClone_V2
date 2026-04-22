@@ -337,6 +337,28 @@ namespace TodoAppAPI.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "CardLabels",
+                columns: table => new
+                {
+                    CardLabelUId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    CardUId = table.Column<string>(type: "nvarchar(128)", nullable: false),
+                    Title = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    ColorCode = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_CardLabels", x => x.CardLabelUId);
+                    table.ForeignKey(
+                        name: "FK_CardLabels_Cards_CardUId",
+                        column: x => x.CardUId,
+                        principalTable: "Cards",
+                        principalColumn: "CardUId",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "CardMembers",
                 columns: table => new
                 {
@@ -499,6 +521,11 @@ namespace TodoAppAPI.Migrations
                 column: "WorkspaceUId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_CardLabels_CardUId",
+                table: "CardLabels",
+                column: "CardUId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_CardMembers_CardUId_UserUId",
                 table: "CardMembers",
                 columns: new[] { "CardUId", "UserUId" },
@@ -615,6 +642,9 @@ namespace TodoAppAPI.Migrations
 
             migrationBuilder.DropTable(
                 name: "BoardMembers");
+
+            migrationBuilder.DropTable(
+                name: "CardLabels");
 
             migrationBuilder.DropTable(
                 name: "CardMembers");

@@ -91,10 +91,10 @@ class _BoardDetailListColumnState extends State<BoardDetailListColumn> {
       onAcceptWithDetails: (details) {
         setState(() => _isDragOver = false);
         context.read<BoardDetailCubit>().moveCard(
-          cardId: details.data.id,
-          fromListId: details.data.listId ?? '',
-          toListId: widget.listData.id,
-          newPosition: widget.listData.cards.length,
+          card: details.data,
+          sourceListId: details.data.listId ?? '',
+          targetListId: widget.listData.id,
+          insertIndex: widget.listData.cards.length,
         );
       },
       builder: (context, candidateData, rejectedData) {

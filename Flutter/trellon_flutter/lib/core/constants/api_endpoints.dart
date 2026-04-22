@@ -1,8 +1,7 @@
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
 class ApiEndpoints {
-  static const String baseUrl = String.fromEnvironment(
-    'API_BASE_URL',
-    defaultValue: 'http://192.168.1.5:5293/v1/api',
-  );
+  static String get baseUrl => dotenv.env['API_URL']!;
   static const String register = 'auth/register';
   static const String login = 'auth/login';
   static const String refreshToken = 'auth/refresh-token';
@@ -20,4 +19,5 @@ class ApiEndpoints {
   static const String workspace = 'workspace';
   static const String recentBoards = 'RecentBoard';
   static const String workspaceMember = 'workspaceMember';
+  static const String boardMember = 'boardMember';
 }

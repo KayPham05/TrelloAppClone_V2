@@ -13,10 +13,13 @@ import '../widgets/card_detail/card_detail_attachments.dart';
 import '../widgets/card_detail/card_detail_activity.dart';
 import '../../../../core/widgets/cover_picker_bottom_sheet.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import '../widgets/card_detail/card_member_picker_sheet.dart';
+import '../widgets/card_detail/label_picker_sheet.dart';
 
 class CardDetailPage extends StatefulWidget {
   final CardEntity card;
-  const CardDetailPage({super.key, required this.card});
+  final String? boardId;
+  const CardDetailPage({super.key, required this.card, this.boardId});
 
   @override
   State<CardDetailPage> createState() => _CardDetailPageState();
@@ -29,6 +32,9 @@ class _CardDetailPageState extends State<CardDetailPage> {
   void initState() {
     super.initState();
     _cubit = serviceLocator<CardDetailCubit>()..loadCardDetails(widget.card);
+    if (widget.boardId != null) {
+      _cubit.loadPotentialMembers(widget.boardId!);
+    }
   }
 
   @override
@@ -55,60 +61,88 @@ class _CardDetailPageState extends State<CardDetailPage> {
                          child: Column(
                            crossAxisAlignment: CrossAxisAlignment.stretch,
                            children: [
-                              if (state.card.backgroundUrl != null && state.card.backgroundUrl!.isNotEmpty)
-                                GestureDetector(
-                                  onTap: () {
-                                    CoverPickerBottomSheet.show(
-                                      context,
-                                      onTemplateSelected: (url) {
-                                        context.read<CardDetailCubit>().updateBackgroundUrl(url);
-                                      },
-                                      onImagePicked: (file) {
-                                        context.read<CardDetailCubit>().uploadCover(file.path);
-                                      },
-                                    );
-                                  },
-                                  child: CachedNetworkImage(
-                                    imageUrl: state.card.backgroundUrl!,
-                                    height: 180,
-                                    width: double.infinity,
-                                    fit: BoxFit.cover,
-                                  ),
-                                ),
-                              if (state.card.backgroundUrl == null || state.card.backgroundUrl!.isEmpty)
-                                const SizedBox(height: 80),
-                              Padding(
-                                padding: const EdgeInsets.only(top: 16),
-                                child: CardDetailTitle(
-                                  title: state.card.title,
-                                  status: state.card.status,
-                                  onStatusToggle: (newStatus) => context.read<CardDetailCubit>().updateStatus(newStatus),
-                                ),
-                              ),
-                              const SizedBox(height: 32),
-                              CardDetailMetaGrid(members: state.members, dueDate: state.card.dueDate),
-                              const SizedBox(height: 32),
-                              CardDetailDescription(
-                                description: state.card.description ?? '',
-                                onSave: (newDesc) => context.read<CardDetailCubit>().updateDescription(newDesc),
-                              ),
-                              const SizedBox(height: 32),
-                              CardDetailChecklist(
-                                initialItems: state.todos.map((t) => CardDetailChecklistItem(id: t.id, title: t.title, checked: t.isCompleted)).toList(),
-                                onCheckChanged: (id, isCompleted) => context.read<CardDetailCubit>().toggleTodoItem(id, isCompleted),
-                                onAddTodo: (content) => context.read<CardDetailCubit>().addTodoItem(content),
-                              ),
-                              const SizedBox(height: 32),
-                              const CardDetailAttachments(),
-                              const SizedBox(height: 32),
-                              CardDetailActivityList(
-                                activities: state.comments.map((c) => CardActivityItemData(
-                                  authorName: c.authorName ?? 'User',
-                                  initial: (c.authorName ?? 'U').substring(0, 1),
-                                  time: '${c.createdAt.day}/${c.createdAt.month} ${c.createdAt.hour}:${c.createdAt.minute}',
-                                  content: c.content,
-                                )).toList(),
-                              ),
+                               if (state.card.backgroundUrl != null && state.card.backgroundUrl!.isNotEmpty)
+                                 GestureDetector(
+                                   onTap: () {
+                                     CoverPickerBottomSheet.show(
+                                       context,
+                                       onTemplateSelected: (url) {
+                                         context.read<CardDetailCubit>().updateBackgroundUrl(url);
+                                       },
+                                       onImagePicked: (file) {
+                                         context.read<CardDetailCubit>().uploadCover(file.path);
+                                       },
+                                     );
+                                   },
+                                   child: CachedNetworkImage(
+                                     imageUrl: state.card.backgroundUrl!,
+                                     height: 180,
+                                     width: double.infinity,
+                                     fit: BoxFit.cover,
+                                   ),
+                                 ),
+                               if (state.card.backgroundUrl == null || state.card.backgroundUrl!.isEmpty)
+                                 const SizedBox(height: 80),
+                               Padding(
+                                 padding: const EdgeInsets.only(top: 16),
+                                 child: CardDetailTitle(
+                                   title: state.card.title,
+                                   status: state.card.status,
+                                   onStatusToggle: (newStatus) => context.read<CardDetailCubit>().updateStatus(newStatus),
+                                 ),
+                               ),
+                               const SizedBox(height: 32),
+                               CardDetailMetaGrid(
+                                 members: state.members, 
+                                 labels: state.card.labels,
+                                 dueDate: state.card.dueDate,
+                                 onAddMember: () {
+                                   if (widget.boardId == null) return;
+                                   CardMemberPickerSheet.show(
+                                     context,
+                                     allBoardMembers: state.potentialMembers,
+                                     currentCardMembers: state.members,
+                                     onMemberToggled: (member) {
+                                       final isAssigned = state.members.any((m) => m.userUId == member.userUId);
+                                       if (isAssigned) {
+                                          _cubit.removeMember(member.userUId, widget.boardId!);
+                                       } else {
+                                          _cubit.addMember(member.userUId, widget.boardId!);
+                                       }
+                                     },
+                                   );
+                                 },
+                                 onAddLabel: () {
+                                   LabelPickerSheet.show(
+                                     context,
+                                     selectedLabels: state.card.labels,
+                                     onLabelToggled: (label, colorHex) => _cubit.toggleLabel(label, colorHex),
+                                   );
+                                 },
+                                 onDateChanged: (date) => _cubit.updateDueDate(date),
+                               ),
+                               const SizedBox(height: 32),
+                               CardDetailDescription(
+                                 description: state.card.description ?? '',
+                                 onSave: (newDesc) => context.read<CardDetailCubit>().updateDescription(newDesc),
+                               ),
+                               const SizedBox(height: 32),
+                               CardDetailChecklist(
+                                 initialItems: state.todos.map((t) => CardDetailChecklistItem(id: t.id, title: t.title, checked: t.isCompleted)).toList(),
+                                 onCheckChanged: (id, isCompleted) => context.read<CardDetailCubit>().toggleTodoItem(id, isCompleted),
+                                 onAddTodo: (content) => context.read<CardDetailCubit>().addTodoItem(content),
+                               ),
+                               const SizedBox(height: 32),
+                               const CardDetailAttachments(),
+                               const SizedBox(height: 32),
+                               CardDetailActivityList(
+                                 activities: state.comments.map((c) => CardActivityItemData(
+                                   authorName: c.authorName ?? 'User',
+                                   initial: (c.authorName ?? 'U').substring(0, 1),
+                                   time: '${c.createdAt.day}/${c.createdAt.month} ${c.createdAt.hour}:${c.createdAt.minute}',
+                                   content: c.content,
+                                 )).toList(),
+                               ),
                            ],
                          ),
                       ),
@@ -130,29 +164,29 @@ class _CardDetailPageState extends State<CardDetailPage> {
                           ),
                         ),
                         child: Row(
-                          children: [
-                            const SizedBox(width: 8),
-                            IconButton(
-                              icon: const Icon(Icons.arrow_back, color: Colors.white),
-                              onPressed: () => Navigator.pop(context),
-                            ),
-                            const Spacer(),
-                            IconButton(
-                              icon: const Icon(Icons.image, color: Colors.white),
-                              onPressed: () {
-                                CoverPickerBottomSheet.show(
-                                  context,
-                                  onTemplateSelected: (url) {
-                                    context.read<CardDetailCubit>().updateBackgroundUrl(url);
-                                  },
-                                  onImagePicked: (file) {
-                                    context.read<CardDetailCubit>().uploadCover(file.path);
-                                  },
-                                );
-                              },
-                            ),
-                            const SizedBox(width: 8),
-                          ],
+                           children: [
+                             const SizedBox(width: 8),
+                             IconButton(
+                               icon: const Icon(Icons.arrow_back, color: Colors.white),
+                               onPressed: () => Navigator.pop(context),
+                             ),
+                             const Spacer(),
+                             IconButton(
+                               icon: const Icon(Icons.image, color: Colors.white),
+                               onPressed: () {
+                                 CoverPickerBottomSheet.show(
+                                   context,
+                                   onTemplateSelected: (url) {
+                                     context.read<CardDetailCubit>().updateBackgroundUrl(url);
+                                   },
+                                   onImagePicked: (file) {
+                                     context.read<CardDetailCubit>().uploadCover(file.path);
+                                   },
+                                 );
+                               },
+                             ),
+                             const SizedBox(width: 8),
+                           ],
                         ),
                       ),
                     ),

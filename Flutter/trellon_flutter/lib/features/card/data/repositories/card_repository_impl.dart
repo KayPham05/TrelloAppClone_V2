@@ -43,12 +43,17 @@ class CardRepositoryImpl implements ICardRepository {
   @override
   Future<CardEntity> updateCard({required String cardId, required String title, String? description, DateTime? dueDate, String? backgroundUrl}) async {
     try {
+      final oldRes = await dio.get('${ApiEndpoints.card}/$cardId');
+      final Map<String, dynamic> oldData = oldRes.data;
+
       final data = {
         'title': title,
+        'description': description ?? oldData['description'],
+        'dueDate': dueDate != null ? dueDate.toIso8601String() : oldData['dueDate'],
+        'backgroundUrl': backgroundUrl ?? oldData['backgroundUrl'],
+        'position': oldData['position'] ?? 0,
+        'listUId': oldData['listUId'] ?? oldData['listId'],
       };
-      if (description != null) data['description'] = description;
-      if (dueDate != null) data['dueDate'] = dueDate.toIso8601String();
-      if (backgroundUrl != null) data['backgroundUrl'] = backgroundUrl;
 
       final response = await dio.put('${ApiEndpoints.card}/$cardId', data: data);
       if (response.statusCode == 200) {
@@ -321,6 +326,104 @@ class CardRepositoryImpl implements ICardRepository {
       final response = await dio.put('${ApiEndpoints.card}/$cardId/attachments/$fileId/description$queryParam');
       if (response.statusCode != 200) {
         throw Exception('Lỗi khi cập nhật mô tả tệp đính kèm');
+      }
+    } catch (e) {
+      throw Exception('Lỗi kết nối server: $e');
+    }
+  }
+
+  @override
+  Future<CardLabelEntity> addCardLabel({required String cardId, required String title, required String colorCode}) async {
+    try {
+      final response = await dio.post('${ApiEndpoints.card}/$cardId/labels', data: {
+        'title': title,
+        'colorCode': colorCode,
+      });
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return CardLabelModel.fromJson(response.data).toEntity();
+      }
+      throw Exception('Lỗi khi thêm nhãn');
+    } catch (e) {
+      throw Exception('Lỗi kết nối server: $e');
+    }
+  }
+
+  @override
+  Future<void> deleteCardLabel({required String cardId, required String labelId}) async {
+    try {
+      final response = await dio.delete('${ApiEndpoints.card}/$cardId/labels/$labelId');
+      if (response.statusCode != 200 && response.statusCode != 204) {
+        throw Exception('Lỗi khi xóa nhãn');
+      }
+    } catch (e) {
+      throw Exception('Lỗi kết nối server: $e');
+    }
+  }
+
+  @override
+  Future<List<CardMemberEntity>> getBoardMembers({required String boardId}) async {
+    try {
+      final response = await dio.get('${ApiEndpoints.boardMember}/$boardId/members');
+      if (response.statusCode == 200) {
+        final List<dynamic> data = response.data;
+        return data.map((json) {
+          return CardMemberEntity(
+            id: json['id'] ?? json['userUId'] ?? '',
+            userUId: json['userUId'] ?? '',
+            userName: json['userName'] ?? json['fullName'],
+          );
+        }).toList();
+      }
+      return [];
+    } catch (e) {
+      throw Exception('Lỗi khi lấy danh sách thành viên bảng: $e');
+    }
+  }
+
+  @override
+  Future<void> addCardMember({
+    required String cardId,
+    required String userUId,
+    required String requesterUId,
+    required String boardId,
+  }) async {
+    try {
+      final response = await dio.post(
+        '${ApiEndpoints.cardMember}/add',
+        queryParameters: {
+          'userUId': userUId,
+          'requesterUId': requesterUId,
+          'boardUId': boardId,
+          'cardUId': cardId,
+        },
+      );
+      if (response.statusCode != 200) {
+        throw Exception('Lỗi khi thêm thành viên vào thẻ');
+      }
+    } catch (e) {
+      throw Exception('Lỗi kết nối server: $e');
+    }
+  }
+
+  @override
+  Future<void> removeCardMember({
+    required String cardId,
+    required String userUId,
+    required String requesterUId,
+    required String boardId,
+  }) async {
+    try {
+      final response = await dio.delete(
+        '${ApiEndpoints.cardMember}/remove',
+        queryParameters: {
+          'userUId': userUId,
+          'requesterUId': requesterUId,
+          'boardUId': boardId,
+          'cardUId': cardId,
+        },
+      );
+      if (response.statusCode != 200) {
+        throw Exception('Lỗi khi xóa thành viên khỏi thẻ');
       }
     } catch (e) {
       throw Exception('Lỗi kết nối server: $e');

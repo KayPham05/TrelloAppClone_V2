@@ -54,6 +54,12 @@ namespace TodoAppAPI.Service
         public Card? GetById(string cardUId)
         {
             return _dbContext.Todos
+                .Include(c => c.List)
+                .Include(c => c.TodoItems)
+                .Include(c => c.Comments)
+                .Include(c => c.FileUrls)
+                .Include(c => c.CardMembers)
+                .Include(c => c.CardLabels)
                 .FirstOrDefault(c => c.CardUId == cardUId);
         }
 
@@ -61,6 +67,11 @@ namespace TodoAppAPI.Service
         {
             return _dbContext.Todos
                 .Include(c => c.List)
+                .Include(c => c.TodoItems)
+                .Include(c => c.Comments)
+                .Include(c => c.FileUrls)
+                .Include(c => c.CardMembers)
+                .Include(c => c.CardLabels)
                 .Where(c => c.Status != "Deleted" && c.List.BoardUId == boardUId)
                 .ToList();
         }
@@ -285,6 +296,25 @@ namespace TodoAppAPI.Service
             catch (Exception ex)
             {
                 Console.WriteLine($"Lỗi khi cập nhật mô tả attachment: {ex.Message}");
+                return false;
+            }
+        }
+
+        public async Task<bool> UpdateDueDateAsync(string cardUId, DateTime? dueDate)
+        {
+            try
+            {
+                var card = await _dbContext.Todos.FirstOrDefaultAsync(c => c.CardUId == cardUId);
+                if (card == null) return false;
+
+                card.DueDate = dueDate;
+                _dbContext.Todos.Update(card);
+                await _dbContext.SaveChangesAsync();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Lỗi khi cập nhật ngày hết hạn: {ex.Message}");
                 return false;
             }
         }

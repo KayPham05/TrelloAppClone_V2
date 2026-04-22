@@ -106,6 +106,10 @@ void _initBoard() {
     () => BoardRemoteDataSourceImpl(client: serviceLocator<Dio>()),
   );
 
+  serviceLocator.registerLazySingleton<BoardDetailRemoteDataSource>(
+    () => BoardDetailRemoteDataSource(dio: serviceLocator<Dio>()),
+  );
+
   // Repository
   serviceLocator.registerLazySingleton<BoardRepository>(
     () => BoardRepositoryImpl(remoteDataSource: serviceLocator<BoardRemoteDataSource>()),
@@ -116,7 +120,7 @@ void _initBoard() {
   serviceLocator.registerLazySingleton(() => CreateBoardUseCase(serviceLocator()));
   serviceLocator.registerLazySingleton(() => GetPersonalBoardsUseCase(serviceLocator()));
 
-  // Cubit
+  // BoardCubit
   serviceLocator.registerFactory(() => BoardCubit(
     getPersonalBoardsUseCase: serviceLocator(),
     getWorkspacesUseCase: serviceLocator(),
@@ -125,16 +129,12 @@ void _initBoard() {
     userLocalDataSource: serviceLocator(),
   ));
 
-
-  // Board Detail
-  serviceLocator.registerLazySingleton<BoardDetailRemoteDataSource>(
-    () => BoardDetailRemoteDataSource(dio: serviceLocator<Dio>()),
-  );
+  // BoardDetailCubit — uses data source, userLocalDataSource, and updateListUIdUseCase
   serviceLocator.registerFactory(() => BoardDetailCubit(
-    dataSource: serviceLocator(),
-    userLocalDataSource: serviceLocator(),
+    dataSource: serviceLocator<BoardDetailRemoteDataSource>(),
+    userLocalDataSource: serviceLocator<UserLocalDataSource>(),
+    updateListUIdUseCase: serviceLocator<UpdateListUIdUseCase>(),
   ));
-  _initBoard();
 }
 
 void _initCard() {
@@ -217,10 +217,3 @@ void _initInbox() {
   );
 }
 
-void _initBoard() {
-  serviceLocator.registerFactory(
-    () => BoardDetailCubit(
-      updateListUIdUseCase: serviceLocator(),
-    ),
-  );
-}

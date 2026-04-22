@@ -23,5 +23,6 @@ namespace TodoAppAPI.Models
         public ICollection<UserInboxCard>? UserInboxCards { get; set; } // ← Changed to nullable
         public virtual ICollection<CardMember>? CardMembers { get; set; }
         public virtual ICollection<FileUrl>? FileUrls { get; set; }
+        public virtual ICollection<CardLabel>? CardLabels { get; set; }
     }
 }

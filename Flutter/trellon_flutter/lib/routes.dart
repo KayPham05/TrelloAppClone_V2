@@ -11,6 +11,9 @@ import 'features/workspace/domain/entities/workspace_entity.dart';
 import 'features/workspace/presentation/cubit/workspace_cubit.dart';
 import 'features/board/presentation/cubit/board_cubit.dart';
 import 'features/board/presentation/cubit/board_detail_cubit.dart';
+import 'features/card/presentation/pages/card_detail_page.dart';
+import 'features/card/domain/entities/card_entity.dart';
+import 'features/card/presentation/cubit/card_detail_cubit.dart';
 import 'init_dependencies.dart';
 
 class AppRoutes {
@@ -20,7 +23,9 @@ class AppRoutes {
   static const String verify         = '/verify';
   static const String boardDetail    = '/board-detail';
   static const String workspaceMenu  = '/workspace-menu';
+  static const String workspaceDetail = '/workspace-detail';
   static const String introduction   = '/introduction';
+  static const String cardDetail      = '/card-detail';
 
   static Map<String, WidgetBuilder> routes = {
     login:         (context) => const LoginPage(),
@@ -38,15 +43,38 @@ class AppRoutes {
       create: (_) => serviceLocator<BoardDetailCubit>(),
       child: const BoardDetailPage(),
     ),
-    workspaceMenu: (context) {
-      final workspace = ModalRoute.of(context)?.settings.arguments as WorkspaceEntity?;
-      if (workspace == null) {
-        return const Scaffold(body: Center(child: Text('Workspace not provided')));
-      }
-      return BlocProvider(
-        create: (_) => serviceLocator<WorkspaceCubit>(),
-        child: WorkspaceMenuPage(workspace: workspace),
-      );
-    },
+    workspaceMenu: (context) => _buildWorkspaceMenu(context),
+    workspaceDetail: (context) => _buildWorkspaceMenu(context),
+    cardDetail: (context) => _buildCardDetail(context),
   };
+
+  static Widget _buildWorkspaceMenu(BuildContext context) {
+    final workspace = ModalRoute.of(context)?.settings.arguments as WorkspaceEntity?;
+    if (workspace == null) {
+      return const Scaffold(body: Center(child: Text('Workspace not provided')));
+    }
+    return BlocProvider(
+      create: (_) => serviceLocator<WorkspaceCubit>(),
+      child: WorkspaceMenuPage(workspace: workspace),
+    );
+  }
+
+  static Widget _buildCardDetail(BuildContext context) {
+    final args = ModalRoute.of(context)?.settings.arguments;
+    CardEntity? card;
+    String? boardId;
+
+    if (args is CardEntity) {
+      card = args;
+    } else if (args is Map<String, dynamic>) {
+      card = args['card'] as CardEntity?;
+      boardId = args['boardId'] as String?;
+    }
+
+    if (card == null) {
+      return const Scaffold(body: Center(child: Text('Card not provided')));
+    }
+
+    return CardDetailPage(card: card, boardId: boardId);
+  }
 }

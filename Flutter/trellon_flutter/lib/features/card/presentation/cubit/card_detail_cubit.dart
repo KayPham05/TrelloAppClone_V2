@@ -225,6 +225,111 @@ class CardDetailCubit extends Cubit<CardDetailState> {
     }
   }
 
+  Future<void> loadPotentialMembers(String boardId) async {
+    final currentState = state;
+    if (currentState is CardDetailLoaded) {
+      try {
+        final potential = await repository.getBoardMembers(boardId: boardId);
+        emit(currentState.copyWith(potentialMembers: potential));
+      } catch (e) {
+        // Handle error silently
+      }
+    }
+  }
+
+  Future<void> addMember(String userUId, String boardId) async {
+    final currentState = state;
+    if (currentState is CardDetailLoaded) {
+      try {
+        final requesterUId = await UserLocalDataSource().getUserId();
+        if (requesterUId == null) return;
+
+        await repository.addCardMember(
+          cardId: currentState.card.id,
+          userUId: userUId,
+          requesterUId: requesterUId,
+          boardId: boardId,
+        );
+        // Refresh members
+        final members = await repository.getCardMembers(cardId: currentState.card.id);
+        emit(currentState.copyWith(members: members));
+      } catch (e) {
+        // Handle error silently
+      }
+    }
+  }
+
+  Future<void> removeMember(String userUId, String boardId) async {
+    final currentState = state;
+    if (currentState is CardDetailLoaded) {
+      try {
+        final requesterUId = await UserLocalDataSource().getUserId();
+        if (requesterUId == null) return;
+
+        await repository.removeCardMember(
+          cardId: currentState.card.id,
+          userUId: userUId,
+          requesterUId: requesterUId,
+          boardId: boardId,
+        );
+        // Refresh members
+        final members = await repository.getCardMembers(cardId: currentState.card.id);
+        emit(currentState.copyWith(members: members));
+      } catch (e) {
+        // Handle error silently
+      }
+    }
+  }
+
+  Future<void> toggleLabel(String title, String colorCode) async {
+    final currentState = state;
+    if (currentState is CardDetailLoaded) {
+      final currentLabels = List<CardLabelEntity>.from(currentState.card.labels);
+      final existingIndex = currentLabels.indexWhere((l) => l.title == title && l.colorCode.toUpperCase() == colorCode.toUpperCase());
+
+      if (existingIndex != -1) {
+        // Label exists, delete it
+        final labelToRemove = currentLabels[existingIndex];
+        currentLabels.removeAt(existingIndex);
+        
+        // Update local state first (Optimistic)
+        emit(currentState.copyWith(card: currentState.card.copyWith(labels: currentLabels)));
+        
+        try {
+          await repository.deleteCardLabel(cardId: currentState.card.id, labelId: labelToRemove.id);
+        } catch (e) {
+          // Revert or surface error
+        }
+      } else {
+        // Optimistic UI fallback: We can do a loading state or just wait. It's fast enough to await usually.
+        // Or generate a fake ID. Better to just await since ID is needed for future deletions.
+        try {
+          final newLabel = await repository.addCardLabel(
+            cardId: currentState.card.id,
+            title: title,
+            colorCode: colorCode,
+          );
+          currentLabels.add(newLabel);
+          emit(currentState.copyWith(card: currentState.card.copyWith(labels: currentLabels)));
+        } catch (e) {
+          // Revert or handle error
+        }
+      }
+    }
+  }
+
+  Future<void> updateDueDate(DateTime dueDate) async {
+    final currentState = state;
+    if (currentState is CardDetailLoaded) {
+      try {
+        await repository.updateDueDate(cardId: currentState.card.id, dueDate: dueDate);
+        emit(currentState.copyWith(card: currentState.card.copyWith(dueDate: dueDate)));
+      } catch (e) {
+        // Handle error silently
+      }
+    }
+  }
+
   void clearAttachmentError() {
     final currentState = state;
     if (currentState is CardDetailLoaded) {
