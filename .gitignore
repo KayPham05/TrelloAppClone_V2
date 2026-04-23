@@ -46,6 +46,13 @@ $RECYCLE.BIN/
 *.pfx
 
 # -----------------------------
+# .NET local settings
+# -----------------------------
+appsettings.Development.json
+appsettings.Local.json
+appsettings.*.local.json
+
+# -----------------------------
 # Local agent folders
 # -----------------------------
 .gemini/
