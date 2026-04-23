@@ -18,8 +18,6 @@ class InboxItemWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool isFirst = index == 0;
-    final bool isLast = index == totalCount - 1;
     final bool isCompleted = item.status == 'Completed';
 
     return Container(
@@ -43,7 +41,7 @@ class InboxItemWidget extends StatelessWidget {
                 color: isCompleted ? AppColors.success : AppColors.outlineVariant,
                 width: 2,
               ),
-              color: isCompleted ? AppColors.success.withOpacity(0.15) : Colors.transparent,
+              color: isCompleted ? AppColors.success.withValues(alpha: 0.15) : Colors.transparent,
             ),
             child: isCompleted
                 ? const Icon(Icons.check, color: AppColors.success, size: 14)

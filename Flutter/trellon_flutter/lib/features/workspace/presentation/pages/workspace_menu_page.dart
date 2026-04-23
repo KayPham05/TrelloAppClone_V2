@@ -3,12 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../domain/entities/workspace_entity.dart';
-import '../../../../core/widgets/cover_picker_bottom_sheet.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../cubit/workspace_cubit.dart';
-import '../../../../init_dependencies.dart';
-import '../../../../core/data_sources/user_local_data_source.dart';
 import '../widgets/dashed_create_board_card.dart';
 import '../widgets/workspace_board_item_widget.dart';
 import '../widgets/create_workspace_dialog.dart';
@@ -414,7 +410,6 @@ class _WorkspaceMenuPageState extends State<WorkspaceMenuPage> {
   }
 
   Widget _buildBoardsSection() {
-    final boards = widget.workspace.boards;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

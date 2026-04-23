@@ -38,10 +38,6 @@ class _InboxViewState extends State<InboxView> {
     context.read<InboxCubit>().fetchInboxCards();
   }
 
-  void _onToggleComplete(int index, bool newValue) {
-    // Deprecated for ID based
-  }
-
   void _onSubmittedNewCard(String val) {
     if (val.trim().isNotEmpty) {
       context.read<InboxCubit>().addCardToInbox(val.trim());

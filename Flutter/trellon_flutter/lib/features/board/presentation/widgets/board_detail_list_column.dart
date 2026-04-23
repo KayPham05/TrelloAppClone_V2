@@ -102,7 +102,7 @@ class _BoardDetailListColumnState extends State<BoardDetailListColumn> {
           duration: const Duration(milliseconds: 150),
           decoration: BoxDecoration(
             color: _isDragOver
-                ? AppColors.primary.withOpacity(0.08)
+                ? AppColors.primary.withValues(alpha: 0.08)
                 : AppColors.surfaceContainer,
             borderRadius: const BorderRadius.vertical(bottom: Radius.circular(10)),
             border: _isDragOver
@@ -120,7 +120,7 @@ class _BoardDetailListColumnState extends State<BoardDetailListColumn> {
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
                   itemCount: widget.listData.cards.length,
-                  separatorBuilder: (_, __) =>
+                  separatorBuilder: (_, _) =>
                       Container(height: 0.5, color: AppColors.border),
                    itemBuilder: (ctx, i) =>
                        BoardDetailCardItem(card: widget.listData.cards[i]),

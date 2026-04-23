@@ -280,8 +280,6 @@ class CardRepositoryImpl implements ICardRepository {
       throw Exception('Lỗi kết nối server: $e');
     } catch (e) {
       throw Exception('Lỗi kết nối server: $e');
-    } catch (e) {
-      rethrow;
     }
   }
 

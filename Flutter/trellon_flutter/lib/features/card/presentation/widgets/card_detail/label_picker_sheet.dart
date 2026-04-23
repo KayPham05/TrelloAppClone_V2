@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../../../../core/constants/app_colors.dart';
 import '../../../domain/entities/card_entity.dart';
 
 class LabelPickerSheet extends StatelessWidget {
@@ -262,7 +261,7 @@ class _LabelPickerContentState extends State<_LabelPickerContent> {
           rightAction: TextButton(
             onPressed: () {
               if (selectedCustomColor != null) {
-                final hexCode = '#${selectedCustomColor!.value.toRadixString(16).substring(2).toUpperCase()}';
+                final hexCode = '#${selectedCustomColor!.toARGB32().toRadixString(16).substring(2).toUpperCase()}';
                 
                 // Add to repository if not exists
                 final existsInRepo = LabelPickerSheet.boardLabelRepository.any((r) =>
@@ -387,7 +386,7 @@ class _LabelPickerContentState extends State<_LabelPickerContent> {
           Switch(
             value: false,
             onChanged: (v) {},
-            activeColor: Colors.blue,
+            activeThumbColor: Colors.blue,
             inactiveThumbColor: Colors.black54,
             inactiveTrackColor: Colors.black12,
           ),

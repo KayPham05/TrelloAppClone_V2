@@ -7,19 +7,19 @@ import '../../../board/domain/entities/board_entity.dart';
 class WorkspaceBoardItemWidget extends StatelessWidget {
   final BoardEntity board;
   final VoidCallback onToggleStar;
+  final bool isStarred;
 
   const WorkspaceBoardItemWidget({
     super.key,
     required this.board,
     required this.onToggleStar,
+    this.isStarred = false,
   });
 
   @override
   Widget build(BuildContext context) {
     final color = ColorUtils.hexToColor(board.coverColor ?? '#0079BF');
     // Using a simple logic for mockup favorites until star is added to backend model
-    final bool isStarred = false; 
-
     return Material(
       color: AppColors.surfaceContainerLowest,
       borderRadius: BorderRadius.circular(12),
@@ -35,7 +35,7 @@ class WorkspaceBoardItemWidget extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: AppColors.outlineVariant.withOpacity(0.35),
+              color: AppColors.outlineVariant.withValues(alpha: 0.35),
             ),
           ),
           child: Row(
@@ -49,8 +49,8 @@ class WorkspaceBoardItemWidget extends StatelessWidget {
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [
-                      color.withOpacity(0.95),
-                      color.withOpacity(0.45),
+                      color.withValues(alpha: 0.95),
+                      color.withValues(alpha: 0.45),
                     ],
                   ),
                 ),

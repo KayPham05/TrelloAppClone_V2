@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:apptreolon/features/card/domain/entities/card_entity.dart';
 import '../../../../core/constants/app_colors.dart';
-import '../pages/card_detail_page.dart';
 
 class CardOverviewWidget extends StatelessWidget {
   final CardEntity card;

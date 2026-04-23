@@ -26,7 +26,7 @@ class GuestWorkspaceTileWidget extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: AppColors.onSurface.withOpacity(0.06),
+              color: AppColors.onSurface.withValues(alpha: 0.06),
               blurRadius: 16,
               offset: const Offset(0, 4),
             ),

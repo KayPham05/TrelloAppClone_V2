@@ -19,7 +19,7 @@ class ActivityItemWidget extends StatelessWidget {
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(vertical: 8),
       leading: CircleAvatar(
-        backgroundColor: AppColors.primary.withOpacity(0.2),
+        backgroundColor: AppColors.primary.withValues(alpha: 0.2),
         child: Text(
           item.userName.isNotEmpty ? item.userName[0].toUpperCase() : '?',
           style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold),

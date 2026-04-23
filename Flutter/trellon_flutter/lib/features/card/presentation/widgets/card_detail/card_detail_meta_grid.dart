@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../../core/constants/app_colors.dart';
 import '../../../domain/entities/card_entity.dart';
-import 'label_picker_sheet.dart';
 
 class CardDetailMetaGrid extends StatelessWidget {
   final List<CardMemberEntity> members;
@@ -75,7 +74,7 @@ class CardDetailMetaGrid extends StatelessWidget {
               children: [
                 ...labels.map((l) {
                   final color = _parseHexColor(l.colorCode);
-                  return _buildLabelChip(l.title, color.withOpacity(0.2), color);
+                  return _buildLabelChip(l.title, color.withValues(alpha: 0.2), color);
                 }),
                 GestureDetector(
                   onTap: onAddLabel,

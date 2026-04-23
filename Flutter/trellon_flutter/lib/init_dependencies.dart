@@ -12,7 +12,7 @@ import 'features/auth/domain/usecases/verify_code_usecase.dart';
 import 'features/auth/presentation/cubit/login_cubit.dart';
 import 'features/auth/presentation/cubit/register_cubit.dart';
 import 'features/auth/presentation/cubit/verify_cubit.dart';
-import 'features/inbox/data/repositories/inbox_repositories_Impl.dart';
+import 'features/inbox/data/repositories/inbox_repositories_impl.dart';
 import 'features/inbox/domain/repositories/i_inbox_repositories.dart';
 import 'features/inbox/domain/usecases/get_user_inbox_card.dart';
 import 'features/inbox/domain/usecases/add_inbox_card_usecase.dart';
