@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using TodoAppAPI.Data;
 using TodoAppAPI.DTOs;
 using TodoAppAPI.Interfaces;
@@ -26,10 +26,10 @@ namespace TodoAppAPI.Service
                 .ToListAsync();
         }
 
-        public async Task<bool> MarkAsReadAsync(string notiId)
+        public async Task<bool> MarkAsReadAsync(string userId, string notiId)
         {
             var noti = await _context.Notifications.FindAsync(notiId);
-            if (noti == null) return false;
+            if (noti == null || noti.RecipientId != userId) return false;
 
             noti.Read = true;
             noti.ReadAt = DateTime.Now;
@@ -102,18 +102,18 @@ namespace TodoAppAPI.Service
             }
         }
 
-        public async Task<bool> DeleteAsync(string notiId)
+        public async Task<bool> DeleteAsync(string userId, string notiId)
         {
             if (string.IsNullOrWhiteSpace(notiId))
                 return false;
 
             var noti = await _context.Notifications
                 .AsNoTracking()
-                .FirstOrDefaultAsync(n => n.NotiId == notiId);
+                .FirstOrDefaultAsync(n => n.NotiId == notiId && n.RecipientId == userId);
 
             if (noti == null)
             {
-                Console.WriteLine($"[WARN] Notification not found for deletion: {notiId}");
+                Console.WriteLine($"[WARN] Notification not found for deletion or unauthorized: {notiId}");
                 return false;
             }
 

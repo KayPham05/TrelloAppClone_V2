@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using TodoAppAPI.DTOs;
 using TodoAppAPI.Interfaces;
 
@@ -6,6 +7,7 @@ namespace TodoAppAPI.Controllers
 {
     [Route("v1/api/notifications")]
     [ApiController]
+    [Authorize]
     public class NotificationController : ControllerBase
     {
         private readonly INotificationService _notificationService;
@@ -15,12 +17,18 @@ namespace TodoAppAPI.Controllers
             _notificationService = notificationService;
         }
 
+        private string? GetUserId()
+        {
+            return User.FindFirst("UserUId")?.Value;
+        }
+
         // Lấy danh sách thông báo gần đây của người dùng
         [HttpGet]
-        public async Task<IActionResult> GetNotifications([FromQuery] string userId, [FromQuery] int page, [FromQuery] int pageSize)
+        public async Task<IActionResult> GetNotifications([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
+            var userId = GetUserId();
             if (string.IsNullOrEmpty(userId))
-                return BadRequest(new { message = "userId is required" });
+                return Unauthorized(new { message = "User not authenticated" });
 
             var items = await _notificationService.GetNotificationsAsync(userId, page, pageSize);
             return Ok(items);
@@ -30,18 +38,23 @@ namespace TodoAppAPI.Controllers
         [HttpPatch("{notiId}/read")]
         public async Task<IActionResult> MarkAsRead(string notiId)
         {
-            var result = await _notificationService.MarkAsReadAsync(notiId);
+            var userId = GetUserId();
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized(new { message = "User not authenticated" });
+
+            var result = await _notificationService.MarkAsReadAsync(userId, notiId);
             if (!result)
-                return NotFound(new { message = "Notification not found" });
+                return NotFound(new { message = "Notification not found or unauthorized" });
             return Ok(new { message = "Marked as read" });
         }
 
         // Đánh dấu tất cả thông báo là đã đọc cho người dùng
         [HttpPatch("read-all")]
-        public async Task<IActionResult> MarkAllAsRead([FromQuery] string userId)
+        public async Task<IActionResult> MarkAllAsRead()
         {
+            var userId = GetUserId();
             if (string.IsNullOrEmpty(userId))
-                return BadRequest(new { message = "userId is required" });
+                return Unauthorized(new { message = "User not authenticated" });
 
             var count = await _notificationService.MarkAllAsReadAsync(userId);
             return Ok(new { message = $"Marked {count} notifications as read" });
@@ -65,12 +78,16 @@ namespace TodoAppAPI.Controllers
         [HttpDelete("{notiId}")]
         public async Task<IActionResult> DeleteNotification(string notiId)
         {
+            var userId = GetUserId();
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized(new { message = "User not authenticated" });
+
             if (string.IsNullOrWhiteSpace(notiId))
                 return BadRequest(new { message = "notiId is required" });
 
-            var deleted = await _notificationService.DeleteAsync(notiId);
+            var deleted = await _notificationService.DeleteAsync(userId, notiId);
             if (!deleted)
-                return NotFound(new { message = "Notification not found or already deleted" });
+                return NotFound(new { message = "Notification not found, unauthorized or already deleted" });
 
             return Ok(new { message = "Notification deleted successfully" });
         }
