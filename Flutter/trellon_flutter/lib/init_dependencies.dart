@@ -48,6 +48,14 @@ import 'features/workspace/domain/usecases/add_workspace_member_usecase.dart';
 import 'features/workspace/domain/usecases/get_workspace_boards_usecase.dart';
 import 'features/workspace/presentation/cubit/workspace_cubit.dart';
 import 'features/card/domain/usecases/update_list_uid_usecase.dart';
+import 'features/activity/data/datasources/notification_remote_datasource.dart';
+import 'features/activity/data/repositories/notification_repository_impl.dart';
+import 'features/activity/domain/repositories/i_notification_repository.dart';
+import 'features/activity/domain/usecases/delete_notification_usecase.dart';
+import 'features/activity/domain/usecases/get_notifications_usecase.dart';
+import 'features/activity/domain/usecases/mark_all_read_usecase.dart';
+import 'features/activity/domain/usecases/mark_as_read_usecase.dart';
+import 'features/activity/presentation/cubit/notification_cubit.dart';
 
 final serviceLocator = GetIt.instance;
 
@@ -67,6 +75,7 @@ Future<void> initDependencies() async {
   _initCard();
   _initBoard();
   _initWorkspace();
+  _initNotification();
 }
 
 void _initWorkspace() {
@@ -217,3 +226,28 @@ void _initInbox() {
   );
 }
 
+void _initNotification() {
+  // Data Source
+  serviceLocator.registerLazySingleton<NotificationRemoteDataSource>(
+    () => NotificationRemoteDataSourceImpl(dio: serviceLocator<Dio>()),
+  );
+
+  // Repository
+  serviceLocator.registerLazySingleton<INotificationRepository>(
+    () => NotificationRepositoryImpl(remoteDataSource: serviceLocator<NotificationRemoteDataSource>()),
+  );
+
+  // UseCases
+  serviceLocator.registerLazySingleton(() => GetNotificationsUseCase(serviceLocator()));
+  serviceLocator.registerLazySingleton(() => MarkAsReadUseCase(serviceLocator()));
+  serviceLocator.registerLazySingleton(() => MarkAllReadUseCase(serviceLocator()));
+  serviceLocator.registerLazySingleton(() => DeleteNotificationUseCase(serviceLocator()));
+
+  // Cubit
+  serviceLocator.registerFactory(() => NotificationCubit(
+    getNotificationsUseCase: serviceLocator(),
+    markAsReadUseCase: serviceLocator(),
+    markAllReadUseCase: serviceLocator(),
+    deleteNotificationUseCase: serviceLocator(),
+  ));
+}
