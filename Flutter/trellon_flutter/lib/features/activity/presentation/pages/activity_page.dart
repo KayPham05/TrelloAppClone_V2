@@ -1,111 +1,70 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../init_dependencies.dart';
+import '../../domain/entities/notification_entity.dart';
+import '../cubit/notification_cubit.dart';
+import '../cubit/notification_state.dart';
 
-// ── Mock Data Models ──────────────────────────────────────────────────────
-
-enum NotificationType { mention, addedToCard, dueDate, completed, system }
-
-class _MockNotification {
-  final NotificationType type;
-  final String authorName;
-  final String titleHtml; // Text rich: "added you to card [Design UI]"
-  final String timeText;
-  final bool isUnread;
-  
-  // For avatar
-  final String? avatarInitials;
-  final Color? avatarColor;
-  
-  // For icon (if no avatar)
-  final IconData? icon;
-  final Color? iconContainerColor;
-  final Color? iconColor;
-
-  // Extra content
-  final String? boardName;
-  final String? quote;
-
-  const _MockNotification({
-    required this.type,
-    required this.authorName,
-    required this.titleHtml,
-    required this.timeText,
-    this.isUnread = false,
-    this.avatarInitials,
-    this.avatarColor,
-    this.icon,
-    this.iconContainerColor,
-    this.iconColor,
-    this.boardName,
-    this.quote,
-  });
-}
-
-final List<_MockNotification> _mockNotifications = [
-  const _MockNotification(
-    type: NotificationType.addedToCard,
-    authorName: 'John Doe',
-    titleHtml: 'đã thêm bạn vào thẻ Design UI',
-    timeText: '2p trước',
-    isUnread: true,
-    avatarInitials: 'JD',
-    avatarColor: Color(0xFF3B82F6), // blue
-    boardName: 'Mobile App Redesign',
-  ),
-  const _MockNotification(
-    type: NotificationType.mention,
-    authorName: 'Sarah Jenkins',
-    titleHtml: 'đã nhắc đến bạn trong Màn hình người dùng',
-    timeText: '45p trước',
-    isUnread: false,
-    avatarInitials: 'SJ',
-    avatarColor: Color(0xFF10B981), // green
-    quote: '@alex Bạn có thể kiểm tra Prototype trước buổi họp 2h chiều mai không?',
-  ),
-  const _MockNotification(
-    type: NotificationType.dueDate,
-    authorName: '', // System alert
-    titleHtml: 'Thẻ Chốt ngân sách Q3 sẽ hết hạn trong 1 giờ',
-    timeText: '1 giờ trước',
-    isUnread: false,
-    icon: Icons.schedule_rounded,
-    iconContainerColor: Color(0xFFFFEDD5), // orange-100
-    iconColor: Color(0xFFEA580C), // orange-600
-    boardName: 'Kế hoạch 2024',
-  ),
-  const _MockNotification(
-    type: NotificationType.completed,
-    authorName: 'Mike Chen',
-    titleHtml: 'đã hoàn thành mục Cập nhật Design Tokens',
-    timeText: '3 giờ trước',
-    isUnread: false,
-    avatarInitials: 'MC',
-    avatarColor: Color(0xFF8B5CF6), // purple
-  ),
-  const _MockNotification(
-    type: NotificationType.system,
-    authorName: 'Hệ thống',
-    titleHtml: 'đã tự động lưu trữ 4 thẻ không hoạt động',
-    timeText: 'Hôm qua',
-    isUnread: false,
-    icon: Icons.rocket_launch_rounded,
-    iconContainerColor: Color(0xFFF3E8FF), // purple-100
-    iconColor: Color(0xFF9333EA), // purple-600
-  ),
-];
-
-// ── Page ──────────────────────────────────────────────────────────────────
-
-class ActivityPage extends StatefulWidget {
+class ActivityPage extends StatelessWidget {
   const ActivityPage({super.key});
 
   @override
-  State<ActivityPage> createState() => _ActivityPageState();
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (_) => serviceLocator<NotificationCubit>()..fetchNotifications(refresh: true),
+      child: const ActivityPageView(),
+    );
+  }
 }
 
-class _ActivityPageState extends State<ActivityPage> {
+class ActivityPageView extends StatefulWidget {
+  const ActivityPageView({super.key});
+
+  @override
+  State<ActivityPageView> createState() => _ActivityPageViewState();
+}
+
+class _ActivityPageViewState extends State<ActivityPageView> {
   int _selectedTabIndex = 0; // 0: All, 1: Me, 2: Unread
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
+      context.read<NotificationCubit>().fetchNotifications();
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _onRefresh() async {
+    await context.read<NotificationCubit>().fetchNotifications(refresh: true);
+  }
+
+  String _formatTime(DateTime time) {
+    final now = DateTime.now();
+    final difference = now.difference(time);
+    if (difference.inMinutes < 60) {
+      return '${difference.inMinutes}p trước';
+    } else if (difference.inHours < 24) {
+      return '${difference.inHours} giờ trước';
+    } else if (difference.inDays < 7) {
+      return '${difference.inDays} ngày trước';
+    } else {
+      return '${time.day.toString().padLeft(2, '0')}/${time.month.toString().padLeft(2, '0')}/${time.year}';
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -117,13 +76,19 @@ class _ActivityPageState extends State<ActivityPage> {
           children: [
             _buildTopBar(),
             Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildHeader(),
+              child: RefreshIndicator(
+                onRefresh: _onRefresh,
+                child: CustomScrollView(
+                  controller: _scrollController,
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  slivers: [
+                    SliverToBoxAdapter(
+                      child: _buildHeader(),
+                    ),
                     _buildNotificationList(),
-                    const SizedBox(height: 80), // Padding cho bottom nav
+                    const SliverToBoxAdapter(
+                      child: SizedBox(height: 80),
+                    ),
                   ],
                 ),
               ),
@@ -187,15 +152,32 @@ class _ActivityPageState extends State<ActivityPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Thông báo',
-            style: GoogleFonts.inter(
-              fontSize: 24,
-              fontWeight: FontWeight.w700,
-              color: AppColors.onSurface,
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Thông báo',
+                style: GoogleFonts.inter(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.onSurface,
+                ),
+              ),
+              TextButton(
+                onPressed: () {
+                  context.read<NotificationCubit>().markAllAsRead();
+                },
+                child: Text(
+                  'Đánh dấu đã đọc',
+                  style: GoogleFonts.inter(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
           Container(
             padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
@@ -206,7 +188,7 @@ class _ActivityPageState extends State<ActivityPage> {
               children: [
                 _buildTab('Tất cả', 0),
                 _buildTab('Gửi tôi', 1),
-                _buildTab('Chưa đọc', 2, hasUnreadDot: true),
+                _buildTab('Chưa đọc', 2),
               ],
             ),
           ),
@@ -215,7 +197,7 @@ class _ActivityPageState extends State<ActivityPage> {
     );
   }
 
-  Widget _buildTab(String label, int index, {bool hasUnreadDot = false}) {
+  Widget _buildTab(String label, int index) {
     final isSelected = _selectedTabIndex == index;
     return Expanded(
       child: GestureDetector(
@@ -229,29 +211,15 @@ class _ActivityPageState extends State<ActivityPage> {
                 ? [const BoxShadow(color: Color(0x0A000000), blurRadius: 4, offset: Offset(0, 2))]
                 : [],
           ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                label,
-                style: GoogleFonts.inter(
-                  fontSize: 14,
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                  color: isSelected ? AppColors.primary : AppColors.onSurfaceVariant,
-                ),
+          child: Center(
+            child: Text(
+              label,
+              style: GoogleFonts.inter(
+                fontSize: 14,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                color: isSelected ? AppColors.primary : AppColors.onSurfaceVariant,
               ),
-              if (hasUnreadDot) ...[
-                const SizedBox(width: 4),
-                Container(
-                  width: 8,
-                  height: 8,
-                  decoration: const BoxDecoration(
-                    color: AppColors.primaryContainer,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-              ],
-            ],
+            ),
           ),
         ),
       ),
@@ -260,192 +228,262 @@ class _ActivityPageState extends State<ActivityPage> {
 
   // ── Notification List ─────────────────────────────────────────────────────
   Widget _buildNotificationList() {
-    return Column(
-      children: _mockNotifications.map((notif) => _buildNotificationItem(notif)).toList(),
+    return BlocBuilder<NotificationCubit, NotificationState>(
+      builder: (context, state) {
+        if (state is NotificationInitial || (state is NotificationLoading && context.read<NotificationCubit>().state is! NotificationLoaded)) {
+          return const SliverFillRemaining(
+            child: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        if (state is NotificationError) {
+          return SliverFillRemaining(
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.error_outline, color: Colors.red, size: 48),
+                  const SizedBox(height: 16),
+                  Text(state.message, style: GoogleFonts.inter(color: Colors.red)),
+                  TextButton(
+                    onPressed: _onRefresh,
+                    child: const Text('Thử lại'),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+
+        if (state is NotificationLoaded) {
+          List<NotificationEntity> notifications = state.notifications;
+          
+          if (_selectedTabIndex == 1) { // Gửi tôi
+            notifications = notifications.where((n) => n.type == NotificationTypeEnum.assign || n.type == NotificationTypeEnum.mention).toList();
+          } else if (_selectedTabIndex == 2) { // Chưa đọc
+            notifications = notifications.where((n) => !n.isRead).toList();
+          }
+
+          if (notifications.isEmpty) {
+            return SliverFillRemaining(
+              child: Center(
+                child: Text('Không có thông báo nào', style: GoogleFonts.inter(color: AppColors.onSurfaceVariant)),
+              ),
+            );
+          }
+
+          return SliverList(
+            delegate: SliverChildBuilderDelegate(
+              (context, index) {
+                if (index == notifications.length) {
+                  return state.hasReachedMax
+                      ? const SizedBox.shrink()
+                      : const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 16),
+                          child: Center(child: CircularProgressIndicator()),
+                        );
+                }
+                return _buildNotificationItem(notifications[index]);
+              },
+              childCount: notifications.length + (state.hasReachedMax ? 0 : 1),
+            ),
+          );
+        }
+
+        return const SliverToBoxAdapter(child: SizedBox.shrink());
+      },
     );
   }
 
-  Widget _buildNotificationItem(_MockNotification notif) {
-    return Container(
-      decoration: BoxDecoration(
-        color: notif.isUnread ? const Color(0xFFEFF6FF) : Colors.white, // blue-50 for unread
-        border: const Border(bottom: BorderSide(color: Color(0xFFE2E8F0))), // slate-200
+  Widget _buildNotificationItem(NotificationEntity notif) {
+    IconData iconData;
+    Color iconColor;
+    Color iconContainerColor;
+
+    switch (notif.type) {
+      case NotificationTypeEnum.assign:
+        iconData = Icons.person_add_rounded;
+        iconColor = AppColors.primaryContainer;
+        iconContainerColor = const Color(0xFFEFF6FF);
+        break;
+      case NotificationTypeEnum.mention:
+        iconData = Icons.chat_bubble_rounded;
+        iconColor = AppColors.secondary;
+        iconContainerColor = const Color(0xFFF1F5F9);
+        break;
+      case NotificationTypeEnum.due:
+        iconData = Icons.schedule_rounded;
+        iconColor = const Color(0xFFEA580C);
+        iconContainerColor = const Color(0xFFFFEDD5);
+        break;
+      default:
+        iconData = Icons.notifications_rounded;
+        iconColor = AppColors.primary;
+        iconContainerColor = const Color(0xFFEFF6FF);
+    }
+
+    final avatarInitials = notif.actorName != null && notif.actorName!.isNotEmpty
+        ? notif.actorName!.substring(0, 1).toUpperCase()
+        : 'U';
+
+    return Dismissible(
+      key: Key(notif.id),
+      direction: DismissDirection.endToStart,
+      background: Container(
+        color: Colors.red,
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: 20),
+        child: const Icon(Icons.delete, color: Colors.white),
       ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () {},
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Avatar / Icon
-                SizedBox(
-                  width: 52,
-                  child: Stack(
-                    children: [
-                      if (notif.avatarInitials != null)
+      onDismissed: (direction) {
+        context.read<NotificationCubit>().deleteNotification(notif.id);
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: !notif.isRead ? const Color(0xFFEFF6FF) : Colors.white,
+          border: const Border(bottom: BorderSide(color: Color(0xFFE2E8F0))),
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () {
+              if (!notif.isRead) {
+                context.read<NotificationCubit>().markAsRead(notif.id);
+              }
+            },
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(
+                    width: 52,
+                    child: Stack(
+                      children: [
                         Container(
                           width: 48,
                           height: 48,
                           decoration: BoxDecoration(
-                            color: notif.avatarColor,
+                            color: iconContainerColor,
                             shape: BoxShape.circle,
                           ),
                           child: Center(
                             child: Text(
-                              notif.avatarInitials!,
+                              avatarInitials,
                               style: GoogleFonts.inter(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w700,
-                                color: Colors.white,
+                                color: iconColor,
                               ),
                             ),
                           ),
-                        )
-                      else if (notif.icon != null)
-                        Container(
-                          width: 48,
-                          height: 48,
-                          decoration: BoxDecoration(
-                            color: notif.iconContainerColor,
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(notif.icon, color: notif.iconColor, size: 24),
                         ),
-                      
-                      // Type badge (bottom right of avatar)
-                      if (notif.type == NotificationType.addedToCard)
                         Positioned(
                           right: 0,
                           bottom: 0,
-                          child: _buildBadge(Icons.person_add_rounded, AppColors.primaryContainer),
+                          child: _buildBadge(iconData, iconColor),
                         )
-                      else if (notif.type == NotificationType.mention)
-                        Positioned(
-                          right: 0,
-                          bottom: 0,
-                          child: _buildBadge(Icons.chat_bubble_rounded, AppColors.secondary),
-                        )
-                      else if (notif.type == NotificationType.completed)
-                        Positioned(
-                          right: 0,
-                          bottom: 0,
-                          child: _buildBadge(Icons.check_circle_rounded, const Color(0xFF16A34A)), // green-600
-                        ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-                const SizedBox(width: 16),
-                
-                // Content
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(
-                            child: Text.rich(
-                              TextSpan(
-                                children: [
-                                  if (notif.authorName.isNotEmpty)
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: Text.rich(
+                                TextSpan(
+                                  children: [
+                                    if (notif.actorName != null && notif.actorName!.isNotEmpty)
+                                      TextSpan(
+                                        text: '${notif.actorName} ',
+                                        style: GoogleFonts.inter(fontWeight: FontWeight.w700, color: AppColors.onSurface),
+                                      ),
                                     TextSpan(
-                                      text: '${notif.authorName} ',
-                                      style: GoogleFonts.inter(fontWeight: FontWeight.w700, color: AppColors.onSurface),
+                                      text: notif.title,
+                                      style: GoogleFonts.inter(color: AppColors.onSurface),
                                     ),
-                                  TextSpan(
-                                    text: notif.titleHtml,
-                                    style: GoogleFonts.inter(color: AppColors.onSurface),
-                                  ),
-                                ],
+                                  ],
+                                ),
+                                style: GoogleFonts.inter(fontSize: 14, height: 1.4),
                               ),
-                              style: GoogleFonts.inter(fontSize: 14, height: 1.4),
                             ),
-                          ),
-                          const SizedBox(width: 12),
-                          Text(
-                            notif.timeText,
-                            style: GoogleFonts.inter(
-                              fontSize: 11,
-                              color: AppColors.onSurfaceVariant,
+                            const SizedBox(width: 12),
+                            Text(
+                              _formatTime(notif.createdAt),
+                              style: GoogleFonts.inter(
+                                fontSize: 11,
+                                color: AppColors.onSurfaceVariant,
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (notif.message.isNotEmpty) ...[
+                          const SizedBox(height: 6),
+                          Container(
+                            padding: const EdgeInsets.only(left: 12, top: 4, bottom: 4),
+                            decoration: const BoxDecoration(
+                              border: Border(left: BorderSide(color: AppColors.outlineVariant, width: 2)),
+                            ),
+                            child: Text(
+                              notif.message,
+                              style: GoogleFonts.inter(
+                                fontSize: 14,
+                                fontStyle: FontStyle.italic,
+                                color: AppColors.onSurfaceVariant,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                         ],
-                      ),
-                      
-                      // Quote
-                      if (notif.quote != null) ...[
-                        const SizedBox(height: 6),
-                        Container(
-                          padding: const EdgeInsets.only(left: 12, top: 4, bottom: 4),
-                          decoration: const BoxDecoration(
-                            border: Border(left: BorderSide(color: AppColors.outlineVariant, width: 2)),
-                          ),
-                          child: Text(
-                            notif.quote!,
-                            style: GoogleFonts.inter(
-                              fontSize: 14,
-                              fontStyle: FontStyle.italic,
-                              color: AppColors.onSurfaceVariant,
+                        if (notif.boardId != null) ...[
+                          const SizedBox(height: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: AppColors.surfaceContainerLow,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: AppColors.outlineVariant.withValues(alpha: 0.3)),
                             ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                      
-                      // Board chip
-                      if (notif.boardName != null) ...[
-                        const SizedBox(height: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: AppColors.surfaceContainerLow,
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: AppColors.outlineVariant.withValues(alpha: 0.3)),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                notif.type == NotificationType.dueDate ? Icons.folder_rounded : Icons.dashboard_rounded,
-                                size: 14,
-                                color: AppColors.onSurfaceVariant,
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                notif.boardName!,
-                                style: GoogleFonts.inter(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500,
-                                  color: AppColors.onSurfaceVariant,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.dashboard_rounded, size: 14, color: AppColors.onSurfaceVariant),
+                                const SizedBox(width: 6),
+                                Text(
+                                  'Board',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                    color: AppColors.onSurfaceVariant,
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
-                        ),
+                        ],
                       ],
-                    ],
-                  ),
-                ),
-                
-                // Unread dot (rightmost)
-                if (notif.isUnread) ...[
-                  const SizedBox(width: 12),
-                  Container(
-                    margin: const EdgeInsets.only(top: 6),
-                    width: 10,
-                    height: 10,
-                    decoration: const BoxDecoration(
-                      color: AppColors.primaryContainer,
-                      shape: BoxShape.circle,
                     ),
                   ),
+                  if (!notif.isRead) ...[
+                    const SizedBox(width: 12),
+                    Container(
+                      margin: const EdgeInsets.only(top: 6),
+                      width: 10,
+                      height: 10,
+                      decoration: const BoxDecoration(
+                        color: AppColors.primaryContainer,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
         ),
