@@ -9,21 +9,35 @@ namespace TodoAppAPI.Service
     public class CardsService : ICardsService
     {
         private readonly TodoDbContext _dbContext;
-        public CardsService(TodoDbContext dbContext)
+        private readonly IAuthorizationService _authService;
+
+        public CardsService(TodoDbContext dbContext, IAuthorizationService authService)
         {
             _dbContext = dbContext;
+            _authService = authService;
         }
-        public bool AddCard(Card card)
+        public async Task<bool> AddCard(Card card)
         {
             try
             {
+                // Check permission to add card to list
+                if (!string.IsNullOrEmpty(card.ListUId))
+                {
+                    var list = await _dbContext.Lists.FindAsync(card.ListUId);
+                    if (list != null)
+                    {
+                        if (!await _authService.CanCreateCardAsync(list.BoardUId, card.UserUId))
+                            return false;
+                    }
+                }
+
                 card.CardUId = Guid.NewGuid().ToString();
 
                 if (string.IsNullOrEmpty(card.ListUId))
                     card.ListUId = null; // Inbox mặc định (null)
 
                 _dbContext.Todos.Add(card);
-                _dbContext.SaveChanges();
+                await _dbContext.SaveChangesAsync();
                 return true;
             }
             catch (Exception ex)
@@ -33,15 +47,18 @@ namespace TodoAppAPI.Service
             }
         }
 
-        public bool DeleteCard(string cardUId)
+        public async Task<bool> DeleteCard(string Uid, string userUId)
         {
             try
             {
-                var card = _dbContext.Todos.FirstOrDefault(c => c.CardUId == cardUId);
+                if (!await _authService.CanDeleteCardAsync(Uid, userUId))
+                    return false;
+
+                var card = await _dbContext.Todos.FirstOrDefaultAsync(c => c.CardUId == Uid);
                 if (card == null) return false;
 
                 _dbContext.Todos.Remove(card);
-                _dbContext.SaveChanges();
+                await _dbContext.SaveChangesAsync();
                 return true;
             }
             catch (Exception ex)
@@ -76,11 +93,14 @@ namespace TodoAppAPI.Service
                 .ToList();
         }
 
-        public bool UpdateCard(Card card)
+        public async Task<bool> UpdateCard(Card card, string userUId)
         {
             try
             {
-                var existing = _dbContext.Todos.Find(card.CardUId);
+                if (!await _authService.CanEditCardAsync(card.CardUId, userUId))
+                    return false;
+
+                var existing = await _dbContext.Todos.FindAsync(card.CardUId);
                 if (existing == null) return false;
                 existing.Title = card.Title;
                 existing.Description = card.Description;
@@ -89,7 +109,7 @@ namespace TodoAppAPI.Service
                 existing.ListUId = card.ListUId;
                 existing.BackgroundUrl = card.BackgroundUrl;
                 _dbContext.Update(existing);
-                _dbContext.SaveChanges();
+                await _dbContext.SaveChangesAsync();
                 return true;
             }
             catch (Exception ex)
@@ -101,6 +121,9 @@ namespace TodoAppAPI.Service
 
         public async Task<bool> UpdateListUid(string cardUId, string? newListUId, string userUId)
         {
+            if (!await _authService.CanEditCardAsync(cardUId, userUId))
+                return false;
+
             using var transaction = await _dbContext.Database.BeginTransactionAsync();
             try
             {
@@ -145,11 +168,14 @@ namespace TodoAppAPI.Service
 
         }
 
-        public async Task<bool> UpdateStatus(string cardUId, string newStatus)
+        public async Task<bool> UpdateStatus(string cardUId, string newStatus, string userUId)
         {
             try
             {
-                var card = _dbContext.Todos.FirstOrDefault(c => c.CardUId == cardUId);
+                if (!await _authService.CanEditCardAsync(cardUId, userUId))
+                    return false;
+
+                var card = await _dbContext.Todos.FirstOrDefaultAsync(c => c.CardUId == cardUId);
                 if (card == null) return false;
 
                 card.Status = newStatus;
@@ -168,56 +194,13 @@ namespace TodoAppAPI.Service
             }
         }
 
-        public async Task<CardDTO?> AddCardToInboxAsync(string userUId, Card card)
-        {
-            using var transaction = await _dbContext.Database.BeginTransactionAsync();
-            try
-            {
-                card.CardUId = Guid.NewGuid().ToString();
-                
-                if (string.IsNullOrEmpty(card.ListUId))
-                    card.ListUId = null; // Inbox mặc định không có list
-                    
-                card.CreatedAt = DateTime.UtcNow;
-
-                _dbContext.Todos.Add(card);
-                
-                UserInboxCard userInboxCard = new UserInboxCard
-                {
-                    UserUId = userUId,
-                    CardUId = card.CardUId,
-                    AddedAt = DateTime.UtcNow
-                };
-                
-                _dbContext.UserInboxCards.Add(userInboxCard);
-                
-                await _dbContext.SaveChangesAsync();
-                await transaction.CommitAsync();
-                
-                return new CardDTO {
-                    CardUId = card.CardUId,
-                    Title = card.Title,
-                    Description = card.Description,
-                    DueDate = card.DueDate,
-                    Position = card.Position,
-                    CreatedAt = card.CreatedAt,
-                    Status = card.Status,
-                    ListUId = card.ListUId,
-                    BackgroundUrl = card.BackgroundUrl
-                };
-            }
-            catch (Exception ex)
-            {
-                await transaction.RollbackAsync();
-                Console.WriteLine($"Lỗi khi thêm Card vào Inbox: {ex.Message}");
-                return null;
-            }
-        }
-
-        public async Task<(FileUrl? FileUrl, bool IsDuplicate)> AddFileToCardAsync(string cardUId, string url, string fileName, string? description = null)
+        public async Task<(FileUrl? FileUrl, bool IsDuplicate)> AddFileToCardAsync(string cardUId, string url, string fileName, string userUId, string? description = null)
         {
             try
             {
+                if (!await _authService.CanEditCardAsync(cardUId, userUId))
+                    return (null, false);
+
                 var card = await _dbContext.Todos.FirstOrDefaultAsync(c => c.CardUId == cardUId);
                 if (card == null) return (null, false);
 
@@ -263,12 +246,17 @@ namespace TodoAppAPI.Service
             }
         }
 
-        public async Task<bool> DeleteAttachmentAsync(string fileUId)
+        public async Task<bool> DeleteAttachmentAsync(string fileUId, string userUId)
         {
             try
             {
-                var fileUrl = await _dbContext.FileUrls.FirstOrDefaultAsync(f => f.FileUId == fileUId);
+                var fileUrl = await _dbContext.FileUrls
+                    .Include(f => f.Card)
+                    .FirstOrDefaultAsync(f => f.FileUId == fileUId);
                 if (fileUrl == null) return false;
+
+                if (!await _authService.CanEditCardAsync(fileUrl.CardUId, userUId))
+                    return false;
 
                 _dbContext.FileUrls.Remove(fileUrl);
                 await _dbContext.SaveChangesAsync();
@@ -281,12 +269,17 @@ namespace TodoAppAPI.Service
             }
         }
 
-        public async Task<bool> UpdateAttachmentDescriptionAsync(string fileUId, string? description)
+        public async Task<bool> UpdateAttachmentDescriptionAsync(string fileUId, string userUId, string? description)
         {
             try
             {
-                var file = await _dbContext.FileUrls.FirstOrDefaultAsync(f => f.FileUId == fileUId);
+                var file = await _dbContext.FileUrls
+                    .Include(f => f.Card)
+                    .FirstOrDefaultAsync(f => f.FileUId == fileUId);
                 if (file == null) return false;
+
+                if (!await _authService.CanEditCardAsync(file.CardUId, userUId))
+                    return false;
 
                 file.Description = description;
                 _dbContext.FileUrls.Update(file);
@@ -300,10 +293,13 @@ namespace TodoAppAPI.Service
             }
         }
 
-        public async Task<bool> UpdateDueDateAsync(string cardUId, DateTime? dueDate)
+        public async Task<bool> UpdateDueDateAsync(string cardUId, DateTime? dueDate, string userUId)
         {
             try
             {
+                if (!await _authService.CanEditCardAsync(cardUId, userUId))
+                    return false;
+
                 var card = await _dbContext.Todos.FirstOrDefaultAsync(c => c.CardUId == cardUId);
                 if (card == null) return false;
 

@@ -136,11 +136,36 @@ class CommentEntity {
 class CardMemberEntity {
   final String id;
   final String userUId;
-  final String? userName;
+  final String userName;
+  final String email;
+  final String? avatarUrl;
+  final String role;
 
   const CardMemberEntity({
     required this.id,
     required this.userUId,
-    this.userName,
+    required this.userName,
+    required this.email,
+    this.avatarUrl,
+    required this.role,
   });
+
+  String get resolvedAvatarUrl {
+    if (avatarUrl != null && avatarUrl!.isNotEmpty) return avatarUrl!;
+    final initials = Uri.encodeComponent(
+      userName.trim().isNotEmpty ? userName.trim() : 'U',
+    );
+    return 'https://ui-avatars.com/api/?name=$initials&background=random&color=fff';
+  }
+
+  CardMemberEntity copyWith({String? role}) {
+    return CardMemberEntity(
+      id: id,
+      userUId: userUId,
+      userName: userName,
+      email: email,
+      avatarUrl: avatarUrl,
+      role: role ?? this.role,
+    );
+  }
 }

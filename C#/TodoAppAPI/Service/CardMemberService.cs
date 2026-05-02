@@ -1,7 +1,9 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using TodoAppAPI.Data;
+using TodoAppAPI.DTOs;
 using TodoAppAPI.Interfaces;
 using TodoAppAPI.Models;
+
 namespace TodoAppAPI.Service
 {
     public class CardMemberService : ICardMemberService
@@ -11,11 +13,12 @@ namespace TodoAppAPI.Service
         {
             _dbContext = dbContext;
         }
-        public async Task<bool> AddCardMember(string userUId, string requesterUId, string boardUId ,string cardUId)
+
+        public async Task<bool> AddCardMember(string userUId, string requesterUId, string boardUId, string cardUId)
         {
             try
             {
-                //  B1: Kiểm tra người gửi request có trong BoardMember hay không
+                // B1: Kiểm tra người gửi request có trong BoardMember hay không
                 var requester = await _dbContext.BoardMembers
                     .FirstOrDefaultAsync(bm =>
                         bm.BoardUId == boardUId &&
@@ -24,12 +27,11 @@ namespace TodoAppAPI.Service
 
                 if (requester == null)
                 {
-                    //Không có quyền
                     Console.WriteLine("Requester không có quyền thêm thành viên vào card");
                     return false;
                 }
 
-                //  B2: Kiểm tra user được thêm có tồn tại không
+                // B2: Kiểm tra user được thêm có tồn tại không
                 var targetUser = await _dbContext.Users.FindAsync(userUId);
                 if (targetUser == null)
                 {
@@ -46,7 +48,8 @@ namespace TodoAppAPI.Service
                 }
 
                 // B4: Kiểm tra user đã nằm trong card chưa
-                var existingMember = await _dbContext.CardMembers.FirstOrDefaultAsync(cm => cm.CardUId == cardUId && cm.UserUId == userUId);
+                var existingMember = await _dbContext.CardMembers
+                    .FirstOrDefaultAsync(cm => cm.CardUId == cardUId && cm.UserUId == userUId);
 
                 if (existingMember != null)
                 {
@@ -67,30 +70,38 @@ namespace TodoAppAPI.Service
                 _dbContext.Add(newMember);
                 await _dbContext.SaveChangesAsync();
 
-                Console.WriteLine(" Thêm thành viên vào card thành công");
+                Console.WriteLine("Thêm thành viên vào card thành công");
                 return true;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($" Lỗi khi thêm CardMember: {ex.Message}");
+                Console.WriteLine($"Lỗi khi thêm CardMember: {ex.Message}");
                 return false;
             }
         }
 
-        public async Task<List<CardMember>> GetAllUserMemberByCardUId(string cardUId)
+        public async Task<List<MemberDTO>> GetAllUserMemberByCardUId(string cardUId)
         {
             return await _dbContext.CardMembers
-                        .AsNoTracking()
-                        .Where(cm => cm.CardUId == cardUId)
-                        .Include(cm => cm.User)
-                        .ToListAsync();
+                .AsNoTracking()
+                .Where(cm => cm.CardUId == cardUId)
+                .Include(cm => cm.User)
+                .Select(cm => new MemberDTO
+                {
+                    UserUId   = cm.UserUId,
+                    UserName  = cm.User.UserName,
+                    Email     = cm.User.Email,
+                    AvatarUrl = cm.User.AvatarUrl,
+                    Role      = cm.Role
+                })
+                .ToListAsync();
         }
 
         public async Task<bool> RemoveCardMember(string userUId, string requesterUId, string boardUId, string cardUId)
         {
             try
             {
-                // 1️⃣ Kiểm tra người thực hiện có quyền Owner/Admin trong Board đó không
+                // 1: Kiểm tra người thực hiện có quyền Owner/Admin trong Board đó không
                 var requester = await _dbContext.BoardMembers
                     .AsNoTracking()
                     .FirstOrDefaultAsync(bm =>
@@ -100,32 +111,65 @@ namespace TodoAppAPI.Service
 
                 if (requester == null)
                 {
-                    Console.WriteLine(" Requester không có quyền xóa thành viên khỏi card này.");
+                    Console.WriteLine("Requester không có quyền xóa thành viên khỏi card này.");
                     return false;
                 }
 
-                // 2️⃣ Tìm thành viên cần xóa trong CardMembers
+                // 2: Tìm thành viên cần xóa trong CardMembers
                 var targetMember = await _dbContext.CardMembers
-                    .FirstOrDefaultAsync(cm =>
-                        cm.CardUId == cardUId &&
-                        cm.UserUId == userUId);
+                    .FirstOrDefaultAsync(cm => cm.CardUId == cardUId && cm.UserUId == userUId);
 
                 if (targetMember == null)
                 {
-                    Console.WriteLine(" Thành viên không tồn tại trong card.");
+                    Console.WriteLine("Thành viên không tồn tại trong card.");
                     return false;
                 }
 
-                // 3️⃣ Xóa
+                // 3: Xóa
                 _dbContext.CardMembers.Remove(targetMember);
                 await _dbContext.SaveChangesAsync();
 
-                Console.WriteLine($" Đã xóa user {userUId} khỏi card {cardUId}");
+                Console.WriteLine($"Đã xóa user {userUId} khỏi card {cardUId}");
                 return true;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($" Lỗi khi xóa CardMember: {ex.Message}");
+                Console.WriteLine($"Lỗi khi xóa CardMember: {ex.Message}");
+                return false;
+            }
+        }
+
+        public async Task<bool> UpdateCardMemberRole(string cardUId, string userUId, string newRole, string requesterUId)
+        {
+            try
+            {
+                // Lấy board của card để kiểm tra quyền requester
+                var card = await _dbContext.Todos.AsNoTracking()
+                    .FirstOrDefaultAsync(c => c.CardUId == cardUId);
+                if (card == null) return false;
+
+                var list = await _dbContext.Lists.AsNoTracking()
+                    .FirstOrDefaultAsync(l => l.ListUId == card.ListUId);
+                if (list == null) return false;
+
+                var requesterIsAdmin = await _dbContext.BoardMembers.AnyAsync(bm =>
+                    bm.BoardUId == list.BoardUId &&
+                    bm.UserUId == requesterUId &&
+                    (bm.BoardRole == "Owner" || bm.BoardRole == "Admin"));
+
+                if (!requesterIsAdmin) return false;
+
+                var target = await _dbContext.CardMembers
+                    .FirstOrDefaultAsync(cm => cm.CardUId == cardUId && cm.UserUId == userUId);
+                if (target == null) return false;
+
+                target.Role = newRole;
+                await _dbContext.SaveChangesAsync();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Lỗi khi cập nhật role CardMember: {ex.Message}");
                 return false;
             }
         }

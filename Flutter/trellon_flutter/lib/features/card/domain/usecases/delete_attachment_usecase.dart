@@ -5,7 +5,7 @@ class DeleteAttachmentUseCase {
 
   DeleteAttachmentUseCase(this.repository);
 
-  Future<void> call({required String cardId, required String fileId}) async {
-    return await repository.deleteAttachment(cardId: cardId, fileId: fileId);
+  Future<void> call({required String cardId, required String fileId, required String userUId}) async {
+    return await repository.deleteAttachment(cardId: cardId, fileId: fileId, userUId: userUId);
   }
 }

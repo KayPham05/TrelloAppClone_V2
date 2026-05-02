@@ -12,5 +12,6 @@ namespace TodoAppAPI.DTOs
         public string? BackgroundUrl { get; set; }
 
         public string? ListUId { get; set; }
+        public List<CardLabelDto> CardLabels { get; set; } = new();
     }
 }

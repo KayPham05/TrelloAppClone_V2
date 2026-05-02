@@ -70,39 +70,42 @@ namespace TodoAppAPI.Controllers
 
 
         [HttpPut("{uid}")]
-        public async Task<IActionResult> UpdateBoard(string uid, [FromBody] Board board)
+        public async Task<IActionResult> UpdateBoard(string uid, [FromBody] Board board, [FromQuery] string userUId)
         {
             if (uid != board.BoardUId)
                 return BadRequest(new { message = "UID không khớp." });
 
-            var success = await _boardService.UpdateBoardAsync(board);
+            var success = await _boardService.UpdateBoardAsync(board, userUId);
             if (!success)
-                return NotFound(new { message = "Không tìm thấy board để cập nhật." });
-            _ = _activity.AddActivity(board.UserUId, $"updated board '{board.BoardName}'");
+                return NotFound(new { message = "Không tìm thấy board để cập nhật hoặc bạn không có quyền." });
+            _ = _activity.AddActivity(userUId, $"updated board '{board.BoardName}'");
             return Ok(new { message = "Cập nhật thành công." });
         }
 
  
         [HttpDelete("{uid}")]
-        public async Task<IActionResult> DeleteBoard(string uid)
+        public async Task<IActionResult> DeleteBoard(string uid, [FromQuery] string userUId)
         {
-            var success = await _boardService.DeleteBoardAsync(uid);
+            var success = await _boardService.DeleteBoardAsync(uid, userUId);
             if (!success)
-                return NotFound(new { message = "Không tìm thấy board để xóa." });
-            _ = _activity.AddActivity("System", $"deleted board with UID '{uid}'");
+                return NotFound(new { message = "Không tìm thấy board để xóa hoặc bạn không có quyền." });
+            _ = _activity.AddActivity(userUId, $"deleted board with UID '{uid}'");
             return Ok(new { message = "Xóa thành công." });
         }
 
         [HttpPost("{uid}/upload-background")]
-        public async Task<IActionResult> UploadBackground(string uid, IFormFile file)
+        public async Task<IActionResult> UploadBackground(string uid, IFormFile file, [FromQuery] string userUId)
         {
+            if (string.IsNullOrEmpty(userUId))
+                return BadRequest(new { message = "userUId là bắt buộc." });
+
             var board = await _boardService.GetBoardByIdAsync(uid);
             if (board == null) return NotFound(new { message = "Board không tồn tại." });
 
             var result = await _cloudinaryService.UploadFileAsync(file);
             if (result == null) return BadRequest("Lỗi khi tải ảnh lên Cloudinary.");
 
-            // Update board with new background URL
+            // Update board with new background URL (authorization checked inside UpdateBoardAsync)
             var boardToUpdate = new Board
             {
                 BoardUId = uid,
@@ -111,8 +114,11 @@ namespace TodoAppAPI.Controllers
                 UserUId = board.UserUId
             };
             
-            await _boardService.UpdateBoardAsync(boardToUpdate);
+            var success = await _boardService.UpdateBoardAsync(boardToUpdate, userUId);
+            if (!success)
+                return StatusCode(403, new { message = "Bạn không có quyền thay đổi ảnh nền board này." });
             
+            _ = _activity.AddActivity(userUId, $"updated background of board '{board.BoardName}'");
             return Ok(new { url = result.Value.Url });
         }
     }

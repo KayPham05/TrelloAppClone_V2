@@ -6,7 +6,7 @@ class UpdateCardStatusUseCase {
 
   UpdateCardStatusUseCase(this.repository);
 
-  Future<CardEntity> call({required String cardId, required String newStatus}) async {
-    return await repository.updateStatus(cardId: cardId, newStatus: newStatus);
+  Future<CardEntity> call({required String cardId, required String newStatus, required String userUId}) async {
+    return await repository.updateStatus(cardId: cardId, newStatus: newStatus, userUId: userUId);
   }
 }

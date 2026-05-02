@@ -96,6 +96,42 @@ class FileUrlModel {
   }
 }
 
+class CommentModel {
+  final String id;
+  final String content;
+  final DateTime createdAt;
+  final String userUId;
+  final String? authorName;
+
+  CommentModel({
+    required this.id,
+    required this.content,
+    required this.createdAt,
+    required this.userUId,
+    this.authorName,
+  });
+
+  factory CommentModel.fromJson(Map<String, dynamic> json) {
+    return CommentModel(
+      id: json['commentUId'] ?? json['id'] ?? '',
+      content: json['content'] ?? '',
+      createdAt: json['createdAt'] != null ? DateTime.tryParse(json['createdAt']) ?? DateTime.now() : DateTime.now(),
+      userUId: json['userUId'] ?? '',
+      authorName: json['user'] != null ? json['user']['userName'] : json['userName'],
+    );
+  }
+
+  CommentEntity toEntity() {
+    return CommentEntity(
+      id: id,
+      content: content,
+      createdAt: createdAt,
+      userUId: userUId,
+      authorName: authorName,
+    );
+  }
+}
+
 class CardModel {
   final String id;
   final String title;
@@ -154,7 +190,10 @@ class CardModel {
         ? membersFromJson.map((json) => CardMemberEntity(
             id: json['id'] ?? json['cardMemberUId'] ?? '',
             userUId: json['userUId'] ?? '',
-            userName: json['userName'] ?? json['fullName'] ?? (json['user'] != null ? json['user']['fullName'] : null),
+            userName: json['userName'] ?? json['fullName'] ?? (json['user'] != null ? json['user']['userName'] : 'Unknown'),
+            email: json['email'] ?? (json['user'] != null ? json['user']['email'] : ''),
+            avatarUrl: json['avatarUrl'] ?? (json['user'] != null ? json['user']['avatarUrl'] : null),
+            role: json['role'] ?? 'Observer',
           )).toList()
         : [];
 

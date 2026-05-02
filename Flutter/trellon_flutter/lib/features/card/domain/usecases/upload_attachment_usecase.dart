@@ -6,7 +6,7 @@ class UploadAttachmentUseCase {
 
   UploadAttachmentUseCase(this.repository);
 
-  Future<FileUrlEntity> call({required String cardId, required String filePath, String? description}) async {
-    return await repository.uploadAttachment(cardId: cardId, filePath: filePath, description: description);
+  Future<FileUrlEntity> call({required String cardId, required String filePath, required String userUId, String? description}) async {
+    return await repository.uploadAttachment(cardId: cardId, filePath: filePath, userUId: userUId, description: description);
   }
 }

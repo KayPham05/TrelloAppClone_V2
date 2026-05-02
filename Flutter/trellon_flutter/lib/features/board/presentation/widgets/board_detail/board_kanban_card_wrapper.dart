@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../../../core/constants/app_colors.dart';
 import '../../../../card/domain/entities/card_entity.dart';
+import '../../../domain/entities/list_entity.dart';
 import '../../models/drag_data_models.dart';
-
 
 class CardSlotWidget extends StatelessWidget {
   final String targetListId;
@@ -24,7 +24,8 @@ class CardSlotWidget extends StatelessWidget {
       onWillAcceptWithDetails: (details) {
         final data = details.data;
         if (data.sourceListId == targetListId) {
-          if (data.initialPosition == insertIndex || data.initialPosition == insertIndex - 1) {
+          if (data.initialPosition == insertIndex ||
+              data.initialPosition == insertIndex - 1) {
             return false;
           }
         }
@@ -41,7 +42,9 @@ class CardSlotWidget extends StatelessWidget {
           height: isHovered ? 52.0 * scale : 8.0 * scale,
           margin: EdgeInsets.symmetric(horizontal: 8 * scale),
           decoration: BoxDecoration(
-            color: isHovered ? AppColors.primary.withValues(alpha: 0.12) : Colors.transparent,
+            color: isHovered
+                ? AppColors.primary.withValues(alpha: 0.12)
+                : Colors.transparent,
             borderRadius: BorderRadius.circular(8 * scale),
             border: isHovered
                 ? Border.all(
@@ -64,6 +67,7 @@ class DraggableCardWidget extends StatelessWidget {
   final double scale;
   final VoidCallback onDragStarted;
   final VoidCallback onDragEnded;
+  final Function(DragUpdateDetails)? onDragUpdate;
   final Widget child;
   final Widget feedback;
 
@@ -76,6 +80,7 @@ class DraggableCardWidget extends StatelessWidget {
     required this.scale,
     required this.onDragStarted,
     required this.onDragEnded,
+    this.onDragUpdate,
     required this.child,
     required this.feedback,
   });
@@ -90,8 +95,10 @@ class DraggableCardWidget extends StatelessWidget {
         sourceListId: sourceListId,
         card: card,
       ),
-      delay: const Duration(milliseconds: 250),
+      delay: const Duration(milliseconds: 150),
       onDragStarted: onDragStarted,
+      onDragUpdate: onDragUpdate,
+      onDragCompleted: onDragEnded,
       onDragEnd: (details) => onDragEnded(),
       onDraggableCanceled: (velocity, offset) => onDragEnded(),
       feedback: feedback,
@@ -107,6 +114,49 @@ class DraggableCardWidget extends StatelessWidget {
           ),
         ),
       ),
+      child: child,
+    );
+  }
+}
+
+class DraggableListWidget extends StatelessWidget {
+  final ListEntity list;
+  final int initialPosition;
+  final String boardId;
+  final VoidCallback onDragStarted;
+  final VoidCallback onDragEnded;
+  final Function(DragUpdateDetails)? onDragUpdate;
+  final Widget child;
+  final Widget feedback;
+
+  const DraggableListWidget({
+    super.key,
+    required this.list,
+    required this.initialPosition,
+    required this.boardId,
+    required this.onDragStarted,
+    required this.onDragEnded,
+    this.onDragUpdate,
+    required this.child,
+    required this.feedback,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return LongPressDraggable<ListDragData>(
+      data: ListDragData(
+        id: list.id,
+        boardId: boardId,
+        initialPosition: initialPosition,
+        list: list,
+      ),
+      delay: const Duration(milliseconds: 80),
+      onDragStarted: onDragStarted,
+      onDragUpdate: onDragUpdate,
+      onDragCompleted: onDragEnded,
+      onDragEnd: (details) => onDragEnded(),
+      onDraggableCanceled: (velocity, offset) => onDragEnded(),
+      feedback: feedback,
       child: child,
     );
   }

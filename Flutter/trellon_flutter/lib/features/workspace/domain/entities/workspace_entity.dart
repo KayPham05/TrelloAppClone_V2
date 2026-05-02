@@ -1,3 +1,6 @@
+import '../../../board/domain/entities/board_entity.dart';
+import 'workspace_member.dart';
+
 enum WorkspaceType { personal, team }
 
 extension WorkspaceTypeExtension on WorkspaceType {
@@ -16,7 +19,8 @@ class WorkspaceEntity {
   final String status;
   final WorkspaceType type;
   final String? ownerUId;
-  final List<dynamic> boards; // Can be BoardEntity later
+  final List<BoardEntity> boards;
+  final List<WorkspaceMember>? members;
 
   const WorkspaceEntity({
     required this.id,
@@ -26,6 +30,7 @@ class WorkspaceEntity {
     this.type = WorkspaceType.personal,
     this.ownerUId,
     required this.boards,
+    this.members,
   });
 
   WorkspaceEntity copyWith({
@@ -35,7 +40,8 @@ class WorkspaceEntity {
     String? status,
     WorkspaceType? type,
     String? ownerUId,
-    List<dynamic>? boards,
+    List<BoardEntity>? boards,
+    List<WorkspaceMember>? members,
   }) {
     return WorkspaceEntity(
       id: id ?? this.id,
@@ -45,6 +51,18 @@ class WorkspaceEntity {
       type: type ?? this.type,
       ownerUId: ownerUId ?? this.ownerUId,
       boards: boards ?? this.boards,
+      members: members ?? this.members,
     );
+  }
+  String? getUserRole(String userUId) {
+    if (members == null || members!.isEmpty) {
+      return (userUId == ownerUId) ? 'Owner' : null;
+    }
+    try {
+      final member = members!.firstWhere((m) => m.userUId == userUId);
+      return member.role;
+    } catch (_) {
+      return (userUId == ownerUId) ? 'Owner' : null;
+    }
   }
 }
