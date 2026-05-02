@@ -1,17 +1,17 @@
-import 'package:apptreolon/features/card/domain/entities/card_entity.dart';
+import '../../domain/entities/card_entity.dart';
 
 abstract class ICardRepository {
   Future<CardEntity> getCard(String cardId);
-  Future<CardEntity> addCard({required String listId, required String title, required int position});
-  Future<CardEntity> updateCard({required String cardId, required String title, String? description, DateTime? dueDate, String? backgroundUrl});
-  Future<void> deleteCard({required String cardId});
+  Future<CardEntity> addCard({required String listId, required String title, required int position, required String userUId});
+  Future<CardEntity> updateCard({required String cardId, required String title, required String userUId, String? description, DateTime? dueDate, String? backgroundUrl, int? position, String? listId});
+  Future<void> deleteCard({required String cardId, required String userUId});
   Future<String> getCardDescription({required String cardId});
-  Future<CardEntity> updateListUId({required String cardId, required String newListId, required int newPosition});
-  Future<CardEntity> updateStatus({required String cardId, required String newStatus});
+  Future<CardEntity> updateListUId({required String cardId, required String newListId, required String userUId});
+  Future<CardEntity> updateStatus({required String cardId, required String newStatus, required String userUId});
 
   Future<CardEntity> addTodoItem({required String cardId, required String todoTitle});
   Future<CardEntity> updateTodoItem({required String cardId, required String todoId, required bool isCompleted});
-  Future<CardEntity> updateDueDate({required String cardId, required DateTime dueDate});
+  Future<CardEntity> updateDueDate({required String cardId, required DateTime dueDate, required String userUId});
 
   Future<List<CommentEntity>> getComments({required String cardId});
   Future<CommentEntity> addComment({required String cardId, required String content, required String userUId});
@@ -19,10 +19,10 @@ abstract class ICardRepository {
   Future<List<TodoItemEntity>> getTodoItems({required String cardId});
   
   Future<List<FileUrlEntity>> getAttachments({required String cardId});
-  Future<FileUrlEntity> uploadAttachment({required String cardId, required String filePath, String? description});
-  Future<String> uploadCardCover({required String cardId, required String filePath});
-  Future<void> deleteAttachment({required String cardId, required String fileId});
-  Future<void> updateAttachmentDescription({required String cardId, required String fileId, String? description});
+  Future<FileUrlEntity> uploadAttachment({required String cardId, required String filePath, required String userUId, String? description});
+  Future<String> uploadCardCover({required String cardId, required String filePath, required String userUId});
+  Future<void> deleteAttachment({required String cardId, required String fileId, required String userUId});
+  Future<void> updateAttachmentDescription({required String cardId, required String fileId, required String userUId, String? description});
 
   // Labels
   Future<CardLabelEntity> addCardLabel({required String cardId, required String title, required String colorCode});
@@ -39,6 +39,13 @@ abstract class ICardRepository {
   Future<void> removeCardMember({
     required String cardId,
     required String userUId,
+    required String requesterUId,
+    required String boardId,
+  });
+  Future<void> updateCardMemberRole({
+    required String cardId,
+    required String userUId,
+    required String role,
     required String requesterUId,
     required String boardId,
   });

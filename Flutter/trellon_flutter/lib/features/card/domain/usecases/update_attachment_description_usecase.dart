@@ -5,7 +5,7 @@ class UpdateAttachmentDescriptionUseCase {
 
   UpdateAttachmentDescriptionUseCase(this.repository);
 
-  Future<void> call({required String cardId, required String fileId, String? description}) async {
-    return await repository.updateAttachmentDescription(cardId: cardId, fileId: fileId, description: description);
+  Future<void> call({required String cardId, required String fileId, required String userUId, String? description}) async {
+    return await repository.updateAttachmentDescription(cardId: cardId, fileId: fileId, userUId: userUId, description: description);
   }
 }

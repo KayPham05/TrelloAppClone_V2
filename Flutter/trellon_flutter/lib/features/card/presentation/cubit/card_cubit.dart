@@ -9,6 +9,7 @@ import '../../domain/usecases/add_card_todo_usecase.dart';
 import '../../domain/usecases/update_card_todo_usecase.dart';
 import '../../domain/usecases/update_card_due_date_usecase.dart';
 import 'card_state.dart';
+import '../../../../core/data_sources/user_local_data_source.dart';
 
 class CardCubit extends Cubit<CardState> {
   final AddCardUseCase addCardUseCase;
@@ -36,7 +37,8 @@ class CardCubit extends Cubit<CardState> {
   Future<void> addCard({required String listId, required String title, required int position}) async {
     emit(CardLoading());
     try {
-      final card = await addCardUseCase.call(listId: listId, title: title, position: position);
+      final userUId = await UserLocalDataSource().getUserId() ?? '';
+      final card = await addCardUseCase.call(listId: listId, title: title, position: position, userUId: userUId);
       emit(CardActionSuccess(card: card));
     } catch (e) {
       emit(CardActionError(message: e.toString()));
@@ -46,7 +48,8 @@ class CardCubit extends Cubit<CardState> {
   Future<void> updateCard({required String cardId, required String title, String? description, DateTime? dueDate}) async {
     emit(CardLoading());
     try {
-      final card = await updateCardUseCase.call(cardId: cardId, title: title, description: description, dueDate: dueDate);
+      final userUId = await UserLocalDataSource().getUserId() ?? '';
+      final card = await updateCardUseCase.call(cardId: cardId, title: title, userUId: userUId, description: description, dueDate: dueDate);
       emit(CardActionSuccess(card: card));
     } catch (e) {
       emit(CardActionError(message: e.toString()));
@@ -56,7 +59,8 @@ class CardCubit extends Cubit<CardState> {
   Future<void> deleteCard({required String cardId}) async {
     emit(CardLoading());
     try {
-      await deleteCardUseCase.call(cardId: cardId);
+      final userUId = await UserLocalDataSource().getUserId() ?? '';
+      await deleteCardUseCase.call(cardId: cardId, userUId: userUId);
       emit(CardInitial()); // Or a specific Deleted state if needed
     } catch (e) {
       emit(CardActionError(message: e.toString()));
@@ -76,7 +80,8 @@ class CardCubit extends Cubit<CardState> {
   Future<void> updateListUId({required String cardId, required String newListId, required int newPosition}) async {
     emit(CardLoading());
     try {
-      final card = await updateListUIdUseCase.call(cardId: cardId, newListId: newListId, newPosition: newPosition);
+      final userUId = await UserLocalDataSource().getUserId() ?? '';
+      final card = await updateListUIdUseCase.call(cardId: cardId, newListId: newListId, userUId: userUId);
       emit(CardActionSuccess(card: card));
     } catch (e) {
       emit(CardActionError(message: e.toString()));
@@ -86,7 +91,8 @@ class CardCubit extends Cubit<CardState> {
   Future<void> updateStatus({required String cardId, required String newStatus}) async {
     emit(CardLoading());
     try {
-      final card = await updateCardStatusUseCase.call(cardId: cardId, newStatus: newStatus);
+      final userUId = await UserLocalDataSource().getUserId() ?? '';
+      final card = await updateCardStatusUseCase.call(cardId: cardId, newStatus: newStatus, userUId: userUId);
       emit(CardActionSuccess(card: card));
     } catch (e) {
       emit(CardActionError(message: e.toString()));
@@ -116,7 +122,8 @@ class CardCubit extends Cubit<CardState> {
   Future<void> updateDueDate({required String cardId, required DateTime dueDate}) async {
     emit(CardLoading());
     try {
-      final card = await updateCardDueDateUseCase.call(cardId: cardId, dueDate: dueDate);
+      final userUId = await UserLocalDataSource().getUserId() ?? '';
+      final card = await updateCardDueDateUseCase.call(cardId: cardId, dueDate: dueDate, userUId: userUId);
       emit(CardActionSuccess(card: card));
     } catch (e) {
       emit(CardActionError(message: e.toString()));

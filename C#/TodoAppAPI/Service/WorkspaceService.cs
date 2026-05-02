@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using TodoAppAPI.Constants;
 using TodoAppAPI.Data;
 using TodoAppAPI.DTOs;
 using TodoAppAPI.Interfaces;
@@ -9,9 +10,12 @@ namespace TodoAppAPI.Service
     public class WorkspaceService : IWorkspaceService
     {
         private readonly TodoDbContext _context;
-        public WorkspaceService(TodoDbContext context)
+        private readonly IAuthorizationService _authService;
+
+        public WorkspaceService(TodoDbContext context, IAuthorizationService authService)
         {
             _context = context;
+            _authService = authService;
         }
         
         public async Task<bool> AddWorkspace(string creatorUserId, string name, string? description = null)
@@ -39,7 +43,7 @@ namespace TodoAppAPI.Service
                 await _context.SaveChangesAsync();
 
                 // 3. Auto add creator as Owner in WorkspaceMember
-                var ownerMember = new WorkspaceMemberDto
+                var ownerMember = new WorkspaceMembers
                 {
                     WorkspaceMemberUId = Guid.NewGuid().ToString(),
                     WorkspaceUId = workspace.WorkspaceUId,
@@ -91,8 +95,7 @@ namespace TodoAppAPI.Service
                 return false;
 
             // 🔹 Kiểm tra người thực hiện
-            var requester = workspace.Members.FirstOrDefault(m => m.UserUId == requesterUId);
-            if (requester == null || (requester.Role != "Owner" && requester.Role != "Admin"))
+            if (!await _authService.CanManageWorkspaceAsync(workspaceId, requesterUId))
                 return false;
 
             workspace.Name = name;
@@ -123,6 +126,18 @@ namespace TodoAppAPI.Service
                         UserUId = m.UserUId,
                         UserName = m.User.UserName,
                         Role = m.Role
+                    }).ToList(),
+                    Boards = w.Boards.Select(b => new BoardDTO
+                    {
+                        BoardUId = b.BoardUId,
+                        BoardName = b.BoardName,
+                        Visibility = b.Visibility,
+                        IsPersonal = b.IsPersonal,
+                        WorkspaceUId = b.WorkspaceUId,
+                        BackgroundUrl = b.BackgroundUrl,
+                        Status = b.Status,
+                        CreatedAt = b.CreatedAt,
+                        UserUId = b.UserUId
                     }).ToList()
                 })
                 .ToListAsync();
@@ -149,10 +164,11 @@ namespace TodoAppAPI.Service
               .ThenBy(m => m.User.UserName)
               .Select(m => new WorkspaceMembersDto
               {
-                  UserUId = m.UserUId,
-                  Role = m.Role,
-                  UserName = m.User != null ? m.User.UserName : "",
-                  Email = m.User != null ? m.User.Email : ""
+                  UserUId   = m.UserUId,
+                  Role      = m.Role,
+                  UserName  = m.User != null ? m.User.UserName : "",
+                  Email     = m.User != null ? m.User.Email : "",
+                  AvatarUrl = m.User != null ? m.User.AvatarUrl : null
               })
               .ToListAsync();
         }
@@ -166,12 +182,7 @@ namespace TodoAppAPI.Service
                 if (!exists)
                     return false;
 
-                var requester = await _context.WorkspaceMembers
-                    .FirstOrDefaultAsync(m => m.WorkspaceUId == workspaceId && m.UserUId == requesterUId);
-                if (requester == null)
-                    return false;
-
-                if (requester.Role != "Owner" && requester.Role != "Admin")
+                if (!await _authService.CanManageWorkspaceMembersAsync(workspaceId, requesterUId))
                     return false;
 
                 var user = await _context.Users
@@ -184,7 +195,7 @@ namespace TodoAppAPI.Service
                 if (existingMember != null)
                     return false;
 
-                var newMember = new WorkspaceMemberDto
+                var newMember = new WorkspaceMembers
                 {
                     WorkspaceMemberUId = Guid.NewGuid().ToString(),
                     WorkspaceUId = workspaceId,
@@ -193,8 +204,10 @@ namespace TodoAppAPI.Service
                     JoinedAt = DateTime.UtcNow
                 };
 
-                await _context.WorkspaceMembers.AddAsync(newMember);
+                _context.WorkspaceMembers.Add(newMember);
                 await _context.SaveChangesAsync();
+
+                await _authService.LogPermissionChangeAsync(workspaceId, "Workspace", userId, requesterUId, "InviteMember", null, role);
 
                 return true;
             }
@@ -229,17 +242,23 @@ namespace TodoAppAPI.Service
             if (requesterUId == userId)
                 return false;
 
-            if (requester.Role != "Owner" && requester.Role != "Admin")
+            if (!await _authService.CanManageWorkspaceMembersAsync(workspaceId, requesterUId))
                 return false;
 
-            if (target.Role == "Owner")
+            if (target.Role == RoleConstants.WorkspaceOwner)
                 return false;
 
-            if (requester.Role == "Admin" && target.Role == "Admin")
+            // Admin cannot remove other Admins (handled by logic within auth if needed or here)
+            // For now keep the explicit check or move to auth service
+            var requesterRole = await _authService.GetUserRoleAsync(workspaceId, requesterUId, "Workspace");
+            if (requesterRole == RoleConstants.WorkspaceAdmin && target.Role == RoleConstants.WorkspaceAdmin)
                 return false;
 
             _context.WorkspaceMembers.Remove(target);
             await _context.SaveChangesAsync();
+
+            await _authService.LogPermissionChangeAsync(workspaceId, "Workspace", userId, requesterUId, "RemoveMember", target.Role, null);
+
             return true;
         }
 
@@ -259,29 +278,16 @@ namespace TodoAppAPI.Service
             if (requesterUId == userId)
                 return false;
 
-            // Nếu target là Owner mà requester không phải Owner => cấm
-            if (target.Role == "Owner" && requester.Role != "Owner")
+            if (!await _authService.CanUpdateMemberRoleAsync(workspaceId, requesterUId, newRole))
                 return false;
-
-            // Nếu requester là Admin
-            if (requester.Role == "Admin")
-            {
-                // Admin không được đổi Owner/Admin
-                if (target.Role == "Owner" || target.Role == "Admin")
-                    return false;
-
-                // Admin không thể cấp quyền Admin/Owner cho người khác
-                if (newRole == "Admin" || newRole == "Owner")
-                    return false;
-            }
-
-            // Nếu requester là Member hoặc Viewer => không có quyền đổi ai
-            if (requester.Role == "Member" || requester.Role == "Viewer")
-                return false;
-
+            
             // Cập nhật role
+            var oldRole = target.Role;
             target.Role = newRole;
             await _context.SaveChangesAsync();
+
+            await _authService.LogPermissionChangeAsync(workspaceId, "Workspace", userId, requesterUId, "UpdateRole", oldRole, newRole);
+            
             return true;
         }
 
@@ -303,7 +309,7 @@ namespace TodoAppAPI.Service
 
             return await _context.Boards
                 .Where(b => b.WorkspaceUId == workspaceId &&
-                           (b.Visibility == "Private" ||
+                           (b.Visibility != "Private" ||
                             b.Members.Any(m => m.UserUId == userId)))
                 .Include(b => b.Lists)
                 .OrderBy(b => b.BoardName)

@@ -44,7 +44,7 @@ class CardOverviewWidget extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                   child: Image.network(
                     card.backgroundUrl!,
-                    height: 120,
+                    height: 84,
                     width: double.infinity,
                     fit: BoxFit.cover,
                   ),
@@ -74,14 +74,21 @@ class CardOverviewWidget extends StatelessWidget {
                 ),
                 const SizedBox(width: 14),
                 Expanded(
-                  child: Text(
-                    card.title,
-                    style: GoogleFonts.inter(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: isCompleted ? AppColors.onSurfaceVariant : AppColors.onSurface,
-                      decoration: isCompleted ? TextDecoration.lineThrough : null,
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _buildLabels(),
+                      Text(
+                        card.title,
+                        style: GoogleFonts.inter(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: isCompleted ? AppColors.onSurfaceVariant : AppColors.onSurface,
+                          decoration: isCompleted ? TextDecoration.lineThrough : null,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
                 if (card.dueDate != null || card.todoItems.isNotEmpty)
@@ -110,6 +117,43 @@ class CardOverviewWidget extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildLabels() {
+    if (card.labels.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Wrap(
+        spacing: 4,
+        runSpacing: 4,
+        children: card.labels.map((l) {
+          Color color;
+          if (l.colorCode.isNotEmpty) {
+            final buffer = StringBuffer();
+            if (l.colorCode.length == 6 || l.colorCode.length == 7) buffer.write('ff');
+            buffer.write(l.colorCode.replaceFirst('#', ''));
+            color = Color(int.tryParse(buffer.toString(), radix: 16) ?? 0xFF9E9E9E);
+          } else {
+            color = Colors.grey;
+          }
+          return Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+            decoration: BoxDecoration(
+              color: color,
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Text(
+              l.title,
+              style: GoogleFonts.inter(
+                fontSize: 10,
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          );
+        }).toList(),
       ),
     );
   }

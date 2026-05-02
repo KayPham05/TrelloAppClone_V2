@@ -7,18 +7,23 @@ import '../../../board/domain/entities/board_entity.dart';
 class WorkspaceBoardItemWidget extends StatelessWidget {
   final BoardEntity board;
   final VoidCallback onToggleStar;
+  final VoidCallback? onRename;
+  final VoidCallback? onDelete;
+  final VoidCallback? onToggleVisibility;
 
   const WorkspaceBoardItemWidget({
     super.key,
     required this.board,
     required this.onToggleStar,
+    this.onRename,
+    this.onDelete,
+    this.onToggleVisibility,
   });
 
   @override
   Widget build(BuildContext context) {
     final color = ColorUtils.hexToColor(board.coverColor ?? '#0079BF');
-    // Using a simple logic for mockup favorites until star is added to backend model
-    final bool isStarred = false; 
+    const bool isStarred = false;
 
     return Material(
       color: AppColors.surfaceContainerLowest,
@@ -40,6 +45,7 @@ class WorkspaceBoardItemWidget extends StatelessWidget {
           ),
           child: Row(
             children: [
+              // Color thumbnail
               Container(
                 width: 40,
                 height: 32,
@@ -56,30 +62,104 @@ class WorkspaceBoardItemWidget extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 10),
+              // Board name + visibility
               Expanded(
-                child: Text(
-                  board.name,
-                  style: GoogleFonts.inter(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.onSurface,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      board.name,
+                      style: GoogleFonts.inter(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.onSurface,
+                      ),
+                    ),
+                    Row(
+                      children: [
+                        Icon(
+                          board.visibility == 'Public'
+                              ? Icons.public_rounded
+                              : Icons.lock_outline_rounded,
+                          size: 10,
+                          color: AppColors.onSurfaceVariant,
+                        ),
+                        const SizedBox(width: 3),
+                        Text(
+                          board.visibility,
+                          style: GoogleFonts.inter(
+                            fontSize: 10,
+                            color: AppColors.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
+              // Star toggle
               IconButton(
                 onPressed: onToggleStar,
                 visualDensity: VisualDensity.compact,
                 splashRadius: 18,
                 icon: Icon(
-                  isStarred
-                      ? Icons.star_rounded
-                      : Icons.star_outline_rounded,
+                  isStarred ? Icons.star_rounded : Icons.star_outline_rounded,
                   size: 18,
-                  color: isStarred
-                      ? const Color(0xFFF59E0B)
-                      : AppColors.outlineVariant,
+                  color: isStarred ? const Color(0xFFF59E0B) : AppColors.outlineVariant,
                 ),
               ),
+              // Board actions menu
+              if (onRename != null || onDelete != null || onToggleVisibility != null)
+                PopupMenuButton<String>(
+                  onSelected: (value) {
+                    switch (value) {
+                      case 'rename':        onRename?.call();          break;
+                      case 'visibility':    onToggleVisibility?.call(); break;
+                      case 'delete':        onDelete?.call();           break;
+                    }
+                  },
+                  itemBuilder: (_) => [
+                    if (onRename != null)
+                      const PopupMenuItem(
+                        value: 'rename',
+                        child: ListTile(
+                          dense: true,
+                          leading: Icon(Icons.drive_file_rename_outline_rounded, size: 18),
+                          title: Text('Đổi tên'),
+                          contentPadding: EdgeInsets.zero,
+                        ),
+                      ),
+                    if (onToggleVisibility != null)
+                      const PopupMenuItem(
+                        value: 'visibility',
+                        child: ListTile(
+                          dense: true,
+                          leading: Icon(Icons.visibility_outlined, size: 18),
+                          title: Text('Thay đổi hiển thị'),
+                          contentPadding: EdgeInsets.zero,
+                        ),
+                      ),
+                    if (onDelete != null)
+                      PopupMenuItem(
+                        value: 'delete',
+                        child: ListTile(
+                          dense: true,
+                          leading: Icon(Icons.delete_outline_rounded,
+                              size: 18, color: Colors.red.shade400),
+                          title: Text('Xóa board',
+                              style: TextStyle(color: Colors.red.shade400)),
+                          contentPadding: EdgeInsets.zero,
+                        ),
+                      ),
+                  ],
+                  icon: const Icon(
+                    Icons.more_vert_rounded,
+                    size: 18,
+                    color: AppColors.onSurfaceVariant,
+                  ),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
+                ),
             ],
           ),
         ),

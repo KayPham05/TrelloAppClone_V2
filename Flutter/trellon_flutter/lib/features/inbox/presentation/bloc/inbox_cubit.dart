@@ -1,23 +1,24 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/data_sources/user_local_data_source.dart';
 import '../../../card/domain/usecases/delete_card_usecase.dart';
-import '../../../card/domain/usecases/update_card_status_usecase.dart';
+
 import '../../domain/usecases/add_inbox_card_usecase.dart';
 import '../../domain/usecases/get_user_inbox_card.dart';
+import '../../domain/repositories/i_inbox_repositories.dart';
 import 'inbox_state.dart';
 
 class InboxCubit extends Cubit<InboxState> {
   final GetInboxCardUseCase getInboxCardsUseCase;
   final AddInboxCardUseCase addInboxCardUseCase;
   final DeleteCardUseCase deleteCardUseCase;
-  final UpdateCardStatusUseCase updateCardStatusUseCase;
+  final InboxRepositories inboxRepositories;
   final UserLocalDataSource userLocalDataSource;
 
   InboxCubit({
     required this.getInboxCardsUseCase,
     required this.addInboxCardUseCase,
     required this.deleteCardUseCase,
-    required this.updateCardStatusUseCase,
+    required this.inboxRepositories,
     required this.userLocalDataSource,
   }) : super(InboxInitial());
 
@@ -70,7 +71,8 @@ class InboxCubit extends Cubit<InboxState> {
 
   Future<void> deleteCard(String cardId) async {
     try {
-      await deleteCardUseCase.call(cardId: cardId);
+      final userUId = await userLocalDataSource.getUserId() ?? '';
+      await deleteCardUseCase.call(cardId: cardId, userUId: userUId);
       await fetchInboxCards();
     } catch (e) {
       emit(InboxError(message: "Không thể xóa: ${e.toString()}"));
@@ -79,9 +81,22 @@ class InboxCubit extends Cubit<InboxState> {
   }
 
   Future<void> toggleCardStatus(String cardId, bool isCompleted) async {
+    final currentState = state;
+    if (currentState is! InboxLoaded) return;
     try {
+      final card = currentState.cards.firstWhere((c) => c.id == cardId);
+      final userUId = await userLocalDataSource.getUserId() ?? '';
       final newStatus = isCompleted ? 'Completed' : 'To Do';
-      await updateCardStatusUseCase.call(cardId: cardId, newStatus: newStatus);
+      
+      await inboxRepositories.updateInboxCard(
+        cardId: cardId, 
+        userUId: userUId, 
+        status: newStatus,
+        title: card.title,
+        description: card.description,
+        dueDate: card.dueDate,
+        backgroundUrl: card.backgroundUrl,
+      );
       await fetchInboxCards();
     } catch (e) {
       emit(InboxError(message: "Không thể cập nhật trạng thái: ${e.toString()}"));

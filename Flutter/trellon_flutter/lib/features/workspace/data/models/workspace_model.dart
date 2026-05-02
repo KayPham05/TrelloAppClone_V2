@@ -1,6 +1,7 @@
 import '../../domain/entities/workspace_entity.dart';
 import '../../../board/data/models/board_model.dart';
 import '../../../board/domain/entities/board_entity.dart';
+import '../../domain/entities/workspace_member.dart';
 
 class WorkspaceModel extends WorkspaceEntity {
   const WorkspaceModel({
@@ -11,6 +12,7 @@ class WorkspaceModel extends WorkspaceEntity {
     super.type,
     super.ownerUId,
     required super.boards,
+    super.members,
   });
 
   factory WorkspaceModel.fromJson(Map<String, dynamic> json) {
@@ -18,6 +20,11 @@ class WorkspaceModel extends WorkspaceEntity {
     List<BoardEntity> boardsList = boardsJson != null
         ? boardsJson.map((e) => BoardModel.fromJson(e)).toList()
         : [];
+
+    var membersJson = json['members'] as List?;
+    List<WorkspaceMember>? membersList = membersJson != null
+        ? membersJson.map((e) => WorkspaceMember.fromJson(e)).toList()
+        : null;
 
     return WorkspaceModel(
       id: json['workspaceUId'] ?? json['id'] ?? '',
@@ -27,6 +34,7 @@ class WorkspaceModel extends WorkspaceEntity {
       type: WorkspaceTypeExtension.fromString(json['type'] ?? 'personal'),
       ownerUId: json['ownerUId'],
       boards: boardsList,
+      members: membersList,
     );
   }
 

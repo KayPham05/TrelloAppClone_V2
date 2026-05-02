@@ -10,21 +10,24 @@ namespace TodoAppAPI.Service
     public class BoardService : IBoardService
     {
         private readonly TodoDbContext _context;
-        public BoardService(TodoDbContext context)
+        private readonly IAuthorizationService _authService;
+
+        public BoardService(TodoDbContext context, IAuthorizationService authService)
         {
             _context = context;
+            _authService = authService;
         }
 
         public async Task<Board?> AddBoardAsync(Board board)
         {
             try
             {
-                // 1Kiểm tra quyền (nếu là workspace board)
+                // Kiểm tra quyền (nếu là workspace board)
                 if (!string.IsNullOrEmpty(board.WorkspaceUId))
                 {
-                    if (!await HasPermissionToCreateBoardAsync(board.UserUId, board.WorkspaceUId))
+                    if (!await _authService.CanCreateBoardInWorkspaceAsync(board.WorkspaceUId, board.UserUId))
                     {
-                        Console.WriteLine($"User {board.UserUId} không có quyền tạo board");
+                        Console.WriteLine($"User {board.UserUId} không có quyền tạo board trong workspace {board.WorkspaceUId}");
                         return null;
                     }
                 }
@@ -57,43 +60,6 @@ namespace TodoAppAPI.Service
 
 
 
-        private async Task<bool> HasPermissionToCreateBoardAsync(string userUId, string workspaceUId)
-        {
-            // Kiểm tra user đã là member chưa
-            var member = await _context.WorkspaceMembers
-                .FirstOrDefaultAsync(m => m.WorkspaceUId == workspaceUId && m.UserUId == userUId);
-
-            if (member != null)
-                return member.Role == "Owner" || member.Role == "Admin";
-
-            // Fallback: Kiểm tra có phải workspace owner không
-            var workspace = await _context.Workspaces
-                .FirstOrDefaultAsync(w => w.WorkspaceUId == workspaceUId);
-
-            if (workspace?.OwnerUId == userUId)
-            {
-                // Tự động thêm owner vào workspace members
-                await AddOwnerToWorkspaceMembersAsync(workspaceUId, userUId);
-                return true;
-            }
-
-            return false;
-        }
-
-        private async Task AddOwnerToWorkspaceMembersAsync(string workspaceUId, string userUId)
-        {
-            var newMember = new WorkspaceMemberDto
-            {
-                WorkspaceMemberUId = Guid.NewGuid().ToString(),
-                WorkspaceUId = workspaceUId,
-                UserUId = userUId,
-                Role = "Owner",
-                JoinedAt = DateTime.UtcNow
-            };
-            _context.WorkspaceMembers.Add(newMember);
-            await _context.SaveChangesAsync();
-            Console.WriteLine("✅ Auto-added workspace owner");
-        }
 
         private async Task<List<BoardMember>> BuildBoardMembersAsync(Board board, List<BoardMember>? selectedMembers)
         {
@@ -172,10 +138,14 @@ namespace TodoAppAPI.Service
             };
         }
 
-        public async Task<bool> DeleteBoardAsync(string boardUId)
+        public async Task<bool> DeleteBoardAsync(string boardUId, string userUId)
         {
             try
             {
+                if (!await _authService.CanDeleteBoardAsync(boardUId, userUId))
+                {
+                    return false;
+                }
                 var board = await _context.Boards.FirstOrDefaultAsync(b => b.BoardUId == boardUId);
                 if (board == null) return false;
 
@@ -231,10 +201,14 @@ namespace TodoAppAPI.Service
             throw new NotImplementedException();
         }
 
-        public async Task<bool> UpdateBoardAsync(Board board)
+        public async Task<bool> UpdateBoardAsync(Board board, string userUId)
         {
             try
             {
+                if (!await _authService.CanEditBoardAsync(board.BoardUId, userUId))
+                {
+                    return false;
+                }
                 var boardUpdate = _context.Boards.FirstOrDefault(b => b.BoardUId == board.BoardUId);
                 if (boardUpdate == null) return false;
                 boardUpdate.BoardName = board.BoardName;

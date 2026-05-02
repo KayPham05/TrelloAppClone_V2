@@ -3,7 +3,6 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../domain/entities/workspace_entity.dart';
-import '../../../../core/widgets/cover_picker_bottom_sheet.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../cubit/workspace_cubit.dart';
@@ -14,6 +13,9 @@ import '../widgets/workspace_board_item_widget.dart';
 import '../widgets/create_workspace_dialog.dart';
 import '../widgets/add_member_dialog.dart';
 import '../widgets/create_board_dialog.dart';
+import 'workspace_members_page.dart';
+import '../../../board/domain/entities/board_entity.dart';
+import '../../../../core/services/authorization_service.dart';
 
 class WorkspaceMenuPage extends StatefulWidget {
   final WorkspaceEntity workspace;
@@ -26,11 +28,27 @@ class WorkspaceMenuPage extends StatefulWidget {
 class _WorkspaceMenuPageState extends State<WorkspaceMenuPage> {
   final TextEditingController _searchController = TextEditingController();
   late WorkspaceEntity _currentWorkspace;
+  final _authService = AuthorizationService();
+  String? _currentUserUId;
+  String? _currentUserRole;
 
   @override
   void initState() {
     super.initState();
     _currentWorkspace = widget.workspace;
+    _initUser();
+  }
+
+  void _initUser() async {
+    final uid = await serviceLocator<UserLocalDataSource>().getUserId();
+    if (mounted) {
+      setState(() {
+        _currentUserUId = uid;
+        if (uid != null) {
+          _currentUserRole = _currentWorkspace.getUserRole(uid);
+        }
+      });
+    }
   }
 
   @override
@@ -108,11 +126,95 @@ class _WorkspaceMenuPageState extends State<WorkspaceMenuPage> {
     }
   }
 
-  void _toggleStar(int index) {
-    // Logic for starring/unstarring a board can be implemented here later
-    // For now, satisfy the widget callback requirement
-    _showSnack('Tính năng đánh dấu bảng sẽ sớm được cập nhật');
+  void _showRenameBoard(BoardEntity board) async {
+    final ctrl = TextEditingController(text: board.name);
+    final newName = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Đổi tên board',
+            style: GoogleFonts.inter(fontWeight: FontWeight.w700)),
+        content: TextField(
+          controller: ctrl,
+          decoration: InputDecoration(
+            labelText: 'Tên board',
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx), child: const Text('Hủy')),
+          FilledButton(
+              onPressed: () => Navigator.pop(ctx, ctrl.text.trim()),
+              child: const Text('Lưu')),
+        ],
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      ),
+    );
+    if (newName != null && newName.isNotEmpty && mounted) {
+      _showSnack('Tính năng đổi tên board sẽ sớm được cập nhật');
+    }
   }
+
+  void _showDeleteBoard(BoardEntity board) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Xóa board'),
+        content: Text('Xóa "${board.name}"? Hành động này không thể hoàn tác.'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Hủy')),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Xóa'),
+          ),
+        ],
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      ),
+    );
+    if (confirm == true && mounted) {
+      _showSnack('Tính năng xóa board sẽ có trong phiên bản tiếp theo');
+    }
+  }
+
+  void _showToggleVisibility(BoardEntity board) {
+    final newVis = board.visibility == 'Public' ? 'Private' : 'Public';
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Thay đổi hiển thị'),
+        content: Text(
+            'Chuyển "${board.name}" thành $newVis?'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx), child: const Text('Hủy')),
+          FilledButton(
+              onPressed: () {
+                Navigator.pop(ctx);
+                _showSnack('Tính năng đổi visibility sẽ có trong phiên bản tiếp theo');
+              },
+              child: Text('Chuyển thành $newVis')),
+        ],
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      ),
+    );
+  }
+
+  void _navigateToMembers() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => WorkspaceMembersPage(
+          workspaceId: _currentWorkspace.id,
+          workspaceName: _currentWorkspace.name,
+        ),
+      ),
+    );
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -126,9 +228,12 @@ class _WorkspaceMenuPageState extends State<WorkspaceMenuPage> {
           final updated = [...state.personal, ...state.team]
               .where((w) => w.id == _currentWorkspace.id)
               .firstOrNull;
-          if (updated != null) {
+          if (updated != null && mounted) {
             setState(() {
               _currentWorkspace = updated;
+              if (_currentUserUId != null) {
+                _currentUserRole = _currentWorkspace.getUserRole(_currentUserUId!);
+              }
             });
           }
         }
@@ -269,37 +374,41 @@ class _WorkspaceMenuPageState extends State<WorkspaceMenuPage> {
             padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
             child: Row(
               children: [
-                FilledButton.icon(
-                  onPressed: _showAddMember,
-                  icon: const Icon(Icons.person_add_rounded, size: 16),
-                  label: const Text('Mời'),
-                  style: FilledButton.styleFrom(
-                    minimumSize: const Size(0, 32),
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    textStyle: GoogleFonts.inter(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                    ),
-                    backgroundColor: AppColors.primaryContainer,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
+                if (_authService.canInviteToWorkspace(_currentUserRole))
+                  FilledButton.icon(
+                    onPressed: _showAddMember,
+                    icon: const Icon(Icons.person_add_rounded, size: 16),
+                    label: const Text('Mời'),
+                    style: FilledButton.styleFrom(
+                      minimumSize: const Size(0, 32),
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      textStyle: GoogleFonts.inter(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      backgroundColor: AppColors.primaryContainer,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 8),
-                IconButton(
-                  onPressed: _showEditWorkspace,
-                  icon: const Icon(Icons.edit_rounded, size: 18),
-                  color: AppColors.onSurfaceVariant,
-                  tooltip: 'Sửa',
-                ),
-                IconButton(
-                  onPressed: _showDeleteWorkspace,
-                  icon: const Icon(Icons.delete_outline_rounded, size: 18),
-                  color: Colors.redAccent,
-                  tooltip: 'Xóa',
-                ),
+                if (_authService.canInviteToWorkspace(_currentUserRole))
+                  const SizedBox(width: 8),
+                if (_authService.canManageWorkspace(_currentUserRole))
+                  IconButton(
+                    onPressed: _showEditWorkspace,
+                    icon: const Icon(Icons.edit_rounded, size: 18),
+                    color: AppColors.onSurfaceVariant,
+                    tooltip: 'Sửa',
+                  ),
+                if (_authService.canManageWorkspace(_currentUserRole))
+                  IconButton(
+                    onPressed: _showDeleteWorkspace,
+                    icon: const Icon(Icons.delete_outline_rounded, size: 18),
+                    color: Colors.redAccent,
+                    tooltip: 'Xóa',
+                  ),
               ],
             ),
           ),
@@ -342,7 +451,7 @@ class _WorkspaceMenuPageState extends State<WorkspaceMenuPage> {
   }
 
   Widget _buildMembersCard() {
-    // Removed mock member list and replaced with empty representation
+    final memberCount = _currentWorkspace.members?.length ?? 0;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(12),
@@ -369,7 +478,9 @@ class _WorkspaceMenuPageState extends State<WorkspaceMenuPage> {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      '0 active collaborators',
+                      memberCount > 0
+                          ? '$memberCount thảnh viên'
+                          : '0 active collaborators',
                       style: GoogleFonts.inter(
                         fontSize: 11,
                         fontWeight: FontWeight.w500,
@@ -390,8 +501,7 @@ class _WorkspaceMenuPageState extends State<WorkspaceMenuPage> {
           SizedBox(
             width: double.infinity,
             child: FilledButton(
-              onPressed: () =>
-                  _showSnack('Members list page will be added later'),
+              onPressed: _navigateToMembers,
               style: FilledButton.styleFrom(
                 minimumSize: const Size.fromHeight(36),
                 backgroundColor: AppColors.surfaceContainerLow,
@@ -405,7 +515,7 @@ class _WorkspaceMenuPageState extends State<WorkspaceMenuPage> {
                   borderRadius: BorderRadius.circular(8),
                 ),
               ),
-              child: const Text('View all members'),
+              child: const Text('Quản lý thành viên'),
             ),
           ),
         ],
@@ -414,7 +524,6 @@ class _WorkspaceMenuPageState extends State<WorkspaceMenuPage> {
   }
 
   Widget _buildBoardsSection() {
-    final boards = widget.workspace.boards;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -431,8 +540,7 @@ class _WorkspaceMenuPageState extends State<WorkspaceMenuPage> {
               ),
             ),
             TextButton(
-              onPressed: () =>
-                  _showSnack('Boards list page will be added later'),
+              onPressed: () => Navigator.pushNamed(context, '/board-list'),
               child: Text(
                 'View all',
                 style: GoogleFonts.inter(
@@ -445,19 +553,23 @@ class _WorkspaceMenuPageState extends State<WorkspaceMenuPage> {
           ],
         ),
         const SizedBox(height: 8),
-        ...List.generate(
-          _currentWorkspace.boards.length,
-          (index) => Padding(
+        ..._currentWorkspace.boards.asMap().entries.map((entry) {
+          final board = entry.value;
+          return Padding(
             padding: const EdgeInsets.only(bottom: 10),
             child: WorkspaceBoardItemWidget(
-              board: _currentWorkspace.boards[index], 
-              onToggleStar: () => _toggleStar(index),
+              board: board,
+              onToggleStar: () => _showSnack('Tính năng đánh dấu bảng sẽ sớm được cập nhật'),
+              onRename:           () => _showRenameBoard(board),
+              onDelete:           () => _showDeleteBoard(board),
+              onToggleVisibility: () => _showToggleVisibility(board),
             ),
+          );
+        }),
+        if (_authService.canManageBoard(null, _currentUserRole))
+          DashedCreateBoardCard(
+            onTap: _showCreateBoard,
           ),
-        ),
-        DashedCreateBoardCard(
-          onTap: _showCreateBoard,
-        ),
       ],
     );
   }

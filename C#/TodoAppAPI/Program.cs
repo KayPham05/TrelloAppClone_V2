@@ -22,7 +22,6 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IListService, ListService>();
 builder.Services.AddScoped<ICardsService, CardsService>();
 builder.Services.AddScoped<IUserInboxCard, UserInboxCardService>();
-builder.Services.AddScoped<IAddInboxCardService, AddInboxCardService>();
 builder.Services.AddScoped<IWorkspaceService, WorkspaceService>();
 builder.Services.AddScoped<IUserRecentBoardService, UserBoardRecentService>();
 builder.Services.AddScoped<ITodoItemService, TodoItemService>();
@@ -33,6 +32,7 @@ builder.Services.AddScoped<EmailService>();
 builder.Services.AddScoped<IActivity, ActivityService>();
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<IAuthorizationService, AuthorizationService>();
 
 // Cloudinary
 builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection("CloudinarySettings"));

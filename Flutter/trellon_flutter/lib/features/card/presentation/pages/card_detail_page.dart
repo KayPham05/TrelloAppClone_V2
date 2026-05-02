@@ -13,13 +13,15 @@ import '../widgets/card_detail/card_detail_attachments.dart';
 import '../widgets/card_detail/card_detail_activity.dart';
 import '../../../../core/widgets/cover_picker_bottom_sheet.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import '../../../../core/services/authorization_service.dart';
 import '../widgets/card_detail/card_member_picker_sheet.dart';
 import '../widgets/card_detail/label_picker_sheet.dart';
 
 class CardDetailPage extends StatefulWidget {
   final CardEntity card;
   final String? boardId;
-  const CardDetailPage({super.key, required this.card, this.boardId});
+  final bool isInboxCard;
+  const CardDetailPage({super.key, required this.card, this.boardId, this.isInboxCard = false});
 
   @override
   State<CardDetailPage> createState() => _CardDetailPageState();
@@ -31,7 +33,7 @@ class _CardDetailPageState extends State<CardDetailPage> {
   @override
   void initState() {
     super.initState();
-    _cubit = serviceLocator<CardDetailCubit>()..loadCardDetails(widget.card);
+    _cubit = serviceLocator<CardDetailCubit>()..loadCardDetails(widget.card, isInboxCard: widget.isInboxCard);
     if (widget.boardId != null) {
       _cubit.loadPotentialMembers(widget.boardId!);
     }
@@ -51,6 +53,19 @@ class _CardDetailPageState extends State<CardDetailPage> {
         backgroundColor: AppColors.surface, // Standard white surface for Lucid Sanctuary
         body: BlocBuilder<CardDetailCubit, CardDetailState>(
           builder: (context, state) {
+            bool canEdit = widget.isInboxCard || widget.boardId == null;
+            if (!widget.isInboxCard && widget.boardId != null) {
+              final authService = AuthorizationService();
+              final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+              if (args != null && (args.containsKey('boardRole') || args.containsKey('workspaceRole'))) {
+                final boardRole = args['boardRole'] as String?;
+                final workspaceRole = args['workspaceRole'] as String?;
+                canEdit = authService.canManageCards(boardRole, workspaceRole);
+              } else {
+                canEdit = true; // Default to true if roles are not passed
+              }
+            }
+
             if (state is CardDetailLoaded) {
               return Stack(
                  children: [
@@ -63,7 +78,7 @@ class _CardDetailPageState extends State<CardDetailPage> {
                            children: [
                                if (state.card.backgroundUrl != null && state.card.backgroundUrl!.isNotEmpty)
                                  GestureDetector(
-                                   onTap: () {
+                                   onTap: canEdit ? () {
                                      CoverPickerBottomSheet.show(
                                        context,
                                        onTemplateSelected: (url) {
@@ -73,7 +88,7 @@ class _CardDetailPageState extends State<CardDetailPage> {
                                          context.read<CardDetailCubit>().uploadCover(file.path);
                                        },
                                      );
-                                   },
+                                   } : null,
                                    child: CachedNetworkImage(
                                      imageUrl: state.card.backgroundUrl!,
                                      height: 180,
@@ -92,45 +107,57 @@ class _CardDetailPageState extends State<CardDetailPage> {
                                  ),
                                ),
                                const SizedBox(height: 32),
-                               CardDetailMetaGrid(
-                                 members: state.members, 
-                                 labels: state.card.labels,
-                                 dueDate: state.card.dueDate,
-                                 onAddMember: () {
-                                   if (widget.boardId == null) return;
-                                   CardMemberPickerSheet.show(
-                                     context,
-                                     allBoardMembers: state.potentialMembers,
-                                     currentCardMembers: state.members,
-                                     onMemberToggled: (member) {
-                                       final isAssigned = state.members.any((m) => m.userUId == member.userUId);
-                                       if (isAssigned) {
-                                          _cubit.removeMember(member.userUId, widget.boardId!);
-                                       } else {
-                                          _cubit.addMember(member.userUId, widget.boardId!);
-                                       }
-                                     },
-                                   );
-                                 },
-                                 onAddLabel: () {
+                                 CardDetailMetaGrid(
+                                   members: state.members, 
+                                   labels: state.card.labels,
+                                   dueDate: state.card.dueDate,
+                                   onAddMember: canEdit ? () {
+                                     if (widget.boardId == null) return;
+                                     CardMemberPickerSheet.show(
+                                       context,
+                                       allBoardMembers: state.potentialMembers,
+                                       currentCardMembers: state.members,
+                                       onMemberToggled: (member) {
+                                         final isAssigned = state.members.any((m) => m.userUId == member.userUId);
+                                         if (isAssigned) {
+                                            _cubit.removeMember(member.userUId, widget.boardId!);
+                                         } else {
+                                            _cubit.addMember(member.userUId, widget.boardId!);
+                                         }
+                                       },
+                                     );
+                                   } : () {},
+                                   onMemberRoleChanged: canEdit ? (member, newRole) {
+                                     if (widget.boardId == null) return;
+                                     _cubit.updateMemberRole(
+                                       userUId: member.userUId,
+                                       newRole: newRole,
+                                       boardId: widget.boardId!,
+                                     );
+                                   } : (m, r) {},
+                                   onRemoveMember: canEdit ? (member) {
+                                     if (widget.boardId == null) return;
+                                     _cubit.removeMember(member.userUId, widget.boardId!);
+                                   } : (m) {},
+                                   onAddLabel: canEdit ? () {
                                    LabelPickerSheet.show(
                                      context,
                                      selectedLabels: state.card.labels,
                                      onLabelToggled: (label, colorHex) => _cubit.toggleLabel(label, colorHex),
                                    );
-                                 },
-                                 onDateChanged: (date) => _cubit.updateDueDate(date),
+                                 } : () {},
+                                 onDateChanged: canEdit ? (date) => _cubit.updateDueDate(date) : (d) {},
                                ),
                                const SizedBox(height: 32),
                                CardDetailDescription(
                                  description: state.card.description ?? '',
-                                 onSave: (newDesc) => context.read<CardDetailCubit>().updateDescription(newDesc),
+                                 onSave: canEdit ? (newDesc) => context.read<CardDetailCubit>().updateDescription(newDesc) : (v){},
                                ),
                                const SizedBox(height: 32),
                                CardDetailChecklist(
                                  initialItems: state.todos.map((t) => CardDetailChecklistItem(id: t.id, title: t.title, checked: t.isCompleted)).toList(),
-                                 onCheckChanged: (id, isCompleted) => context.read<CardDetailCubit>().toggleTodoItem(id, isCompleted),
-                                 onAddTodo: (content) => context.read<CardDetailCubit>().addTodoItem(content),
+                                 onCheckChanged: canEdit ? (id, isCompleted) => context.read<CardDetailCubit>().toggleTodoItem(id, isCompleted) : (id, val) {},
+                                 onAddTodo: canEdit ? (content) => context.read<CardDetailCubit>().addTodoItem(content) : (c) {},
                                ),
                                const SizedBox(height: 32),
                                const CardDetailAttachments(),
@@ -171,20 +198,21 @@ class _CardDetailPageState extends State<CardDetailPage> {
                                onPressed: () => Navigator.pop(context),
                              ),
                              const Spacer(),
-                             IconButton(
-                               icon: const Icon(Icons.image, color: Colors.white),
-                               onPressed: () {
-                                 CoverPickerBottomSheet.show(
-                                   context,
-                                   onTemplateSelected: (url) {
-                                     context.read<CardDetailCubit>().updateBackgroundUrl(url);
-                                   },
-                                   onImagePicked: (file) {
-                                     context.read<CardDetailCubit>().uploadCover(file.path);
-                                   },
-                                 );
-                               },
-                             ),
+                             if (canEdit)
+                               IconButton(
+                                 icon: const Icon(Icons.image, color: Colors.white),
+                                 onPressed: () {
+                                   CoverPickerBottomSheet.show(
+                                     context,
+                                     onTemplateSelected: (url) {
+                                       context.read<CardDetailCubit>().updateBackgroundUrl(url);
+                                     },
+                                     onImagePicked: (file) {
+                                       context.read<CardDetailCubit>().uploadCover(file.path);
+                                     },
+                                   );
+                                 },
+                               ),
                              const SizedBox(width: 8),
                            ],
                         ),

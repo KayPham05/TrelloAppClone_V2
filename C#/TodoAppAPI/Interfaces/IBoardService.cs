@@ -9,8 +9,8 @@ namespace TodoAppAPI.Interfaces
         Task<List<BoardDTO>> GetAllBoardsByUserAsync(string userUId);
         Task<BoardDTO?> GetBoardByIdAsync(string boardUId);
         Task<Board?> AddBoardAsync(Board board);
-        Task<bool> UpdateBoardAsync(Board board);
-        Task<bool> DeleteBoardAsync(string boardUId);
+        Task<bool> UpdateBoardAsync(Board board, string userUId);
+        Task<bool> DeleteBoardAsync(string boardUId, string userUId);
         Task<BoardDTO?> GetBoardByNameAsync(string boardName);
     }
 }

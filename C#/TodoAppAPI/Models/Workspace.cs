@@ -14,6 +14,6 @@ namespace TodoAppAPI.Models
 
         // Navigation Properties
         public ICollection<Board>? Boards { get; set; } // ← Changed to nullable
-        public ICollection<WorkspaceMemberDto>? Members { get; set; } // ← Changed to nullable
+        public ICollection<WorkspaceMembers>? Members { get; set; } // ← Changed to nullable
     }
 }

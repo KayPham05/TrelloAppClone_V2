@@ -55,21 +55,12 @@ namespace TodoAppAPI.Controllers
             );
 
             if (!result)
-                return Forbid("Bạn không có quyền chỉnh sửa workspace này.");
+                return StatusCode(403, new { message = "Bạn không có quyền chỉnh sửa workspace này." });
             _ = _activity.AddActivity(dto.RequesterUId, $"updated workspace '{dto.WorkspaceId}'");
             return Ok(new { message = "Workspace updated successfully." });
         }
 
-        [HttpPut("{workspaceUId}/update-role")]
-        public async Task<IActionResult> UpdateMemberRole(string workspaceUId,[FromQuery] string targetUserUId,[FromQuery] string newRole,[FromQuery] string requesterUId)
-        {
-            var success = await _workspaceService.UpdateMemberRole(workspaceUId, targetUserUId, newRole, requesterUId);
 
-            if (!success)
-                return Forbid("Bạn không có quyền thực hiện hành động này hoặc dữ liệu không hợp lệ.");
-            _ = _activity.AddActivity(requesterUId, $"updated role of user '{targetUserUId}' in workspace '{workspaceUId}' to '{newRole}'");
-            return Ok(new { message = "Cập nhật vai trò thành viên thành công!" });
-        }
 
 
 
@@ -83,54 +74,12 @@ namespace TodoAppAPI.Controllers
         }
 
 
-        [HttpPost("{workspaceId}/invite")]
-        public async Task<IActionResult> InviteUserToWorkspace(string workspaceId, [FromBody] InviteUser dto)
-        {
-            if (dto == null || string.IsNullOrEmpty(dto.UserId) || string.IsNullOrEmpty(dto.RequesterUId))
-                return BadRequest("Thiếu thông tin lời mời");
-
-            var success = await _workspaceService.InviteUserToWorkspace(
-                workspaceId,
-                dto.UserId,
-                dto.RequesterUId,
-                dto.Role
-            );
-
-            if (!success)
-                return Forbid("Bạn không có quyền mời hoặc người dùng đã tồn tại trong workspace");
-
-            return Ok(new
-            {
-                message = $"Đã mời người dùng thành công với quyền {dto.Role}",
-                invitedUserId = dto.UserId
-            });
-        }
-
-        [HttpDelete("{workspaceId}/members/{userId}")]
-        public async Task<IActionResult> RemoveMember( string workspaceId,  string userId, [FromQuery] string requesterUId)
-        {
-            if (string.IsNullOrEmpty(requesterUId))
-                return BadRequest("Thiếu thông tin người thực hiện hành động");
-
-            var success = await _workspaceService.RemoveMemberFromWorkspace(
-                workspaceId,
-                userId,
-                requesterUId
-            );
-
-            if (!success)
-                return Forbid("Bạn không có quyền xóa thành viên này hoặc thao tác không hợp lệ");
-            _ = _activity.AddActivity(requesterUId, $"removed user '{userId}' from workspace '{workspaceId}'");
-            return Ok(new { message = "Đã xóa thành viên khỏi workspace thành công!" });
-        }
 
 
-        [HttpGet("{id}/members")]
-        public async Task<IActionResult> GetMembers(string id)
-        {
-            var members = await _workspaceService.GetWorkspaceMembers(id);
-            return Ok(members);
-        }
+
+
+
+
 
         [HttpGet("{id}/boards")]
         public async Task<IActionResult> GetBoards(string id, string userUId)

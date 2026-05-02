@@ -7,10 +7,10 @@ namespace TodoAppAPI.Interfaces
     {
         Task<List<ListDTO>> GetAllListsByBoardUidAsync(string boardUId);
         Task<List> GetListByIdAsync(string listUId);
-        Task<List> AddListAsync(List list);
-        Task<bool> UpdateListAsync(List list);
-        Task<bool> DeleteListAsync(string listUId);
-        Task<bool> UpdateStatus(List list);
-        Task<bool> UpdateListPositionAsync(string boardUId, List<List> newOrder);
+        Task<List?> AddListAsync(List list, string userUId);
+        Task<bool> UpdateListAsync(List list, string userUId);
+        Task<bool> DeleteListAsync(string listUId, string userUId);
+        Task<bool> UpdateStatus(List list, string userUId);
+        Task<bool> UpdateListPositionAsync(string boardUId, List<List> newOrder, string userUId);
     }
 }
