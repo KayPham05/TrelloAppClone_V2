@@ -83,12 +83,14 @@ class WorkspaceRepositoryImpl implements WorkspaceRepository {
     required String workspaceId,
     required String email,
     required String role,
+    required String requesterUId,
   }) async {
     try {
       await remoteDataSource.addWorkspaceMember(
         workspaceId: workspaceId,
         email: email,
         role: role,
+        requesterUId: requesterUId,
       );
     } catch (e) {
       throw Exception('Workspace Repository Error: $e');

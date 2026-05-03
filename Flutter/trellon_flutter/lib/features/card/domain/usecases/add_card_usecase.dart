@@ -6,7 +6,7 @@ class AddCardUseCase {
 
   AddCardUseCase(this.repository);
 
-  Future<CardEntity> call({required String listId, required String title, required int position}) async {
-    return await repository.addCard(listId: listId, title: title, position: position);
+  Future<CardEntity> call({required String listId, required String title, required int position, required String userUId}) async {
+    return await repository.addCard(listId: listId, title: title, position: position, userUId: userUId);
   }
 }

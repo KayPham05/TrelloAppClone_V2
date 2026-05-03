@@ -25,5 +25,6 @@ abstract class WorkspaceRepository {
     required String workspaceId,
     required String email,
     required String role,
+    required String requesterUId,
   });
 }

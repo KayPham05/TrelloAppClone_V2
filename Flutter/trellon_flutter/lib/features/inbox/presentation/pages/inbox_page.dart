@@ -195,7 +195,7 @@ class _InboxViewState extends State<InboxView> {
                                       await Navigator.push(
                                         context,
                                         MaterialPageRoute(
-                                          builder: (context) => CardDetailPage(card: items[i]),
+                                          builder: (context) => CardDetailPage(card: items[i], isInboxCard: true),
                                         ),
                                       );
                                       if (context.mounted) {

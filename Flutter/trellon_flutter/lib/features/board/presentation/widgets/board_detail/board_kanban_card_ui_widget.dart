@@ -9,6 +9,7 @@ class KanbanCardUiWidget extends StatelessWidget {
   final double scale;
   final bool elevated;
   final VoidCallback onTap;
+  final ValueChanged<bool>? onToggleComplete;
 
   const KanbanCardUiWidget({
     super.key,
@@ -17,6 +18,7 @@ class KanbanCardUiWidget extends StatelessWidget {
     required this.scale,
     this.elevated = false,
     required this.onTap,
+    this.onToggleComplete,
   });
 
   @override
@@ -46,6 +48,9 @@ class KanbanCardUiWidget extends StatelessWidget {
                 ],
         ),
         padding: EdgeInsets.all(12 * scale),
+        constraints: BoxConstraints(
+          minHeight: 100 * scale,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
@@ -59,7 +64,7 @@ class KanbanCardUiWidget extends StatelessWidget {
                   child: CachedNetworkImage(
                     imageUrl: card.backgroundUrl!,
                     width: double.infinity,
-                    height: 80 * scale,
+                    height: 120 * scale,
                     fit: BoxFit.cover,
                   ),
                 ),
@@ -88,28 +93,57 @@ class KanbanCardUiWidget extends StatelessWidget {
                         color: color,
                         borderRadius: BorderRadius.circular(4 * scale),
                       ),
-                      child: l.title.isNotEmpty
-                          ? Text(
-                              l.title,
-                              style: GoogleFonts.inter(
-                                fontSize: 10 * scale,
-                                color: Colors.white,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            )
-                          : const SizedBox.shrink(),
+                      child: Text(
+                        l.title.isNotEmpty ? l.title : ' ',
+                        style: GoogleFonts.inter(
+                          fontSize: 10 * scale,
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     );
                   }).toList(),
                 ),
               ),
-            Text(
-              card.title,
-              style: GoogleFonts.inter(
-                fontSize: 14.0 * scale,
-                fontWeight: FontWeight.w500,
-                color: AppColors.onSurface,
-                height: 1.35,
-              ),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (onToggleComplete != null) ...[
+                  GestureDetector(
+                    onTap: () => onToggleComplete!(card.status != 'Completed'),
+                    child: Container(
+                      margin: EdgeInsets.only(right: 10 * scale, top: 1 * scale),
+                      width: 20 * scale,
+                      height: 20 * scale,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: card.status == 'Completed' ? const Color(0xFF1D4ED8) : AppColors.outlineVariant,
+                          width: 2 * scale,
+                        ),
+                        color: card.status == 'Completed' ? const Color(0xFF1D4ED8) : Colors.transparent,
+                      ),
+                      child: card.status == 'Completed'
+                          ? Icon(Icons.check, color: Colors.white, size: 12 * scale)
+                          : null,
+                    ),
+                  ),
+                ],
+                Expanded(
+                  child: Text(
+                    card.title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.inter(
+                      fontSize: 14.0 * scale,
+                      fontWeight: FontWeight.w500,
+                      color: card.status == 'Completed' ? AppColors.onSurfaceVariant : AppColors.onSurface,
+                      decoration: card.status == 'Completed' ? TextDecoration.lineThrough : null,
+                      height: 1.35,
+                    ),
+                  ),
+                ),
+              ],
             ),
             if (card.dueDate != null ||
                 (card.description != null && card.description!.isNotEmpty) ||

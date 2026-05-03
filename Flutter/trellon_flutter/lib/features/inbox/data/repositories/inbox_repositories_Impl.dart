@@ -1,43 +1,15 @@
-import 'package:apptreolon/core/constants/api_endpoints.dart';
 import 'package:apptreolon/features/card/domain/entities/card_entity.dart';
 import 'package:apptreolon/features/inbox/domain/repositories/i_inbox_repositories.dart';
-import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart';
-
-import '../../../card/data/models/card_model.dart';
-
-List<CardEntity> _parseInboxCards(List<dynamic> rawCards) {
-  return rawCards
-      .map(
-        (item) => CardModel.fromJson(
-          Map<String, dynamic>.from(item as Map),
-        ).toEntity(),
-      )
-      .toList(growable: false);
-}
+import '../datasources/inbox_remote_data_source.dart';
 
 class InboxRepositoriesImpl extends InboxRepositories {
-  final Dio dio;
-  InboxRepositoriesImpl({required this.dio});
+  final InboxRemoteDataSource remoteDataSource;
+
+  InboxRepositoriesImpl({required this.remoteDataSource});
 
   @override
   Future<List<CardEntity>> getInboxCard({required String userUId}) async {
-    try {
-      final response = await dio.get('${ApiEndpoints.userInbox}/$userUId');
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        final List<dynamic> data = response.data;
-        return compute(_parseInboxCards, data);
-      }
-      throw Exception("Lỗi lấy dữ liệu");
-    } on DioException catch (e) {
-      final data = e.response?.data;
-      if (data is Map<String, dynamic> && data.containsKey('message')) {
-        throw Exception(data['message']);
-      } else if (data is String) {
-        throw Exception(data);
-      }
-      throw Exception("Lỗi kết nối server");
-    }
+    return await remoteDataSource.getInboxCards(userUId);
   }
 
   @override
@@ -45,23 +17,77 @@ class InboxRepositoriesImpl extends InboxRepositories {
     required String userUId,
     required String cardTitle,
   }) async {
-    try {
-      final response = await dio.post(
-        '${ApiEndpoints.card}/$userUId/inbox',
-        data: {'title': cardTitle},
-      );
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        return CardModel.fromJson(response.data).toEntity();
-      }
-      throw Exception("Lỗi khi thêm thẻ");
-    } on DioException catch (e) {
-      final data = e.response?.data;
-      if (data is Map<String, dynamic> && data.containsKey('message')) {
-        throw Exception(data['message']);
-      } else if (data is String) {
-        throw Exception(data);
-      }
-      throw Exception("Lỗi kết nối server");
-    }
+    return await remoteDataSource.addInboxCard(userUId, cardTitle);
+  }
+
+  @override
+  Future<CardEntity> updateInboxCard({
+    required String cardId,
+    required String userUId,
+    String? title,
+    String? description,
+    DateTime? dueDate,
+    String? backgroundUrl,
+    String? status,
+  }) async {
+    return await remoteDataSource.updateInboxCard(
+      cardId,
+      userUId,
+      title: title,
+      description: description,
+      dueDate: dueDate,
+      backgroundUrl: backgroundUrl,
+      status: status,
+    );
+  }
+
+  @override
+  Future<void> deleteInboxCard({required String cardId, required String userUId}) async {
+    await remoteDataSource.deleteInboxCard(cardId, userUId);
+  }
+
+  @override
+  Future<List<TodoItemEntity>> getTodoItems({required String cardId}) async {
+    return await remoteDataSource.getTodoItems(cardId);
+  }
+
+  @override
+  Future<CardEntity> addTodoItem({required String cardId, required String todoTitle}) async {
+    return await remoteDataSource.addTodoItem(cardId, todoTitle);
+  }
+
+  @override
+  Future<CardEntity> updateTodoItem({required String cardId, required String todoId, required bool isCompleted}) async {
+    return await remoteDataSource.updateTodoItem(cardId, todoId, isCompleted);
+  }
+
+  @override
+  Future<List<CommentEntity>> getComments({required String cardId}) async {
+    return await remoteDataSource.getComments(cardId);
+  }
+
+  @override
+  Future<CommentEntity> addComment({required String cardId, required String userUId, required String content}) async {
+    return await remoteDataSource.addComment(cardId, userUId, content);
+  }
+
+  @override
+  Future<List<FileUrlEntity>> getAttachments({required String cardId}) async {
+    return await remoteDataSource.getAttachments(cardId);
+  }
+
+  @override
+  Future<FileUrlEntity> uploadAttachment({required String cardId, required String filePath, required String userUId, String? description}) async {
+    return await remoteDataSource.uploadAttachment(cardId, filePath, userUId, description);
+  }
+
+  @override
+  Future<void> deleteAttachment({required String cardId, required String fileId, required String userUId}) async {
+    await remoteDataSource.deleteAttachment(cardId, fileId, userUId);
+  }
+
+  @override
+  Future<void> updateAttachmentDescription({required String cardId, required String fileId, required String userUId, String? description}) async {
+    await remoteDataSource.updateAttachmentDescription(cardId, fileId, userUId, description);
   }
 }

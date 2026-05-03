@@ -5,7 +5,7 @@ class UploadCardCoverUseCase {
 
   UploadCardCoverUseCase(this.repository);
 
-  Future<String> call({required String cardId, required String filePath}) async {
-    return await repository.uploadCardCover(cardId: cardId, filePath: filePath);
+  Future<String> call({required String cardId, required String filePath, required String userUId}) async {
+    return await repository.uploadCardCover(cardId: cardId, filePath: filePath, userUId: userUId);
   }
 }

@@ -18,6 +18,11 @@ class BoardDetailLoaded extends BoardDetailState {
   final String? backgroundUrl;
   final List<ListEntity> lists;
   final String? transientError;
+  final String? boardRole;
+  final String? workspaceRole;
+  final String? boardVisibility;
+  final String? workspaceId;
+  final String? workspaceName;
 
   const BoardDetailLoaded({
     required this.boardId,
@@ -25,6 +30,11 @@ class BoardDetailLoaded extends BoardDetailState {
     this.backgroundUrl,
     required this.lists,
     this.transientError,
+    this.boardRole,
+    this.workspaceRole,
+    this.boardVisibility,
+    this.workspaceId,
+    this.workspaceName,
   });
 
   BoardDetailLoaded copyWith({
@@ -34,6 +44,11 @@ class BoardDetailLoaded extends BoardDetailState {
     List<ListEntity>? lists,
     String? transientError,
     bool clearTransientError = false,
+    String? boardRole,
+    String? workspaceRole,
+    String? boardVisibility,
+    String? workspaceId,
+    String? workspaceName,
   }) {
     return BoardDetailLoaded(
       boardId: boardId ?? this.boardId,
@@ -41,11 +56,16 @@ class BoardDetailLoaded extends BoardDetailState {
       backgroundUrl: backgroundUrl ?? this.backgroundUrl,
       lists: lists ?? this.lists,
       transientError: clearTransientError ? null : (transientError ?? this.transientError),
+      boardRole: boardRole ?? this.boardRole,
+      workspaceRole: workspaceRole ?? this.workspaceRole,
+      boardVisibility: boardVisibility ?? this.boardVisibility,
+      workspaceId: workspaceId ?? this.workspaceId,
+      workspaceName: workspaceName ?? this.workspaceName,
     );
   }
 
   @override
-  List<Object?> get props => [boardId, boardName, backgroundUrl, lists, transientError];
+  List<Object?> get props => [boardId, boardName, backgroundUrl, lists, transientError, boardRole, workspaceRole, boardVisibility, workspaceId, workspaceName];
 }
 
 class BoardDetailError extends BoardDetailState {

@@ -4,9 +4,9 @@ using TodoAppAPI.Models;
 
 namespace TodoAppAPI.Configurations
 {
-    public class WorkspaceMemberConfiguration : IEntityTypeConfiguration<WorkspaceMemberDto>
+    public class WorkspaceMemberConfiguration : IEntityTypeConfiguration<WorkspaceMembers>
     {
-        public void Configure(EntityTypeBuilder<WorkspaceMemberDto> builder)
+        public void Configure(EntityTypeBuilder<WorkspaceMembers> builder)
         {
             builder.ToTable("WorkspaceMembers");
 

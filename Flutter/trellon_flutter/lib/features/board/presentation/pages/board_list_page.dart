@@ -61,6 +61,7 @@ class _BoardListViewState extends State<_BoardListView> {
     showHomeActionMenu(
       _fabKey.currentContext ?? context,
       onCreateBoard: _openCreateBoard,
+      onCreateWorkspace: _showCreateWorkspaceSheet,
     );
   }
 

@@ -1,13 +1,13 @@
 class UpdateListRequestModel {
   final String listUId;
-  final int position;
+  final String userUId;
 
-  UpdateListRequestModel({required this.listUId, required this.position});
+  UpdateListRequestModel({required this.listUId, required this.userUId});
 
   Map<String, dynamic> toJson() {
     return {
       'listUId': listUId,
-      'position': position,
+      'userUId': userUId,
     };
   }
 }
