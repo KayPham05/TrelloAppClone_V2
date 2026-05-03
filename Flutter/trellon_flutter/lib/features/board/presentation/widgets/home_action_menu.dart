@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/constants/app_colors.dart';
 
-/// Popup menu shown when the blue [+] button is tapped (screenshot 2).
-/// Call [showHomeActionMenu] with the context and an onCreateBoard callback.
+/// Popup menu shown when the blue [+] button is tapped.
+/// Call [showHomeActionMenu] with the context, onCreateBoard, and onCreateWorkspace callbacks.
 Future<void> showHomeActionMenu(
   BuildContext context, {
   required VoidCallback onCreateBoard,
+  required VoidCallback onCreateWorkspace,
 }) async {
   final RenderBox button = context.findRenderObject() as RenderBox;
   final RenderBox overlay =
@@ -33,6 +34,12 @@ Future<void> showHomeActionMenu(
         subtitle: 'Một bảng được tạo thành từ các thẻ',
       ),
       _buildMenuItem(
+        value: 'workspace',
+        icon: Icons.group_add_rounded,
+        label: 'Tạo Không gian làm việc',
+        subtitle: 'Một không gian làm việc là nơi nhóm của bạn cộng tác',
+      ),
+      _buildMenuItem(
         value: 'card',
         icon: Icons.crop_portrait_rounded,
         label: 'Tạo một thẻ',
@@ -48,6 +55,8 @@ Future<void> showHomeActionMenu(
   ).then((value) {
     if (value == 'board') {
       onCreateBoard();
+    } else if (value == 'workspace') {
+      onCreateWorkspace();
     }
   });
 }

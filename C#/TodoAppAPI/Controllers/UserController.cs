@@ -34,6 +34,12 @@ namespace TodoAppAPI.Controllers
             return Ok(user);
         }
 
+        [HttpGet("search")]
+        public async Task<IActionResult> SearchUserByEmail([FromQuery] string email)
+        {
+            return await GetUserByEmail(email);
+        }
+
         [HttpPost("AddBio")]
         public async Task<IActionResult> AddBio([FromQuery] string userUId, [FromQuery] string Bio)
         {

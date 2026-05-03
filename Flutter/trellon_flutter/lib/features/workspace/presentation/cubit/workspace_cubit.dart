@@ -99,10 +99,12 @@ class WorkspaceCubit extends Cubit<WorkspaceState> {
 
   Future<void> addMember(String workspaceId, String email) async {
     try {
+      final userUid = await userLocalDataSource.getUserId() ?? '';
       await addWorkspaceMemberUseCase(
         workspaceId: workspaceId,
         email: email,
         role: 'Member',
+        requesterUId: userUid,
       );
     } catch (e) {
       emit(WorkspaceError(e.toString()));

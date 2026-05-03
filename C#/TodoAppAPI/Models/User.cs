@@ -16,6 +16,8 @@ namespace TodoAppAPI.Models
 
         public string Bio { get; set; } = string.Empty;
 
+        public string? AvatarUrl { get; set; }
+
         public string StatusAccount { get; set; } = string.Empty;
         public bool IsTwoFactorEnabled { get; set; } = false;
         public string? TwoFactorSecret { get; set; }
@@ -36,7 +38,7 @@ namespace TodoAppAPI.Models
         public ICollection<Activity>? Activities { get; set; }
         public ICollection<Comment>? Comments { get; set; }
         public ICollection<BoardMember>? BoardMemberships { get; set; }
-        public ICollection<WorkspaceMemberDto>? WorkspaceMemberships { get; set; }
+        public ICollection<WorkspaceMembers>? WorkspaceMemberships { get; set; }
         public ICollection<UserInboxCard>? InboxCards { get; set; } // ← Changed from UserInboxCards
         public ICollection<Notification> ReceivedNotifications { get; set; } = new List<Notification>();
         public ICollection<Notification> SentNotifications { get; set; } = new List<Notification>();

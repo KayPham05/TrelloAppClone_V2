@@ -6,11 +6,13 @@ import '../../../../../core/constants/app_colors.dart';
 class BoardDetailTopBarWidget extends StatelessWidget {
   final String boardName;
   final VoidCallback onBack;
+  final VoidCallback? onSettingsTap;
 
   const BoardDetailTopBarWidget({
     super.key,
     required this.boardName,
     required this.onBack,
+    this.onSettingsTap,
   });
 
   @override
@@ -40,6 +42,10 @@ class BoardDetailTopBarWidget extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.search_rounded, color: Color(0xFF64748B)),
             onPressed: () {},
+          ),
+          IconButton(
+            icon: const Icon(Icons.more_horiz_rounded, color: Color(0xFF64748B)),
+            onPressed: onSettingsTap,
           ),
           const AvatarChipWidget(),
           const SizedBox(width: 4),

@@ -41,6 +41,7 @@ namespace TodoAppAPI.Data
             modelBuilder.ApplyConfiguration(new FileUrlConfiguration());
             modelBuilder.ApplyConfiguration(new User2FABackupCodeConfiguration());
             modelBuilder.ApplyConfiguration(new CardLabelConfiguration());
+            modelBuilder.ApplyConfiguration(new PermissionAuditConfiguration());
             DatabaseSeeder.SeedData(modelBuilder);
         }
 
@@ -55,7 +56,7 @@ namespace TodoAppAPI.Data
         public DbSet<TodoItem> TodoItems { get; set; }
         public DbSet<UserInboxCard> UserInboxCards { get; set; }
         public DbSet<Workspace> Workspaces { get; set; }
-        public DbSet<WorkspaceMemberDto> WorkspaceMembers { get; set; }
+        public DbSet<WorkspaceMembers> WorkspaceMembers { get; set; }
         public DbSet<UserRecentBoard> UserRecentBoards { get; set; }
         public DbSet<CardMember> CardMembers { get; set; }
         public DbSet<UserSession> UserSessions { get; set; }
@@ -64,5 +65,6 @@ namespace TodoAppAPI.Data
         public DbSet<FileUrl> FileUrls { get; set; }
         public DbSet<User2FABackupCode> User2FABackupCodes { get; set; }
         public DbSet<CardLabel> CardLabels { get; set; }
+        public DbSet<PermissionAudit> PermissionAudits { get; set; }
     }
 }

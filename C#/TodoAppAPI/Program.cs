@@ -22,7 +22,6 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IListService, ListService>();
 builder.Services.AddScoped<ICardsService, CardsService>();
 builder.Services.AddScoped<IUserInboxCard, UserInboxCardService>();
-builder.Services.AddScoped<IAddInboxCardService, AddInboxCardService>();
 builder.Services.AddScoped<IWorkspaceService, WorkspaceService>();
 builder.Services.AddScoped<IUserRecentBoardService, UserBoardRecentService>();
 builder.Services.AddScoped<ITodoItemService, TodoItemService>();
@@ -37,6 +36,7 @@ builder.Services.AddScoped<ITwoFactorService, TwoFactorService>();
 
 // IMemoryCache for 2FA temp secrets
 builder.Services.AddMemoryCache();
+builder.Services.AddScoped<IAuthorizationService, AuthorizationService>();
 
 // Cloudinary
 builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection("CloudinarySettings"));

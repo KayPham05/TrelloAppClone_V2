@@ -1,4 +1,4 @@
-﻿using TodoAppAPI.DTOs;
+using TodoAppAPI.DTOs;
 
 namespace TodoAppAPI.Interfaces
 {
@@ -11,5 +11,11 @@ namespace TodoAppAPI.Interfaces
         Task<string?> GetUserRoleInBoardAsync(string boardUId, string userUId);
 
         Task<bool> HasPermissionAsync(string boardUId, string userUId, string requiredRole);
+
+        /// <summary>
+        /// Chuyển board sang workspace mới. Chỉ Owner board mới được thực hiện.
+        /// Tự động thêm các thành viên board vào workspace đích (nếu chưa có).
+        /// </summary>
+        Task<(bool Success, string Message)> TransferBoardWorkspaceAsync(string boardUId, string newWorkspaceUId, string requesterUId);
     }
 }

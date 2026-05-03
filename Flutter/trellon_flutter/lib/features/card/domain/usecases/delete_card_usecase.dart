@@ -5,7 +5,7 @@ class DeleteCardUseCase {
 
   DeleteCardUseCase(this.repository);
 
-  Future<void> call({required String cardId}) async {
-    return await repository.deleteCard(cardId: cardId);
+  Future<void> call({required String cardId, required String userUId}) async {
+    return await repository.deleteCard(cardId: cardId, userUId: userUId);
   }
 }

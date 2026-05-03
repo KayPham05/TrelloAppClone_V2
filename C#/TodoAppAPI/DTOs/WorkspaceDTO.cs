@@ -12,5 +12,6 @@ namespace TodoAppAPI.DTOs
         public string OwnerUId { get; set; }
         public string Type { get; set; } = "personal"; // personal | team
         public List<MemberDTO> Members { get; set; } = new();
+        public List<BoardDTO> Boards { get; set; } = new();
     }
 }

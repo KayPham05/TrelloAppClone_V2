@@ -41,9 +41,9 @@ namespace TodoAppAPI.Controllers
             if (string.IsNullOrEmpty(userUId))
                 return BadRequest("userUId is required");
 
-            var result = await _listService.AddListAsync(list);
+            var result = await _listService.AddListAsync(list, userUId);
             if (result == null)
-                return StatusCode(500, new { message = "Lỗi khi tạo List." });
+                return StatusCode(403, new { message = "Lỗi khi tạo List hoặc bạn không có quyền." });
             _ = _activity.AddActivity(userUId, $"created list '{list.ListName}'");
             
             var listDto = new ListDTO {
@@ -76,22 +76,22 @@ namespace TodoAppAPI.Controllers
                 Status = newStatus
             };
 
-            var success = await _listService.UpdateStatus(list);
+            var success = await _listService.UpdateStatus(list, userUId);
             if (!success)
-                return BadRequest(new { message = "Không thể cập nhật status" });
+                return BadRequest(new { message = "Không thể cập nhật status hoặc bạn không có quyền" });
 
             _ = _activity.AddActivity(userUId, $"updated list '{existingList.ListName}' status to '{newStatus}'");
             return Ok(new {message = "cập nhật trạng thái thành công"});
         }
 
         [HttpPut("reorder")]
-        public async Task<IActionResult> Reorder([FromBody] ReorderRequest req)
+        public async Task<IActionResult> Reorder([FromBody] ReorderRequest req, [FromQuery] string userUId)
         {
             if (req == null || req.Order == null)
                 return BadRequest("Invalid order");
 
-            var ok = await _listService.UpdateListPositionAsync(req.BoardUId, req.Order);
-            return ok ? Ok() : StatusCode(500);
+            var ok = await _listService.UpdateListPositionAsync(req.BoardUId, req.Order, userUId);
+            return ok ? Ok() : StatusCode(403, new { message = "Không thấy quyền hoặc lỗi server" });
         }
 
 

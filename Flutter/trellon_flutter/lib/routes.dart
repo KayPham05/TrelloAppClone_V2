@@ -18,7 +18,6 @@ import 'features/board/presentation/cubit/board_cubit.dart';
 import 'features/board/presentation/cubit/board_detail_cubit.dart';
 import 'features/card/presentation/pages/card_detail_page.dart';
 import 'features/card/domain/entities/card_entity.dart';
-import 'features/card/presentation/cubit/card_detail_cubit.dart';
 import 'init_dependencies.dart';
 
 class AppRoutes {

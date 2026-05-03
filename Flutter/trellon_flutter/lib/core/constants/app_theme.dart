@@ -114,7 +114,7 @@ class AppTheme {
           backgroundColor: AppColors.primaryContainer,
           foregroundColor: AppColors.onPrimary,
           elevation: 0,
-          minimumSize: const Size(double.infinity, 48),
+          minimumSize: const Size(64, 48),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           textStyle: GoogleFonts.inter(
             fontSize: 14,
@@ -127,7 +127,7 @@ class AppTheme {
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: AppColors.onSurface,
-          minimumSize: const Size(double.infinity, 48),
+          minimumSize: const Size(64, 48),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           side: BorderSide(color: AppColors.outlineVariant.withValues(alpha: 0.5)),
           textStyle: GoogleFonts.inter(
