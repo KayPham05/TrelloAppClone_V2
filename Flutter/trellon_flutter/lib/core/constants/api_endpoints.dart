@@ -24,4 +24,5 @@ class ApiEndpoints {
   static const String twoFASetup = '/auth/2fa/setup';
   static const String twoFAEnable = '/auth/2fa/enable';
   static const String verifyOtp = '/auth/verify-otp';
+  static const String changePassword = 'users/change-password';
 }

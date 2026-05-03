@@ -117,6 +117,10 @@ class _Enable2FAScreenState extends State<Enable2FAScreen> {
         final data = response.data;
         final backupCodes = List<String>.from(data['backupCodes'] ?? []);
 
+        // Đánh dấu 2FA đã được bật
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setBool('is_two_factor_enabled', true);
+
         if (!mounted) return;
 
         // Navigate sang BackupCodesPage

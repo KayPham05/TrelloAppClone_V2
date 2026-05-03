@@ -37,6 +37,8 @@ class LoginCubit extends Cubit<LoginState> {
       await prefs.setString('user_uid', user.userUId ?? '');
       await prefs.setString('user_name', user.userName);
       await prefs.setString('user_email', user.email);
+      // 2FA: Khi login thành công mà không qua 2FA → user chưa bật 2FA
+      await prefs.setBool('is_two_factor_enabled', false);
 
       emit(LoginSuccess(user));
     } catch (e) {

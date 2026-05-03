@@ -44,7 +44,7 @@ namespace TodoAppAPI.Controllers
 
             if (!string.IsNullOrEmpty(result.Token))
                 await SetRefreshCookie(result.UserUId);
-            else if (!result.RequiresVerification && !result.Requires2FA)
+            else if (!result.requiresVerification && !result.requires2FA)
                 return Unauthorized(result);
 
             return Ok(result);

@@ -22,33 +22,33 @@ import 'features/card/presentation/cubit/card_detail_cubit.dart';
 import 'init_dependencies.dart';
 
 class AppRoutes {
-  static const String home           = '/home';
-  static const String login          = '/login';
-  static const String register       = '/register';
-  static const String verify         = '/verify';
-  static const String boardDetail    = '/board-detail';
-  static const String workspaceMenu  = '/workspace-menu';
-  static const String userProfile    = '/user-profile';
-  static const String securityPage   = '/security';
-  static const String changePassPage   = '/change-password';
-  static const String enable2FA      = '/enable-2fa';
+  static const String home = '/home';
+  static const String login = '/login';
+  static const String register = '/register';
+  static const String verify = '/verify';
+  static const String boardDetail = '/board-detail';
+  static const String workspaceMenu = '/workspace-menu';
+  static const String userProfile = '/user-profile';
+  static const String securityPage = '/security';
+  static const String changePassPage = '/change-password';
+  static const String enable2FA = '/enable-2fa';
   static const String twoFactorAuthPage = '/two-factor-auth';
-  
+
   static const String workspaceDetail = '/workspace-detail';
-  static const String introduction   = '/introduction';
-  static const String cardDetail      = '/card-detail';
+  static const String introduction = '/introduction';
+  static const String cardDetail = '/card-detail';
 
   static Map<String, WidgetBuilder> routes = {
-    login:         (context) => const LoginPage(),
-    register:      (context) => const RegisterPage(),
-    verify:        (context) => const VerifyPage(),
-    home:          (context) => const MainShell(),
-    userProfile:   (context) => const ProfilePage(),
-    securityPage:  (context) => const SecurityPage(),
-    changePassPage: (context) => ChangePassword(),
-    enable2FA:     (context) => const Enable2FAScreen(),
+    login: (context) => const LoginPage(),
+    register: (context) => const RegisterPage(),
+    verify: (context) => const VerifyPage(),
+    home: (context) => const MainShell(),
+    userProfile: (context) => const ProfilePage(),
+    securityPage: (context) => const SecurityPage(),
+    changePassPage: (context) => const ChangePassword(),
+    enable2FA: (context) => const Enable2FAScreen(),
     twoFactorAuthPage: (context) => const TwoFactorAuthPage(),
-    introduction:  (context) => MultiBlocProvider(
+    introduction: (context) => MultiBlocProvider(
       providers: [
         BlocProvider(create: (_) => serviceLocator<WorkspaceCubit>()),
         BlocProvider(create: (_) => serviceLocator<BoardCubit>()),
@@ -65,9 +65,12 @@ class AppRoutes {
   };
 
   static Widget _buildWorkspaceMenu(BuildContext context) {
-    final workspace = ModalRoute.of(context)?.settings.arguments as WorkspaceEntity?;
+    final workspace =
+        ModalRoute.of(context)?.settings.arguments as WorkspaceEntity?;
     if (workspace == null) {
-      return const Scaffold(body: Center(child: Text('Workspace not provided')));
+      return const Scaffold(
+        body: Center(child: Text('Workspace not provided')),
+      );
     }
     return BlocProvider(
       create: (_) => serviceLocator<WorkspaceCubit>(),

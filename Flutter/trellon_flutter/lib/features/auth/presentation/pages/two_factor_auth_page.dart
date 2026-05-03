@@ -83,6 +83,8 @@ class _TwoFactorAuthPageState extends State<TwoFactorAuthPage> {
         await prefs.setString('user_uid', _userUId);
         await prefs.setString('user_name', userName);
         await prefs.setString('user_email', _email);
+        // Đánh dấu user đã bật 2FA (vì đã qua flow 2FA login)
+        await prefs.setBool('is_two_factor_enabled', true);
         
         if (!mounted) return;
         Navigator.pushReplacementNamed(context, AppRoutes.home);

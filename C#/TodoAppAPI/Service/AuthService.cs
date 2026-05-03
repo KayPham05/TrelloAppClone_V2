@@ -231,6 +231,7 @@ namespace TodoAppAPI.Service
                 UserName = user.UserName,
                 Bio = user.Bio,
                 RefreshToken = refreshToken,
+                IsTwoFactorEnabled = user.IsTwoFactorEnabled,
             };
         }
 
@@ -351,7 +352,7 @@ namespace TodoAppAPI.Service
                 {
                     Message = "A new verification code has been sent to your email.",
                     Email = email,
-                    RequiresVerification = true,
+                    requiresVerification = true,
                     ExpiresInSeconds = 300
                 };
             }
@@ -362,7 +363,7 @@ namespace TodoAppAPI.Service
             {
                 Message = "Verification code is still valid.",
                 Email = email,
-                RequiresVerification = true,
+                requiresVerification = true,
                 ExpiresInSeconds = remaining
             };
         }
