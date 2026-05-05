@@ -32,6 +32,10 @@ builder.Services.AddScoped<EmailService>();
 builder.Services.AddScoped<IActivity, ActivityService>();
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<ITwoFactorService, TwoFactorService>();
+
+// IMemoryCache for 2FA temp secrets
+builder.Services.AddMemoryCache();
 builder.Services.AddScoped<IAuthorizationService, AuthorizationService>();
 
 // Cloudinary

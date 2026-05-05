@@ -71,7 +71,7 @@ namespace TodoAppAPI.Service
                 {
                     Message = "Email has not been verified.",
                     Email = user.Email,
-                    RequiresVerification = true
+                    requiresVerification = true
                 };
             }
 
@@ -96,7 +96,7 @@ namespace TodoAppAPI.Service
                 return new AuthResponse
                 {
                     UserUId = user.UserUId,
-                    Requires2FA = true,
+                    requires2FA = true,
                     Email = user.Email,
                     Message = "OTP has been sent."
                 };
@@ -230,6 +230,8 @@ namespace TodoAppAPI.Service
                 Email = user.Email,
                 UserName = user.UserName,
                 Bio = user.Bio,
+                RefreshToken = refreshToken,
+                IsTwoFactorEnabled = user.IsTwoFactorEnabled,
             };
         }
 
@@ -350,7 +352,7 @@ namespace TodoAppAPI.Service
                 {
                     Message = "A new verification code has been sent to your email.",
                     Email = email,
-                    RequiresVerification = true,
+                    requiresVerification = true,
                     ExpiresInSeconds = 300
                 };
             }
@@ -361,7 +363,7 @@ namespace TodoAppAPI.Service
             {
                 Message = "Verification code is still valid.",
                 Email = email,
-                RequiresVerification = true,
+                requiresVerification = true,
                 ExpiresInSeconds = remaining
             };
         }

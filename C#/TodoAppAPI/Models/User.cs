@@ -7,7 +7,7 @@ namespace TodoAppAPI.Models
         public string UserUId { get; set; } = Guid.NewGuid().ToString(); // ← Not nullable
         public string UserName { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
-        public string PasswordHash { get; set; } = string.Empty;
+        public string PasswordHash { get; set; } = string.Empty; //password must have at least 6 characters
         public bool IsEmailVerified { get; set; } = false;
         public string? VerificationTokenHash { get; set; }
         public DateTime? VerificationTokenExpiresAt { get; set; }
@@ -20,6 +20,11 @@ namespace TodoAppAPI.Models
 
         public string StatusAccount { get; set; } = string.Empty;
         public bool IsTwoFactorEnabled { get; set; } = false;
+        public string? TwoFactorSecret { get; set; }
+
+        // Navigation - 2FA Backup Codes
+        public ICollection<User2FABackupCode>? BackupCodes { get; set; }
+
         // FK - Role
         public int? RoleId { get; set; }
         public Role? Role { get; set; }

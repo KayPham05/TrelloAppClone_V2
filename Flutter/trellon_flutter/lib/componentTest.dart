@@ -1,41 +1,26 @@
+import 'package:apptreolon/features/profile/presentation/pages/profile_page.dart';
+import 'package:apptreolon/features/profile/presentation/pages/security_page.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'core/constants/app_theme.dart';
 import 'routes.dart';
 import 'init_dependencies.dart';
 
-import 'package:shared_preferences/shared_preferences.dart';
-final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await dotenv.load(fileName: ".env");
   await initDependencies();
-  
-  final prefs = await SharedPreferences.getInstance();
-  final isLogged = prefs.getBool('isLogged') ?? false;
-
-  runApp(MyApp(isLogged: isLogged));
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  final bool isLogged;
-
-  const MyApp({super.key, required this.isLogged});
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Trello Clone',
       debugShowCheckedModeBanner: false,
-      navigatorKey: navigatorKey,
-      theme: AppTheme.light,
+      initialRoute: AppRoutes.userProfile,
       routes: AppRoutes.routes,
-      builder: (context, child) {
-        return _AppWarmup(child: child ?? const SizedBox.shrink());
-      },
-      initialRoute: isLogged ? AppRoutes.home : AppRoutes.login,
     );
   }
 }
