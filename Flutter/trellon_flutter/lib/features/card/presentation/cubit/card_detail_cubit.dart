@@ -36,7 +36,7 @@ class CardDetailCubit extends Cubit<CardDetailState> {
     this.uploadCardCoverUseCase,
   ) : super(CardDetailLoading());
 
-  Future<void> loadCardDetails(CardEntity card, {bool isInboxCard = false}) async {
+  Future<void> loadCardDetails(CardEntity card, {bool isInboxCard = false, String? boardId}) async {
     _isInboxCard = isInboxCard;
     emit(CardDetailLoading());
     try {
@@ -51,6 +51,7 @@ class CardDetailCubit extends Cubit<CardDetailState> {
         if (!isInboxCard) repository.getCardMembers(cardId: card.id) else Future.value(<CardMemberEntity>[]),
         isInboxCard ? inboxRepository.getComments(cardId: card.id) : repository.getComments(cardId: card.id),
         isInboxCard ? inboxRepository.getAttachments(cardId: card.id) : repository.getAttachments(cardId: card.id),
+        if (boardId != null) repository.getBoardMembers(boardId: boardId) else Future.value(<CardMemberEntity>[]),
       ]);
 
       emit(CardDetailLoaded(
@@ -58,6 +59,7 @@ class CardDetailCubit extends Cubit<CardDetailState> {
         todos: futures[0] as List<TodoItemEntity>,
         members: futures[1] as List<CardMemberEntity>,
         comments: futures[2] as List<CommentEntity>,
+        potentialMembers: futures.length > 4 ? futures[4] as List<CardMemberEntity> : const [],
       ));
     } catch (e) {
       emit(CardDetailError(e.toString()));

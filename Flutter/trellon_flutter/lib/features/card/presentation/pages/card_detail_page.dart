@@ -33,10 +33,7 @@ class _CardDetailPageState extends State<CardDetailPage> {
   @override
   void initState() {
     super.initState();
-    _cubit = serviceLocator<CardDetailCubit>()..loadCardDetails(widget.card, isInboxCard: widget.isInboxCard);
-    if (widget.boardId != null) {
-      _cubit.loadPotentialMembers(widget.boardId!);
-    }
+    _cubit = serviceLocator<CardDetailCubit>()..loadCardDetails(widget.card, isInboxCard: widget.isInboxCard, boardId: widget.boardId);
   }
 
   @override
@@ -117,6 +114,7 @@ class _CardDetailPageState extends State<CardDetailPage> {
                                        context,
                                        allBoardMembers: state.potentialMembers,
                                        currentCardMembers: state.members,
+                                       canManage: canEdit,
                                        onMemberToggled: (member) {
                                          final isAssigned = state.members.any((m) => m.userUId == member.userUId);
                                          if (isAssigned) {
