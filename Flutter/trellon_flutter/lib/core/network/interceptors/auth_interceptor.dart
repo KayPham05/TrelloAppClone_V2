@@ -3,7 +3,9 @@ import 'dart:async';
 import 'package:apptreolon/core/constants/api_endpoints.dart';
 import 'package:cookie_jar/cookie_jar.dart';
 import 'package:dio/dio.dart';
+import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../../../main.dart';
 
@@ -23,8 +25,8 @@ class AuthInterceptor extends Interceptor {
   @override
   void onRequest(
       RequestOptions options, RequestInterceptorHandler handler) async {
-    final prefs = await SharedPreferences.getInstance();
-    final String? token = prefs.getString('access_token');
+    final secureStorage = const FlutterSecureStorage();
+    final String? token = await secureStorage.read(key: 'access_token');
 
     if (token != null && token.isNotEmpty) {
       options.headers['Authorization'] = 'Bearer $token';
@@ -60,8 +62,8 @@ class AuthInterceptor extends Interceptor {
 
         if (newAccessToken != null) {
           // Lưu access token mới
-          final prefs = await SharedPreferences.getInstance();
-          await prefs.setString('access_token', newAccessToken);
+          final secureStorage = const FlutterSecureStorage();
+          await secureStorage.write(key: 'access_token', value: newAccessToken);
 
           // Thông báo thành công cho tất cả request đang chờ
           for (final c in _pendingRequests) {
@@ -98,9 +100,14 @@ class AuthInterceptor extends Interceptor {
   // --- Helper: Gọi API refresh-token ---
   Future<String?> _refreshToken() async {
     try {
+      final secureStorage = const FlutterSecureStorage();
+      final String? oldRefreshToken = await secureStorage.read(key: 'refresh_token');
+
       // Cookie refreshToken sẽ được tự động gửi qua CookieManager
+      // Nhưng ta vẫn gửi kèm trong body để dự phòng nếu Cookie Manager không đẩy lên
       final response = await dio.post(
         ApiEndpoints.refreshToken,
+        data: {'refreshToken': oldRefreshToken},
         options: Options(
           // Bỏ qua interceptor này cho request refresh để tránh vòng lặp vô hạn
           extra: {'skipAuthInterceptor': true},
@@ -126,8 +133,12 @@ class AuthInterceptor extends Interceptor {
   // --- Helper: Xóa session cục bộ khi refresh thất bại ---
   Future<void> _clearSessionAndLogout() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('access_token');
     await prefs.remove('user_uid');
+    await prefs.setBool('isLogged', false);
+
+    final secureStorage = const FlutterSecureStorage();
+    await secureStorage.deleteAll();
+
     // Xóa hết cookie (refreshToken)
     await cookieJar.deleteAll();
     

@@ -605,6 +605,10 @@ namespace TodoAppAPI.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
+                    b.Property<string>("TwoFactorSecret")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
                     b.Property<string>("UserName")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -625,6 +629,41 @@ namespace TodoAppAPI.Migrations
                     b.HasIndex("RoleId");
 
                     b.ToTable("Users", (string)null);
+                });
+
+            modelBuilder.Entity("TodoAppAPI.Models.User2FABackupCode", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("CodeHash")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
+
+                    b.Property<bool>("IsUsed")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<string>("UserUId")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserUId");
+
+                    b.ToTable("User2FABackupCodes", (string)null);
                 });
 
             modelBuilder.Entity("TodoAppAPI.Models.UserInboxCard", b =>
@@ -771,7 +810,7 @@ namespace TodoAppAPI.Migrations
                     b.ToTable("Workspaces", (string)null);
                 });
 
-            modelBuilder.Entity("TodoAppAPI.Models.WorkspaceMemberDto", b =>
+            modelBuilder.Entity("TodoAppAPI.Models.WorkspaceMembers", b =>
                 {
                     b.Property<string>("WorkspaceMemberUId")
                         .HasMaxLength(128)
@@ -977,6 +1016,17 @@ namespace TodoAppAPI.Migrations
                     b.Navigation("Role");
                 });
 
+            modelBuilder.Entity("TodoAppAPI.Models.User2FABackupCode", b =>
+                {
+                    b.HasOne("TodoAppAPI.Models.User", "User")
+                        .WithMany("BackupCodes")
+                        .HasForeignKey("UserUId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("TodoAppAPI.Models.UserInboxCard", b =>
                 {
                     b.HasOne("TodoAppAPI.Models.Card", "Card")
@@ -1048,7 +1098,7 @@ namespace TodoAppAPI.Migrations
                     b.Navigation("Owner");
                 });
 
-            modelBuilder.Entity("TodoAppAPI.Models.WorkspaceMemberDto", b =>
+            modelBuilder.Entity("TodoAppAPI.Models.WorkspaceMembers", b =>
                 {
                     b.HasOne("TodoAppAPI.Models.User", "User")
                         .WithMany("WorkspaceMemberships")
@@ -1104,6 +1154,8 @@ namespace TodoAppAPI.Migrations
             modelBuilder.Entity("TodoAppAPI.Models.User", b =>
                 {
                     b.Navigation("Activities");
+
+                    b.Navigation("BackupCodes");
 
                     b.Navigation("BoardMemberships");
 

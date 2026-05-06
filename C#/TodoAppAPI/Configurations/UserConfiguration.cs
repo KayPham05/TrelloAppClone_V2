@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using TodoAppAPI.Models;
 
@@ -58,6 +58,10 @@ namespace TodoAppAPI.Configurations
                    .WithOne(s => s.User)
                    .HasForeignKey<UserSession>(s => s.UserUId)
                    .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Property(x => x.TwoFactorSecret)
+                   .HasMaxLength(256)
+                   .IsRequired(false);
 
             builder.HasOne(u => u.UserOtp)
                    .WithOne(o => o.User)

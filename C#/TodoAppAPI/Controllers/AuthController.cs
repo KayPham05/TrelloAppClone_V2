@@ -15,12 +15,14 @@ namespace TodoAppAPI.Controllers
     {
         private readonly IAuthService _authService;
         private readonly IUserService _userService;
+        private readonly ITwoFactorService _twoFactorService;
         private readonly ILogger<AuthController> _logger;
 
-        public AuthController(IAuthService authService, IUserService userService, ILogger<AuthController> logger)
+        public AuthController(IAuthService authService, IUserService userService, ITwoFactorService twoFactorService, ILogger<AuthController> logger)
         {
             _authService = authService;
             _userService = userService;
+            _twoFactorService = twoFactorService;
             _logger = logger;
         }
 
@@ -42,7 +44,7 @@ namespace TodoAppAPI.Controllers
 
             if (!string.IsNullOrEmpty(result.Token))
                 await SetRefreshCookie(result.UserUId);
-            else if (!result.RequiresVerification && !result.Requires2FA)
+            else if (!result.requiresVerification && !result.requires2FA)
                 return Unauthorized(result);
 
             return Ok(result);
@@ -79,18 +81,23 @@ namespace TodoAppAPI.Controllers
         // AllowAnonymous cho refresh-token
         [AllowAnonymous]
         [HttpPost("refresh-token")]
-        public async Task<IActionResult> RefreshToken()
+        public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequest? req = null)
         {
             _logger.LogInformation(" Refresh token request received");
 
-            var refreshToken = Request.Cookies["refreshToken"];
+            var refreshToken = req?.RefreshToken;
+            
+            if (string.IsNullOrEmpty(refreshToken))
+            {
+                refreshToken = Request.Cookies["refreshToken"];
+            }
 
             _logger.LogInformation($"Cookies: {string.Join(", ", Request.Cookies.Keys)}");
             _logger.LogInformation($"RefreshToken exists: {!string.IsNullOrEmpty(refreshToken)}");
 
             if (string.IsNullOrEmpty(refreshToken))
             {
-                _logger.LogWarning(" No refresh token in cookies");
+                _logger.LogWarning(" No refresh token in cookies or body");
                 return Unauthorized(new { message = "Không có refresh token." });
             }
 
@@ -109,11 +116,15 @@ namespace TodoAppAPI.Controllers
         // QUAN TRỌNG: AllowAnonymous cho logout
         [AllowAnonymous]
         [HttpPost("logout")]
-        public async Task<IActionResult> Logout([FromQuery] string userUId)
+        public async Task<IActionResult> Logout([FromQuery] string userUId, [FromBody] RefreshTokenRequest? req = null)
         {
             _logger.LogInformation($" Logout attempt - UserUId: {userUId}");
 
-            var refreshToken = Request.Cookies["refreshToken"];
+            var refreshToken = req?.RefreshToken;
+            if (string.IsNullOrEmpty(refreshToken))
+            {
+                refreshToken = Request.Cookies["refreshToken"];
+            }
             _logger.LogInformation($" RefreshToken exists: {!string.IsNullOrEmpty(refreshToken)}");
 
             if (string.IsNullOrEmpty(refreshToken))
@@ -224,6 +235,73 @@ namespace TodoAppAPI.Controllers
             {
                 _logger.LogError($"verify-2fa-setup error: {ex.Message}");
                 return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        // ───────── 2FA TOTP Endpoints ─────────
+
+        /// <summary>
+        /// Bước 2: Sinh SecretKey + QR URI cho Google Authenticator.
+        /// </summary>
+        [HttpGet("2fa/setup")]
+        public async Task<IActionResult> Setup2FA([FromQuery] string userUId)
+        {
+            if (string.IsNullOrEmpty(userUId))
+                return BadRequest(new { message = "userUId không hợp lệ" });
+
+            try
+            {
+                var result = await _twoFactorService.Setup2FAAsync(userUId);
+                return Ok(result);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"[2FA Setup Error] {ex.Message}");
+                return StatusCode(500, new { message = "Đã xảy ra lỗi khi thiết lập 2FA." });
+            }
+        }
+
+        /// <summary>
+        /// Bước 5: Xác thực mã TOTP 6 số và kích hoạt 2FA.
+        /// </summary>
+        [HttpPost("2fa/enable")]
+        public async Task<IActionResult> Enable2FA([FromQuery] string userUId, [FromBody] Enable2FARequest request)
+        {
+            if (string.IsNullOrEmpty(userUId))
+                return BadRequest(new { message = "userUId không hợp lệ" });
+
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            try
+            {
+                var result = await _twoFactorService.Enable2FAAsync(userUId, request.Code);
+                return Ok(result);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"[2FA Enable Error] {ex.Message}");
+                return StatusCode(500, new { message = "Đã xảy ra lỗi khi kích hoạt 2FA." });
             }
         }
 
