@@ -59,4 +59,31 @@ class BoardRepositoryImpl implements BoardRepository {
       throw Exception('Repository error: $e');
     }
   }
+
+  @override
+  Future<void> saveRecentBoard(String userUid, String boardId) async {
+    try {
+      await remoteDataSource.saveRecentBoard(userUid, boardId);
+    } catch (e) {
+      throw Exception('Repository error: $e');
+    }
+  }
+
+  @override
+  Future<List<dynamic>> getLists(String boardId) async {
+    try {
+      return await remoteDataSource.getLists(boardId);
+    } catch (e) {
+      throw Exception('Repository error: $e');
+    }
+  }
+
+  @override
+  Future<String?> getUserRoleInBoard(String boardId, String userUId) async {
+    try {
+      return await remoteDataSource.getUserRoleInBoard(boardId: boardId, userUId: userUId);
+    } catch (e) {
+      return null;
+    }
+  }
 }

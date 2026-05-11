@@ -1,4 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:async';
 
 import '../../domain/usecases/verify_code_usecase.dart';
@@ -25,7 +27,7 @@ class VerifyCubit extends Cubit<VerifyState> {
       if (remainingSeconds > 0) {
         startCountdown(seconds: remainingSeconds);
       } else {
-        // Nếu backend trả về 0 (hoặc lỗi), nó đã tự động gửi lại mã rồi, 
+        // Nếu backend trả về 0 (hoặc lỗi), nó đã tự động gửi lại mã rồi,
         // nên chúng ta bắt đầu countdown mới 5p
         startCountdown(seconds: 300);
       }
@@ -53,8 +55,26 @@ class VerifyCubit extends Cubit<VerifyState> {
   Future<void> verify({required String email, required String code}) async {
     emit(VerifyLoading());
     try {
-      await verifyCodeUseCase(email: email, code: code);
+      final user = await verifyCodeUseCase(email: email, code: code);
       _countdownTimer?.cancel();
+
+      // Lưu session nếu backend trả về token (xác thực email sau đăng ký)
+      if (user.token != null && user.token!.isNotEmpty) {
+        final secureStorage = const FlutterSecureStorage();
+        await secureStorage.write(key: 'access_token', value: user.token!);
+        await secureStorage.write(
+          key: 'refresh_token',
+          value: user.refreshToken ?? '',
+        );
+
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setBool('isLogged', true);
+        await prefs.setString('user_uid', user.userUId ?? '');
+        await prefs.setString('user_name', user.userName);
+        await prefs.setString('user_email', user.email);
+        await prefs.setBool('is_two_factor_enabled', false);
+      }
+
       emit(VerifySuccess());
     } catch (e) {
       emit(VerifyError(e.toString().replaceFirst('Exception: ', '')));

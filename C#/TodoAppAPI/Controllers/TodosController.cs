@@ -136,7 +136,7 @@ namespace TodoAppAPI.Controllers
 
             var oldListUId = card.ListUId;
 
-            var success = await _cardService.UpdateListUid(CardUId, body.ListUId, body.UserUId);
+            var success = await _cardService.UpdateListUid(CardUId, body.ListUId, body.UserUId, body.Position);
             if (!success)
                 return BadRequest(new { message = "Không thể cập nhật ListUId cho Card." });
 

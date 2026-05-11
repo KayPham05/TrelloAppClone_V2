@@ -15,5 +15,6 @@ namespace TodoAppAPI.Interfaces
         Task<bool> SendTwoFactorOtpAsync(string email);
         Task<VerifyTwoFactorResponse> VerifyTwoFactorSetupAsync(string email, string otp);
         Task<AuthResponse> CheckAndResendVerificationCodeAsync(string email);
+        Task<AuthResponse> GenerateTokensAndSessionPublic(User user);
     }
 }

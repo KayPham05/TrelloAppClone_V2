@@ -1,10 +1,12 @@
-﻿using TodoAppAPI.Models;
+using TodoAppAPI.Models;
+
+using TodoAppAPI.DTOs;
 
 namespace TodoAppAPI.Interfaces
 {
     public interface IUserRecentBoardService
     {
-        Task<List<Board>> GetRecentBoardByUserUId(string userUId);
+        Task<List<BoardDTO>> GetRecentBoardByUserUId(string userUId);
         Task<bool> SaveRecentBoard(string userUId, string boardUId);
     }
 }

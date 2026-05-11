@@ -12,13 +12,8 @@ using TodoAppAPI.Data;
 namespace TodoAppAPI.Migrations
 {
     [DbContext(typeof(TodoDbContext))]
-<<<<<<<< HEAD:C#/TodoAppAPI/Migrations/20260422021756_initDB.Designer.cs
-    [Migration("20260422021756_initDB")]
-    partial class initDB
-========
-    [Migration("20260427125136_InitDB")]
-    partial class InitDB
->>>>>>>> main:C#/TodoAppAPI/Migrations/20260427125136_InitDB.Designer.cs
+    [Migration("20260511163625_updatePosition")]
+    partial class updatePosition
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -689,6 +684,9 @@ namespace TodoAppAPI.Migrations
                         .HasColumnType("datetime2")
                         .HasDefaultValueSql("GETDATE()");
 
+                    b.Property<int>("Position")
+                        .HasColumnType("int");
+
                     b.HasKey("UserUId", "CardUId");
 
                     b.HasIndex("CardUId");
@@ -818,7 +816,7 @@ namespace TodoAppAPI.Migrations
                     b.ToTable("Workspaces", (string)null);
                 });
 
-            modelBuilder.Entity("TodoAppAPI.Models.WorkspaceMemberDto", b =>
+            modelBuilder.Entity("TodoAppAPI.Models.WorkspaceMembers", b =>
                 {
                     b.Property<string>("WorkspaceMemberUId")
                         .HasMaxLength(128)
@@ -1106,7 +1104,7 @@ namespace TodoAppAPI.Migrations
                     b.Navigation("Owner");
                 });
 
-            modelBuilder.Entity("TodoAppAPI.Models.WorkspaceMemberDto", b =>
+            modelBuilder.Entity("TodoAppAPI.Models.WorkspaceMembers", b =>
                 {
                     b.HasOne("TodoAppAPI.Models.User", "User")
                         .WithMany("WorkspaceMemberships")

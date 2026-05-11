@@ -35,6 +35,7 @@ import 'features/board/domain/repositories/board_repository.dart';
 import 'features/board/domain/usecases/get_recent_boards_usecase.dart';
 import 'features/board/domain/usecases/create_board_usecase.dart';
 import 'features/board/domain/usecases/get_personal_boards_usecase.dart';
+import 'features/board/domain/usecases/save_recent_board_usecase.dart';
 import 'features/board/presentation/cubit/board_cubit.dart';
 import 'features/board/presentation/cubit/board_detail_cubit.dart';
 import 'features/workspace/data/datasources/workspace_remote_data_source.dart';
@@ -115,6 +116,7 @@ void _initBoard() {
   serviceLocator.registerLazySingleton(() => GetRecentBoardsUseCase(serviceLocator()));
   serviceLocator.registerLazySingleton(() => CreateBoardUseCase(serviceLocator()));
   serviceLocator.registerLazySingleton(() => GetPersonalBoardsUseCase(serviceLocator()));
+  serviceLocator.registerLazySingleton(() => SaveRecentBoardUseCase(serviceLocator()));
 
   // BoardCubit
   serviceLocator.registerFactory(() => BoardCubit(
@@ -131,6 +133,7 @@ void _initBoard() {
     userLocalDataSource: serviceLocator<UserLocalDataSource>(),
     updateListUIdUseCase: serviceLocator<UpdateListUIdUseCase>(),
     updateCardStatusUseCase: serviceLocator<UpdateCardStatusUseCase>(),
+    saveRecentBoardUseCase: serviceLocator<SaveRecentBoardUseCase>(),
   ));
 }
 

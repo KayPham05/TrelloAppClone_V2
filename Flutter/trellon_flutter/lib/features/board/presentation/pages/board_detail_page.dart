@@ -126,6 +126,8 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
       boardId = arguments['boardId'] as String? ?? '';
       boardName = arguments['boardName'] as String? ?? 'Board';
       backgroundUrl = arguments['backgroundUrl'] as String?;
+      workspaceId = arguments['workspaceId'] as String?;
+      workspaceName = arguments['workspaceName'] as String?;
     } else if (arguments is BoardEntity) {
       boardId = arguments.id;
       boardName = arguments.name;

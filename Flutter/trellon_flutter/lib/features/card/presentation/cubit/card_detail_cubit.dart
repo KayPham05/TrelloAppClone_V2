@@ -6,7 +6,6 @@ import '../../domain/usecases/add_card_comment_usecase.dart';
 import '../../domain/usecases/upload_attachment_usecase.dart';
 import '../../domain/usecases/get_attachments_usecase.dart';
 import '../../domain/usecases/delete_attachment_usecase.dart';
-import '../../domain/usecases/delete_attachment_usecase.dart';
 import '../../domain/usecases/update_attachment_description_usecase.dart';
 import '../../domain/usecases/upload_card_cover_usecase.dart';
 import '../../../../core/data_sources/user_local_data_source.dart';
@@ -36,7 +35,7 @@ class CardDetailCubit extends Cubit<CardDetailState> {
     this.uploadCardCoverUseCase,
   ) : super(CardDetailLoading());
 
-  Future<void> loadCardDetails(CardEntity card, {bool isInboxCard = false}) async {
+  Future<void> loadCardDetails(CardEntity card, {bool isInboxCard = false, String? boardId}) async {
     _isInboxCard = isInboxCard;
     emit(CardDetailLoading());
     try {
@@ -51,6 +50,7 @@ class CardDetailCubit extends Cubit<CardDetailState> {
         if (!isInboxCard) repository.getCardMembers(cardId: card.id) else Future.value(<CardMemberEntity>[]),
         isInboxCard ? inboxRepository.getComments(cardId: card.id) : repository.getComments(cardId: card.id),
         isInboxCard ? inboxRepository.getAttachments(cardId: card.id) : repository.getAttachments(cardId: card.id),
+        if (boardId != null) repository.getBoardMembers(boardId: boardId) else Future.value(<CardMemberEntity>[]),
       ]);
 
       emit(CardDetailLoaded(
@@ -58,6 +58,7 @@ class CardDetailCubit extends Cubit<CardDetailState> {
         todos: futures[0] as List<TodoItemEntity>,
         members: futures[1] as List<CardMemberEntity>,
         comments: futures[2] as List<CommentEntity>,
+        potentialMembers: futures.length > 4 ? futures[4] as List<CardMemberEntity> : const [],
       ));
     } catch (e) {
       emit(CardDetailError(e.toString()));
@@ -487,5 +488,48 @@ class CardDetailCubit extends Cubit<CardDetailState> {
     if (currentState is CardDetailLoaded) {
       emit(currentState.copyWith(clearAttachmentError: true));
     }
+  }
+
+  // ─── Move Card ────────────────────────────────────────────────────────────
+
+  /// Di chuyển card từ bất kỳ đâu vào inbox tại vị trí [position].
+  Future<void> moveToInbox(int position) async {
+    final currentState = state;
+    if (currentState is! CardDetailLoaded) return;
+    try {
+      final userUId = await UserLocalDataSource().getUserId() ?? '';
+      await inboxRepository.moveCardToInbox(
+        cardId: currentState.card.id,
+        userUId: userUId,
+        position: position,
+      );
+      emit(CardDetailMoved());
+    } catch (e) {
+      emit(CardDetailError('Không thể di chuyển card: ${e.toString()}'));
+      if (currentState is CardDetailLoaded) emit(currentState);
+    }
+  }
+
+  /// Di chuyển card đến một list trong board, tại vị trí [position].
+  Future<void> moveToBoard(String newListId, int position) async {
+    final currentState = state;
+    if (currentState is! CardDetailLoaded) return;
+    try {
+      final userUId = await UserLocalDataSource().getUserId() ?? '';
+      await repository.updateListUId(
+        cardId: currentState.card.id,
+        newListId: newListId,
+        userUId: userUId,
+      );
+      emit(CardDetailMoved());
+    } catch (e) {
+      emit(CardDetailError('Không thể di chuyển card: ${e.toString()}'));
+      if (currentState is CardDetailLoaded) emit(currentState);
+    }
+  }
+
+  /// Lấy danh sách lists cho một board (UI phải truyền BoardRepository trực tiếp thay vì dùng cubit này).
+  Future<List<dynamic>> getListsForBoard(String boardId) async {
+    return [];
   }
 }

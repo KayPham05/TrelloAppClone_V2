@@ -10,7 +10,7 @@ namespace TodoAppAPI.Interfaces
         Task<bool> UpdateCard(Card card, string userUId);
         Task<bool> DeleteCard(string Uid, string userUId);
         Card? GetById(string cardUId);
-        Task<bool> UpdateListUid(string cardUId, string? newListUId, string userUId);
+        Task<bool> UpdateListUid(string cardUId, string? newListUId, string userUId, int? position = null);
         Task<bool> UpdateStatus(string cardUId, string newStatus, string userUId);
         Task<(FileUrl? FileUrl, bool IsDuplicate)> AddFileToCardAsync(string cardUId, string url, string fileName, string userUId, string? description = null);
         Task<List<FileUrl>> GetAttachmentsByCardAsync(string cardUId);

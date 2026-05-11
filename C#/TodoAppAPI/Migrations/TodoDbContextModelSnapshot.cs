@@ -681,6 +681,9 @@ namespace TodoAppAPI.Migrations
                         .HasColumnType("datetime2")
                         .HasDefaultValueSql("GETDATE()");
 
+                    b.Property<int>("Position")
+                        .HasColumnType("int");
+
                     b.HasKey("UserUId", "CardUId");
 
                     b.HasIndex("CardUId");
@@ -810,7 +813,7 @@ namespace TodoAppAPI.Migrations
                     b.ToTable("Workspaces", (string)null);
                 });
 
-            modelBuilder.Entity("TodoAppAPI.Models.WorkspaceMemberDto", b =>
+            modelBuilder.Entity("TodoAppAPI.Models.WorkspaceMembers", b =>
                 {
                     b.Property<string>("WorkspaceMemberUId")
                         .HasMaxLength(128)
@@ -1098,7 +1101,7 @@ namespace TodoAppAPI.Migrations
                     b.Navigation("Owner");
                 });
 
-            modelBuilder.Entity("TodoAppAPI.Models.WorkspaceMemberDto", b =>
+            modelBuilder.Entity("TodoAppAPI.Models.WorkspaceMembers", b =>
                 {
                     b.HasOne("TodoAppAPI.Models.User", "User")
                         .WithMany("WorkspaceMemberships")
