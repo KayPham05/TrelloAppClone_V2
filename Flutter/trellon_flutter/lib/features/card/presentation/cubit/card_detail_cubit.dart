@@ -6,7 +6,6 @@ import '../../domain/usecases/add_card_comment_usecase.dart';
 import '../../domain/usecases/upload_attachment_usecase.dart';
 import '../../domain/usecases/get_attachments_usecase.dart';
 import '../../domain/usecases/delete_attachment_usecase.dart';
-import '../../domain/usecases/delete_attachment_usecase.dart';
 import '../../domain/usecases/update_attachment_description_usecase.dart';
 import '../../domain/usecases/upload_card_cover_usecase.dart';
 import '../../../../core/data_sources/user_local_data_source.dart';
@@ -489,5 +488,48 @@ class CardDetailCubit extends Cubit<CardDetailState> {
     if (currentState is CardDetailLoaded) {
       emit(currentState.copyWith(clearAttachmentError: true));
     }
+  }
+
+  // ─── Move Card ────────────────────────────────────────────────────────────
+
+  /// Di chuyển card từ bất kỳ đâu vào inbox tại vị trí [position].
+  Future<void> moveToInbox(int position) async {
+    final currentState = state;
+    if (currentState is! CardDetailLoaded) return;
+    try {
+      final userUId = await UserLocalDataSource().getUserId() ?? '';
+      await inboxRepository.moveCardToInbox(
+        cardId: currentState.card.id,
+        userUId: userUId,
+        position: position,
+      );
+      emit(CardDetailMoved());
+    } catch (e) {
+      emit(CardDetailError('Không thể di chuyển card: ${e.toString()}'));
+      if (currentState is CardDetailLoaded) emit(currentState);
+    }
+  }
+
+  /// Di chuyển card đến một list trong board, tại vị trí [position].
+  Future<void> moveToBoard(String newListId, int position) async {
+    final currentState = state;
+    if (currentState is! CardDetailLoaded) return;
+    try {
+      final userUId = await UserLocalDataSource().getUserId() ?? '';
+      await repository.updateListUId(
+        cardId: currentState.card.id,
+        newListId: newListId,
+        userUId: userUId,
+      );
+      emit(CardDetailMoved());
+    } catch (e) {
+      emit(CardDetailError('Không thể di chuyển card: ${e.toString()}'));
+      if (currentState is CardDetailLoaded) emit(currentState);
+    }
+  }
+
+  /// Lấy danh sách lists cho một board (UI phải truyền BoardRepository trực tiếp thay vì dùng cubit này).
+  Future<List<dynamic>> getListsForBoard(String boardId) async {
+    return [];
   }
 }

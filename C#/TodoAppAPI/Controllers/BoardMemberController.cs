@@ -98,20 +98,27 @@ namespace TodoAppAPI.Controllers
         }
 
         // Chuyển board sang workspace mới (chỉ Owner, kéo theo thành viên)
+        // Nếu newWorkspaceUId rỗng/null → chuyển về không gian cá nhân (IsPersonal = true)
         [HttpPost("{boardUId}/transfer-workspace")]
         public async Task<IActionResult> TransferBoardWorkspace(
             string boardUId,
-            [FromQuery] string newWorkspaceUId,
+            [FromQuery] string? newWorkspaceUId,   // nullable — rỗng = chuyển về personal
             [FromQuery] string requesterUId)
         {
-            if (string.IsNullOrEmpty(boardUId) || string.IsNullOrEmpty(newWorkspaceUId) || string.IsNullOrEmpty(requesterUId))
+            if (string.IsNullOrEmpty(boardUId) || string.IsNullOrEmpty(requesterUId))
                 return BadRequest("Thiếu dữ liệu bắt buộc.");
 
-            var (success, message) = await _boardMemberService.TransferBoardWorkspaceAsync(boardUId, newWorkspaceUId, requesterUId);
+            var (success, message) = await _boardMemberService.TransferBoardWorkspaceAsync(
+                boardUId, newWorkspaceUId ?? string.Empty, requesterUId);
+
             if (!success)
                 return StatusCode(403, new { message });
 
-            _ = _activity.AddActivity(requesterUId, $"transferred board '{boardUId}' to workspace '{newWorkspaceUId}'");
+            _ = _activity.AddActivity(requesterUId,
+                string.IsNullOrEmpty(newWorkspaceUId)
+                    ? $"moved board '{boardUId}' to personal space"
+                    : $"transferred board '{boardUId}' to workspace '{newWorkspaceUId}'");
+
             return Ok(new { message });
         }
     }

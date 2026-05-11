@@ -119,7 +119,7 @@ namespace TodoAppAPI.Service
             }
         }
 
-        public async Task<bool> UpdateListUid(string cardUId, string? newListUId, string userUId)
+        public async Task<bool> UpdateListUid(string cardUId, string? newListUId, string userUId, int? position = null)
         {
             if (!await _authService.CanEditCardAsync(cardUId, userUId))
                 return false;
@@ -130,7 +130,7 @@ namespace TodoAppAPI.Service
                 var card = await _dbContext.Todos.FirstOrDefaultAsync(c => c.CardUId == cardUId);
                 if (card == null) return false;
                 card.ListUId = newListUId;
-                _dbContext.Update(card);
+                if (position.HasValue) card.Position = position.Value;
                 await _dbContext.SaveChangesAsync();
                 if(newListUId == null)
                 {

@@ -171,11 +171,17 @@ class _BoardListViewState extends State<_BoardListView> {
                                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
                                   child: PersonalBoardTileWidget(
                                     board: board,
-                                    onTap: () => Navigator.pushNamed(
-                                      context,
-                                      '/board-detail',
-                                      arguments: board,
-                                    ),
+                                    onTap: () async {
+                                      await Navigator.pushNamed(
+                                        context,
+                                        '/board-detail',
+                                        arguments: board,
+                                      );
+                                      final uid = await serviceLocator<UserLocalDataSource>().getUserId();
+                                      if (uid != null && ctx.mounted) {
+                                        ctx.read<BoardCubit>().fetchBoardData(uid, '');
+                                      }
+                                    },
                                   ),
                                 )),
                             if (personalBoards.isEmpty)
@@ -186,11 +192,17 @@ class _BoardListViewState extends State<_BoardListView> {
                                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
                                   child: GuestWorkspaceTileWidget(
                                     workspace: ws,
-                                    onTap: () => Navigator.pushNamed(
-                                      context,
-                                      '/workspace-detail',
-                                      arguments: ws,
-                                    ),
+                                    onTap: () async {
+                                      await Navigator.pushNamed(
+                                        context,
+                                        '/workspace-detail',
+                                        arguments: ws,
+                                      );
+                                      final uid = await serviceLocator<UserLocalDataSource>().getUserId();
+                                      if (uid != null && ctx.mounted) {
+                                        ctx.read<BoardCubit>().fetchBoardData(uid, '');
+                                      }
+                                    },
                                   ),
                                 )),
                             if (guestWs.isEmpty)

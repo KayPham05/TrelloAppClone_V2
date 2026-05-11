@@ -3,6 +3,11 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/utils/color_utils.dart';
 import '../../../board/domain/entities/board_entity.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../cubit/workspace_cubit.dart';
+import '../../../../init_dependencies.dart';
+import '../../../../core/data_sources/user_local_data_source.dart';
+import '../../../board/presentation/cubit/board_cubit.dart';
 
 class WorkspaceBoardItemWidget extends StatelessWidget {
   final BoardEntity board;
@@ -29,11 +34,22 @@ class WorkspaceBoardItemWidget extends StatelessWidget {
       color: AppColors.surfaceContainerLowest,
       borderRadius: BorderRadius.circular(12),
       child: InkWell(
-        onTap: () => Navigator.pushNamed(context, '/board-detail', arguments: {
-          'boardId': board.id,
-          'boardName': board.name,
-          'backgroundUrl': board.backgroundUrl,
-        }),
+        onTap: () async {
+          await Navigator.pushNamed(context, '/board-detail', arguments: {
+            'boardId': board.id,
+            'boardName': board.name,
+            'backgroundUrl': board.backgroundUrl,
+            'workspaceId': board.workspaceId,
+            'workspaceName': board.workspaceName,
+          });
+          if (context.mounted) {
+            context.read<WorkspaceCubit>().loadWorkspaces();
+            final uid = await serviceLocator<UserLocalDataSource>().getUserId();
+            if (uid != null && context.mounted) {
+              context.read<BoardCubit>().fetchBoardData(uid, '');
+            }
+          }
+        },
         borderRadius: BorderRadius.circular(12),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
@@ -46,20 +62,17 @@ class WorkspaceBoardItemWidget extends StatelessWidget {
           child: Row(
             children: [
               // Color thumbnail
-              Container(
-                width: 40,
-                height: 32,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(6),
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      color.withOpacity(0.95),
-                      color.withOpacity(0.45),
-                    ],
-                  ),
-                ),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(6),
+                child: board.backgroundUrl != null
+                  ? Image.network(
+                      board.backgroundUrl!,
+                      width: 60,
+                      height: 32,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => _buildFallbackColor(color),
+                    )
+                  : _buildFallbackColor(color),
               ),
               const SizedBox(width: 10),
               // Board name + visibility
@@ -162,6 +175,23 @@ class WorkspaceBoardItemWidget extends StatelessWidget {
                 ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFallbackColor(Color color) {
+    return Container(
+      width: 60,
+      height: 32,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            color.withOpacity(0.95),
+            color.withOpacity(0.45),
+          ],
         ),
       ),
     );

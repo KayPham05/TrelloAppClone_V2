@@ -168,6 +168,18 @@ namespace TodoAppAPI.Services
                 if (requesterRole != "Owner")
                     return (false, "Chỉ Owner mới có thể chuyển bảng sang workspace khác.");
 
+                // ── Move to personal space ────────────────────────────────────
+                if (string.IsNullOrEmpty(newWorkspaceUId))
+                {
+                    var board2 = await _context.Boards.FirstOrDefaultAsync(b => b.BoardUId == boardUId);
+                    if (board2 == null) return (false, "Board không tồn tại.");
+
+                    board2.WorkspaceUId = null;
+                    board2.IsPersonal = true;
+                    await _context.SaveChangesAsync();
+                    return (true, "Đã chuyển board về không gian cá nhân.");
+                }
+
                 // 2. Kiểm tra workspace đích tồn tại
                 var targetWorkspace = await _context.Workspaces
                     .FirstOrDefaultAsync(w => w.WorkspaceUId == newWorkspaceUId);
@@ -180,6 +192,7 @@ namespace TodoAppAPI.Services
                     return (false, "Board không tồn tại.");
 
                 board.WorkspaceUId = newWorkspaceUId;
+                board.IsPersonal = false;
 
                 // 4. Lấy danh sách thành viên board hiện tại
                 var boardMembers = await _context.BoardMembers

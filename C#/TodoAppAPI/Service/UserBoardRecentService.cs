@@ -1,7 +1,8 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using TodoAppAPI.Data;
 using TodoAppAPI.Interfaces;
 using TodoAppAPI.Models;
+using TodoAppAPI.DTOs;
 
 namespace TodoAppAPI.Service
 {
@@ -12,14 +13,25 @@ namespace TodoAppAPI.Service
         {
             _context = context;
         }
-        public async Task<List<Board>> GetRecentBoardByUserUId(string userUId)
+        public async Task<List<BoardDTO>> GetRecentBoardByUserUId(string userUId)
         {
             return await _context.UserRecentBoards
                     .Where(x => x.UserUId == userUId)
                     .OrderByDescending(x => x.LastVisitedAt)
                     .Include(x => x.Board)
-                    .Select(x => x.Board)
                     .Take(10)
+                    .Select(x => new TodoAppAPI.DTOs.BoardDTO
+                    {
+                        BoardUId = x.Board.BoardUId,
+                        BoardName = x.Board.BoardName,
+                        CreatedAt = x.Board.CreatedAt,
+                        IsPersonal = x.Board.IsPersonal,
+                        Visibility = x.Board.Visibility,
+                        Status = x.Board.Status,
+                        UserUId = x.Board.UserUId,
+                        WorkspaceUId = x.Board.WorkspaceUId,
+                        BackgroundUrl = x.Board.BackgroundUrl
+                    })
                     .ToListAsync();
             
         }

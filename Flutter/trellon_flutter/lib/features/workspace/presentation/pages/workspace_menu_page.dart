@@ -37,6 +37,7 @@ class _WorkspaceMenuPageState extends State<WorkspaceMenuPage> {
     super.initState();
     _currentWorkspace = widget.workspace;
     _initUser();
+    context.read<WorkspaceCubit>().loadWorkspaces();
   }
 
   void _initUser() async {

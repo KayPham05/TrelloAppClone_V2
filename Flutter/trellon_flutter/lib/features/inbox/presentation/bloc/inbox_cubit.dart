@@ -103,4 +103,34 @@ class InboxCubit extends Cubit<InboxState> {
       await fetchInboxCards();
     }
   }
+
+  /// Kéo-thả sắp xếp lại vị trí card trong inbox.
+  /// Cập nhật local ngay lập tức (optimistic), sau đó gọi API.
+  Future<void> reorderCards(int oldIndex, int newIndex) async {
+    final currentState = state;
+    if (currentState is! InboxLoaded) return;
+
+    final cards = List.of(currentState.cards);
+    if (oldIndex == newIndex) return;
+
+    // Optimistic update
+    final card = cards.removeAt(oldIndex);
+    final insertIdx = newIndex > oldIndex ? newIndex - 1 : newIndex;
+    cards.insert(insertIdx, card);
+    emit(InboxLoaded(cards: cards));
+
+    try {
+      final userUId = await userLocalDataSource.getUserId() ?? '';
+      final items = cards.asMap().entries.map((e) => {
+        'cardUId': e.value.id,
+        'position': e.key,
+      }).toList();
+      await inboxRepositories.reorderInboxCards(userUId: userUId, items: items);
+    } catch (_) {
+      // Roll back on failure
+      emit(currentState);
+    }
+  }
+
+  Future<String?> getUserId() => userLocalDataSource.getUserId();
 }

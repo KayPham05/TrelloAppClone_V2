@@ -5,6 +5,7 @@ import '../../../card/data/models/card_model.dart';
 import '../../../card/domain/entities/card_entity.dart';
 import '../../../card/domain/usecases/update_card_status_usecase.dart';
 import '../../../card/domain/usecases/update_list_uid_usecase.dart';
+import '../../domain/usecases/save_recent_board_usecase.dart';
 import '../../data/datasources/board_remote_data_source.dart';
 import '../../data/models/list_model.dart';
 import '../../domain/entities/list_entity.dart';
@@ -15,6 +16,7 @@ class BoardDetailCubit extends Cubit<BoardDetailState> {
   final UserLocalDataSource userLocalDataSource;
   final UpdateListUIdUseCase updateListUIdUseCase;
   final UpdateCardStatusUseCase updateCardStatusUseCase;
+  final SaveRecentBoardUseCase saveRecentBoardUseCase;
 
   // Rollback snapshot for optimistic updates
   List<ListEntity>? _previousLists;
@@ -24,6 +26,7 @@ class BoardDetailCubit extends Cubit<BoardDetailState> {
     required this.userLocalDataSource,
     required this.updateListUIdUseCase,
     required this.updateCardStatusUseCase,
+    required this.saveRecentBoardUseCase,
   }) : super(BoardDetailInitial());
 
   // ─── Load Board (Real API) ─────────────────────────────────────────────────
@@ -34,6 +37,10 @@ class BoardDetailCubit extends Cubit<BoardDetailState> {
     try {
       // Fetch lists, cards, and board role in parallel
       final userUId = await userLocalDataSource.getUserId() ?? '';
+      
+      // Save recent board in background
+      saveRecentBoardUseCase(userUId, boardId).catchError((_) {});
+
       final results = await Future.wait([
         dataSource.getLists(boardId),
         dataSource.getCardsByBoard(boardId),

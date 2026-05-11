@@ -11,11 +11,13 @@ namespace TodoAppAPI.Controllers
     public class UserController : ControllerBase
     {
         public readonly IUserService _userService;
+        private readonly IAuthService _authService;
         private readonly ILogger<UserController> _logger;
 
-        public UserController(IUserService userService, ILogger<UserController> logger)
+        public UserController(IUserService userService, IAuthService authService, ILogger<UserController> logger)
         {
             _userService = userService;
+            _authService = authService;
             _logger = logger;
         }
 
@@ -78,18 +80,7 @@ namespace TodoAppAPI.Controllers
             return Ok(new { userName = userName ?? "" });
         }
 
-        //// PUT api/<UserController>/5
-        //[HttpPut("{id}")]
-        //public void Put(int id, [FromBody] string value)
-        //{
-        //}
-
-        //// DELETE api/<UserController>/5
-        //[HttpDelete("{id}")]
-        //public void Delete(int id)
-        //{
-        //}
-
+        [AllowAnonymous]
         [HttpPost("verify-code")]
         public async Task<IActionResult> VerifyCode([FromBody] VerifyCodeRequest req)
         {
@@ -101,27 +92,44 @@ namespace TodoAppAPI.Controllers
             if (user == null)
                 return NotFound("Không tìm thấy tài khoản.");
 
-            //  Nếu đã xác thực rồi thì báo luôn
-            if (user.IsEmailVerified)
-                return Ok("Tài khoản đã được xác thực trước đó.");
+            //  Nếu đã xác thực rồi thì tạo token và trả về luôn
+            if (!user.IsEmailVerified)
+            {
+                //  Kiểm tra hết hạn mã
+                if (user.VerificationTokenExpiresAt == null || user.VerificationTokenExpiresAt < DateTime.UtcNow)
+                    return BadRequest("Mã xác thực đã hết hạn. Vui lòng yêu cầu mã mới.");
 
-            //  Kiểm tra hết hạn mã
-            if (user.VerificationTokenExpiresAt == null || user.VerificationTokenExpiresAt < DateTime.UtcNow)
-                return BadRequest(" Mã xác thực đã hết hạn. Vui lòng yêu cầu mã mới.");
+                //  Kiểm tra mã hợp lệ
+                bool valid = BCrypt.Net.BCrypt.Verify(req.Code, user.VerificationTokenHash);
+                if (!valid)
+                    return BadRequest("Mã xác thực không hợp lệ.");
 
-            //  Kiểm tra mã hợp lệ
-            bool valid = BCrypt.Net.BCrypt.Verify(req.Code, user.VerificationTokenHash);
-            if (!valid)
-                return BadRequest(" Mã xác thực không hợp lệ.");
+                //  Cập nhật trạng thái xác thực
+                user.IsEmailVerified = true;
+                user.VerificationTokenHash = null;
+                user.VerificationTokenExpiresAt = null;
+                user.StatusAccount = "Login";
+                await _userService.UpdateAsync(user);
+            }
 
-            //  Cập nhật trạng thái xác thực
-            user.IsEmailVerified = true;
-            user.VerificationTokenHash = null;
-            user.VerificationTokenExpiresAt = null;
-            user.StatusAccount = "Isverified";
-            await _userService.UpdateAsync(user);
+            // Tạo access token + refresh token + session
+            var authResponse = await _authService.GenerateTokensAndSessionPublic(user);
 
-            return Ok(" Xác thực thành công! Bạn có thể đăng nhập ngay bây giờ.");
+            // Set refreshToken cookie (giống login)
+            var session = await _authService.GetUserSessionByUserId(user.UserUId);
+            if (session != null)
+            {
+                Response.Cookies.Append("refreshToken", session.RefreshToken, new CookieOptions
+                {
+                    HttpOnly = true,
+                    Secure = false,
+                    SameSite = SameSiteMode.Lax,
+                    Path = "/",
+                    Expires = session.ExpiresAt
+                });
+            }
+
+            return Ok(authResponse);
         }
 
 

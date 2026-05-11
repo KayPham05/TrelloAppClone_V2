@@ -80,6 +80,8 @@ class BoardRowWidget extends StatelessWidget {
           'boardId': board.id,
           'boardName': board.name,
           'backgroundUrl': board.backgroundUrl,
+          'workspaceId': board.workspaceId,
+          'workspaceName': board.workspaceName,
         });
       },
       child: Padding(

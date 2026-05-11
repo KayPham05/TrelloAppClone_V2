@@ -7,6 +7,7 @@ import '../../../card/data/models/card_model.dart';
 abstract class BoardRemoteDataSource {
   // Board CRUD
   Future<List<BoardModel>> getRecentBoards(String userUid);
+  Future<void> saveRecentBoard(String userUid, String boardId);
   Future<List<BoardModel>> getAllBoards(String userUid);
   Future<BoardModel?> getBoardById(String boardId);
   Future<void> createBoard({
@@ -110,7 +111,7 @@ class BoardRemoteDataSourceImpl implements BoardRemoteDataSource {
   Future<List<BoardModel>> getRecentBoards(String userUid) async {
     try {
       final response = await client.get(
-        '${ApiEndpoints.boards}/${ApiEndpoints.recentBoards}',
+        ApiEndpoints.recentBoards,
         queryParameters: {'userUId': userUid},
       );
       if (response.statusCode == 200) {
@@ -127,6 +128,18 @@ class BoardRemoteDataSourceImpl implements BoardRemoteDataSource {
       rethrow;
     } catch (e) {
       throw Exception('Failed to load recent boards: $e');
+    }
+  }
+
+  @override
+  Future<void> saveRecentBoard(String userUid, String boardId) async {
+    try {
+      await client.post(
+        '${ApiEndpoints.recentBoards}/$userUid',
+        queryParameters: {'boardUId': boardId},
+      );
+    } catch (e) {
+      throw Exception('Failed to save recent board: $e');
     }
   }
 
