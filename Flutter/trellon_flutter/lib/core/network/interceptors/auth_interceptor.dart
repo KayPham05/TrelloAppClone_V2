@@ -6,6 +6,8 @@ import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../main.dart';
+import '../../../init_dependencies.dart';
+import '../../../features/activity/presentation/cubit/notification_cubit.dart';
 
 
 class AuthInterceptor extends Interceptor {
@@ -130,6 +132,8 @@ class AuthInterceptor extends Interceptor {
     await prefs.remove('user_uid');
     // Xóa hết cookie (refreshToken)
     await cookieJar.deleteAll();
+
+    serviceLocator<NotificationCubit>().reset();
     
     // Điều hướng toàn cục
     navigatorKey.currentState?.pushNamedAndRemoveUntil('/login', (route) => false);

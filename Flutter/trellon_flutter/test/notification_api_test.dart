@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:dio/dio.dart';
-import '../lib/features/activity/data/datasources/notification_remote_datasource.dart';
-import '../lib/features/activity/domain/entities/notification_entity.dart';
+import 'package:apptreolon/features/activity/data/datasources/notification_remote_datasource.dart';
+import 'package:apptreolon/features/activity/domain/entities/notification_entity.dart';
 
 class MockDio extends Fake implements Dio {
   final Future<Response<dynamic>> Function(String path, {Object? data, Options? options, Map<String, dynamic>? queryParameters})? onGet;
@@ -41,47 +41,70 @@ class MockDio extends Fake implements Dio {
 void main() {
   group('NotificationRemoteDataSource Tests', () {
     test('getNotifications trả về danh sách NotificationModel khi API thành công (200)', () async {
-      // 1. Arrange: Giả lập Dio trả về JSON mẫu
+      print('\n======================================================');
+      print('TEST CASE: getNotifications - Success (200)');
+      print('======================================================');
+      
+      final mockData = [
+        {
+          "notiId": "noti-123",
+          "recipientId": "user-1",
+          "actorId": "user-2",
+          "actor": {"userName": "John Doe"},
+          "type": 0,
+          "title": "đã bình luận",
+          "message": "Nội dung bình luận...",
+          "createdAt": "2023-10-01T12:00:00Z",
+          "read": false
+        }
+      ];
+
       final mockDio = MockDio(
         onGet: (path, {data, options, queryParameters}) async {
+          print('[MOCK] Call GET: $path');
+          print('[MOCK] Query Params: $queryParameters');
+          print('[MOCK] Returning Data: $mockData');
           return Response(
             requestOptions: RequestOptions(path: path),
             statusCode: 200,
-            data: [
-              {
-                "notiId": "noti-123",
-                "recipientId": "user-1",
-                "actorId": "user-2",
-                "actor": {"userName": "John Doe"},
-                "type": 0,
-                "title": "đã bình luận",
-                "message": "Nội dung bình luận...",
-                "createdAt": "2023-10-01T12:00:00Z",
-                "read": false
-              }
-            ],
+            data: mockData,
           );
         },
       );
 
       final dataSource = NotificationRemoteDataSourceImpl(dio: mockDio);
 
-      // 2. Act: Gọi phương thức getNotifications
+      print('\n[ACT] Calling dataSource.getNotifications(page: 1, pageSize: 20)...');
       final result = await dataSource.getNotifications(page: 1, pageSize: 20);
 
-      // 3. Assert: Kiểm tra dữ liệu được parse đúng không
+      print('\n[ASSERT] Verifying parsed data:');
+      print(' - Result Count: ${result.length}');
       expect(result.length, 1);
-      expect(result.first.id, "noti-123");
-      expect(result.first.actorName, "John Doe");
-      expect(result.first.type, NotificationTypeEnum.comment);
-      expect(result.first.isRead, false);
-      expect(result.first.message, "Nội dung bình luận...");
+      
+      final first = result.first;
+      print(' - Notification ID: ${first.id}');
+      print(' - Actor Name: ${first.actorName}');
+      print(' - Notification Type: ${first.type}');
+      print(' - Message: ${first.message}');
+      print(' - Is Read: ${first.isRead}');
+      
+      expect(first.id, "noti-123");
+      expect(first.actorName, "John Doe");
+      expect(first.type, NotificationTypeEnum.comment);
+      expect(first.isRead, false);
+      print('Result: PASSED');
     });
 
     test('markAsRead trả về true khi API thành công (200)', () async {
-      // Arrange
+      print('\n======================================================');
+      print('TEST CASE: markAsRead - Success (200)');
+      print('======================================================');
+      
+      final targetId = "noti-123";
+
       final mockDio = MockDio(
         onPatch: (path, {data, options, queryParameters}) async {
+          print('[MOCK] Call PATCH: $path');
           return Response(
             requestOptions: RequestOptions(path: path),
             statusCode: 200,
@@ -92,17 +115,23 @@ void main() {
 
       final dataSource = NotificationRemoteDataSourceImpl(dio: mockDio);
 
-      // Act
-      final result = await dataSource.markAsRead(notiId: "noti-123");
+      print('\n[ACT] Calling dataSource.markAsRead(notiId: $targetId)...');
+      final result = await dataSource.markAsRead(notiId: targetId);
 
-      // Assert
+      print('\n[ASSERT] Verifying response:');
+      print(' - Return value: $result');
       expect(result, true);
+      print('Result: PASSED');
     });
 
     test('markAllAsRead trả về 1 khi API thành công (200)', () async {
-      // Arrange
+      print('\n======================================================');
+      print('TEST CASE: markAllAsRead - Success (200)');
+      print('======================================================');
+
       final mockDio = MockDio(
         onPatch: (path, {data, options, queryParameters}) async {
+          print('[MOCK] Call PATCH: $path');
           return Response(
             requestOptions: RequestOptions(path: path),
             statusCode: 200,
@@ -113,17 +142,25 @@ void main() {
 
       final dataSource = NotificationRemoteDataSourceImpl(dio: mockDio);
 
-      // Act
+      print('\n[ACT] Calling dataSource.markAllAsRead()...');
       final result = await dataSource.markAllAsRead();
 
-      // Assert
+      print('\n[ASSERT] Verifying response:');
+      print(' - Return value: $result');
       expect(result, 1);
+      print('Result: PASSED');
     });
 
     test('deleteNotification trả về true khi API thành công (200)', () async {
-      // Arrange
+      print('\n======================================================');
+      print('TEST CASE: deleteNotification - Success (200)');
+      print('======================================================');
+      
+      final targetId = "noti-123";
+
       final mockDio = MockDio(
         onDelete: (path, {data, options, queryParameters}) async {
+          print('[MOCK] Call DELETE: $path');
           return Response(
             requestOptions: RequestOptions(path: path),
             statusCode: 200,
@@ -134,11 +171,13 @@ void main() {
 
       final dataSource = NotificationRemoteDataSourceImpl(dio: mockDio);
 
-      // Act
-      final result = await dataSource.deleteNotification(notiId: "noti-123");
+      print('\n[ACT] Calling dataSource.deleteNotification(notiId: $targetId)...');
+      final result = await dataSource.deleteNotification(notiId: targetId);
 
-      // Assert
+      print('\n[ASSERT] Verifying response:');
+      print(' - Return value: $result');
       expect(result, true);
+      print('Result: PASSED');
     });
   });
 }

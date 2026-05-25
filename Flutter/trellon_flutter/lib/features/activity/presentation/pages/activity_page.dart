@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/app_colors.dart';
-import '../../../../init_dependencies.dart';
 import '../../domain/entities/notification_entity.dart';
 import '../cubit/notification_cubit.dart';
 import '../cubit/notification_state.dart';
@@ -12,10 +11,7 @@ class ActivityPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => serviceLocator<NotificationCubit>()..fetchNotifications(refresh: true),
-      child: const ActivityPageView(),
-    );
+    return const ActivityPageView();
   }
 }
 
@@ -28,42 +24,18 @@ class ActivityPageView extends StatefulWidget {
 
 class _ActivityPageViewState extends State<ActivityPageView> {
   int _selectedTabIndex = 0; // 0: All, 1: Me, 2: Unread
-  final ScrollController _scrollController = ScrollController();
+  late final PageController _pageController;
 
   @override
   void initState() {
     super.initState();
-    _scrollController.addListener(_onScroll);
-  }
-
-  void _onScroll() {
-    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
-      context.read<NotificationCubit>().fetchNotifications();
-    }
+    _pageController = PageController(initialPage: _selectedTabIndex);
   }
 
   @override
   void dispose() {
-    _scrollController.dispose();
+    _pageController.dispose();
     super.dispose();
-  }
-
-  Future<void> _onRefresh() async {
-    await context.read<NotificationCubit>().fetchNotifications(refresh: true);
-  }
-
-  String _formatTime(DateTime time) {
-    final now = DateTime.now();
-    final difference = now.difference(time);
-    if (difference.inMinutes < 60) {
-      return '${difference.inMinutes}p trước';
-    } else if (difference.inHours < 24) {
-      return '${difference.inHours} giờ trước';
-    } else if (difference.inDays < 7) {
-      return '${difference.inDays} ngày trước';
-    } else {
-      return '${time.day.toString().padLeft(2, '0')}/${time.month.toString().padLeft(2, '0')}/${time.year}';
-    }
   }
 
   @override
@@ -75,22 +47,18 @@ class _ActivityPageViewState extends State<ActivityPageView> {
         child: Column(
           children: [
             _buildTopBar(),
+            _buildHeader(),
             Expanded(
-              child: RefreshIndicator(
-                onRefresh: _onRefresh,
-                child: CustomScrollView(
-                  controller: _scrollController,
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  slivers: [
-                    SliverToBoxAdapter(
-                      child: _buildHeader(),
-                    ),
-                    _buildNotificationList(),
-                    const SliverToBoxAdapter(
-                      child: SizedBox(height: 80),
-                    ),
-                  ],
-                ),
+              child: PageView(
+                controller: _pageController,
+                onPageChanged: (index) {
+                  setState(() => _selectedTabIndex = index);
+                },
+                children: const [
+                  NotificationListTab(tabIndex: 0),
+                  NotificationListTab(tabIndex: 1),
+                  NotificationListTab(tabIndex: 2),
+                ],
               ),
             ),
           ],
@@ -163,17 +131,39 @@ class _ActivityPageViewState extends State<ActivityPageView> {
                   color: AppColors.onSurface,
                 ),
               ),
-              TextButton(
-                onPressed: () {
-                  context.read<NotificationCubit>().markAllAsRead();
+              BlocBuilder<NotificationCubit, NotificationState>(
+                builder: (context, state) {
+                  final unreadCount = context.read<NotificationCubit>().unreadCount;
+                  return IgnorePointer(
+                    ignoring: unreadCount == 0,
+                    child: AnimatedOpacity(
+                      opacity: unreadCount == 0 ? 0.5 : 1.0,
+                      duration: const Duration(milliseconds: 200),
+                      child: TextButton(
+                        onPressed: () async {
+                          final success = await context.read<NotificationCubit>().markAllAsRead();
+                          if (!context.mounted) return;
+                          if (success) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Đã đánh dấu tất cả đã đọc')),
+                            );
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Đã xảy ra lỗi, không thể đánh dấu')),
+                            );
+                          }
+                        },
+                        child: Text(
+                          'Đánh dấu đã đọc',
+                          style: GoogleFonts.inter(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
                 },
-                child: Text(
-                  'Đánh dấu đã đọc',
-                  style: GoogleFonts.inter(
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
               ),
             ],
           ),
@@ -201,8 +191,16 @@ class _ActivityPageViewState extends State<ActivityPageView> {
     final isSelected = _selectedTabIndex == index;
     return Expanded(
       child: GestureDetector(
-        onTap: () => setState(() => _selectedTabIndex = index),
-        child: Container(
+        onTap: () {
+          setState(() => _selectedTabIndex = index);
+          _pageController.animateToPage(
+            index,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+          );
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
           padding: const EdgeInsets.symmetric(vertical: 6),
           decoration: BoxDecoration(
             color: isSelected ? Colors.white : Colors.transparent,
@@ -226,72 +224,136 @@ class _ActivityPageViewState extends State<ActivityPageView> {
     );
   }
 
-  // ── Notification List ─────────────────────────────────────────────────────
-  Widget _buildNotificationList() {
-    return BlocBuilder<NotificationCubit, NotificationState>(
-      builder: (context, state) {
-        if (state is NotificationInitial || (state is NotificationLoading && context.read<NotificationCubit>().state is! NotificationLoaded)) {
-          return const SliverFillRemaining(
-            child: Center(child: CircularProgressIndicator()),
-          );
-        }
+}
 
-        if (state is NotificationError) {
-          return SliverFillRemaining(
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.error_outline, color: Colors.red, size: 48),
-                  const SizedBox(height: 16),
-                  Text(state.message, style: GoogleFonts.inter(color: Colors.red)),
-                  TextButton(
-                    onPressed: _onRefresh,
-                    child: const Text('Thử lại'),
+class NotificationListTab extends StatefulWidget {
+  final int tabIndex;
+
+  const NotificationListTab({super.key, required this.tabIndex});
+
+  @override
+  State<NotificationListTab> createState() => _NotificationListTabState();
+}
+
+class _NotificationListTabState extends State<NotificationListTab> {
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
+      context.read<NotificationCubit>().fetchNotifications();
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _onRefresh() async {
+    await context.read<NotificationCubit>().fetchNotifications(refresh: true);
+  }
+
+  String _formatTime(DateTime time) {
+    final now = DateTime.now();
+    final difference = now.difference(time);
+    if (difference.inMinutes < 60) {
+      return '${difference.inMinutes}p trước';
+    } else if (difference.inHours < 24) {
+      return '${difference.inHours} giờ trước';
+    } else if (difference.inDays < 7) {
+      return '${difference.inDays} ngày trước';
+    } else {
+      return '${time.day.toString().padLeft(2, '0')}/${time.month.toString().padLeft(2, '0')}/${time.year}';
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return RefreshIndicator(
+      onRefresh: _onRefresh,
+      child: CustomScrollView(
+        controller: _scrollController,
+        key: PageStorageKey('tab_${widget.tabIndex}'),
+        physics: const AlwaysScrollableScrollPhysics(),
+        slivers: [
+          BlocBuilder<NotificationCubit, NotificationState>(
+            builder: (context, state) {
+              if (state is NotificationInitial || state is NotificationLoading) {
+                return const SliverFillRemaining(
+                  child: Center(child: CircularProgressIndicator()),
+                );
+              }
+
+              if (state is NotificationError) {
+                return SliverFillRemaining(
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.error_outline, color: Colors.red, size: 48),
+                        const SizedBox(height: 16),
+                        Text(state.message, style: GoogleFonts.inter(color: Colors.red)),
+                        TextButton(
+                          onPressed: _onRefresh,
+                          child: const Text('Thử lại'),
+                        ),
+                      ],
+                    ),
                   ),
-                ],
-              ),
-            ),
-          );
-        }
+                );
+              }
 
-        if (state is NotificationLoaded) {
-          List<NotificationEntity> notifications = state.notifications;
-          
-          if (_selectedTabIndex == 1) { // Gửi tôi
-            notifications = notifications.where((n) => n.type == NotificationTypeEnum.assign || n.type == NotificationTypeEnum.mention).toList();
-          } else if (_selectedTabIndex == 2) { // Chưa đọc
-            notifications = notifications.where((n) => !n.isRead).toList();
-          }
-
-          if (notifications.isEmpty) {
-            return SliverFillRemaining(
-              child: Center(
-                child: Text('Không có thông báo nào', style: GoogleFonts.inter(color: AppColors.onSurfaceVariant)),
-              ),
-            );
-          }
-
-          return SliverList(
-            delegate: SliverChildBuilderDelegate(
-              (context, index) {
-                if (index == notifications.length) {
-                  return state.hasReachedMax
-                      ? const SizedBox.shrink()
-                      : const Padding(
-                          padding: EdgeInsets.symmetric(vertical: 16),
-                          child: Center(child: CircularProgressIndicator()),
-                        );
+              if (state is NotificationLoaded) {
+                final allList = state.notifications.toList();
+                List<NotificationEntity> notifications = allList;
+                
+                if (widget.tabIndex == 1) { // Gửi tôi
+                  notifications = allList.where((n) => n.type == NotificationTypeEnum.assign || n.type == NotificationTypeEnum.mention).toList();
+                } else if (widget.tabIndex == 2) { // Chưa đọc
+                  notifications = allList.where((n) => !n.isRead).toList();
                 }
-                return _buildNotificationItem(notifications[index]);
-              },
-              childCount: notifications.length + (state.hasReachedMax ? 0 : 1),
-            ),
-          );
-        }
 
-        return const SliverToBoxAdapter(child: SizedBox.shrink());
-      },
+                if (notifications.isEmpty) {
+                  return SliverFillRemaining(
+                    child: Center(
+                      child: Text('Không có thông báo nào', style: GoogleFonts.inter(color: AppColors.onSurfaceVariant)),
+                    ),
+                  );
+                }
+
+                return SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                      if (index == notifications.length) {
+                        return state.hasReachedMax
+                            ? const SizedBox.shrink()
+                            : const Padding(
+                                padding: EdgeInsets.symmetric(vertical: 16),
+                                child: Center(child: CircularProgressIndicator()),
+                              );
+                      }
+                      return _buildNotificationItem(notifications[index]);
+                    },
+                    childCount: notifications.length + (state.hasReachedMax ? 0 : 1),
+                  ),
+                );
+              }
+
+              return const SliverToBoxAdapter(child: SizedBox.shrink());
+            },
+          ),
+          const SliverToBoxAdapter(
+            child: SizedBox(height: 80),
+          ),
+        ],
+      ),
     );
   }
 
@@ -335,10 +397,42 @@ class _ActivityPageViewState extends State<ActivityPageView> {
         padding: const EdgeInsets.only(right: 20),
         child: const Icon(Icons.delete, color: Colors.white),
       ),
-      onDismissed: (direction) {
-        context.read<NotificationCubit>().deleteNotification(notif.id);
+      confirmDismiss: (direction) async {
+        final cubit = context.read<NotificationCubit>();
+        final result = cubit.removeNotificationLocally(notif.id);
+        if (result == null) return false;
+        final entity = result.$1;
+        final index = result.$2;
+
+        ScaffoldMessenger.of(context)
+          .showSnackBar(
+            SnackBar(
+              content: const Text('Đã xóa thông báo'),
+              action: SnackBarAction(
+                label: 'Hoàn tác',
+                onPressed: () {
+                  cubit.undoDeleteNotification(entity, index);
+                },
+              ),
+              duration: const Duration(seconds: 3),
+            ),
+          )
+          .closed
+          .then((reason) async {
+            if (reason == SnackBarClosedReason.timeout) {
+              final success = await cubit.confirmDeleteNotification(notif.id, entity, index);
+              if (!success && mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Xóa thông báo thất bại. Đã khôi phục.')),
+                );
+              }
+            }
+          });
+
+        return true;
       },
-      child: Container(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
         decoration: BoxDecoration(
           color: !notif.isRead ? const Color(0xFFEFF6FF) : Colors.white,
           border: const Border(bottom: BorderSide(color: Color(0xFFE2E8F0))),

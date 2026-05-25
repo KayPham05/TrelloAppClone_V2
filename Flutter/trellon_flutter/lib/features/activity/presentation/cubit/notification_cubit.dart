@@ -106,7 +106,7 @@ class NotificationCubit extends Cubit<NotificationState> {
     }
   }
 
-  Future<void> markAllAsRead() async {
+  Future<bool> markAllAsRead() async {
     final currentState = state;
     if (currentState is NotificationLoaded) {
       try {
@@ -129,25 +129,57 @@ class NotificationCubit extends Cubit<NotificationState> {
             );
           }).toList();
           emit(currentState.copyWith(notifications: updatedNotifications));
+          return true;
         }
       } catch (e) {
         // Log error
       }
     }
+    return false;
   }
 
-  Future<void> deleteNotification(String notiId) async {
-    final currentState = state;
-    if (currentState is NotificationLoaded) {
-      try {
-        final success = await deleteNotificationUseCase.call(notiId: notiId);
-        if (success) {
-          final updatedNotifications = currentState.notifications.where((n) => n.id != notiId).toList();
-          emit(currentState.copyWith(notifications: updatedNotifications));
-        }
-      } catch (e) {
-        // Log error
+  int get unreadCount {
+    final s = state;
+    if (s is NotificationLoaded) {
+      return s.notifications.where((n) => !n.isRead).length;
+    }
+    return 0;
+  }
+
+  void reset() {
+    _currentPage = 1;
+    emit(NotificationInitial());
+  }
+
+  (NotificationEntity, int)? removeNotificationLocally(String notiId) {
+    final s = state;
+    if (s is! NotificationLoaded) return null;
+    final idx = s.notifications.indexWhere((n) => n.id == notiId);
+    if (idx == -1) return null;
+    final entity = s.notifications[idx];
+    final newList = List<NotificationEntity>.from(s.notifications)..removeAt(idx);
+    emit(s.copyWith(notifications: newList));
+    return (entity, idx);
+  }
+
+  void undoDeleteNotification(NotificationEntity entity, int index) {
+    final s = state;
+    if (s is! NotificationLoaded) return;
+    final newList = List<NotificationEntity>.from(s.notifications)
+      ..insert(index.clamp(0, s.notifications.length), entity);
+    emit(s.copyWith(notifications: newList));
+  }
+
+  Future<bool> confirmDeleteNotification(String notiId, NotificationEntity entity, int index) async {
+    try {
+      final success = await deleteNotificationUseCase.call(notiId: notiId);
+      if (!success) {
+        undoDeleteNotification(entity, index);
       }
+      return success;
+    } catch (e) {
+      undoDeleteNotification(entity, index);
+      return false;
     }
   }
 }

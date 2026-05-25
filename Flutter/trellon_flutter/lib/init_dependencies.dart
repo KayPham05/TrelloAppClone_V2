@@ -65,6 +65,7 @@ Future<void> initDependencies() async {
   final cookieJar = PersistCookieJar(
     storage: FileStorage('${appDir.path}/.cookies/'),
   );
+  serviceLocator.registerLazySingleton<CookieJar>(() => cookieJar);
   final dioClient = DioClient(persistentCookieJar: cookieJar);
 
   serviceLocator.registerLazySingleton<Dio>(() => dioClient.instance);
@@ -243,8 +244,7 @@ void _initNotification() {
   serviceLocator.registerLazySingleton(() => MarkAllReadUseCase(serviceLocator()));
   serviceLocator.registerLazySingleton(() => DeleteNotificationUseCase(serviceLocator()));
 
-  // Cubit
-  serviceLocator.registerFactory(() => NotificationCubit(
+  serviceLocator.registerLazySingleton(() => NotificationCubit(
     getNotificationsUseCase: serviceLocator(),
     markAsReadUseCase: serviceLocator(),
     markAllReadUseCase: serviceLocator(),

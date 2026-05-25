@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:cookie_jar/cookie_jar.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../init_dependencies.dart';
+import '../../../activity/presentation/cubit/notification_cubit.dart';
+import '../../../../core/data_sources/user_local_data_source.dart';
+import '../../../../features/auth/domain/repositories/i_auth_repository.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
@@ -28,7 +33,7 @@ class ProfilePage extends StatelessWidget {
                     const SizedBox(height: 24),
                     _buildPreferencesGroup(),
                     const SizedBox(height: 24),
-                    _buildSupportGroup(),
+                    _buildSupportGroup(context),
                   ],
                 ),
               ),
@@ -283,7 +288,7 @@ class ProfilePage extends StatelessWidget {
     );
   }
 
-  Widget _buildSupportGroup() {
+  Widget _buildSupportGroup(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -312,6 +317,20 @@ class ProfilePage extends StatelessWidget {
                 const Color(0xFFFFDAD6).withValues(alpha: 0.2),
                 AppColors.error,
                 showChevron: false,
+                onTap: () async {
+                  final userId = await serviceLocator<UserLocalDataSource>().getUserId();
+                  if (userId != null) {
+                    try {
+                      await serviceLocator<AuthRepository>().logout(userUId: userId);
+                    } catch (_) {}
+                  }
+                  await serviceLocator<UserLocalDataSource>().clearUserData();
+                  await serviceLocator<CookieJar>().deleteAll();
+                  serviceLocator<NotificationCubit>().reset();
+                  if (context.mounted) {
+                    Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+                  }
+                },
               ),
             ],
           ),
@@ -463,9 +482,10 @@ class ProfilePage extends StatelessWidget {
     Color iconColor, {
     Widget? trailing,
     bool showChevron = true,
+    VoidCallback? onTap,
   }) {
     return InkWell(
-      onTap: () {},
+      onTap: onTap ?? () {},
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Row(
