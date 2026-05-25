@@ -13,6 +13,7 @@ import 'features/auth/presentation/cubit/login_cubit.dart';
 import 'features/auth/presentation/cubit/register_cubit.dart';
 import 'features/auth/presentation/cubit/verify_cubit.dart';
 import 'features/inbox/data/repositories/inbox_repositories_impl.dart';
+import 'features/inbox/data/datasources/inbox_remote_data_source.dart';
 import 'features/inbox/domain/repositories/i_inbox_repositories.dart';
 import 'features/inbox/domain/usecases/get_user_inbox_card.dart';
 import 'features/inbox/domain/usecases/add_inbox_card_usecase.dart';
@@ -29,12 +30,12 @@ import 'features/card/domain/usecases/update_attachment_description_usecase.dart
 import 'features/card/domain/usecases/upload_card_cover_usecase.dart';
 import 'features/card/presentation/cubit/card_detail_cubit.dart';
 import 'features/board/data/datasources/board_remote_data_source.dart';
-import 'features/board/data/datasources/board_detail_remote_data_source.dart';
 import 'features/board/data/repositories/board_repository_impl.dart';
 import 'features/board/domain/repositories/board_repository.dart';
 import 'features/board/domain/usecases/get_recent_boards_usecase.dart';
 import 'features/board/domain/usecases/create_board_usecase.dart';
 import 'features/board/domain/usecases/get_personal_boards_usecase.dart';
+import 'features/board/domain/usecases/save_recent_board_usecase.dart';
 import 'features/board/presentation/cubit/board_cubit.dart';
 import 'features/board/presentation/cubit/board_detail_cubit.dart';
 import 'features/workspace/data/datasources/workspace_remote_data_source.dart';
@@ -116,10 +117,6 @@ void _initBoard() {
     () => BoardRemoteDataSourceImpl(client: serviceLocator<Dio>()),
   );
 
-  serviceLocator.registerLazySingleton<BoardDetailRemoteDataSource>(
-    () => BoardDetailRemoteDataSource(dio: serviceLocator<Dio>()),
-  );
-
   // Repository
   serviceLocator.registerLazySingleton<BoardRepository>(
     () => BoardRepositoryImpl(remoteDataSource: serviceLocator<BoardRemoteDataSource>()),
@@ -129,6 +126,7 @@ void _initBoard() {
   serviceLocator.registerLazySingleton(() => GetRecentBoardsUseCase(serviceLocator()));
   serviceLocator.registerLazySingleton(() => CreateBoardUseCase(serviceLocator()));
   serviceLocator.registerLazySingleton(() => GetPersonalBoardsUseCase(serviceLocator()));
+  serviceLocator.registerLazySingleton(() => SaveRecentBoardUseCase(serviceLocator()));
 
   // BoardCubit
   serviceLocator.registerFactory(() => BoardCubit(
@@ -141,9 +139,11 @@ void _initBoard() {
 
   // BoardDetailCubit — uses data source, userLocalDataSource, and updateListUIdUseCase
   serviceLocator.registerFactory(() => BoardDetailCubit(
-    dataSource: serviceLocator<BoardDetailRemoteDataSource>(),
+    dataSource: serviceLocator<BoardRemoteDataSource>(),
     userLocalDataSource: serviceLocator<UserLocalDataSource>(),
     updateListUIdUseCase: serviceLocator<UpdateListUIdUseCase>(),
+    updateCardStatusUseCase: serviceLocator<UpdateCardStatusUseCase>(),
+    saveRecentBoardUseCase: serviceLocator<SaveRecentBoardUseCase>(),
   ));
 }
 
@@ -166,6 +166,7 @@ void _initCard() {
 
   // Cubit
   serviceLocator.registerFactory(() => CardDetailCubit(
+    serviceLocator(),
     serviceLocator(),
     serviceLocator(),
     serviceLocator(),
@@ -206,9 +207,14 @@ void _initAuth() {
 }
 
 void _initInbox() {
+  // DataSource
+  serviceLocator.registerLazySingleton<InboxRemoteDataSource>(
+    () => InboxRemoteDataSourceImpl(dio: serviceLocator<Dio>()),
+  );
+
   // Repository
   serviceLocator.registerLazySingleton<InboxRepositories>(
-    () => InboxRepositoriesImpl(dio: serviceLocator<Dio>()),
+    () => InboxRepositoriesImpl(remoteDataSource: serviceLocator<InboxRemoteDataSource>()),
   );
 
   // UseCases
@@ -221,7 +227,7 @@ void _initInbox() {
       getInboxCardsUseCase: serviceLocator(),
       addInboxCardUseCase: serviceLocator(),
       deleteCardUseCase: serviceLocator(),
-      updateCardStatusUseCase: serviceLocator(),
+      inboxRepositories: serviceLocator(),
       userLocalDataSource: serviceLocator(),
     ),
   );

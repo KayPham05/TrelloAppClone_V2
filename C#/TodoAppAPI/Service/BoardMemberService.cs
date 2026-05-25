@@ -1,32 +1,27 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using TodoAppAPI.Data;
 using TodoAppAPI.DTOs;
 using TodoAppAPI.Interfaces;
 using TodoAppAPI.Models;
-
 namespace TodoAppAPI.Services
 {
     public class BoardMemberService : IBoardMemberService
     {
         private readonly TodoDbContext _context;
+        private readonly IAuthorizationService _authService;
 
-        public BoardMemberService(TodoDbContext context)
+        public BoardMemberService(TodoDbContext context, IAuthorizationService authService)
         {
             _context = context;
+            _authService = authService;
         }
 
         public async Task<bool> AddBoardMemberAsync(string boardUId, string userUId, string requesterUId, string role)
         {
             try
             {
-                // Kiểm tra requester có trong board không
-                var requester = await _context.BoardMembers
-                    .FirstOrDefaultAsync(bm => bm.BoardUId == boardUId && bm.UserUId == requesterUId);
-                if (requester == null)
-                    return false;
-
-                // Chỉ Owner hoặc Admin board mới có quyền mời
-                if (requester.BoardRole != "Owner" && requester.BoardRole != "Admin")
+                // Kiểm tra requester có quyền mời không
+                if (!await _authService.CanManageBoardMembersAsync(boardUId, requesterUId))
                     return false;
 
                 // Kiểm tra người được mời có tồn tại không
@@ -51,6 +46,9 @@ namespace TodoAppAPI.Services
 
                 _context.BoardMembers.Add(newMember);
                 await _context.SaveChangesAsync();
+
+                await _authService.LogPermissionChangeAsync(boardUId, "Board", userUId, requesterUId, "AddMember", null, role);
+
                 return true;
             }
             catch (Exception ex)
@@ -65,13 +63,8 @@ namespace TodoAppAPI.Services
         {
             try
             {
-                var requester = await _context.BoardMembers
-                    .FirstOrDefaultAsync(bm => bm.BoardUId == boardUId && bm.UserUId == requesterUId);
-                if (requester == null)
-                    return false;
-
                 // Chỉ Owner hoặc Admin có quyền cập nhật
-                if (requester.BoardRole != "Owner" && requester.BoardRole != "Admin")
+                if (!await _authService.CanManageBoardMembersAsync(boardUId, requesterUId))
                     return false;
 
                 var target = await _context.BoardMembers
@@ -83,8 +76,12 @@ namespace TodoAppAPI.Services
                 if (target.UserUId == requesterUId)
                     return false;
 
+                var oldRole = target.BoardRole;
                 target.BoardRole = newRole;
                 await _context.SaveChangesAsync();
+
+                await _authService.LogPermissionChangeAsync(boardUId, "Board", userUId, requesterUId, "UpdateRole", oldRole, newRole);
+
                 return true;
             }
             catch (Exception ex)
@@ -99,9 +96,8 @@ namespace TodoAppAPI.Services
         {
             try
             {
-                var requester = await _context.BoardMembers
-                    .FirstOrDefaultAsync(bm => bm.BoardUId == boardUId && bm.UserUId == requesterUId);
-                if (requester == null)
+                // Chỉ Owner/Admin được xóa
+                if (!await _authService.CanManageBoardMembersAsync(boardUId, requesterUId))
                     return false;
 
                 var target = await _context.BoardMembers
@@ -109,16 +105,16 @@ namespace TodoAppAPI.Services
                 if (target == null)
                     return false;
 
-                // Chỉ Owner/Admin được xóa
-                if (requester.BoardRole != "Owner" && requester.BoardRole != "Admin")
-                    return false;
-
                 // Không được xóa chính mình hoặc xóa Owner
                 if (target.UserUId == requesterUId || target.BoardRole == "Owner")
                     return false;
 
+                var oldRole = target.BoardRole;
                 _context.BoardMembers.Remove(target);
                 await _context.SaveChangesAsync();
+
+                await _authService.LogPermissionChangeAsync(boardUId, "Board", userUId, requesterUId, "RemoveMember", oldRole, null);
+
                 return true;
             }
             catch (Exception ex)
@@ -136,9 +132,11 @@ namespace TodoAppAPI.Services
                 .Where(bm => bm.BoardUId == boardUId)
                 .Select(bm => new MemberDTO
                 {
-                    UserUId = bm.UserUId,
-                    UserName = bm.User.UserName,
-                    Role = bm.BoardRole
+                    UserUId   = bm.UserUId,
+                    UserName  = bm.User.UserName,
+                    Email     = bm.User.Email,
+                    AvatarUrl = bm.User.AvatarUrl,
+                    Role      = bm.BoardRole
                 })
                 .ToListAsync();
 
@@ -156,32 +154,82 @@ namespace TodoAppAPI.Services
         // Kiểm tra quyền thao tác
         public async Task<bool> HasPermissionAsync(string boardUId, string userUId, string requiredRole)
         {
-            var priority = new Dictionary<string, int>
-            {
-                { "Viewer", 0 },
-                { "Editor", 1 },
-                { "Admin", 2 },
-                { "Owner", 3 }
-            };
+            return await _authService.HasMinimumRoleAsync(boardUId, userUId, "Board", requiredRole);
+        }
 
-            var member = await _context.BoardMembers
-                .FirstOrDefaultAsync(m => m.BoardUId == boardUId && m.UserUId == userUId);
-            if (member == null)
+        // Chuyển board sang workspace mới + kéo theo thành viên board
+        public async Task<(bool Success, string Message)> TransferBoardWorkspaceAsync(
+            string boardUId, string newWorkspaceUId, string requesterUId)
+        {
+            try
             {
-                var board = await _context.Boards.FirstOrDefaultAsync(b => b.BoardUId == boardUId);
-                if (board?.Visibility == "Public" && !string.IsNullOrEmpty(board.WorkspaceUId))
+                // 1. Chỉ Owner board mới được chuyển
+                var requesterRole = await GetUserRoleInBoardAsync(boardUId, requesterUId);
+                if (requesterRole != "Owner")
+                    return (false, "Chỉ Owner mới có thể chuyển bảng sang workspace khác.");
+
+                // ── Move to personal space ────────────────────────────────────
+                if (string.IsNullOrEmpty(newWorkspaceUId))
                 {
-                    bool inWorkspace = await _context.WorkspaceMembers
-                        .AnyAsync(w => w.WorkspaceUId == board.WorkspaceUId && w.UserUId == userUId);
-                    if (inWorkspace) return true;
+                    var board2 = await _context.Boards.FirstOrDefaultAsync(b => b.BoardUId == boardUId);
+                    if (board2 == null) return (false, "Board không tồn tại.");
+
+                    board2.WorkspaceUId = null;
+                    board2.IsPersonal = true;
+                    await _context.SaveChangesAsync();
+                    return (true, "Đã chuyển board về không gian cá nhân.");
                 }
-                return false;
+
+                // 2. Kiểm tra workspace đích tồn tại
+                var targetWorkspace = await _context.Workspaces
+                    .FirstOrDefaultAsync(w => w.WorkspaceUId == newWorkspaceUId);
+                if (targetWorkspace == null)
+                    return (false, "Workspace đích không tồn tại.");
+
+                // 3. Cập nhật WorkspaceUId của board
+                var board = await _context.Boards.FirstOrDefaultAsync(b => b.BoardUId == boardUId);
+                if (board == null)
+                    return (false, "Board không tồn tại.");
+
+                board.WorkspaceUId = newWorkspaceUId;
+                board.IsPersonal = false;
+
+                // 4. Lấy danh sách thành viên board hiện tại
+                var boardMembers = await _context.BoardMembers
+                    .Where(bm => bm.BoardUId == boardUId)
+                    .ToListAsync();
+
+                // 5. Với mỗi thành viên board, thêm vào workspace đích nếu chưa có
+                foreach (var bm in boardMembers)
+                {
+                    bool alreadyInWorkspace = await _context.WorkspaceMembers
+                        .AnyAsync(wm => wm.WorkspaceUId == newWorkspaceUId && wm.UserUId == bm.UserUId);
+
+                    if (!alreadyInWorkspace)
+                    {
+                        _context.WorkspaceMembers.Add(new WorkspaceMembers
+                        {
+                            WorkspaceUId = newWorkspaceUId,
+                            UserUId = bm.UserUId,
+                            Role = bm.BoardRole == "Owner" ? "Admin" : "Member",
+                            JoinedAt = DateTime.UtcNow
+                        });
+                    }
+                }
+
+                await _context.SaveChangesAsync();
+
+                await _authService.LogPermissionChangeAsync(
+                    boardUId, "Board", requesterUId, requesterUId,
+                    "TransferWorkspace", board.WorkspaceUId, newWorkspaceUId);
+
+                return (true, "Đã chuyển board sang workspace mới thành công.");
             }
-
-            if (!priority.ContainsKey(member.BoardRole) || !priority.ContainsKey(requiredRole))
-                return false;
-
-            return priority[member.BoardRole] >= priority[requiredRole];
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error transferring board workspace: {ex.Message}");
+                return (false, "Đã xảy ra lỗi khi chuyển workspace.");
+            }
         }
     }
 }

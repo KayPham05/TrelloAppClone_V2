@@ -115,13 +115,16 @@ class WorkspaceRemoteDataSource {
     required String workspaceId,
     required String email,
     required String role,
+    required String requesterUId,
   }) async {
+    // Note: The backend InviteUser DTO expects UserId. 
+    // This implementation might need mapping if email is used instead of ID.
     final response = await client.post(
-      ApiEndpoints.workspaceMember,
+      '${ApiEndpoints.workspaceMember}/$workspaceId/invite',
       data: {
-        'workspaceUId': workspaceId,
-        'email': email,
+        'userId': email, // Assuming email is used as identifier here for now, or FE should resolve ID first
         'role': role,
+        'requesterUId': requesterUId,
       },
     );
     if (response.statusCode != 200 && response.statusCode != 201) {

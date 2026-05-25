@@ -8,11 +8,31 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace TodoAppAPI.Migrations
 {
     /// <inheritdoc />
-    public partial class Init_DB : Migration
+    public partial class InitDb : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.CreateTable(
+                name: "PermissionAudits",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    ResourceId = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    ResourceType = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
+                    TargetUserUId = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    ActionByUserUId = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    ActionType = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    OldRole = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
+                    NewRole = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
+                    ActionAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_PermissionAudits", x => x.Id);
+                });
+
             migrationBuilder.CreateTable(
                 name: "Roles",
                 columns: table => new
@@ -41,8 +61,10 @@ namespace TodoAppAPI.Migrations
                     Provider = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETDATE()"),
                     Bio = table.Column<string>(type: "nvarchar(250)", maxLength: 250, nullable: false),
+                    AvatarUrl = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     StatusAccount = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     IsTwoFactorEnabled = table.Column<bool>(type: "bit", nullable: false),
+                    TwoFactorSecret = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     RoleId = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
@@ -86,6 +108,28 @@ namespace TodoAppAPI.Migrations
                     table.ForeignKey(
                         name: "FK_Notifications_Users_RecipientId",
                         column: x => x.RecipientId,
+                        principalTable: "Users",
+                        principalColumn: "UserUId",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "User2FABackupCodes",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    UserUId = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: false),
+                    CodeHash = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: false),
+                    IsUsed = table.Column<bool>(type: "bit", nullable: false, defaultValue: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETDATE()")
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_User2FABackupCodes", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_User2FABackupCodes_Users_UserUId",
+                        column: x => x.UserUId,
                         principalTable: "Users",
                         principalColumn: "UserUId",
                         onDelete: ReferentialAction.Cascade);
@@ -298,6 +342,7 @@ namespace TodoAppAPI.Migrations
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETDATE()"),
                     Status = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false, defaultValue: "To Do"),
                     BackgroundUrl = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    UserUId = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     ListUId = table.Column<string>(type: "nvarchar(128)", nullable: true)
                 },
                 constraints: table =>
@@ -587,6 +632,11 @@ namespace TodoAppAPI.Migrations
                 column: "CardUId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_User2FABackupCodes_UserUId",
+                table: "User2FABackupCodes",
+                column: "UserUId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_UserInboxCards_CardUId",
                 table: "UserInboxCards",
                 column: "CardUId");
@@ -659,7 +709,13 @@ namespace TodoAppAPI.Migrations
                 name: "Notifications");
 
             migrationBuilder.DropTable(
+                name: "PermissionAudits");
+
+            migrationBuilder.DropTable(
                 name: "TodoItems");
+
+            migrationBuilder.DropTable(
+                name: "User2FABackupCodes");
 
             migrationBuilder.DropTable(
                 name: "UserInboxCards");

@@ -1,13 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../../core/constants/app_colors.dart';
+import '../../../../../core/utils/member_role_helper.dart';
 import '../../../domain/entities/card_entity.dart';
+import 'label_picker_sheet.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class CardDetailMetaGrid extends StatelessWidget {
   final List<CardMemberEntity> members;
   final List<CardLabelEntity> labels;
   final DateTime? dueDate;
   final VoidCallback onAddMember;
+  final Function(CardMemberEntity, String) onMemberRoleChanged;
+  final Function(CardMemberEntity) onRemoveMember;
   final VoidCallback onAddLabel;
   final Function(DateTime) onDateChanged;
 
@@ -17,6 +22,8 @@ class CardDetailMetaGrid extends StatelessWidget {
     required this.labels,
     this.dueDate,
     required this.onAddMember,
+    required this.onMemberRoleChanged,
+    required this.onRemoveMember,
     required this.onAddLabel,
     required this.onDateChanged,
   });
@@ -44,17 +51,12 @@ class CardDetailMetaGrid extends StatelessWidget {
                           child: _buildAddButton(label: 'THÊM'),
                         )
                       else ...[
-                        for (int i = 0; i < (members.length > 3 ? 3 : members.length); i++)
-                          _buildAvatar(
-                            (members[i].userName ?? 'U').substring(0, 1),
-                            const Color(0xFF1E293B),
-                            const Color(0xFF94A3B8),
-                            overlap: i > 0,
-                          ),
+                        for (int i = 0; i < (members.length > 5 ? 5 : members.length); i++)
+                          _buildMemberAvatar(context, members[i], overlap: i > 0),
                         const SizedBox(width: 8),
                         GestureDetector(
                           onTap: onAddMember,
-                          child: _buildAddButton(label: members.length > 3 ? '+${members.length - 3}' : null),
+                          child: _buildAddButton(label: members.length > 5 ? '+${members.length - 5}' : null),
                         ),
                       ],
                     ],
@@ -197,23 +199,53 @@ class CardDetailMetaGrid extends StatelessWidget {
     );
   }
 
-  Widget _buildAvatar(String initial, Color color, Color textColor,
-      {bool overlap = false}) {
-    Widget avatar = Container(
-      width: 32,
-      height: 32,
-      decoration: BoxDecoration(
-        color: color,
-        shape: BoxShape.circle,
-        border: Border.all(color: AppColors.surfaceContainerLowest, width: 2),
-      ),
-      child: Center(
-        child: Text(
-          initial,
-          style: GoogleFonts.inter(
-            fontSize: 11,
-            fontWeight: FontWeight.w700,
-            color: textColor,
+  Widget _buildMemberAvatar(BuildContext context, CardMemberEntity member, {bool overlap = false}) {
+    final roleColor = MemberRoleHelper.colorForRole(member.role);
+    
+    Widget avatar = PopupMenuButton<String>(
+      tooltip: '${member.userName} (${member.role})',
+      onSelected: (action) {
+        if (action == 'remove') {
+          onRemoveMember(member);
+        } else {
+          onMemberRoleChanged(member, action);
+        }
+      },
+      itemBuilder: (context) => [
+        PopupMenuItem(
+          enabled: false,
+          child: Text(member.userName, style: const TextStyle(fontWeight: FontWeight.bold)),
+        ),
+        const PopupMenuDivider(),
+        const PopupMenuItem(value: 'Assignee', child: Text('Assignee')),
+        const PopupMenuItem(value: 'Reviewer', child: Text('Reviewer')),
+        const PopupMenuItem(value: 'Observer', child: Text('Observer')),
+        const PopupMenuDivider(),
+        const PopupMenuItem(
+          value: 'remove',
+          child: Text('Gỡ khỏi thẻ', style: TextStyle(color: Colors.red)),
+        ),
+      ],
+      child: Container(
+        width: 34,
+        height: 34,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(color: AppColors.surfaceContainerLowest, width: 2),
+          boxShadow: [
+            BoxShadow(
+              color: roleColor.withOpacity(0.3),
+              blurRadius: 4,
+              spreadRadius: 1,
+            )
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(100),
+          child: CachedNetworkImage(
+            imageUrl: member.resolvedAvatarUrl,
+            fit: BoxFit.cover,
+            placeholder: (ctx, url) => Container(color: roleColor),
           ),
         ),
       ),
@@ -221,7 +253,7 @@ class CardDetailMetaGrid extends StatelessWidget {
 
     if (overlap) {
       return Align(
-        widthFactor: 0.75, // 32 * 0.75 = 24. Shift 8px left.
+        widthFactor: 0.7,
         alignment: Alignment.centerRight,
         child: avatar,
       );

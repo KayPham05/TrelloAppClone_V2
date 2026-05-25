@@ -40,7 +40,6 @@ migrate_working_dir/
 .pub/
 /build/
 /coverage/
-pubspec.lock
 
 # Generated Dart code
 *.g.dart

@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TodoAppAPI.Interfaces;
 
@@ -28,7 +28,7 @@ namespace TodoAppAPI.Controllers
 
             var success = await _boardMemberService.AddBoardMemberAsync(boardUId, userUId, requesterUId, role);
             if (!success)
-                return Forbid("Không thể thêm thành viên. Kiểm tra quyền hoặc dữ liệu.");
+                return StatusCode(403, new { message = "Không thể thêm thành viên. Kiểm tra quyền hoặc dữ liệu." });
             _ = _activity.AddActivity(requesterUId, $"added user '{userUId}' to board '{boardUId}' with role '{role}'");
             return Ok(new { message = $"Đã thêm thành viên vào board với quyền {role}." });
         }
@@ -42,7 +42,7 @@ namespace TodoAppAPI.Controllers
 
             var success = await _boardMemberService.UpdateBoardMemberRoleAsync(boardUId, userUId, newRole, requesterUId);
             if (!success)
-                return Forbid("Không thể cập nhật quyền thành viên này.");
+                return StatusCode(403, new { message = "Không thể cập nhật quyền thành viên này." });
             _ = _activity.AddActivity(requesterUId, $"updated role of user '{userUId}' in board '{boardUId}' to '{newRole}'");
             return Ok(new { message = $"Đã cập nhật quyền thành viên thành {newRole}." });
         }
@@ -56,7 +56,7 @@ namespace TodoAppAPI.Controllers
 
             var success = await _boardMemberService.RemoveBoardMemberAsync(boardUId, userUId, requesterUId);
             if (!success)
-                return Forbid("Không thể xóa thành viên. Kiểm tra quyền hoặc dữ liệu.");
+                return StatusCode(403, new { message = "Không thể xóa thành viên. Kiểm tra quyền hoặc dữ liệu." });
             _ = _activity.AddActivity(requesterUId, $"removed user '{userUId}' from board '{boardUId}'");
             return Ok(new { message = "Đã xóa thành viên khỏi board thành công." });
         }
@@ -95,6 +95,31 @@ namespace TodoAppAPI.Controllers
 
             var hasPermission = await _boardMemberService.HasPermissionAsync(boardUId, userUId, requiredRole);
             return Ok(new { hasPermission });
+        }
+
+        // Chuyển board sang workspace mới (chỉ Owner, kéo theo thành viên)
+        // Nếu newWorkspaceUId rỗng/null → chuyển về không gian cá nhân (IsPersonal = true)
+        [HttpPost("{boardUId}/transfer-workspace")]
+        public async Task<IActionResult> TransferBoardWorkspace(
+            string boardUId,
+            [FromQuery] string? newWorkspaceUId,   // nullable — rỗng = chuyển về personal
+            [FromQuery] string requesterUId)
+        {
+            if (string.IsNullOrEmpty(boardUId) || string.IsNullOrEmpty(requesterUId))
+                return BadRequest("Thiếu dữ liệu bắt buộc.");
+
+            var (success, message) = await _boardMemberService.TransferBoardWorkspaceAsync(
+                boardUId, newWorkspaceUId ?? string.Empty, requesterUId);
+
+            if (!success)
+                return StatusCode(403, new { message });
+
+            _ = _activity.AddActivity(requesterUId,
+                string.IsNullOrEmpty(newWorkspaceUId)
+                    ? $"moved board '{boardUId}' to personal space"
+                    : $"transferred board '{boardUId}' to workspace '{newWorkspaceUId}'");
+
+            return Ok(new { message });
         }
     }
 }

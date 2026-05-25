@@ -69,15 +69,19 @@ class AuthRepositoryImpl implements AuthRepository {
       if (response.statusCode == 200) {
         final data = response.data;
         final token = data['token'] as String?;
+        final refreshToken = data['refreshToken'] as String?;
         final requiresVerification = data['requiresVerification'] as bool? ?? false;
+        final requires2FA = data['requires2FA'] as bool? ?? false;
 
-        // Email chưa verify → trả entity với flag để cubit xử lý
-        if (requiresVerification) {
+        // Email chưa verify hoặc Cần 2FA → trả entity với flag để cubit xử lý
+        if (requiresVerification || requires2FA || (token == null || token.isEmpty)) {
           return UserEntity(
-            id: '',
+            id: data['userUId'] ?? '', // Cần userUId để verify 2FA
+            userUId: data['userUId'] ?? '',
             userName: '',
             email: data['email'] ?? email,
-            requiresVerification: true,
+            requiresVerification: requiresVerification,
+            requires2FA: requires2FA,
           );
         }
 
@@ -87,6 +91,7 @@ class AuthRepositoryImpl implements AuthRepository {
           userName: data['userName'] ?? '',
           email: data['email'] ?? '',
           token: token,
+          refreshToken: refreshToken,
         );
       }
       throw Exception("Đăng nhập không thành công");
@@ -112,7 +117,7 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<void> verifyCode({
+  Future<UserEntity> verifyCode({
     required String email,
     required String code,
   }) async {
@@ -121,9 +126,23 @@ class AuthRepositoryImpl implements AuthRepository {
         ApiEndpoints.verifyCode,
         data: {'email': email, 'code': code},
       );
-      if (response.statusCode != 200) {
-        throw Exception("Xác thực thất bại");
+      if (response.statusCode == 200) {
+        final data = response.data;
+        // Backend trả về token sau khi xác thực thành công
+        final token = data is Map ? data['accessToken'] as String? ?? data['token'] as String? : null;
+        final refreshToken = data is Map ? data['refreshToken'] as String? : null;
+        final userUId = data is Map ? data['userUId'] as String? ?? '' : '';
+        final userName = data is Map ? data['userName'] as String? ?? '' : '';
+        return UserEntity(
+          id: userUId,
+          userUId: userUId,
+          userName: userName,
+          email: email,
+          token: token,
+          refreshToken: refreshToken,
+        );
       }
+      throw Exception("Xác thực thất bại");
     } on DioException catch (e) {
       // BE trả lỗi dạng string plain text hoặc object
       final rawData = e.response?.data;

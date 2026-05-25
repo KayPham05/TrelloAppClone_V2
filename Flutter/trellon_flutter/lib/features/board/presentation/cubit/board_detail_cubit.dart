@@ -3,16 +3,20 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/data_sources/user_local_data_source.dart';
 import '../../../card/data/models/card_model.dart';
 import '../../../card/domain/entities/card_entity.dart';
+import '../../../card/domain/usecases/update_card_status_usecase.dart';
 import '../../../card/domain/usecases/update_list_uid_usecase.dart';
-import '../../data/datasources/board_detail_remote_data_source.dart';
+import '../../domain/usecases/save_recent_board_usecase.dart';
+import '../../data/datasources/board_remote_data_source.dart';
 import '../../data/models/list_model.dart';
 import '../../domain/entities/list_entity.dart';
 import 'board_detail_state.dart';
 
 class BoardDetailCubit extends Cubit<BoardDetailState> {
-  final BoardDetailRemoteDataSource dataSource;
+  final BoardRemoteDataSource dataSource;
   final UserLocalDataSource userLocalDataSource;
   final UpdateListUIdUseCase updateListUIdUseCase;
+  final UpdateCardStatusUseCase updateCardStatusUseCase;
+  final SaveRecentBoardUseCase saveRecentBoardUseCase;
 
   // Rollback snapshot for optimistic updates
   List<ListEntity>? _previousLists;
@@ -21,22 +25,31 @@ class BoardDetailCubit extends Cubit<BoardDetailState> {
     required this.dataSource,
     required this.userLocalDataSource,
     required this.updateListUIdUseCase,
+    required this.updateCardStatusUseCase,
+    required this.saveRecentBoardUseCase,
   }) : super(BoardDetailInitial());
 
   // ─── Load Board (Real API) ─────────────────────────────────────────────────
 
   /// Loads lists and cards from backend in parallel, then groups cards into lists.
-  Future<void> loadBoard(String boardId, String boardName, {String? backgroundUrl}) async {
+  Future<void> loadBoard(String boardId, String boardName, {String? backgroundUrl, String? workspaceId, String? workspaceName, String? visibility}) async {
     emit(BoardDetailLoading());
     try {
-      // Fetch lists AND cards in parallel
+      // Fetch lists, cards, and board role in parallel
+      final userUId = await userLocalDataSource.getUserId() ?? '';
+      
+      // Save recent board in background
+      saveRecentBoardUseCase(userUId, boardId).catchError((_) {});
+
       final results = await Future.wait([
         dataSource.getLists(boardId),
         dataSource.getCardsByBoard(boardId),
+        dataSource.getUserRoleInBoard(boardId: boardId, userUId: userUId),
       ]);
 
       final listModels = results[0] as List<ListModel>;
       final cardModels = results[1] as List<CardModel>;
+      final boardRole = results[2] as String?;
 
       // Convert cards to entities
       final cards = cardModels.map((c) => c.toEntity()).toList();
@@ -68,6 +81,10 @@ class BoardDetailCubit extends Cubit<BoardDetailState> {
         boardName: boardName,
         backgroundUrl: backgroundUrl,
         lists: lists,
+        boardRole: boardRole,
+        boardVisibility: visibility,
+        workspaceId: workspaceId,
+        workspaceName: workspaceName,
       ));
     } catch (e) {
       emit(BoardDetailError(e.toString()));
@@ -111,11 +128,44 @@ class BoardDetailCubit extends Cubit<BoardDetailState> {
       final listIndex = current.lists.indexWhere((l) => l.id == listId);
       if (listIndex < 0) return;
       final position = current.lists[listIndex].cards.length;
-      await dataSource.createCard(listId: listId, title: title, position: position);
+      final userUId = await userLocalDataSource.getUserId() ?? '';
+      await dataSource.createCard(listId: listId, title: title, position: position, userUId: userUId);
       // Reload to get the real card ID from backend
       await loadBoard(current.boardId, current.boardName, backgroundUrl: current.backgroundUrl);
     } catch (_) {
       // Silently fail
+    }
+  }
+
+  // ─── Update Card Status ────────────────────────────────────────────────────
+
+  Future<void> toggleCardStatus(String listId, String cardId, bool isCompleted) async {
+    final current = state;
+    if (current is! BoardDetailLoaded) return;
+    try {
+      final userUId = await userLocalDataSource.getUserId() ?? '';
+      final newStatus = isCompleted ? 'Completed' : 'To Do';
+      
+      // Optimistic upate
+      final newLists = List<ListEntity>.from(current.lists);
+      final listIdx = newLists.indexWhere((l) => l.id == listId);
+      if (listIdx != -1) {
+        final cards = List<CardEntity>.from(newLists[listIdx].cards);
+        final cardIdx = cards.indexWhere((c) => c.id == cardId);
+        if (cardIdx != -1) {
+          cards[cardIdx] = cards[cardIdx].copyWith(status: newStatus);
+          newLists[listIdx] = newLists[listIdx].copyWith(cards: cards);
+          emit(current.copyWith(lists: newLists));
+        }
+      }
+
+      await updateCardStatusUseCase(cardId: cardId, newStatus: newStatus, userUId: userUId);
+    } catch (_) {
+      // Revert if error
+      if (state is BoardDetailLoaded) {
+        final lastState = state as BoardDetailLoaded;
+        emit(lastState.copyWith(transientError: 'Không thể cập nhật trạng thái thẻ.'));
+      }
     }
   }
 
@@ -266,7 +316,8 @@ class BoardDetailCubit extends Cubit<BoardDetailState> {
                 boardId: l.boardId,
               ))
           .toList();
-      await dataSource.reorderLists(boardId: boardId, lists: listModels);
+      final userUId = await userLocalDataSource.getUserId() ?? '';
+      await dataSource.reorderLists(boardId: boardId, lists: listModels, userUId: userUId);
     } catch (_) {
       if (state is BoardDetailLoaded) {
         emit(snapshotOnError.copyWith(transientError: 'Lỗi sắp xếp cột. Đã hoàn tác.'));
@@ -280,6 +331,99 @@ class BoardDetailCubit extends Cubit<BoardDetailState> {
     if (state is BoardDetailLoaded) {
       final currentState = state as BoardDetailLoaded;
       emit(currentState.copyWith(clearTransientError: true));
+    }
+  }
+
+  // ─── Board Settings ────────────────────────────────────────────────────────
+
+  Future<void> updateBoardName(String newName) async {
+    final current = state;
+    if (current is! BoardDetailLoaded) return;
+    final userUId = await userLocalDataSource.getUserId() ?? '';
+    try {
+      await dataSource.updateBoard(
+        boardId: current.boardId,
+        boardName: newName,
+        userUId: userUId,
+        backgroundUrl: current.backgroundUrl,
+        visibility: current.boardVisibility,
+        workspaceUId: current.workspaceId,
+      );
+      emit(current.copyWith(boardName: newName));
+    } catch (_) {
+      emit(current.copyWith(transientError: 'Không thể đổi tên bảng.'));
+    }
+  }
+
+  Future<void> updateBoardBackground(String backgroundUrl) async {
+    final current = state;
+    if (current is! BoardDetailLoaded) return;
+    final userUId = await userLocalDataSource.getUserId() ?? '';
+    try {
+      await dataSource.updateBoard(
+        boardId: current.boardId,
+        boardName: current.boardName,
+        userUId: userUId,
+        backgroundUrl: backgroundUrl,
+      );
+      emit(current.copyWith(backgroundUrl: backgroundUrl));
+    } catch (_) {
+      emit(current.copyWith(transientError: 'Không thể đổi phông nền.'));
+    }
+  }
+
+  Future<String?> uploadAndSetBackground(String filePath) async {
+    final current = state;
+    if (current is! BoardDetailLoaded) return null;
+    final userUId = await userLocalDataSource.getUserId() ?? '';
+    try {
+      final url = await dataSource.uploadBoardBackground(
+        boardId: current.boardId,
+        filePath: filePath,
+        userUId: userUId,
+      );
+      emit(current.copyWith(backgroundUrl: url));
+      return url;
+    } catch (_) {
+      emit(current.copyWith(transientError: 'Không thể tải ảnh lên.'));
+      return null;
+    }
+  }
+
+  Future<bool> transferBoardWorkspace(String newWorkspaceUId, String newWorkspaceName) async {
+    final current = state;
+    if (current is! BoardDetailLoaded) return false;
+    final userUId = await userLocalDataSource.getUserId() ?? '';
+    try {
+      final success = await dataSource.transferBoardWorkspace(
+        boardId: current.boardId,
+        newWorkspaceUId: newWorkspaceUId,
+        requesterUId: userUId,
+      );
+      if (success) {
+        emit(current.copyWith(workspaceId: newWorkspaceUId, workspaceName: newWorkspaceName));
+      }
+      return success;
+    } catch (_) {
+      emit(current.copyWith(transientError: 'Không thể chuyển không gian làm việc.'));
+      return false;
+    }
+  }
+
+  Future<void> updateBoardVisibility(String visibility) async {
+    final current = state;
+    if (current is! BoardDetailLoaded) return;
+    final userUId = await userLocalDataSource.getUserId() ?? '';
+    try {
+      await dataSource.updateBoard(
+        boardId: current.boardId,
+        boardName: current.boardName,
+        userUId: userUId,
+        visibility: visibility,
+      );
+      emit(current.copyWith(boardVisibility: visibility));
+    } catch (_) {
+      emit(current.copyWith(transientError: 'Không thể cập nhật hiển thị.'));
     }
   }
 }

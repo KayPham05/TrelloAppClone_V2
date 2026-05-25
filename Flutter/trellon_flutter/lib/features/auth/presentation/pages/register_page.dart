@@ -43,10 +43,10 @@ class _RegisterViewState extends State<RegisterView> {
   void _handleRegister() {
     if (!_formKey.currentState!.validate()) return;
     context.read<RegisterCubit>().register(
-          userName: _usernameController.text.trim(),
-          email: _emailController.text.trim(),
-          password: _passwordController.text.trim(),
-        );
+      userName: _usernameController.text.trim(),
+      email: _emailController.text.trim(),
+      password: _passwordController.text.trim(),
+    );
   }
 
   @override
@@ -54,10 +54,17 @@ class _RegisterViewState extends State<RegisterView> {
     return BlocListener<RegisterCubit, RegisterState>(
       listener: (context, state) {
         if (state is RegisterSuccess) {
-          Navigator.pushReplacementNamed(context, '/verify', arguments: state.user.email);
+          Navigator.pushReplacementNamed(
+            context,
+            '/verify',
+            arguments: state.user.email,
+          );
         } else if (state is RegisterError) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.message), backgroundColor: AppColors.error),
+            SnackBar(
+              content: Text(state.message),
+              backgroundColor: AppColors.error,
+            ),
           );
         }
       },
@@ -67,17 +74,13 @@ class _RegisterViewState extends State<RegisterView> {
           child: SingleChildScrollView(
             child: ConstrainedBox(
               constraints: BoxConstraints(
-                minHeight: MediaQuery.of(context).size.height -
+                minHeight:
+                    MediaQuery.of(context).size.height -
                     MediaQuery.of(context).padding.top -
                     MediaQuery.of(context).padding.bottom,
               ),
               child: IntrinsicHeight(
-                child: Column(
-                  children: [
-                    _buildBody(),
-                    _buildFooter(),
-                  ],
-                ),
+                child: Column(children: [_buildBody(), _buildFooter()]),
               ),
             ),
           ),
@@ -110,13 +113,24 @@ class _RegisterViewState extends State<RegisterView> {
         Container(
           width: 32,
           height: 32,
-          decoration: BoxDecoration(color: AppColors.primaryContainer, borderRadius: BorderRadius.circular(6)),
-          child: const Icon(Icons.view_kanban_rounded, color: Colors.white, size: 20),
+          decoration: BoxDecoration(
+            color: AppColors.primaryContainer,
+            borderRadius: BorderRadius.circular(6),
+          ),
+          child: const Icon(
+            Icons.view_kanban_rounded,
+            color: Colors.white,
+            size: 20,
+          ),
         ),
         const SizedBox(width: 8),
         Text(
           'Trello',
-          style: GoogleFonts.inter(fontSize: 26, fontWeight: FontWeight.w900, color: AppColors.primary),
+          style: GoogleFonts.inter(
+            fontSize: 26,
+            fontWeight: FontWeight.w900,
+            color: AppColors.primary,
+          ),
         ),
       ],
     );
@@ -141,21 +155,28 @@ class _RegisterViewState extends State<RegisterView> {
                 Text(
                   'Đăng ký Trello',
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w700),
+                  style: GoogleFonts.inter(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
                 const SizedBox(height: 24),
                 AuthTextField(
                   controller: _usernameController,
                   hintText: 'Tên người dùng',
                   prefixIcon: Icons.person_outline,
-                  validator: (v) => (v == null || v.isEmpty) ? 'Vui lòng nhập tên' : null,
+                  validator: (v) =>
+                      (v == null || v.isEmpty) ? 'Vui lòng nhập tên' : null,
                 ),
                 const SizedBox(height: 12),
                 AuthTextField(
                   controller: _emailController,
                   hintText: 'Email',
                   prefixIcon: Icons.email_outlined,
-                  validator: (v) => (v == null || !v.contains('@')) ? 'Email không hợp lệ' : null,
+                  validator: (v) => (v == null || !v.contains('@'))
+                      ? 'Email không hợp lệ'
+                      : null,
+                  keyboardType: TextInputType.emailAddress,
                 ),
                 const SizedBox(height: 12),
                 AuthTextField(
@@ -164,10 +185,17 @@ class _RegisterViewState extends State<RegisterView> {
                   prefixIcon: Icons.lock_outline,
                   obscureText: _obscurePassword,
                   suffixIcon: IconButton(
-                    icon: Icon(_obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined),
-                    onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                    icon: Icon(
+                      _obscurePassword
+                          ? Icons.visibility_off_outlined
+                          : Icons.visibility_outlined,
+                    ),
+                    onPressed: () =>
+                        setState(() => _obscurePassword = !_obscurePassword),
                   ),
-                  validator: (v) => (v == null || v.length < 6) ? 'Mật khẩu tối thiểu 6 ký tự' : null,
+                  validator: (v) => (v == null || v.length < 6)
+                      ? 'Mật khẩu tối thiểu 6 ký tự'
+                      : null,
                 ),
                 const SizedBox(height: 20),
                 SizedBox(
@@ -177,16 +205,26 @@ class _RegisterViewState extends State<RegisterView> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primaryContainer,
                       foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
                     ),
                     child: isLoading
-                        ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          )
                         : const Text('Đăng ký'),
                   ),
                 ),
                 const SizedBox(height: 20),
                 TextButton(
-                  onPressed: () => Navigator.pushReplacementNamed(context, '/login'),
+                  onPressed: () =>
+                      Navigator.pushReplacementNamed(context, '/login'),
                   child: const Text('Đã có tài khoản? Đăng nhập'),
                 ),
               ],
@@ -200,7 +238,10 @@ class _RegisterViewState extends State<RegisterView> {
   Widget _buildFooter() {
     return const Padding(
       padding: EdgeInsets.symmetric(vertical: 24),
-      child: Text('© 2024 Atlassian', style: TextStyle(color: AppColors.onSurfaceVariant)),
+      child: Text(
+        '© 2024 Atlassian',
+        style: TextStyle(color: AppColors.onSurfaceVariant),
+      ),
     );
   }
 }

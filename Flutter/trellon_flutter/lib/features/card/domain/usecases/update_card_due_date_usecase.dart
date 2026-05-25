@@ -6,7 +6,7 @@ class UpdateCardDueDateUseCase {
 
   UpdateCardDueDateUseCase(this.repository);
 
-  Future<CardEntity> call({required String cardId, required DateTime dueDate}) async {
-    return await repository.updateDueDate(cardId: cardId, dueDate: dueDate);
+  Future<CardEntity> call({required String cardId, required DateTime dueDate, required String userUId}) async {
+    return await repository.updateDueDate(cardId: cardId, dueDate: dueDate, userUId: userUId);
   }
 }

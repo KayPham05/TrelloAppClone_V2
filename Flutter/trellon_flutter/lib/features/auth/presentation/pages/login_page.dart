@@ -1,3 +1,4 @@
+import 'package:apptreolon/routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -32,6 +33,15 @@ class _LoginViewState extends State<LoginView> {
   bool _obscurePassword = true;
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final args = ModalRoute.of(context)?.settings.arguments;
+    if (args is String && args.isNotEmpty && _emailController.text.isEmpty) {
+      _emailController.text = args;
+    }
+  }
+
+  @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
@@ -60,6 +70,12 @@ class _LoginViewState extends State<LoginView> {
           }
         } else if (state is LoginRequiresVerification) {
           Navigator.pushReplacementNamed(context, '/verify', arguments: state.email);
+        } else if (state is LoginRequires2FA) {
+          Navigator.pushReplacementNamed(
+            context, 
+            AppRoutes.twoFactorAuthPage, // Make sure this route exists
+            arguments: {'userUId': state.userUId, 'email': state.email},
+          );
         } else if (state is LoginError) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(state.message), backgroundColor: AppColors.error),

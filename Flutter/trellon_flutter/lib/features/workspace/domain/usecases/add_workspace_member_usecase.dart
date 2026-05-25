@@ -8,11 +8,13 @@ class AddWorkspaceMemberUseCase {
     required String workspaceId,
     required String email,
     required String role,
+    required String requesterUId,
   }) async {
     return await repository.addWorkspaceMember(
       workspaceId: workspaceId,
       email: email,
       role: role,
+      requesterUId: requesterUId,
     );
   }
 }

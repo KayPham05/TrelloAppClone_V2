@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TodoAppAPI.Interfaces;
 using TodoAppAPI.Models;
@@ -25,10 +25,6 @@ namespace TodoAppAPI.Controllers
                 return BadRequest("CardUId không được để trống.");
 
             var members = await _cardMemberService.GetAllUserMemberByCardUId(cardUId);
-
-            if (members == null)
-                return NotFound("Không có thành viên nào trong card này.");
-
             return Ok(members);
         }
 
@@ -42,7 +38,7 @@ namespace TodoAppAPI.Controllers
             var result = await _cardMemberService.AddCardMember(userUId, requesterUId, boardUId, cardUId);
 
             if (!result)
-                return Forbid("Không thể thêm thành viên (không có quyền hoặc dữ liệu không hợp lệ).");
+                return StatusCode(403, new { message = "Không thể thêm thành viên (không có quyền hoặc dữ liệu không hợp lệ)." });
             _ = _activity.AddActivity(requesterUId, $"added user '{userUId}' to card '{cardUId}'");
             return Ok(new { message = "Thêm thành viên vào card thành công." });
         }
@@ -57,9 +53,26 @@ namespace TodoAppAPI.Controllers
             var result = await _cardMemberService.RemoveCardMember(userUId, requesterUId, boardUId, cardUId);
 
             if (!result)
-                return Forbid("Không thể xóa thành viên (không có quyền hoặc không tồn tại).");
+                return StatusCode(403, new { message = "Không thể xóa thành viên (không có quyền hoặc không tồn tại)." });
             _ = _activity.AddActivity(requesterUId, $"removed user '{userUId}' from card '{cardUId}'");
             return Ok(new { message = "Xóa thành viên khỏi card thành công." });
+        }
+
+        // Cập nhật role của thành viên trong card
+        [HttpPut("{cardUId}/update-role")]
+        public async Task<IActionResult> UpdateCardMemberRole(string cardUId, [FromQuery] string userUId, [FromQuery] string newRole, [FromQuery] string requesterUId)
+        {
+            if (string.IsNullOrEmpty(cardUId) || string.IsNullOrEmpty(userUId) ||
+                string.IsNullOrEmpty(newRole) || string.IsNullOrEmpty(requesterUId))
+                return BadRequest("Thiếu tham số.");
+
+            var result = await _cardMemberService.UpdateCardMemberRole(cardUId, userUId, newRole, requesterUId);
+
+            if (!result)
+                return StatusCode(403, new { message = "Không thể cập nhật role (không có quyền hoặc dữ liệu không hợp lệ)." });
+
+            _ = _activity.AddActivity(requesterUId, $"updated role of user '{userUId}' in card '{cardUId}' to '{newRole}'");
+            return Ok(new { message = $"Đã cập nhật role thành viên thành {newRole}." });
         }
     }
 }

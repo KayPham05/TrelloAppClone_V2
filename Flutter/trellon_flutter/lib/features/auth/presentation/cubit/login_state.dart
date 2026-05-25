@@ -21,3 +21,9 @@ class LoginRequiresVerification extends LoginState {
   final String email;
   LoginRequiresVerification(this.email);
 }
+
+class LoginRequires2FA extends LoginState {
+  final String userUId;
+  final String email;
+  LoginRequires2FA(this.userUId, this.email);
+}

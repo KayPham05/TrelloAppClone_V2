@@ -5,17 +5,24 @@ import 'core/constants/app_theme.dart';
 import 'routes.dart';
 import 'init_dependencies.dart';
 
+import 'package:shared_preferences/shared_preferences.dart';
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
   await initDependencies();
-  runApp(const MyApp());
+  
+  final prefs = await SharedPreferences.getInstance();
+  final isLogged = prefs.getBool('isLogged') ?? false;
+
+  runApp(MyApp(isLogged: isLogged));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final bool isLogged;
+
+  const MyApp({super.key, required this.isLogged});
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +35,7 @@ class MyApp extends StatelessWidget {
       builder: (context, child) {
         return _AppWarmup(child: child ?? const SizedBox.shrink());
       },
-      initialRoute: '/login',
+      initialRoute: isLogged ? AppRoutes.home : AppRoutes.login,
     );
   }
 }

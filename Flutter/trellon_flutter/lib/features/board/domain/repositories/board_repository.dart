@@ -13,4 +13,8 @@ abstract class BoardRepository {
     String? coverColor,
     String? visibility,
   });
+  Future<void> saveRecentBoard(String userUid, String boardId);
+  Future<List<dynamic>> getLists(String boardId);
+  Future<String?> getUserRoleInBoard(String boardId, String userUId);
 }
+

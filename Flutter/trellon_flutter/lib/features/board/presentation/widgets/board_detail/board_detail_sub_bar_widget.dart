@@ -5,12 +5,14 @@ class BoardDetailSubBarWidget extends StatelessWidget {
   final String boardName;
   final bool isStarred;
   final VoidCallback onToggleStar;
+  final VoidCallback onMembersTap;
 
   const BoardDetailSubBarWidget({
     super.key,
     required this.boardName,
     required this.isStarred,
     required this.onToggleStar,
+    required this.onMembersTap,
   });
 
   @override
@@ -51,6 +53,32 @@ class BoardDetailSubBarWidget extends StatelessWidget {
                   const SizedBox(width: 4),
                   Text(
                     'Yêu thích',
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          GestureDetector(
+            onTap: onMembersTap,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.group_rounded, color: Colors.white, size: 16),
+                  const SizedBox(width: 4),
+                  Text(
+                    'Thành viên',
                     style: GoogleFonts.inter(
                       fontSize: 12,
                       fontWeight: FontWeight.w500,

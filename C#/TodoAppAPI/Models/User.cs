@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 
 namespace TodoAppAPI.Models
 {
@@ -7,7 +7,7 @@ namespace TodoAppAPI.Models
         public string UserUId { get; set; } = Guid.NewGuid().ToString(); // ← Not nullable
         public string UserName { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
-        public string PasswordHash { get; set; } = string.Empty;
+        public string PasswordHash { get; set; } = string.Empty; //password must have at least 6 characters
         public bool IsEmailVerified { get; set; } = false;
         public string? VerificationTokenHash { get; set; }
         public DateTime? VerificationTokenExpiresAt { get; set; }
@@ -16,8 +16,15 @@ namespace TodoAppAPI.Models
 
         public string Bio { get; set; } = string.Empty;
 
+        public string? AvatarUrl { get; set; }
+
         public string StatusAccount { get; set; } = string.Empty;
         public bool IsTwoFactorEnabled { get; set; } = false;
+        public string? TwoFactorSecret { get; set; }
+
+        // Navigation - 2FA Backup Codes
+        public ICollection<User2FABackupCode>? BackupCodes { get; set; }
+
         // FK - Role
         public int? RoleId { get; set; }
         public Role? Role { get; set; }
@@ -31,7 +38,7 @@ namespace TodoAppAPI.Models
         public ICollection<Activity>? Activities { get; set; }
         public ICollection<Comment>? Comments { get; set; }
         public ICollection<BoardMember>? BoardMemberships { get; set; }
-        public ICollection<WorkspaceMemberDto>? WorkspaceMemberships { get; set; }
+        public ICollection<WorkspaceMembers>? WorkspaceMemberships { get; set; }
         public ICollection<UserInboxCard>? InboxCards { get; set; } // ← Changed from UserInboxCards
         public ICollection<Notification> ReceivedNotifications { get; set; } = new List<Notification>();
         public ICollection<Notification> SentNotifications { get; set; } = new List<Notification>();

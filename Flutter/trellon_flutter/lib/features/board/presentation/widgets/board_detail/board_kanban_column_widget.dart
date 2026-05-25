@@ -3,6 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../../../core/constants/app_colors.dart';
 import '../../../domain/entities/list_entity.dart';
 import '../list_menu_bottom_sheet.dart';
+
+// ── Normal Kanban Column (Reorderable horizontal scroll mode) ────────────────
 class KanbanColumnWidget extends StatelessWidget {
   final ListEntity list;
   final int columnIndex;
@@ -67,6 +69,147 @@ class KanbanColumnWidget extends StatelessWidget {
   }
 }
 
+// ── Zoom Mode Column ─────────────────────────────────────────────────────────
+/// Used in swipe/zoom (PageView) mode.
+/// - [columnWidth]: passed externally (= 80% of screen width)
+/// - Height is responsive to card count, capped at 80% of screen height.
+/// - Cards are scrollable inside the capped-height column.
+class KanbanColumnZoomWidget extends StatelessWidget {
+  final ListEntity list;
+  final double columnWidth;
+  final int itemCount;
+  final Widget Function(int index) itemBuilder;
+  final VoidCallback onAddCard;
+
+  const KanbanColumnZoomWidget({
+    super.key,
+    required this.list,
+    required this.columnWidth,
+    required this.itemCount,
+    required this.itemBuilder,
+    required this.onAddCard,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final double maxColumnH = MediaQuery.of(context).size.height * 0.80;
+
+    return Container(
+      width: columnWidth,
+      constraints: BoxConstraints(maxHeight: maxColumnH),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceContainer,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.14),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _ZoomColumnHeader(list: list),
+          Flexible(
+            child: ListView.builder(
+              shrinkWrap: true,
+              padding: const EdgeInsets.only(top: 4),
+              physics: const ClampingScrollPhysics(),
+              itemCount: itemCount,
+              itemBuilder: (context, index) => itemBuilder(index),
+            ),
+          ),
+          _ZoomAddCardButton(onTap: onAddCard),
+        ],
+      ),
+    );
+  }
+}
+
+class _ZoomColumnHeader extends StatelessWidget {
+  final ListEntity list;
+  const _ZoomColumnHeader({required this.list});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 14, 8, 10),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              list.name.toUpperCase(),
+              style: GoogleFonts.inter(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: AppColors.onSurface,
+                letterSpacing: 0.8,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          GestureDetector(
+            onTap: () {
+              showModalBottomSheet(
+                context: context,
+                backgroundColor: AppColors.surfaceContainerLow,
+                shape: const RoundedRectangleBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(16)),
+                ),
+                builder: (context) => ListMenuBottomSheet(list: list),
+              );
+            },
+            child: const Icon(
+              Icons.more_horiz_rounded,
+              size: 22,
+              color: AppColors.onSurfaceVariant,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ZoomAddCardButton extends StatelessWidget {
+  final VoidCallback onTap;
+  const _ZoomAddCardButton({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.fromLTRB(8, 4, 8, 8),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(8),
+          color: Colors.transparent,
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.add_rounded, size: 18, color: AppColors.onSurfaceVariant),
+            const SizedBox(width: 6),
+            Text(
+              'Thêm thẻ',
+              style: GoogleFonts.inter(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: AppColors.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Normal Column Header (used by normal mode) ───────────────────────────────
 class KanbanColumnHeaderWidget extends StatelessWidget {
   final ListEntity list;
   final double scale;

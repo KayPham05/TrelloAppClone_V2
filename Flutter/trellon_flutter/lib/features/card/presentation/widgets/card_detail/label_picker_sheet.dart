@@ -14,8 +14,16 @@ class LabelPickerSheet extends StatelessWidget {
 
   // Storage for the user's available labels throughout the session.
   static List<Map<String, dynamic>> boardLabelRepository = [
-    {'name': '', 'color': const Color(0xFF1E7F51), 'code': '#1E7F51'}, // Emerald
-    {'name': '', 'color': const Color(0xFF8B791B), 'code': '#8B791B'}, // Mustard
+    {
+      'name': '',
+      'color': const Color(0xFF1E7F51),
+      'code': '#1E7F51',
+    }, // Emerald
+    {
+      'name': '',
+      'color': const Color(0xFF8B791B),
+      'code': '#8B791B',
+    }, // Mustard
     {'name': '', 'color': const Color(0xFFB15F1C), 'code': '#B15F1C'}, // Orange
     {'name': '', 'color': const Color(0xFFB92C23), 'code': '#B92C23'}, // Red
     {'name': '', 'color': const Color(0xFF7E3DCC), 'code': '#7E3DCC'}, // Purple
@@ -34,8 +42,16 @@ class LabelPickerSheet extends StatelessWidget {
     {'name': '', 'color': Color(0xFFB92C23), 'code': '#B92C23'}, // Red
     {'name': '', 'color': Color(0xFF7E3DCC), 'code': '#7E3DCC'}, // Purple
 
-    {'name': '', 'color': Color(0xFF4BBF6B), 'code': '#4BBF6B'}, // Light Emerald
-    {'name': '', 'color': Color(0xFFDBB124), 'code': '#DBB124'}, // Light Mustard
+    {
+      'name': '',
+      'color': Color(0xFF4BBF6B),
+      'code': '#4BBF6B',
+    }, // Light Emerald
+    {
+      'name': '',
+      'color': Color(0xFFDBB124),
+      'code': '#DBB124',
+    }, // Light Mustard
     {'name': '', 'color': Color(0xFFFF9F1A), 'code': '#FF9F1A'}, // Light Orange
     {'name': '', 'color': Color(0xFFEB5A46), 'code': '#EB5A46'}, // Light Red
     {'name': '', 'color': Color(0xFFC377E0), 'code': '#C377E0'}, // Light Purple
@@ -78,7 +94,9 @@ class LabelPickerSheet extends StatelessWidget {
       backgroundColor: Colors.transparent,
       builder: (sheetContext) => AnimatedPadding(
         duration: const Duration(milliseconds: 100),
-        padding: EdgeInsets.only(bottom: MediaQuery.of(sheetContext).viewInsets.bottom),
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(sheetContext).viewInsets.bottom,
+        ),
         child: LabelPickerSheet(
           selectedLabels: selectedLabels,
           onLabelToggled: onLabelToggled,
@@ -117,12 +135,17 @@ class _LabelPickerContentState extends State<_LabelPickerContent> {
   void _importSelectedLabelsIntoRepository() {
     for (var sl in widget.selectedLabels) {
       final codeUpper = sl.colorCode.toUpperCase();
-      final exists = LabelPickerSheet.boardLabelRepository.any((r) =>
-          (r['code'] as String).toUpperCase() == codeUpper && r['name'] == sl.title);
+      final exists = LabelPickerSheet.boardLabelRepository.any(
+        (r) =>
+            (r['code'] as String).toUpperCase() == codeUpper &&
+            r['name'] == sl.title,
+      );
       if (!exists) {
         // Attempt to find the real color from palette
         Color color = Colors.grey;
-        final paletteMatch = LabelPickerSheet.paletteColors.where((p) => (p['code'] as String).toUpperCase() == codeUpper).toList();
+        final paletteMatch = LabelPickerSheet.paletteColors
+            .where((p) => (p['code'] as String).toUpperCase() == codeUpper)
+            .toList();
         if (paletteMatch.isNotEmpty) {
           color = paletteMatch.first['color'] as Color;
         } else {
@@ -144,11 +167,21 @@ class _LabelPickerContentState extends State<_LabelPickerContent> {
   void _onToggleLabel(String name, String code) {
     setState(() {
       final codeUpper = code.toUpperCase();
-      final exists = _localSelectedLabels.any((l) => l.colorCode.toUpperCase() == codeUpper && l.title == name);
+      final exists = _localSelectedLabels.any(
+        (l) => l.colorCode.toUpperCase() == codeUpper && l.title == name,
+      );
       if (exists) {
-        _localSelectedLabels.removeWhere((l) => l.colorCode.toUpperCase() == codeUpper && l.title == name);
+        _localSelectedLabels.removeWhere(
+          (l) => l.colorCode.toUpperCase() == codeUpper && l.title == name,
+        );
       } else {
-        _localSelectedLabels.add(CardLabelEntity(id: DateTime.now().millisecondsSinceEpoch.toString(), title: name, colorCode: codeUpper));
+        _localSelectedLabels.add(
+          CardLabelEntity(
+            id: DateTime.now().millisecondsSinceEpoch.toString(),
+            title: name,
+            colorCode: codeUpper,
+          ),
+        );
       }
     });
     widget.onLabelToggled(name, code);
@@ -187,16 +220,20 @@ class _LabelPickerContentState extends State<_LabelPickerContent> {
           child: ListView(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             children: LabelPickerSheet.boardLabelRepository.map((label) {
-              final isSelected = _localSelectedLabels.any((l) =>
-                  l.colorCode.toUpperCase() == (label['code'] as String).toUpperCase() 
-                  && l.title == label['name']);
+              final isSelected = _localSelectedLabels.any(
+                (l) =>
+                    l.colorCode.toUpperCase() ==
+                        (label['code'] as String).toUpperCase() &&
+                    l.title == label['name'],
+              );
               return Padding(
                 padding: const EdgeInsets.only(bottom: 8),
                 child: Row(
                   children: [
                     Expanded(
                       child: InkWell(
-                        onTap: () => _onToggleLabel(label['name'], label['code']),
+                        onTap: () =>
+                            _onToggleLabel(label['name'], label['code']),
                         borderRadius: BorderRadius.circular(4),
                         child: Container(
                           height: 48,
@@ -218,7 +255,12 @@ class _LabelPickerContentState extends State<_LabelPickerContent> {
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
-                              if (isSelected) const Icon(Icons.check, color: Colors.white, size: 20),
+                              if (isSelected)
+                                const Icon(
+                                  Icons.check,
+                                  color: Colors.white,
+                                  size: 20,
+                                ),
                             ],
                           ),
                         ),
@@ -226,7 +268,11 @@ class _LabelPickerContentState extends State<_LabelPickerContent> {
                     ),
                     const SizedBox(width: 8),
                     IconButton(
-                      icon: const Icon(Icons.edit_outlined, color: Colors.black54, size: 20),
+                      icon: const Icon(
+                        Icons.edit_outlined,
+                        color: Colors.black54,
+                        size: 20,
+                      ),
                       onPressed: () {
                         setState(() {
                           isAddingLabel = true;
@@ -261,11 +307,15 @@ class _LabelPickerContentState extends State<_LabelPickerContent> {
           rightAction: TextButton(
             onPressed: () {
               if (selectedCustomColor != null) {
-                final hexCode = '#${selectedCustomColor!.toARGB32().toRadixString(16).substring(2).toUpperCase()}';
-                
+                final hexCode =
+                    '#${selectedCustomColor!.value.toRadixString(16).substring(2).toUpperCase()}';
+
                 // Add to repository if not exists
-                final existsInRepo = LabelPickerSheet.boardLabelRepository.any((r) =>
-                    (r['code'] as String).toUpperCase() == hexCode && r['name'] == customName);
+                final existsInRepo = LabelPickerSheet.boardLabelRepository.any(
+                  (r) =>
+                      (r['code'] as String).toUpperCase() == hexCode &&
+                      r['name'] == customName,
+                );
                 if (!existsInRepo) {
                   LabelPickerSheet.boardLabelRepository.add({
                     'name': customName,
@@ -278,7 +328,13 @@ class _LabelPickerContentState extends State<_LabelPickerContent> {
                 setState(() => isAddingLabel = false);
               }
             },
-            child: Text('Xong', style: GoogleFonts.inter(color: Colors.black87, fontWeight: FontWeight.bold)),
+            child: Text(
+              'Xong',
+              style: GoogleFonts.inter(
+                color: Colors.black87,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
         ),
         Expanded(
@@ -296,32 +352,52 @@ class _LabelPickerContentState extends State<_LabelPickerContent> {
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 child: Text(
                   customName,
-                  style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w600),
+                  style: GoogleFonts.inter(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
               const SizedBox(height: 24),
               Text(
                 'Tên (không bắt buộc)',
-                style: GoogleFonts.inter(color: Colors.black87, fontSize: 13, fontWeight: FontWeight.w600),
+                style: GoogleFonts.inter(
+                  color: Colors.black87,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
               const SizedBox(height: 8),
               TextField(
                 onChanged: (v) => setState(() => customName = v),
-                controller: TextEditingController(text: customName)..selection = TextSelection.collapsed(offset: customName.length),
+                controller: TextEditingController(text: customName)
+                  ..selection = TextSelection.collapsed(
+                    offset: customName.length,
+                  ),
                 style: const TextStyle(color: Colors.black87),
                 decoration: InputDecoration(
                   filled: true,
                   fillColor: Colors.black12,
                   hintText: 'Tên nhãn...',
                   hintStyle: const TextStyle(color: Colors.black38),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(4), borderSide: BorderSide.none),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(4),
+                    borderSide: BorderSide.none,
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                 ),
               ),
               const SizedBox(height: 24),
               Text(
                 'Màu sắc',
-                style: GoogleFonts.inter(color: Colors.black87, fontSize: 13, fontWeight: FontWeight.w600),
+                style: GoogleFonts.inter(
+                  color: Colors.black87,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
               const SizedBox(height: 12),
               GridView.builder(
@@ -335,7 +411,8 @@ class _LabelPickerContentState extends State<_LabelPickerContent> {
                 ),
                 itemCount: LabelPickerSheet.paletteColors.length,
                 itemBuilder: (context, index) {
-                  final color = LabelPickerSheet.paletteColors[index]['color'] as Color;
+                  final color =
+                      LabelPickerSheet.paletteColors[index]['color'] as Color;
                   final isSelected = selectedCustomColor == color;
                   return GestureDetector(
                     onTap: () => setState(() => selectedCustomColor = color),
@@ -343,7 +420,9 @@ class _LabelPickerContentState extends State<_LabelPickerContent> {
                       decoration: BoxDecoration(
                         color: color,
                         borderRadius: BorderRadius.circular(4),
-                        border: isSelected ? Border.all(color: Colors.blueAccent, width: 2) : null,
+                        border: isSelected
+                            ? Border.all(color: Colors.blueAccent, width: 2)
+                            : null,
                       ),
                     ),
                   );
@@ -356,7 +435,11 @@ class _LabelPickerContentState extends State<_LabelPickerContent> {
     );
   }
 
-  Widget _buildHeader({required String title, required Widget leftAction, required Widget rightAction}) {
+  Widget _buildHeader({
+    required String title,
+    required Widget leftAction,
+    required Widget rightAction,
+  }) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       child: Row(
@@ -365,7 +448,11 @@ class _LabelPickerContentState extends State<_LabelPickerContent> {
           leftAction,
           Text(
             title,
-            style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.black87),
+            style: GoogleFonts.inter(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: Colors.black87,
+            ),
           ),
           rightAction,
         ],
