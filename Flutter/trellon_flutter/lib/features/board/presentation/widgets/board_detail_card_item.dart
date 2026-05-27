@@ -24,12 +24,19 @@ class BoardDetailCardItem extends StatelessWidget {
           width: 250,
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: AppColors.surfaceContainerLowest,
+            color: AppColors.surfaceWhite,
             borderRadius: BorderRadius.circular(8),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0x21091E42), // rgba(9,30,66,0.13)
+                blurRadius: 3,
+                offset: const Offset(0, 1),
+              )
+            ],
           ),
           child: Text(
             card.title,
-            style: const TextStyle(color: AppColors.onSurface, fontSize: 14, fontWeight: FontWeight.w500),
+            style: const TextStyle(color: AppColors.textPrimary, fontSize: 17, fontWeight: FontWeight.w600),
           ),
         ),
       ),
@@ -59,8 +66,15 @@ class BoardDetailCardItem extends StatelessWidget {
       },
       child: Container(
         decoration: BoxDecoration(
-          color: AppColors.surfaceContainerLowest,
+          color: AppColors.surfaceWhite,
           borderRadius: BorderRadius.circular(8),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0x21091E42), // rgba(9,30,66,0.13)
+              blurRadius: 3,
+              offset: const Offset(0, 1),
+            )
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

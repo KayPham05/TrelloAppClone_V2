@@ -41,7 +41,7 @@ class _BoardDetailListColumnState extends State<BoardDetailListColumn> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: const BoxDecoration(
-        color: AppColors.surfaceContainer,
+        color: AppColors.background,
         borderRadius: BorderRadius.vertical(top: Radius.circular(10)),
       ),
       child: Row(
@@ -50,9 +50,9 @@ class _BoardDetailListColumnState extends State<BoardDetailListColumn> {
               child: Text(
                 widget.listData.name,
                 style: const TextStyle(
-                  color: AppColors.onSurface,
+                  color: AppColors.textPrimary,
                   fontWeight: FontWeight.w600,
-                  fontSize: 15,
+                  fontSize: 17,
                 ),
               ),
           ),
@@ -121,7 +121,7 @@ class _BoardDetailListColumnState extends State<BoardDetailListColumn> {
                   physics: const NeverScrollableScrollPhysics(),
                   itemCount: widget.listData.cards.length,
                   separatorBuilder: (_, __) =>
-                      Container(height: 0.5, color: AppColors.border),
+                      const SizedBox(height: 8),
                    itemBuilder: (ctx, i) =>
                        BoardDetailCardItem(card: widget.listData.cards[i]),
                  ),
