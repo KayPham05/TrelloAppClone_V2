@@ -176,5 +176,24 @@
     </dl>
     <p>Verification: backend and Flutter RED tests failed before the fix because read direct notifications stayed in <code>SentToMe</code>. After the fix, <code>dotnet test "C#\TodoAppAPI.Tests\TodoAppAPI.Tests.csproj" --no-restore --output "D:\tmp\trellon-test-out"</code> passed 20/20; <code>dotnet build "C#\TodoAppAPI\TodoAppAPI.csproj" --no-restore --output "D:\tmp\trellon-build-out"</code> passed with 0 warnings and 0 errors; <code>flutter test --no-pub test/notification_api_test.dart test/notification_cubit_test.dart test/notification_model_test.dart test/notification_realtime_service_test.dart test/activity_page_notification_flow_test.dart test/notification_navigation_service_test.dart -r expanded</code> passed 37/37; <code>dart analyze lib/features/activity lib/core/common_widgets/main_shell.dart lib/init_dependencies.dart</code> reported no issues. Separate backend output paths were used because the running API process locked the default build output.</p>
   </section>
+  <section>
+    <h2>2026-05-27 21:00:00 +07:00 (CI/CD Pipeline Fix)</h2>
+    <dl>
+      <dt>Design decisions</dt>
+      <dd>Added the <code>Prepare Flutter env for CI</code> step to <code>.github/workflows/sonarcloud.yml</code> to run before the Flutter tests. This step generates a placeholder <code>.env</code> file under the Flutter project root.</dd>
+      <dd>Since the <code>.env</code> file is untracked to protect development configuration and environment variables, the CI/CD pipeline on GitHub did not have the file. Flutter's build runner requires all assets specified in <code>pubspec.yaml</code> to exist, so the tests failed during asset bundling when it was missing.</dd>
+
+      <dt>Deviations</dt>
+      <dd>None. This change alignment allows the automated Flutter checks to run seamlessly in the pipeline without exposing local environment settings.</dd>
+
+      <dt>Tradeoffs</dt>
+      <dd>Using a placeholder <code>.env</code> file in CI is standard practice to satisfy the build system's dependency requirements without committing secrets. Storing a default mock API URL ensures tests resolve their initialization correctly.</dd>
+
+      <dt>Open questions</dt>
+      <dd>None.</dd>
+    </dl>
+    <p>Verification: Modified the SonarCloud workflow and pushed to <code>origin/Notification_Activity</code> to trigger the remote build and verify that the "Run Flutter tests with coverage" step passes successfully.</p>
+  </section>
 </body>
 </html>
+
