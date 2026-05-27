@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <title>Notification Implementation Notes</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 32px; line-height: 1.5; color: #172b4d; }
+    h1 { font-size: 24px; }
+    h2 { font-size: 18px; margin-top: 28px; }
+    section { border-top: 1px solid #dfe1e6; padding-top: 16px; margin-top: 16px; }
+    dt { font-weight: 700; margin-top: 10px; }
+    dd { margin: 4px 0 8px 0; }
+    code { background: #f4f5f7; padding: 2px 4px; border-radius: 3px; }
+  </style>
+</head>
+<body>
+  <h1>Notification Implementation Notes</h1>
+
+
+  <section>
+    <h2>2026-05-26 (local rerun evidence)</h2>
+    <dl>
+      <dt>Design decisions</dt>
+      <dd>Review artifacts were updated to treat Flutter verification as confirmed rather than blocked. The latest local rerun provides concrete command output, not just a summarized pass/fail note.</dd>
+      <dd>Verification status is now split more clearly: focused Flutter automation is green, while remaining completion gaps are product behavior and backend hardening items.</dd>
+
+      <dt>Deviations</dt>
+      <dd>No production code changes were made in this pass. Only <code>Docs/Reviews/</code> and <code>Docs/Notes/</code> were corrected to match the latest local Flutter evidence.</dd>
+
+      <dt>Tradeoffs</dt>
+      <dd>The rerun still does not automate live SignalR event forwarding or full <code>ActivityPage</code> widget navigation. Those remain manual smoke-test items even though the cubit, model, and datasource suite is green.</dd>
+      <dd>Backend risk posture is unchanged. There is still no backend automated coverage for the critical notification flows, so Flutter green status should not be mistaken for end-to-end production readiness.</dd>
+
+      <dt>Open questions</dt>
+      <dd>Whether the completion bar before merge includes Trello-like tap-to-navigate and multi-device <code>NotificationReadAll</code> parity, or whether those move to a hardening follow-up.</dd>
+    </dl>
+    <p>Verification refresh from the latest local rerun: <code>flutter test --no-pub test/notification_api_test.dart test/notification_cubit_test.dart test/notification_model_test.dart test/notification_realtime_service_test.dart test/activity_page_notification_flow_test.dart -r expanded</code> → <strong>20/20 passed</strong>; <code>dart analyze lib/features/activity lib/core/common_widgets/main_shell.dart lib/init_dependencies.dart</code> → <strong>No issues found</strong>; <code>flutter --version</code> → <strong>Flutter 3.44.0, Dart 3.12.0, DevTools 2.57.0</strong>.</p>
+  </section>
+  <section>
+    <h2>2026-05-26 20:55:46 +07:00</h2>
+    <dl>
+      <dt>Design decisions</dt>
+      <dd>Notification creation from business services is now best-effort after the business save succeeds. Domain services call <code>TryCreateInternalAsync</code> / <code>TryCreateManyInternalAsync</code> so a notification write/send failure is logged but does not roll back the actual board, card, comment, member, or workspace operation.</dd>
+      <dd>Backend notification coverage was added as a separate <code>C#/TodoAppAPI.Tests</code> xUnit project instead of relying only on <code>dotnet build</code>. The tests cover failure isolation, server tab filtering, ownership checks for read/delete, locked manual notification POST behavior, and mention validation/deduplication.</dd>
+      <dd>Flutter realtime parity was implemented in production code for <code>NotificationReadAll</code>. The cubit applies the event by clearing the unread tab, marking loaded items as read on other tabs, and setting <code>unreadCount</code> to zero.</dd>
+      <dd>Notification tap navigation uses typed context fields (<code>workspaceId</code>, <code>boardId</code>, <code>cardId</code>, <code>commentId</code>) rather than trusting the backend <code>link</code> string. Missing or deleted targets return no route and let <code>ActivityPage</code> show a user-visible snackbar.</dd>
+      <dd>Activity tab fetching was centralized through <code>NotificationTabCoordinator</code>. Tapping a tab only animates the page; <code>PageView.onPageChanged</code> performs the fetch, avoiding duplicate server requests during normal tab switching.</dd>
+
+      <dt>Deviations</dt>
+      <dd>No outbox, retry queue, or background notification dispatcher was added in this pass. This intentionally differs from a guaranteed-delivery design because the reviewed high-risk bug was false failure of successful business actions, not durable notification retry.</dd>
+      <dd>Due-date scheduled reminders remain out of scope. The current implementation covers due-date set/change notifications only; timed reminders still require a future scheduler specification.</dd>
+      <dd>Navigation does not use arbitrary backend deep-link strings as the source of truth. This is a deliberate safety and correctness deviation: routes are built from validated typed IDs so stale or malformed links do not navigate blindly.</dd>
+      <dd>The manual realtime smoke test with two signed-in devices and a real backend was not executed in this documentation pass. Automated tests cover the pure Flutter/backend logic, but live SignalR transport still needs manual confirmation.</dd>
+
+      <dt>Tradeoffs</dt>
+      <dd>Best-effort notification dispatch is simpler and safer for current domain operations than introducing an outbox schema now. The tradeoff is that notification delivery can still be lost if the notification write fails after the business transaction succeeds.</dd>
+      <dd>The navigation service resolves cards through existing board/card data instead of adding a new dedicated backend deep-link resolver. This avoids API expansion, but deleted or inaccessible cards are handled as non-navigable results.</dd>
+      <dd>Flutter tests focus on cubit/service behavior rather than a full widget/device flow. This keeps required tests deterministic in CI-style environments, but it does not replace final manual smoke testing for SignalR and real screen navigation.</dd>
+
+      <dt>Open questions</dt>
+      <dd>Confirm whether scheduled due-date reminders should be added in a later phase, including reminder timing, recipient rules, and whether reminders should repeat or send once.</dd>
+      <dd>Confirm whether notification tap navigation should eventually support a backend-generated canonical deep link in addition to typed IDs.</dd>
+      <dd>Run or confirm the remaining manual smoke test: two active sessions receive <code>NotificationCreated</code>, <code>NotificationRead</code>, <code>NotificationReadAll</code>, and <code>NotificationDeleted</code> consistently, and tapping card/board/workspace notifications opens the expected screen.</dd>
+    </dl>
+    <p>Verification recorded for this implementation pass: <code>dotnet build "C#\TodoAppAPI\TodoAppAPI.csproj"</code> passed with 0 warnings and 0 errors; <code>dotnet test "C#\TodoAppAPI.Tests\TodoAppAPI.Tests.csproj"</code> passed 11/11; <code>flutter test --no-pub test/notification_api_test.dart test/notification_cubit_test.dart test/notification_model_test.dart test/notification_realtime_service_test.dart test/activity_page_notification_flow_test.dart test/notification_navigation_service_test.dart -r expanded</code> passed 30/30; <code>dart analyze lib/features/activity lib/core/common_widgets/main_shell.dart lib/init_dependencies.dart</code> reported no issues; <code>git diff --check</code> reported only LF/CRLF line-ending warnings and no whitespace errors.</p>
+  </section>
+  <section>
+    <h2>2026-05-26 21:22:36 +07:00</h2>
+    <dl>
+      <dt>Design decisions</dt>
+      <dd>Scheduled due-date reminder is now a required notification feature before the notification feature can be considered merge-ready. The scheduler rule is fixed: run every 15 minutes and notify assignees at exactly three milestones per card: 1 day before due date, 1 hour before due date, and when due date is reached.</dd>
+      <dd>Each reminder milestone must be sent at most once per card. Cards that are completed or have no assignees are skipped.</dd>
+      <dd>If a card due date is changed or removed, the reminder send history for that card must be reset so all milestones can be sent again from the new due-date state.</dd>
+      <dd>Typed notification context IDs are accepted as sufficient for navigation. No backend-generated canonical deep link is required for this phase.</dd>
+      <dd>The manual realtime/navigation smoke test is now documented as a required Definition of Done in <code>Docs/Tests/notification-smoke-test.md</code>.</dd>
+
+      <dt>Deviations</dt>
+      <dd>The previous due-date reminder deviation is no longer accepted as final behavior. The current code still lacks the scheduled reminder worker/history reset behavior, so this is now a pending implementation gap before merge rather than an approved out-of-scope item.</dd>
+      <dd>No deviation is needed for backend deep links because typed IDs are the confirmed design.</dd>
+
+      <dt>Tradeoffs</dt>
+      <dd>The scheduler requirement keeps reminder delivery inside the backend instead of pushing this responsibility to Flutter clients. This is more reliable for offline users, but it requires backend state to track which milestone notifications were already sent.</dd>
+      <dd>The smoke test remains manual because it verifies live SignalR behavior across two active sessions, which the current automated test setup does not cover end-to-end.</dd>
+
+      <dt>Open questions</dt>
+      <dd>None for navigation: typed IDs are enough.</dd>
+      <dd>None for the smoke-test merge gate: if all 6 scenarios pass, merge is allowed; if any scenario fails, open a bug ticket and do not merge.</dd>
+      <dd>Implementation question for the next code pass: choose the backend persistence shape for reminder send history, likely a small table keyed by card ID and reminder milestone so due-date changes can reset the card's reminder records safely.</dd>
+    </dl>
+    <p>Documentation update: created <code>Docs/Tests/notification-smoke-test.md</code> with 6 required pre-merge scenarios covering realtime create, read-all sync, tap navigation, stale-card tap handling, and realtime delete.</p>
+  </section>
+  <section>
+    <h2>2026-05-26 21:47:52 +07:00</h2>
+    <dl>
+      <dt>Design decisions</dt>
+      <dd>Scheduled due-date reminder is now implemented in the backend. <code>CardDueDateReminderHostedService</code> runs once when the API starts and then repeats every 15 minutes with server-local <code>DateTime.Now</code>.</dd>
+      <dd>Reminder send history is persisted in <code>CardDueDateReminderDeliveries</code> with a unique key on <code>(CardUId, Milestone)</code>. The scheduler records the milestone marker before creating notifications so the database unique index can prevent duplicate delivery under concurrent scheduler runs.</dd>
+      <dd>The three reminder windows are implemented as fixed milestones: <code>OneDayBefore</code> for due dates within 24 hours but more than 1 hour away, <code>OneHourBefore</code> for due dates within 1 hour but still in the future, and <code>DueNow</code> for due or overdue cards.</dd>
+      <dd>Cards are skipped when they are deleted, completed, or have no assignees. Completed status matches the app's existing status strings: <code>Completed</code>, <code>hoan_thanh</code>, and <code>hoàn thành</code>.</dd>
+      <dd>Changing or removing a card due date resets all reminder history for that card through both <code>UpdateDueDateAsync</code> and the broader <code>UpdateCard</code> path.</dd>
+      <dd><code>NotificationService.CreateManyInternalAsync</code> now keeps saved notification rows even if SignalR broadcast fails. This prevents the scheduler from treating a saved notification as failed only because realtime delivery failed.</dd>
+
+      <dt>Deviations</dt>
+      <dd>No Flutter code was changed for this pass because <code>NotificationTypeEnum.dueDateReminder</code> and typed card navigation already exist.</dd>
+      <dd>The scheduler does not send catch-up reminders for earlier milestones once the card is already in a later window. For example, an overdue card sends only <code>DueNow</code>, not backfilled 1-day or 1-hour reminders.</dd>
+
+      <dt>Tradeoffs</dt>
+      <dd>Using server-local time matches the existing backend date handling and the chosen plan, but it means due-date reminder behavior follows the API server timezone instead of each user's client timezone.</dd>
+      <dd>Delivery history is one row per card and milestone, not per assignee. This keeps the "once per card per milestone" rule simple, but if assignees are added after a milestone was sent, they will not receive that already-sent milestone until the due date changes and resets history.</dd>
+      <dd>The scheduler logs failures with <code>Console.WriteLine</code> to match the current service style. A production hardening pass should replace this with structured <code>ILogger</code>.</dd>
+
+      <dt>Open questions</dt>
+      <dd>Manual smoke test is still required before merge according to <code>Docs/Tests/notification-smoke-test.md</code>.</dd>
+      <dd>If product wants reminders to be per assignee rather than per card, the persistence key must change from <code>(CardUId, Milestone)</code> to include <code>RecipientId</code>.</dd>
+    </dl>
+    <p>Verification: baseline <code>dotnet test "C#\TodoAppAPI.Tests\TodoAppAPI.Tests.csproj"</code> passed 11/11 before changes. After implementation, <code>dotnet test "C#\TodoAppAPI.Tests\TodoAppAPI.Tests.csproj"</code> passed 19/19; <code>dotnet build "C#\TodoAppAPI\TodoAppAPI.csproj"</code> passed with 0 warnings and 0 errors; <code>git diff --check</code> exited 0 with only LF/CRLF warnings and no whitespace errors.</p>
+  </section>
+  <section>
+    <h2>2026-05-27 10:56:26 +07:00</h2>
+    <dl>
+      <dt>Design decisions</dt>
+      <dd>The third notification tab was changed from unread notifications to read notifications. Flutter now labels the tab <code>Đã đọc</code> and requests <code>tab=read</code>; the backend maps that value to <code>NotificationTab.Read</code> and filters rows where <code>Read == true</code>.</dd>
+      <dd>The backend still accepts the old <code>unread</code> tab value for compatibility, but the Flutter Activity page no longer sends it for the third tab.</dd>
+      <dd>Read-tab state handling was changed so realtime unread notifications are not inserted into the read tab, while read/read-all updates keep matching read items visible instead of removing them.</dd>
+      <dd>Delete remains optimistic in the UI: the row disappears immediately, a 3-second snackbar with inline <code>Hoàn tác</code> is shown, and the backend delete is confirmed when the snackbar closes if the user did not undo.</dd>
+
+      <dt>Deviations</dt>
+      <dd>No migration was added for the tab rename because tab selection is an API query/UI behavior change, not stored user state.</dd>
+      <dd>The old unread server filter was not removed. Keeping it is intentional so older clients or direct API callers do not break immediately.</dd>
+
+      <dt>Tradeoffs</dt>
+      <dd>The snackbar uses custom content with an inline button instead of <code>SnackBarAction</code>. This avoids the previous sticky behavior and guarantees the delete toast naturally times out after the configured 3 seconds unless the user taps undo.</dd>
+      <dd>Server delete is delayed until the undo window closes. This preserves undo behavior without adding a restore endpoint, but if the app process is killed during the 3-second window, the server delete may not be confirmed.</dd>
+
+      <dt>Open questions</dt>
+      <dd>None for the tab rename: the confirmed product behavior is <code>Tất cả</code>, <code>Gửi tôi</code>, and <code>Đã đọc</code>.</dd>
+      <dd>If product later wants delete to be durable immediately even when the app closes inside the undo window, add a backend restore/undelete endpoint and switch to server-delete-first undo.</dd>
+    </dl>
+    <p>Verification: <code>dotnet test "C#\TodoAppAPI.Tests\TodoAppAPI.Tests.csproj" --no-restore</code> passed 20/20; <code>dotnet build "C#\TodoAppAPI\TodoAppAPI.csproj"</code> passed with 0 warnings and 0 errors; <code>flutter test --no-pub test/notification_api_test.dart test/notification_cubit_test.dart test/notification_model_test.dart test/notification_realtime_service_test.dart test/activity_page_notification_flow_test.dart test/notification_navigation_service_test.dart -r expanded</code> passed 32/32; <code>dart analyze lib/features/activity lib/core/common_widgets/main_shell.dart lib/init_dependencies.dart</code> reported no issues; <code>git diff --check</code> exited 0 with only LF/CRLF warnings and no whitespace errors.</p>
+  </section>
+  <section>
+    <h2>2026-05-27 11:21:52 +07:00</h2>
+    <dl>
+      <dt>Design decisions</dt>
+      <dd><code>NotificationCubit.fetchNotifications</code> now treats refresh/tab-change requests as superseding requests. A newer tab request is allowed to start even while an older request is still in flight, and stale responses are ignored through a monotonically increasing fetch ID.</dd>
+      <dd>The delete snackbar remains undo-capable but is now visually smaller: floating behavior, max 320px width, reduced padding, compact inline undo button, and a 2-second duration.</dd>
+
+      <dt>Deviations</dt>
+      <dd>No backend code changed in this pass. The spinner issue was caused by Flutter request coordination, not by the backend <code>tab=read</code> query.</dd>
+
+      <dt>Tradeoffs</dt>
+      <dd>Latest-request-wins avoids the stuck spinner when users switch tabs quickly, but this keeps one shared notification list state for all tabs rather than caching each tab independently.</dd>
+      <dd>Server delete is still delayed until the undo window closes. The shorter 2-second timeout reduces how long the notification can remain only locally deleted before backend confirmation.</dd>
+
+      <dt>Open questions</dt>
+      <dd>If users later expect instant tab switching with cached results per tab, introduce separate per-tab state/cache instead of one shared cubit list.</dd>
+    </dl>
+    <p>Verification: new regression test <code>read-tab fetch is not dropped while another tab request is in flight</code> failed before the fix with final state <code>NotificationTab.all</code>, then passed after the fix. <code>flutter test --no-pub test/activity_page_notification_flow_test.dart -r expanded</code> passed 9/9; <code>flutter test --no-pub test/notification_api_test.dart test/notification_cubit_test.dart test/notification_model_test.dart test/notification_realtime_service_test.dart test/activity_page_notification_flow_test.dart test/notification_navigation_service_test.dart -r expanded</code> passed 33/33; <code>dart analyze lib/features/activity lib/core/common_widgets/main_shell.dart lib/init_dependencies.dart</code> reported no issues.</p>
+  </section>
+  <section>
+    <h2>2026-05-27 11:33:25 +07:00</h2>
+    <dl>
+      <dt>Design decisions</dt>
+      <dd>The <code>Gửi tôi</code> tab now means direct notifications that are still unread. Once a direct notification is marked read, it is removed from <code>Gửi tôi</code> and remains reachable through <code>Đã đọc</code>.</dd>
+      <dd>The backend <code>SentToMe</code> query now filters by both direct notification type and <code>Read == false</code>, so reloads do not bring read direct notifications back into <code>Gửi tôi</code>.</dd>
+      <dd>Flutter local state mirrors the server rule: <code>markAsRead</code>, <code>NotificationRead</code>, and <code>NotificationReadAll</code> remove read items from the current <code>Gửi tôi</code> list immediately.</dd>
+
+      <dt>Deviations</dt>
+      <dd>The old interpretation of <code>Gửi tôi</code> as all direct notifications, read or unread, is no longer used in the app UI.</dd>
+
+      <dt>Tradeoffs</dt>
+      <dd>The current design keeps <code>Gửi tôi</code> as an action/inbox-style tab and <code>Đã đọc</code> as history. This avoids duplicate read notifications across both tabs, but users must switch to <code>Đã đọc</code> to see direct notifications after reading them.</dd>
+
+      <dt>Open questions</dt>
+      <dd>None for the current request.</dd>
+    </dl>
+    <p>Verification: backend and Flutter RED tests failed before the fix because read direct notifications stayed in <code>SentToMe</code>. After the fix, <code>dotnet test "C#\TodoAppAPI.Tests\TodoAppAPI.Tests.csproj" --no-restore --output "D:\tmp\trellon-test-out"</code> passed 20/20; <code>dotnet build "C#\TodoAppAPI\TodoAppAPI.csproj" --no-restore --output "D:\tmp\trellon-build-out"</code> passed with 0 warnings and 0 errors; <code>flutter test --no-pub test/notification_api_test.dart test/notification_cubit_test.dart test/notification_model_test.dart test/notification_realtime_service_test.dart test/activity_page_notification_flow_test.dart test/notification_navigation_service_test.dart -r expanded</code> passed 37/37; <code>dart analyze lib/features/activity lib/core/common_widgets/main_shell.dart lib/init_dependencies.dart</code> reported no issues. Separate backend output paths were used because the running API process locked the default build output.</p>
+  </section>
+</body>
+</html>
