@@ -1,0 +1,81 @@
+import '../../../../routes.dart';
+import '../../../card/domain/entities/card_entity.dart';
+import '../../../workspace/domain/entities/workspace_entity.dart';
+import '../../domain/entities/notification_entity.dart';
+
+class NotificationNavigationTarget {
+  final String routeName;
+  final Object arguments;
+
+  const NotificationNavigationTarget({
+    required this.routeName,
+    required this.arguments,
+  });
+}
+
+class NotificationNavigationService {
+  final Future<List<CardEntity>> Function(String boardId) loadCardsByBoard;
+  final Future<List<WorkspaceEntity>> Function() loadWorkspaces;
+
+  const NotificationNavigationService({
+    required this.loadCardsByBoard,
+    required this.loadWorkspaces,
+  });
+
+  Future<NotificationNavigationTarget?> resolve(NotificationEntity notification) async {
+    final boardId = _blankToNull(notification.boardId);
+    final cardId = _blankToNull(notification.cardId);
+    final workspaceId = _blankToNull(notification.workspaceId);
+
+    if (boardId != null && cardId != null) {
+      final cards = await loadCardsByBoard(boardId);
+      final card = _firstOrNull(cards.where((c) => c.id == cardId));
+      if (card == null) return null;
+      return NotificationNavigationTarget(
+        routeName: AppRoutes.cardDetail,
+        arguments: {
+          'card': card,
+          'boardId': boardId,
+        },
+      );
+    }
+
+    if (boardId != null) {
+      return NotificationNavigationTarget(
+        routeName: AppRoutes.boardDetail,
+        arguments: {
+          'boardId': boardId,
+          'boardName': _fallbackTitle(notification),
+          'workspaceId': workspaceId,
+        },
+      );
+    }
+
+    if (workspaceId != null) {
+      final workspaces = await loadWorkspaces();
+      final workspace = _firstOrNull(workspaces.where((w) => w.id == workspaceId));
+      if (workspace == null) return null;
+      return NotificationNavigationTarget(
+        routeName: AppRoutes.workspaceMenu,
+        arguments: workspace,
+      );
+    }
+
+    return null;
+  }
+
+  static T? _firstOrNull<T>(Iterable<T> values) {
+    final iterator = values.iterator;
+    return iterator.moveNext() ? iterator.current : null;
+  }
+
+  static String? _blankToNull(String? value) {
+    if (value == null || value.trim().isEmpty) return null;
+    return value;
+  }
+
+  static String _fallbackTitle(NotificationEntity notification) {
+    final title = notification.title.trim();
+    return title.isNotEmpty ? title : 'Board';
+  }
+}

@@ -10,11 +10,19 @@ namespace TodoAppAPI.Service
     {
         private readonly TodoDbContext _dbContext;
         private readonly IAuthorizationService _authService;
+        private readonly INotificationService _notificationService;
+        private readonly ICardDueDateReminderService _dueDateReminderService;
 
-        public CardsService(TodoDbContext dbContext, IAuthorizationService authService)
+        public CardsService(
+            TodoDbContext dbContext,
+            IAuthorizationService authService,
+            INotificationService notificationService,
+            ICardDueDateReminderService dueDateReminderService)
         {
             _dbContext = dbContext;
             _authService = authService;
+            _notificationService = notificationService;
+            _dueDateReminderService = dueDateReminderService;
         }
         public async Task<bool> AddCard(Card card)
         {
@@ -102,6 +110,7 @@ namespace TodoAppAPI.Service
 
                 var existing = await _dbContext.Todos.FindAsync(card.CardUId);
                 if (existing == null) return false;
+                var dueDateChanged = existing.DueDate != card.DueDate;
                 existing.Title = card.Title;
                 existing.Description = card.Description;
                 existing.DueDate = card.DueDate;
@@ -110,6 +119,10 @@ namespace TodoAppAPI.Service
                 existing.BackgroundUrl = card.BackgroundUrl;
                 _dbContext.Update(existing);
                 await _dbContext.SaveChangesAsync();
+                if (dueDateChanged)
+                {
+                    await _dueDateReminderService.ResetReminderHistoryAsync(existing.CardUId);
+                }
                 return true;
             }
             catch (Exception ex)
@@ -300,12 +313,42 @@ namespace TodoAppAPI.Service
                 if (!await _authService.CanEditCardAsync(cardUId, userUId))
                     return false;
 
-                var card = await _dbContext.Todos.FirstOrDefaultAsync(c => c.CardUId == cardUId);
+                var card = await _dbContext.Todos
+                    .Include(c => c.List)
+                    .Include(c => c.CardMembers)
+                    .FirstOrDefaultAsync(c => c.CardUId == cardUId);
                 if (card == null) return false;
 
+                var dueDateChanged = card.DueDate != dueDate;
                 card.DueDate = dueDate;
                 _dbContext.Todos.Update(card);
                 await _dbContext.SaveChangesAsync();
+                if (dueDateChanged)
+                {
+                    await _dueDateReminderService.ResetReminderHistoryAsync(cardUId);
+                }
+
+                var assignees = card.CardMembers?
+                    .Where(cm => cm.UserUId != userUId)
+                    .Select(cm => cm.UserUId)
+                    .Distinct()
+                    .Select(recipientId => new NotificationDTO
+                    {
+                        RecipientId = recipientId,
+                        ActorId = userUId,
+                        Type = NotificationType.DueDateChanged,
+                        Title = "Card due date changed",
+                        Message = dueDate.HasValue
+                            ? $"Due date for card '{card.Title ?? card.CardUId}' is now {dueDate.Value:yyyy-MM-dd}."
+                            : $"Due date was removed from card '{card.Title ?? card.CardUId}'.",
+                        BoardId = card.List?.BoardUId,
+                        ListId = card.ListUId,
+                        CardId = cardUId,
+                        Link = $"/card-detail/{cardUId}"
+                    })
+                    .ToList() ?? new List<NotificationDTO>();
+
+                await _notificationService.TryCreateManyInternalAsync(assignees, "card due date update");
                 return true;
             }
             catch (Exception ex)

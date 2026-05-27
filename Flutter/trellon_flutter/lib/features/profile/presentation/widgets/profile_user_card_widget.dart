@@ -28,7 +28,7 @@ class ProfileUserCardWidget extends StatelessWidget {
               height: 48,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: AppColors.primary.withOpacity(0.15),
+                color: AppColors.primary.withValues(alpha: 0.15),
                 border: Border.all(color: AppColors.border),
               ),
               child: const Icon(Icons.account_circle, color: AppColors.primary, size: 32),

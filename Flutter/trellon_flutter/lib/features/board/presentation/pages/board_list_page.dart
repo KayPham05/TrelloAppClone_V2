@@ -13,7 +13,6 @@ import '../../domain/entities/board_entity.dart';
 
 // Modular widgets
 import '../widgets/board_list/recent_boards_section.dart';
-import '../widgets/board_list/workspace_section.dart';
 import '../widgets/board_list/board_list_hints.dart';
 import '../widgets/board_list/empty_team_workspace_hint.dart';
 import '../widgets/board_list/create_workspace_sheet.dart';

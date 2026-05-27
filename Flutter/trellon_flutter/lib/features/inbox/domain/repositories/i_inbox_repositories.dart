@@ -20,4 +20,4 @@ abstract class InboxRepositories {
   // Move-card support
   Future<void> moveCardToInbox({required String cardId, required String userUId, required int position});
   Future<void> reorderInboxCards({required String userUId, required List<Map<String, dynamic>> items});
-}
+}

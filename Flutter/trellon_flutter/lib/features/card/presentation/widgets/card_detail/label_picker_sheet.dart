@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../../../../core/constants/app_colors.dart';
 import '../../../domain/entities/card_entity.dart';
 
 class LabelPickerSheet extends StatelessWidget {
@@ -474,7 +473,7 @@ class _LabelPickerContentState extends State<_LabelPickerContent> {
           Switch(
             value: false,
             onChanged: (v) {},
-            activeColor: Colors.blue,
+            activeThumbColor: Colors.blue,
             inactiveThumbColor: Colors.black54,
             inactiveTrackColor: Colors.black12,
           ),

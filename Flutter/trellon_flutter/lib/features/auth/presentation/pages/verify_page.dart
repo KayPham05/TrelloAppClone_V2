@@ -32,7 +32,6 @@ class _VerifyViewState extends State<VerifyView> {
   final List<FocusNode> _focusNodes = List.generate(6, (_) => FocusNode());
 
   late String _email;
-  bool _emailLoaded = false;
 
   @override
   void didChangeDependencies() {
@@ -47,8 +46,12 @@ class _VerifyViewState extends State<VerifyView> {
 
   @override
   void dispose() {
-    for (final c in _controllers) c.dispose();
-    for (final f in _focusNodes) f.dispose();
+    for (final c in _controllers) {
+      c.dispose();
+    }
+    for (final f in _focusNodes) {
+      f.dispose();
+    }
     super.dispose();
   }
 

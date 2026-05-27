@@ -7,6 +7,8 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../main.dart';
+import '../../../init_dependencies.dart';
+import '../../../features/activity/presentation/cubit/notification_cubit.dart';
 
 class AuthInterceptor extends Interceptor {
   final Dio dio;
@@ -153,9 +155,11 @@ class AuthInterceptor extends Interceptor {
 
     await cookieJar.deleteAll();
 
+    serviceLocator<NotificationCubit>().reset();
+
     navigatorKey.currentState?.pushNamedAndRemoveUntil(
       '/login',
-          (route) => false,
+      (route) => false,
     );
   }
 }

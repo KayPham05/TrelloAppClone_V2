@@ -1,5 +1,4 @@
 import '../../../card/domain/entities/card_entity.dart';
-import 'list_model.dart';
 
 class ListModel {
   final String id;

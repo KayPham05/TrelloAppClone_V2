@@ -57,7 +57,7 @@ class ListColumnWidget extends StatelessWidget {
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
                     itemCount: list.cards.length,
-                    separatorBuilder: (_, __) => Container(height: 0.5, color: AppColors.border),
+                    separatorBuilder: (_, _) => Container(height: 0.5, color: AppColors.border),
                     itemBuilder: (ctx, i) => CardItemWidget(card: list.cards[i]),
                   ),
                 // Add card button

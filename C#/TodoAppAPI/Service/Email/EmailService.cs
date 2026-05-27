@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Configuration;
 using MailKit.Net.Smtp;
 using MailKit.Security;
 using MimeKit;
@@ -6,10 +7,22 @@ namespace TodoAppAPI.Service
 {
     public class EmailService
     {
+        private readonly IConfiguration _configuration;
+
+        public EmailService(IConfiguration configuration)
+        {
+            _configuration = configuration;
+        }
+
         public async Task SendVerificationEmailAsync(string toEmail, string code)
         {
+            var senderEmail = _configuration["EmailSettings:SenderEmail"];
+            var senderPassword = _configuration["EmailSettings:SenderPassword"];
+            var smtpServer = _configuration["EmailSettings:SmtpServer"];
+            var smtpPort = int.Parse(_configuration["EmailSettings:Port"] ?? "587");
+
             var message = new MimeMessage();
-            message.From.Add(new MailboxAddress("Trello Clone", "no-reply@yourdomain.com"));
+            message.From.Add(new MailboxAddress("Trello Clone", senderEmail));
             message.To.Add(MailboxAddress.Parse(toEmail));
             message.Subject = "Mã xác thực tài khoản Trello Clone";
 
@@ -23,16 +36,21 @@ namespace TodoAppAPI.Service
             };
 
             using var client = new SmtpClient();
-            await client.ConnectAsync("smtp.gmail.com", 587, SecureSocketOptions.StartTls);
-            await client.AuthenticateAsync("6451071030@st.utc2.edu.vn", "cbbr ghvb zocr mnbk");
+            await client.ConnectAsync(smtpServer, smtpPort, SecureSocketOptions.StartTls);
+            await client.AuthenticateAsync(senderEmail, senderPassword);
             await client.SendAsync(message);
             await client.DisconnectAsync(true);
         }
 
         public async Task SendTwoFactorOtpEmailAsync(string toEmail, string code)
         {
+            var senderEmail = _configuration["EmailSettings:SenderEmail"];
+            var senderPassword = _configuration["EmailSettings:SenderPassword"];
+            var smtpServer = _configuration["EmailSettings:SmtpServer"];
+            var smtpPort = int.Parse(_configuration["EmailSettings:Port"] ?? "587");
+
             var message = new MimeMessage();
-            message.From.Add(new MailboxAddress("Trello Clone", "no-reply@yourdomain.com"));
+            message.From.Add(new MailboxAddress("Trello Clone", senderEmail));
             message.To.Add(MailboxAddress.Parse(toEmail));
             message.Subject = "Xác thực đăng nhập 2FA – Trello Clone";
 
@@ -46,8 +64,8 @@ namespace TodoAppAPI.Service
             };
 
             using var client = new SmtpClient();
-            await client.ConnectAsync("smtp.gmail.com", 587, SecureSocketOptions.StartTls);
-            await client.AuthenticateAsync("6451071030@st.utc2.edu.vn", "cbbr ghvb zocr mnbk");
+            await client.ConnectAsync(smtpServer, smtpPort, SecureSocketOptions.StartTls);
+            await client.AuthenticateAsync(senderEmail, senderPassword);
             await client.SendAsync(message);
             await client.DisconnectAsync(true);
         }

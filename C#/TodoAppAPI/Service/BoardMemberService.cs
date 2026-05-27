@@ -9,11 +9,16 @@ namespace TodoAppAPI.Services
     {
         private readonly TodoDbContext _context;
         private readonly IAuthorizationService _authService;
+        private readonly INotificationService _notificationService;
 
-        public BoardMemberService(TodoDbContext context, IAuthorizationService authService)
+        public BoardMemberService(
+            TodoDbContext context,
+            IAuthorizationService authService,
+            INotificationService notificationService)
         {
             _context = context;
             _authService = authService;
+            _notificationService = notificationService;
         }
 
         public async Task<bool> AddBoardMemberAsync(string boardUId, string userUId, string requesterUId, string role)
@@ -49,6 +54,21 @@ namespace TodoAppAPI.Services
 
                 await _authService.LogPermissionChangeAsync(boardUId, "Board", userUId, requesterUId, "AddMember", null, role);
 
+                if (userUId != requesterUId)
+                {
+                    var board = await _context.Boards.AsNoTracking().FirstOrDefaultAsync(b => b.BoardUId == boardUId);
+                    await _notificationService.TryCreateInternalAsync(new NotificationDTO
+                    {
+                        RecipientId = userUId,
+                        ActorId = requesterUId,
+                        Type = NotificationType.BoardMemberAdded,
+                        Title = "You were added to a board",
+                        Message = $"You were added to board '{board?.BoardName ?? boardUId}' as {role}.",
+                        BoardId = boardUId,
+                        Link = $"/board-detail/{boardUId}"
+                    }, "board member add");
+                }
+
                 return true;
             }
             catch (Exception ex)
@@ -82,6 +102,21 @@ namespace TodoAppAPI.Services
 
                 await _authService.LogPermissionChangeAsync(boardUId, "Board", userUId, requesterUId, "UpdateRole", oldRole, newRole);
 
+                if (userUId != requesterUId)
+                {
+                    var board = await _context.Boards.AsNoTracking().FirstOrDefaultAsync(b => b.BoardUId == boardUId);
+                    await _notificationService.TryCreateInternalAsync(new NotificationDTO
+                    {
+                        RecipientId = userUId,
+                        ActorId = requesterUId,
+                        Type = NotificationType.BoardRoleChanged,
+                        Title = "Your board role changed",
+                        Message = $"Your role in board '{board?.BoardName ?? boardUId}' changed from {oldRole} to {newRole}.",
+                        BoardId = boardUId,
+                        Link = $"/board-detail/{boardUId}"
+                    }, "board member role update");
+                }
+
                 return true;
             }
             catch (Exception ex)
@@ -114,6 +149,21 @@ namespace TodoAppAPI.Services
                 await _context.SaveChangesAsync();
 
                 await _authService.LogPermissionChangeAsync(boardUId, "Board", userUId, requesterUId, "RemoveMember", oldRole, null);
+
+                if (userUId != requesterUId)
+                {
+                    var board = await _context.Boards.AsNoTracking().FirstOrDefaultAsync(b => b.BoardUId == boardUId);
+                    await _notificationService.TryCreateInternalAsync(new NotificationDTO
+                    {
+                        RecipientId = userUId,
+                        ActorId = requesterUId,
+                        Type = NotificationType.BoardMemberRemoved,
+                        Title = "You were removed from a board",
+                        Message = $"You were removed from board '{board?.BoardName ?? boardUId}'.",
+                        BoardId = boardUId,
+                        Link = $"/board-detail/{boardUId}"
+                    }, "board member remove");
+                }
 
                 return true;
             }

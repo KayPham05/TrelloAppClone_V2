@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../../core/constants/app_colors.dart';
 
 /// Top bar for the Board Detail page
 class BoardDetailTopBarWidget extends StatelessWidget {
