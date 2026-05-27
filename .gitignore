@@ -74,6 +74,24 @@ dist/
 *.7z
 
 # -----------------------------
+# .NET Build Artifacts
+# -----------------------------
+[Bb]in/
+[Oo]bj/
+
+# -----------------------------
+# Flutter / Dart Build Artifacts
+# -----------------------------
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+build/
+flutter_export_environment.sh
+GeneratedPluginRegistrant.referenced
+ephemeral/
+
+# -----------------------------
 # Local project notes
 # -----------------------------
 AGENT.md
