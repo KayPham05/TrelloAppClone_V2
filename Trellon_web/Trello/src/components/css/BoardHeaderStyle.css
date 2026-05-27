@@ -1,0 +1,80 @@
+.board-header-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(90deg, #3d2266, #5c1953);
+  padding: 12px 20px;
+  border-radius: 8px 8px 0 0;
+}
+.board-title{
+  color: white;
+}
+.board-header-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.board-title {
+  font-size: 1.3rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.icon-down {
+  color: #ccc;
+  cursor: pointer;
+}
+
+.board-header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.header-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: white;
+  padding: 6px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.header-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.header-share-btn {
+  background: #e2e8f0;
+  border: none;
+  color: #1d2125;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.header-share-btn:hover {
+  background: #fff;
+}
+
+/* ──────── FILTER PANEL ANIMATION ──────── */
+@keyframes filterSlideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-filterSlideDown {
+  animation: filterSlideDown 0.2s ease;
+}

@@ -42,6 +42,9 @@ namespace TodoAppAPI.Data
             modelBuilder.ApplyConfiguration(new User2FABackupCodeConfiguration());
             modelBuilder.ApplyConfiguration(new CardLabelConfiguration());
             modelBuilder.ApplyConfiguration(new PermissionAuditConfiguration());
+            modelBuilder.ApplyConfiguration(new WorkflowDesignConfiguration());
+            modelBuilder.ApplyConfiguration(new WorkflowNodeConfiguration());
+            modelBuilder.ApplyConfiguration(new WorkflowEdgeConfiguration());
             DatabaseSeeder.SeedData(modelBuilder);
         }
 
@@ -66,5 +69,8 @@ namespace TodoAppAPI.Data
         public DbSet<User2FABackupCode> User2FABackupCodes { get; set; }
         public DbSet<CardLabel> CardLabels { get; set; }
         public DbSet<PermissionAudit> PermissionAudits { get; set; }
+        public DbSet<WorkflowDesign> WorkflowDesigns { get; set; }
+        public DbSet<WorkflowNode> WorkflowNodes { get; set; }
+        public DbSet<WorkflowEdge> WorkflowEdges { get; set; }
     }
 }
