@@ -11,10 +11,14 @@ namespace TodoAppAPI.Controllers
     public class NotificationController : ControllerBase
     {
         private readonly INotificationService _notificationService;
+        private readonly IWebHostEnvironment _environment;
 
-        public NotificationController(INotificationService notificationService)
+        public NotificationController(
+            INotificationService notificationService,
+            IWebHostEnvironment environment)
         {
             _notificationService = notificationService;
+            _environment = environment;
         }
 
         private string? GetUserId()
@@ -22,19 +26,32 @@ namespace TodoAppAPI.Controllers
             return User.FindFirst("UserUId")?.Value;
         }
 
-        // Lấy danh sách thông báo gần đây của người dùng
         [HttpGet]
-        public async Task<IActionResult> GetNotifications([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+        public async Task<IActionResult> GetNotifications(
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 20,
+            [FromQuery] string tab = "all")
         {
             var userId = GetUserId();
             if (string.IsNullOrEmpty(userId))
                 return Unauthorized(new { message = "User not authenticated" });
 
-            var items = await _notificationService.GetNotificationsAsync(userId, page, pageSize);
-            return Ok(items);
+            var parsedTab = ParseTab(tab);
+            var pageDto = await _notificationService.GetNotificationsAsync(userId, parsedTab, page, pageSize);
+            return Ok(pageDto);
         }
 
-        // Đánh dấu 1 thông báo là đã đọc
+        [HttpGet("unread-count")]
+        public async Task<IActionResult> GetUnreadCount()
+        {
+            var userId = GetUserId();
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized(new { message = "User not authenticated" });
+
+            var count = await _notificationService.GetUnreadCountAsync(userId);
+            return Ok(new { unreadCount = count });
+        }
+
         [HttpPatch("{notiId}/read")]
         public async Task<IActionResult> MarkAsRead(string notiId)
         {
@@ -45,10 +62,10 @@ namespace TodoAppAPI.Controllers
             var result = await _notificationService.MarkAsReadAsync(userId, notiId);
             if (!result)
                 return NotFound(new { message = "Notification not found or unauthorized" });
+
             return Ok(new { message = "Marked as read" });
         }
 
-        // Đánh dấu tất cả thông báo là đã đọc cho người dùng
         [HttpPatch("read-all")]
         public async Task<IActionResult> MarkAllAsRead()
         {
@@ -57,24 +74,18 @@ namespace TodoAppAPI.Controllers
                 return Unauthorized(new { message = "User not authenticated" });
 
             var count = await _notificationService.MarkAllAsReadAsync(userId);
-            return Ok(new { message = $"Marked {count} notifications as read" });
+            return Ok(new { updatedCount = count });
         }
 
-        // Tạo thông báo mới
         [HttpPost]
-        public async Task<IActionResult> CreateNotification([FromBody] NotificationDTO dto)
+        public IActionResult CreateNotification()
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-            var noti = await _notificationService.CreateAsync(dto);
-            if (noti == null)
-                return StatusCode(500, new { message = "Failed to create notification" });
+            if (_environment.IsDevelopment())
+                return StatusCode(403, new { message = "Manual notification creation is disabled. Use server-side business events." });
 
-            return Ok(noti);
+            return NotFound();
         }
 
-
-        // Xóa thông báo
         [HttpDelete("{notiId}")]
         public async Task<IActionResult> DeleteNotification(string notiId)
         {
@@ -92,6 +103,19 @@ namespace TodoAppAPI.Controllers
             return Ok(new { message = "Notification deleted successfully" });
         }
 
-
+        private static NotificationTab ParseTab(string tab)
+        {
+            return tab.Trim().ToLowerInvariant() switch
+            {
+                "senttome" => NotificationTab.SentToMe,
+                "sent-to-me" => NotificationTab.SentToMe,
+                "me" => NotificationTab.SentToMe,
+                "unread" => NotificationTab.Unread,
+                "read" => NotificationTab.Read,
+                "readed" => NotificationTab.Read,
+                "da-doc" => NotificationTab.Read,
+                _ => NotificationTab.All
+            };
+        }
     }
 }
