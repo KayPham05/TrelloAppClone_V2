@@ -8,9 +8,16 @@ class NotificationRepositoryImpl implements INotificationRepository {
   NotificationRepositoryImpl({required this.remoteDataSource});
 
   @override
-  Future<List<NotificationEntity>> getNotifications({required int page, required int pageSize}) async {
-    final models = await remoteDataSource.getNotifications(page: page, pageSize: pageSize);
-    return models.map((model) => model.toEntity()).toList();
+  Future<NotificationPageEntity> getNotifications({
+    required int page,
+    required int pageSize,
+    required NotificationTab tab,
+  }) async {
+    return await remoteDataSource.getNotifications(
+      page: page,
+      pageSize: pageSize,
+      tab: tab.apiValue,
+    );
   }
 
   @override

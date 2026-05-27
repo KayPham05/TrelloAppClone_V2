@@ -15,6 +15,8 @@ class NotificationCubit extends Cubit<NotificationState> {
   int _currentPage = 1;
   final int _pageSize = 20;
   bool _isFetching = false;
+  int _activeFetchId = 0;
+  NotificationTab _currentTab = NotificationTab.all;
 
   NotificationCubit({
     required this.getNotificationsUseCase,
@@ -23,131 +25,204 @@ class NotificationCubit extends Cubit<NotificationState> {
     required this.deleteNotificationUseCase,
   }) : super(NotificationInitial());
 
-  Future<void> fetchNotifications({bool refresh = false}) async {
-    if (_isFetching) return;
+  Future<void> fetchNotifications({
+    bool refresh = false,
+    NotificationTab tab = NotificationTab.all,
+  }) async {
+    final tabChanged = tab != _currentTab;
+    final resetList = refresh || tabChanged;
+    if (_isFetching && !resetList) return;
 
-    if (refresh) {
+    if (!resetList && state is NotificationLoaded && (state as NotificationLoaded).hasReachedMax) {
+      return;
+    }
+
+    final fetchId = ++_activeFetchId;
+    final fetchPage = resetList ? 1 : _currentPage;
+    final fetchTab = tab;
+
+    if (resetList) {
       _currentPage = 1;
+      _currentTab = fetchTab;
       emit(NotificationLoading());
-    } else {
-      if (state is NotificationLoaded && (state as NotificationLoaded).hasReachedMax) {
-        return;
-      }
     }
 
     _isFetching = true;
 
     try {
-      final newNotifications = await getNotificationsUseCase.call(page: _currentPage, pageSize: _pageSize);
-      
-      _isFetching = false;
-      
-      if (refresh) {
-        emit(NotificationLoaded(
-          notifications: newNotifications,
-          hasReachedMax: newNotifications.length < _pageSize,
-        ));
-      } else {
-        final currentState = state;
-        if (currentState is NotificationLoaded) {
-          emit(currentState.copyWith(
-            notifications: List.of(currentState.notifications)..addAll(newNotifications),
-            hasReachedMax: newNotifications.length < _pageSize,
-          ));
-        } else {
-          emit(NotificationLoaded(
-            notifications: newNotifications,
-            hasReachedMax: newNotifications.length < _pageSize,
-          ));
-        }
-      }
+      final page = await getNotificationsUseCase.call(
+        page: fetchPage,
+        pageSize: _pageSize,
+        tab: fetchTab,
+      );
 
-      if (newNotifications.isNotEmpty) {
-        _currentPage++;
+      if (fetchId != _activeFetchId || fetchTab != _currentTab) return;
+
+      final currentState = state;
+      final notifications = currentState is NotificationLoaded && !resetList
+          ? _dedupeById([...currentState.notifications, ...page.items])
+          : page.items;
+
+      emit(NotificationLoaded(
+        notifications: notifications,
+        hasReachedMax: !page.hasMore,
+        unreadCount: page.unreadCount,
+        tab: fetchTab,
+      ));
+
+      if (page.items.isNotEmpty) {
+        _currentPage = fetchPage + 1;
       }
     } catch (e) {
-      _isFetching = false;
-      if (refresh) {
+      if (fetchId != _activeFetchId || fetchTab != _currentTab) return;
+      if (resetList || state is! NotificationLoaded) {
         emit(NotificationError(e.toString()));
+      }
+    } finally {
+      if (fetchId == _activeFetchId) {
+        _isFetching = false;
       }
     }
   }
 
   Future<void> markAsRead(String notiId) async {
     final currentState = state;
-    if (currentState is NotificationLoaded) {
-      try {
-        final success = await markAsReadUseCase.call(notiId: notiId);
-        if (success) {
-          final updatedNotifications = currentState.notifications.map((n) {
-            if (n.id == notiId) {
-              return NotificationEntity(
-                id: n.id,
-                recipientId: n.recipientId,
-                actorId: n.actorId,
-                actorName: n.actorName,
-                type: n.type,
-                title: n.title,
-                message: n.message,
-                link: n.link,
-                boardId: n.boardId,
-                cardId: n.cardId,
-                createdAt: n.createdAt,
-                isRead: true,
-              );
-            }
-            return n;
-          }).toList();
-          emit(currentState.copyWith(notifications: updatedNotifications));
+    if (currentState is! NotificationLoaded) return;
+
+    final notificationIndex = currentState.notifications.indexWhere((n) => n.id == notiId);
+    if (notificationIndex == -1) return;
+    final notification = currentState.notifications[notificationIndex];
+    if (notification.isRead) return;
+
+    try {
+      final success = await markAsReadUseCase.call(notiId: notiId);
+      if (!success) return;
+
+      final updatedNotifications = currentState.notifications.map((n) {
+        if (n.id == notiId) {
+          return n.copyWith(isRead: true, readAt: DateTime.now());
         }
-      } catch (e) {
-        // Log error silently or show a snackbar (but state remains the same for UI)
-      }
+        return n;
+      }).toList();
+      final visibleNotifications = currentState.tab == NotificationTab.sentToMe
+          ? updatedNotifications.where((n) => n.id != notiId).toList()
+          : updatedNotifications;
+
+      emit(currentState.copyWith(
+        notifications: visibleNotifications,
+        unreadCount: _decrementUnread(currentState.unreadCount),
+      ));
+    } catch (_) {
+      // Keep current UI state when the server update fails.
     }
   }
 
   Future<bool> markAllAsRead() async {
     final currentState = state;
-    if (currentState is NotificationLoaded) {
-      try {
-        final updatedCount = await markAllReadUseCase.call();
-        if (updatedCount >= 0) {
-          final updatedNotifications = currentState.notifications.map((n) {
-            return NotificationEntity(
-              id: n.id,
-              recipientId: n.recipientId,
-              actorId: n.actorId,
-              actorName: n.actorName,
-              type: n.type,
-              title: n.title,
-              message: n.message,
-              link: n.link,
-              boardId: n.boardId,
-              cardId: n.cardId,
-              createdAt: n.createdAt,
-              isRead: true,
-            );
-          }).toList();
-          emit(currentState.copyWith(notifications: updatedNotifications));
-          return true;
-        }
-      } catch (e) {
-        // Log error
-      }
+    if (currentState is! NotificationLoaded) return false;
+
+    try {
+      await markAllReadUseCase.call();
+      final updatedNotifications = currentState.tab == NotificationTab.sentToMe
+          ? <NotificationEntity>[]
+          : currentState.notifications
+              .map((n) => n.copyWith(isRead: true, readAt: DateTime.now()))
+              .toList();
+      emit(currentState.copyWith(
+        notifications: updatedNotifications,
+        unreadCount: 0,
+      ));
+      return true;
+    } catch (_) {
+      return false;
     }
-    return false;
   }
 
   int get unreadCount {
     final s = state;
     if (s is NotificationLoaded) {
-      return s.notifications.where((n) => !n.isRead).length;
+      return s.unreadCount;
     }
     return 0;
   }
 
+  void applyRealtimeNotification(NotificationEntity notification) {
+    final s = state;
+    if (s is! NotificationLoaded) return;
+    if (s.notifications.any((n) => n.id == notification.id)) return;
+
+    final unreadCount = notification.isRead ? s.unreadCount : s.unreadCount + 1;
+    final shouldDisplay = _matchesTab(notification, s.tab);
+    if (!shouldDisplay && unreadCount == s.unreadCount) return;
+    final notifications = shouldDisplay ? [notification, ...s.notifications] : s.notifications;
+
+    emit(s.copyWith(
+      notifications: notifications,
+      unreadCount: unreadCount,
+    ));
+  }
+
+  void applyUnreadCount(int unreadCount) {
+    final s = state;
+    if (s is NotificationLoaded) {
+      emit(s.copyWith(unreadCount: unreadCount));
+    }
+  }
+
+  void applyNotificationRead(String notiId) {
+    final s = state;
+    if (s is! NotificationLoaded) return;
+
+    final existingIndex = s.notifications.indexWhere((n) => n.id == notiId);
+    if (existingIndex == -1) return;
+    final existing = s.notifications[existingIndex];
+    final unreadCount = existing.isRead ? s.unreadCount : _decrementUnread(s.unreadCount);
+    if (s.tab == NotificationTab.sentToMe) {
+      emit(s.copyWith(
+        notifications: s.notifications.where((n) => n.id != notiId).toList(),
+        unreadCount: unreadCount,
+      ));
+      return;
+    }
+
+    final notifications = s.notifications
+        .map((n) => n.id == notiId ? n.copyWith(isRead: true, readAt: DateTime.now()) : n)
+        .toList();
+    emit(s.copyWith(
+      notifications: notifications,
+      unreadCount: unreadCount,
+    ));
+  }
+
+  void applyNotificationDeleted(String notiId) {
+    final s = state;
+    if (s is! NotificationLoaded) return;
+    emit(s.copyWith(
+      notifications: s.notifications.where((n) => n.id != notiId).toList(),
+    ));
+  }
+
+  void applyNotificationReadAll() {
+    final s = state;
+    if (s is! NotificationLoaded) return;
+
+    final notifications = s.tab == NotificationTab.sentToMe
+        ? <NotificationEntity>[]
+        : s.notifications
+            .map((n) => n.copyWith(isRead: true, readAt: DateTime.now()))
+            .toList();
+
+    emit(s.copyWith(
+      notifications: notifications,
+      unreadCount: 0,
+    ));
+  }
+
   void reset() {
     _currentPage = 1;
+    _activeFetchId++;
+    _isFetching = false;
+    _currentTab = NotificationTab.all;
     emit(NotificationInitial());
   }
 
@@ -158,7 +233,10 @@ class NotificationCubit extends Cubit<NotificationState> {
     if (idx == -1) return null;
     final entity = s.notifications[idx];
     final newList = List<NotificationEntity>.from(s.notifications)..removeAt(idx);
-    emit(s.copyWith(notifications: newList));
+    emit(s.copyWith(
+      notifications: newList,
+      unreadCount: entity.isRead ? s.unreadCount : _decrementUnread(s.unreadCount),
+    ));
     return (entity, idx);
   }
 
@@ -167,7 +245,10 @@ class NotificationCubit extends Cubit<NotificationState> {
     if (s is! NotificationLoaded) return;
     final newList = List<NotificationEntity>.from(s.notifications)
       ..insert(index.clamp(0, s.notifications.length), entity);
-    emit(s.copyWith(notifications: newList));
+    emit(s.copyWith(
+      notifications: newList,
+      unreadCount: entity.isRead ? s.unreadCount : s.unreadCount + 1,
+    ));
   }
 
   Future<bool> confirmDeleteNotification(String notiId, NotificationEntity entity, int index) async {
@@ -177,9 +258,46 @@ class NotificationCubit extends Cubit<NotificationState> {
         undoDeleteNotification(entity, index);
       }
       return success;
-    } catch (e) {
+    } catch (_) {
       undoDeleteNotification(entity, index);
       return false;
     }
   }
+
+  bool _matchesTab(NotificationEntity notification, NotificationTab tab) {
+    return switch (tab) {
+      NotificationTab.all => true,
+      NotificationTab.read => notification.isRead,
+      NotificationTab.sentToMe => !notification.isRead && _isSentToMe(notification.type),
+    };
+  }
+
+  bool _isSentToMe(NotificationTypeEnum type) {
+    return {
+      NotificationTypeEnum.assign,
+      NotificationTypeEnum.cardUnassigned,
+      NotificationTypeEnum.mention,
+      NotificationTypeEnum.boardMemberAdded,
+      NotificationTypeEnum.boardMemberRemoved,
+      NotificationTypeEnum.boardRoleChanged,
+      NotificationTypeEnum.workspaceMemberAdded,
+      NotificationTypeEnum.workspaceMemberRemoved,
+      NotificationTypeEnum.workspaceRoleChanged,
+      NotificationTypeEnum.dueDateChanged,
+      NotificationTypeEnum.dueDateReminder,
+    }.contains(type);
+  }
+
+  List<NotificationEntity> _dedupeById(List<NotificationEntity> notifications) {
+    final seen = <String>{};
+    final result = <NotificationEntity>[];
+    for (final notification in notifications) {
+      if (seen.add(notification.id)) {
+        result.add(notification);
+      }
+    }
+    return result;
+  }
+
+  int _decrementUnread(int current) => current > 0 ? current - 1 : 0;
 }

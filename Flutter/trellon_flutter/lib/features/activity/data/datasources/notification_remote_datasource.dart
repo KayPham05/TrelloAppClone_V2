@@ -3,7 +3,11 @@ import '../../../../core/constants/api_endpoints.dart';
 import '../models/notification_model.dart';
 
 abstract class NotificationRemoteDataSource {
-  Future<List<NotificationModel>> getNotifications({required int page, required int pageSize});
+  Future<NotificationPageModel> getNotifications({
+    required int page,
+    required int pageSize,
+    required String tab,
+  });
   Future<bool> markAsRead({required String notiId});
   Future<int> markAllAsRead();
   Future<bool> deleteNotification({required String notiId});
@@ -15,20 +19,29 @@ class NotificationRemoteDataSourceImpl implements NotificationRemoteDataSource {
   NotificationRemoteDataSourceImpl({required this.dio});
 
   @override
-  Future<List<NotificationModel>> getNotifications({required int page, required int pageSize}) async {
+  Future<NotificationPageModel> getNotifications({
+    required int page,
+    required int pageSize,
+    required String tab,
+  }) async {
     try {
-      final response = await dio.get('${ApiEndpoints.notifications}?page=$page&pageSize=$pageSize');
-      if (response.statusCode == 200) {
-        final List<dynamic> data = response.data;
-        return data.map((json) => NotificationModel.fromJson(json)).toList();
-      } else {
-        throw Exception("Failed to load notifications");
+      final response = await dio.get(
+        ApiEndpoints.notifications,
+        queryParameters: {
+          'page': page,
+          'pageSize': pageSize,
+          'tab': tab,
+        },
+      );
+      if (response.statusCode == 200 && response.data is Map) {
+        return NotificationPageModel.fromJson(Map<String, dynamic>.from(response.data as Map));
       }
+      throw Exception('Failed to load notifications');
     } on DioException catch (e) {
-      final message = e.response?.data?['message'] ?? e.message ?? "Lỗi kết nối";
+      final message = e.response?.data?['message'] ?? e.message ?? 'Connection error';
       throw Exception(message);
     } catch (e) {
-      throw Exception("Unexpected error: $e");
+      throw Exception('Unexpected error: $e');
     }
   }
 
@@ -37,8 +50,8 @@ class NotificationRemoteDataSourceImpl implements NotificationRemoteDataSource {
     try {
       final response = await dio.patch('${ApiEndpoints.notifications}/$notiId/read');
       return response.statusCode == 200;
-    } catch (e) {
-      throw Exception("Không thể đánh dấu đã đọc");
+    } catch (_) {
+      throw Exception('Could not mark notification as read');
     }
   }
 
@@ -46,12 +59,12 @@ class NotificationRemoteDataSourceImpl implements NotificationRemoteDataSource {
   Future<int> markAllAsRead() async {
     try {
       final response = await dio.patch('${ApiEndpoints.notifications}/read-all');
-      if (response.statusCode == 200) {
-        return 1;
+      if (response.statusCode == 200 && response.data is Map) {
+        return response.data['updatedCount'] ?? 0;
       }
       return 0;
-    } catch (e) {
-      throw Exception("Không thể đánh dấu tất cả đã đọc");
+    } catch (_) {
+      throw Exception('Could not mark all notifications as read');
     }
   }
 
@@ -60,8 +73,8 @@ class NotificationRemoteDataSourceImpl implements NotificationRemoteDataSource {
     try {
       final response = await dio.delete('${ApiEndpoints.notifications}/$notiId');
       return response.statusCode == 200;
-    } catch (e) {
-      throw Exception("Không thể xóa thông báo");
+    } catch (_) {
+      throw Exception('Could not delete notification');
     }
   }
 }

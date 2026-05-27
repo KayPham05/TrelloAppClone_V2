@@ -10,6 +10,7 @@ import '../../../features/profile/presentation/pages/profile_page.dart';
 import '../../../features/workspace/presentation/cubit/workspace_cubit.dart';
 import '../../../features/activity/presentation/cubit/notification_cubit.dart';
 import '../../../features/activity/presentation/cubit/notification_state.dart';
+import '../../../features/activity/data/services/notification_realtime_service.dart';
 import '../../../init_dependencies.dart';
 import '../../../core/data_sources/user_local_data_source.dart';
 import '../constants/app_colors.dart';
@@ -30,6 +31,8 @@ class _MainShellState extends State<MainShell>
       serviceLocator<WorkspaceCubit>();
   late final NotificationCubit _notificationCubit =
       serviceLocator<NotificationCubit>();
+  late final NotificationRealtimeService _notificationRealtimeService =
+      serviceLocator<NotificationRealtimeService>();
 
   // 5 tabs: Boards, Inbox, Planner, Notifications/Activity, Account
   final List<Widget> _pages = const [
@@ -80,7 +83,14 @@ class _MainShellState extends State<MainShell>
     if (uid != null && uid.isNotEmpty) {
       _workspaceCubit.loadWorkspaces();
       _notificationCubit.fetchNotifications(refresh: true);
+      await _notificationRealtimeService.start();
     }
+  }
+
+  @override
+  void dispose() {
+    _notificationRealtimeService.stop();
+    super.dispose();
   }
 
   void _setSystemUI() {

@@ -51,6 +51,7 @@ import 'features/workspace/presentation/cubit/workspace_cubit.dart';
 import 'features/card/domain/usecases/update_list_uid_usecase.dart';
 import 'features/activity/data/datasources/notification_remote_datasource.dart';
 import 'features/activity/data/repositories/notification_repository_impl.dart';
+import 'features/activity/data/services/notification_realtime_service.dart';
 import 'features/activity/domain/repositories/i_notification_repository.dart';
 import 'features/activity/domain/usecases/delete_notification_usecase.dart';
 import 'features/activity/domain/usecases/get_notifications_usecase.dart';
@@ -255,5 +256,9 @@ void _initNotification() {
     markAsReadUseCase: serviceLocator(),
     markAllReadUseCase: serviceLocator(),
     deleteNotificationUseCase: serviceLocator(),
+  ));
+
+  serviceLocator.registerLazySingleton(() => NotificationRealtimeService(
+    cubit: serviceLocator<NotificationCubit>(),
   ));
 }

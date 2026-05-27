@@ -6,7 +6,11 @@ class GetNotificationsUseCase {
 
   GetNotificationsUseCase(this.repository);
 
-  Future<List<NotificationEntity>> call({required int page, required int pageSize}) async {
-    return await repository.getNotifications(page: page, pageSize: pageSize);
+  Future<NotificationPageEntity> call({
+    required int page,
+    required int pageSize,
+    required NotificationTab tab,
+  }) async {
+    return await repository.getNotifications(page: page, pageSize: pageSize, tab: tab);
   }
 }
