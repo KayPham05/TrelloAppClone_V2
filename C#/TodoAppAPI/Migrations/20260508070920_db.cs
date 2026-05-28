@@ -8,11 +8,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace TodoAppAPI.Migrations
 {
     /// <inheritdoc />
-<<<<<<<< HEAD:C#/TodoAppAPI/Migrations/20260422021756_initDB.cs
-    public partial class initDB : Migration
-========
-    public partial class InitDB : Migration
->>>>>>>> main:C#/TodoAppAPI/Migrations/20260427125136_InitDB.cs
+    public partial class db : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
