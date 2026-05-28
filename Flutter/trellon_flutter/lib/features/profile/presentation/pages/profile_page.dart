@@ -22,7 +22,6 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-
   Future<Map<String, String>> _getUserInfo() async {
     final prefs = await SharedPreferences.getInstance();
     final nameStr = prefs.getString('user_name');
@@ -30,9 +29,11 @@ class _ProfilePageState extends State<ProfilePage> {
     final avatarStr = prefs.getString('user_avatar');
 
     final name = (nameStr == null || nameStr.isEmpty) ? 'Khách' : nameStr;
-    final email = (emailStr == null || emailStr.isEmpty) ? 'Chưa cập nhật' : emailStr;
+    final email = (emailStr == null || emailStr.isEmpty)
+        ? 'Chưa cập nhật'
+        : emailStr;
     final avatar = avatarStr ?? '';
-    
+
     return {'name': name, 'email': email, 'avatar': avatar};
   }
 
@@ -62,7 +63,8 @@ class _ProfilePageState extends State<ProfilePage> {
                         }
 
                         final name = snapshot.data?['name'] ?? 'Khách';
-                        final email = snapshot.data?['email'] ?? 'Chưa cập nhật';
+                        final email =
+                            snapshot.data?['email'] ?? 'Chưa cập nhật';
                         final avatar = snapshot.data?['avatar'] ?? '';
 
                         return _buildProfileHeader(name, email, avatar);
@@ -123,7 +125,9 @@ class _ProfilePageState extends State<ProfilePage> {
     if (avatarUrl.isNotEmpty) {
       avatarImage = CachedNetworkImageProvider(avatarUrl);
     } else {
-      avatarImage = const CachedNetworkImageProvider('https://i.pravatar.cc/150?u=jordan');
+      avatarImage = const CachedNetworkImageProvider(
+        'https://i.pravatar.cc/150?u=jordan',
+      );
     }
 
     return Column(
@@ -140,10 +144,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   color: AppColors.primaryContainer.withValues(alpha: 0.1),
                   width: 4,
                 ),
-                image: DecorationImage(
-                  image: avatarImage,
-                  fit: BoxFit.cover,
-                ),
+                image: DecorationImage(image: avatarImage, fit: BoxFit.cover),
               ),
             ),
             Positioned(
@@ -374,29 +375,6 @@ class _ProfilePageState extends State<ProfilePage> {
                   _showLogoutDialog(context);
                 },
               ),
-              _buildDivider(),
-              _buildSettingItem(
-                Icons.logout_rounded,
-                'Đăng xuất',
-                null,
-                const Color(0xFFFFDAD6).withValues(alpha: 0.2),
-                AppColors.error,
-                showChevron: false,
-                onTap: () async {
-                  final userId = await serviceLocator<UserLocalDataSource>().getUserId();
-                  if (userId != null) {
-                    try {
-                      await serviceLocator<AuthRepository>().logout(userUId: userId);
-                    } catch (_) {}
-                  }
-                  await serviceLocator<UserLocalDataSource>().clearUserData();
-                  await serviceLocator<CookieJar>().deleteAll();
-                  serviceLocator<NotificationCubit>().reset();
-                  if (context.mounted) {
-                    Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
-                  }
-                },
-              ),
             ],
           ),
         ),
@@ -552,7 +530,9 @@ class _ProfilePageState extends State<ProfilePage> {
             'Bạn có chắc chắn muốn đăng xuất?',
             style: GoogleFonts.inter(),
           ),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(),
@@ -576,7 +556,8 @@ class _ProfilePageState extends State<ProfilePage> {
                 showDialog(
                   context: context,
                   barrierDismissible: false,
-                  builder: (_) => const Center(child: CircularProgressIndicator()),
+                  builder: (_) =>
+                      const Center(child: CircularProgressIndicator()),
                 );
 
                 // 1. Gọi API Logout (Có thể fail nếu rớt mạng, không sao cả)
@@ -584,7 +565,9 @@ class _ProfilePageState extends State<ProfilePage> {
                   final prefs = await SharedPreferences.getInstance();
                   final userUId = prefs.getString('user_uid');
                   const secureStorage = FlutterSecureStorage();
-                  final refreshToken = await secureStorage.read(key: 'refresh_token');
+                  final refreshToken = await secureStorage.read(
+                    key: 'refresh_token',
+                  );
                   if (userUId != null && userUId.isNotEmpty) {
                     final dio = serviceLocator<Dio>();
                     await dio.post(
@@ -620,15 +603,18 @@ class _ProfilePageState extends State<ProfilePage> {
                 // 5. Điều hướng về Login
                 if (context.mounted) {
                   // Dùng rootNavigator để xóa sạch cả loading dialog nếu có và các trang trước đó
-                  Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil(
-                    AppRoutes.login,
-                    (route) => false,
-                  );
+                  Navigator.of(
+                    context,
+                    rootNavigator: true,
+                  ).pushNamedAndRemoveUntil(AppRoutes.login, (route) => false);
                 }
               },
               child: Text(
                 'Đăng xuất',
-                style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w600),
+                style: GoogleFonts.inter(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
           ],
