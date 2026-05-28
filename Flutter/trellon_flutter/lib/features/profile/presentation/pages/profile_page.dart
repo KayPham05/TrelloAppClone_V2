@@ -17,6 +17,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../workspace/presentation/cubit/workspace_cubit.dart';
 import '../../../workspace/domain/entities/workspace_entity.dart';
 import '../../../board/presentation/widgets/board_list/create_workspace_sheet.dart';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
+import 'package:image_cropper/image_cropper.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -26,6 +29,8 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
+  bool _isUploadingAvatar = false;
+
   Future<Map<String, String>> _getUserInfo() async {
     final prefs = await SharedPreferences.getInstance();
     final nameStr = prefs.getString('user_name');
@@ -123,6 +128,81 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+  // ── Thêm Avatar Upload vào Header ─────────────────────────────────────────
+  Future<void> _pickAndUploadAvatar() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+
+    if (pickedFile != null) {
+      final croppedFile = await ImageCropper().cropImage(
+        sourcePath: pickedFile.path,
+        aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1),
+        uiSettings: [
+          AndroidUiSettings(
+            toolbarTitle: 'Cắt ảnh',
+            toolbarColor: AppColors.primary,
+            toolbarWidgetColor: Colors.white,
+            initAspectRatio: CropAspectRatioPreset.square,
+            lockAspectRatio: true,
+          ),
+          IOSUiSettings(
+            title: 'Cắt ảnh',
+            aspectRatioLockEnabled: true,
+            resetAspectRatioEnabled: false,
+          ),
+        ],
+      );
+
+      if (croppedFile != null) {
+        setState(() {
+          _isUploadingAvatar = true;
+        });
+
+        try {
+          final dio = serviceLocator<Dio>();
+          String fileName = croppedFile.path.split('/').last;
+
+          FormData formData = FormData.fromMap({
+            'avatar': await MultipartFile.fromFile(
+              croppedFile.path,
+              filename: fileName,
+            ),
+          });
+
+          final response = await dio.put(
+            ApiEndpoints.updateProfile,
+            data: formData,
+          );
+
+          if (response.statusCode == 200) {
+            final data = response.data;
+            final prefs = await SharedPreferences.getInstance();
+            if (data['avatarUrl'] != null) {
+              await prefs.setString('user_avatar', data['avatarUrl']);
+            }
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Cập nhật ảnh đại diện thành công')),
+              );
+            }
+          }
+        } catch (e) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Lỗi cập nhật ảnh: ${e.toString()}')),
+            );
+          }
+        } finally {
+          if (mounted) {
+            setState(() {
+              _isUploadingAvatar = false;
+            });
+          }
+        }
+      }
+    }
+  }
+
   // BỎ ASYNC VÀ FUTURE Ở ĐÂY, TRUYỀN THAM SỐ VÀO
   Widget _buildProfileHeader(String name, String email, String avatarUrl) {
     ImageProvider avatarImage;
@@ -134,11 +214,13 @@ class _ProfilePageState extends State<ProfilePage> {
       );
     }
 
-    return Column(
-      children: [
-        Stack(
-          clipBehavior: Clip.none,
-          children: [
+    return GestureDetector(
+      onTap: _pickAndUploadAvatar,
+      child: Column(
+        children: [
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
             Container(
               width: 96,
               height: 96,
@@ -168,16 +250,34 @@ class _ProfilePageState extends State<ProfilePage> {
                     ),
                   ],
                 ),
-                child: const Icon(
-                  Icons.edit_rounded,
-                  color: Colors.white,
-                  size: 14,
-                ),
+                child: _isUploadingAvatar 
+                  ? const SizedBox(
+                      width: 14,
+                      height: 14,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    )
+                  : const Icon(
+                      Icons.camera_alt_rounded,
+                      color: Colors.white,
+                      size: 14,
+                    ),
               ),
             ),
           ],
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
+        Text(
+          'Chạm để đổi ảnh đại diện',
+          style: GoogleFonts.inter(
+            fontSize: 12,
+            color: AppColors.primary,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 8),
         Text(
           name, // HIỂN THỊ TÊN TỪ THAM SỐ
           style: GoogleFonts.inter(
@@ -197,6 +297,7 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
         ),
       ],
+      ),
     );
   }
 
