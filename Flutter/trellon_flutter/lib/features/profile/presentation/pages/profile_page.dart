@@ -13,6 +13,10 @@ import '../../../../core/constants/api_endpoints.dart';
 import '../../../activity/presentation/cubit/notification_cubit.dart';
 import '../../../../core/data_sources/user_local_data_source.dart';
 import '../../../../features/auth/domain/repositories/i_auth_repository.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../workspace/presentation/cubit/workspace_cubit.dart';
+import '../../../workspace/domain/entities/workspace_entity.dart';
+import '../../../board/presentation/widgets/board_list/create_workspace_sheet.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -198,43 +202,73 @@ class _ProfilePageState extends State<ProfilePage> {
 
   // ── Groups ───────────────────────────────────────────────────────────────
 
+  void _showCreateWorkspaceSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => BlocProvider.value(
+        value: context.read<WorkspaceCubit>(),
+        child: const CreateWorkspaceSheet(),
+      ),
+    );
+  }
+
   Widget _buildWorkspacesGroup(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionTitle('KHÔNG GIAN LÀM VIỆC'),
+        _buildSectionTitle('KHÔNG GIAN LÀM VIỆC (GẦN ĐÂY)'),
         const SizedBox(height: 12),
         Container(
           decoration: BoxDecoration(
             color: AppColors.surfaceContainerLowest,
             borderRadius: BorderRadius.circular(12),
           ),
-          child: Column(
-            children: [
-              _buildWorkspaceItem(
-                'Thiết kế & UI/UX',
-                'Đang hoạt động',
-                const Color(0xFF2563EB),
-                true,
-                true,
-                () {
-                  Navigator.pushNamed(context, AppRoutes.workspaceMenu);
-                },
-              ),
-              _buildDivider(),
-              _buildWorkspaceItem(
-                'Engineering Workspace',
-                'Chuyển không gian',
-                const Color(0xFF059669),
-                false,
-                true,
-                () {
-                  Navigator.pushNamed(context, '/workspace-menu');
-                },
-              ),
-              _buildDivider(),
-              _buildAddItem('Tạo không gian làm việc mới'),
-            ],
+          child: BlocBuilder<WorkspaceCubit, WorkspaceState>(
+            builder: (context, state) {
+              if (state is WorkspaceLoading) {
+                return const Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: Center(child: CircularProgressIndicator()),
+                );
+              }
+
+              if (state is WorkspaceLoaded) {
+                final allWorkspaces = [...state.personal, ...state.team];
+                // Limit to top 3 workspaces
+                final topWorkspaces = allWorkspaces.take(3).toList();
+
+                return Column(
+                  children: [
+                    for (int i = 0; i < topWorkspaces.length; i++) ...[
+                      _buildWorkspaceItem(
+                        topWorkspaces[i].name,
+                        topWorkspaces[i].type == WorkspaceType.personal ? 'Cá nhân' : 'Nhóm',
+                        AppColors.primary,
+                        false,
+                        true,
+                        () {
+                          Navigator.pushNamed(
+                            context,
+                            AppRoutes.workspaceMenu,
+                            arguments: topWorkspaces[i],
+                          );
+                        },
+                      ),
+                      _buildDivider(),
+                    ],
+                    _buildAddItem('Tạo không gian làm việc mới', onTap: _showCreateWorkspaceSheet),
+                  ],
+                );
+              }
+
+              return Column(
+                children: [
+                  _buildAddItem('Tạo không gian làm việc mới', onTap: _showCreateWorkspaceSheet),
+                ],
+              );
+            },
           ),
         ),
       ],
@@ -478,9 +512,9 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _buildAddItem(String text) {
+  Widget _buildAddItem(String text, {VoidCallback? onTap}) {
     return InkWell(
-      onTap: () {},
+      onTap: onTap ?? () {},
       borderRadius: const BorderRadius.vertical(bottom: Radius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(16),
