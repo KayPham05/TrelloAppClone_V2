@@ -8,11 +8,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace TodoAppAPI.Migrations
 {
     /// <inheritdoc />
-<<<<<<<< HEAD:C#/TodoAppAPI/Migrations/20260508070920_db.cs
     public partial class db : Migration
-========
-    public partial class InitDb : Migration
->>>>>>>> main:C#/TodoAppAPI/Migrations/20260506024347_InitDb.cs
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -386,6 +382,27 @@ namespace TodoAppAPI.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "CardDueDateReminderDeliveries",
+                columns: table => new
+                {
+                    ReminderDeliveryId = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: false),
+                    CardUId = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: false),
+                    Milestone = table.Column<int>(type: "int", nullable: false),
+                    DueDateSnapshot = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    SentAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_CardDueDateReminderDeliveries", x => x.ReminderDeliveryId);
+                    table.ForeignKey(
+                        name: "FK_CardDueDateReminderDeliveries_Cards_CardUId",
+                        column: x => x.CardUId,
+                        principalTable: "Cards",
+                        principalColumn: "CardUId",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "CardLabels",
                 columns: table => new
                 {
@@ -510,7 +527,8 @@ namespace TodoAppAPI.Migrations
                 {
                     UserUId = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: false),
                     CardUId = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: false),
-                    AddedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETDATE()")
+                    AddedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETDATE()"),
+                    Position = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -568,6 +586,12 @@ namespace TodoAppAPI.Migrations
                 name: "IX_Boards_WorkspaceUId",
                 table: "Boards",
                 column: "WorkspaceUId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_CardDueDateReminderDeliveries_CardUId_Milestone",
+                table: "CardDueDateReminderDeliveries",
+                columns: new[] { "CardUId", "Milestone" },
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_CardLabels_CardUId",
@@ -696,6 +720,9 @@ namespace TodoAppAPI.Migrations
 
             migrationBuilder.DropTable(
                 name: "BoardMembers");
+
+            migrationBuilder.DropTable(
+                name: "CardDueDateReminderDeliveries");
 
             migrationBuilder.DropTable(
                 name: "CardLabels");

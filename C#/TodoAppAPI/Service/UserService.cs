@@ -1,4 +1,4 @@
-﻿using System.Net.WebSockets;
+using System.Net.WebSockets;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
@@ -86,12 +86,30 @@ namespace TodoAppAPI.Service
 
 
             _context.Users.Update(user);
+
+            var existingOtp = await _context.UserOtps.FindAsync(user.UserUId);
+            if (existingOtp != null) _context.UserOtps.Remove(existingOtp);
+
+            await _context.UserOtps.AddAsync(new UserOtp
+            {
+                UserUId = user.UserUId,
+                OtpCode = code,
+                ExpiresAt = DateTime.UtcNow.AddMinutes(5)
+            });
+
             await _context.SaveChangesAsync();
 
             // Gửi mail
-            await _emailService.SendVerificationEmailAsync(email, code);
+            try 
+            {
+                await _emailService.SendVerificationEmailAsync(email, code);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ResendVerificationCodeAsync] Error sending email: {ex.Message}");
+            }
 
-            return " Mã xác thực mới đã được gửi tới email của bạn (có hiệu lực trong 10 phút).";
+            return " Mã xác thực mới đã được gửi tới email của bạn (có hiệu lực trong 5 phút).";
         }
 
         public async Task<bool> AddBioByUserUId(string userUId, string BIO)

@@ -43,8 +43,27 @@ namespace TodoAppAPI.Service
             };
 
             _context.Users.Add(user);
+
+            var existingOtp = await _context.UserOtps.FindAsync(user.UserUId);
+            if (existingOtp != null) _context.UserOtps.Remove(existingOtp);
+
+            await _context.UserOtps.AddAsync(new UserOtp
+            {
+                UserUId = user.UserUId,
+                OtpCode = code,
+                ExpiresAt = DateTime.UtcNow.AddMinutes(5)
+            });
+
             await _context.SaveChangesAsync();
-            await _emailService.SendVerificationEmailAsync(email, code);
+            
+            try 
+            {
+                await _emailService.SendVerificationEmailAsync(email, code);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[Register] Error sending email: {ex.Message}");
+            }
 
             return new AuthResponse
             {
@@ -349,8 +368,26 @@ namespace TodoAppAPI.Service
                 user.VerificationTokenHash = BCrypt.Net.BCrypt.HashPassword(code);
                 user.VerificationTokenExpiresAt = now.AddMinutes(5);
                 
+                var existingOtp = await _context.UserOtps.FindAsync(user.UserUId);
+                if (existingOtp != null) _context.UserOtps.Remove(existingOtp);
+
+                await _context.UserOtps.AddAsync(new UserOtp
+                {
+                    UserUId = user.UserUId,
+                    OtpCode = code,
+                    ExpiresAt = now.AddMinutes(5)
+                });
+
                 await _context.SaveChangesAsync();
-                await _emailService.SendVerificationEmailAsync(email, code);
+                
+                try
+                {
+                    await _emailService.SendVerificationEmailAsync(email, code);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[CheckAndResend] Error sending email: {ex.Message}");
+                }
 
                 return new AuthResponse
                 {
