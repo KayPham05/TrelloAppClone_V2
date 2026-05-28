@@ -27,4 +27,7 @@ class ApiEndpoints {
   static const String verifyOtp = '/auth/verify-otp';
   static const String changePassword = 'users/change-password';
   static const String updateProfile = 'users/update-profile';
+  static const String checkChangeEmail = 'users/check-change-email';
+  static const String sendChangeEmailOtp = 'users/send-change-email-otp';
+  static const String confirmChangeEmail = 'users/confirm-change-email';
 }

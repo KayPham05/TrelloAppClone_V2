@@ -6,26 +6,26 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../init_dependencies.dart';
 import '../cubit/verify_cubit.dart';
 
-class VerifyPage extends StatelessWidget {
-  const VerifyPage({super.key});
+class LockedAccountPage extends StatelessWidget {
+  const LockedAccountPage({super.key});
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (context) => serviceLocator<VerifyCubit>(),
-      child: const VerifyView(),
+      child: const LockedAccountView(),
     );
   }
 }
 
-class VerifyView extends StatefulWidget {
-  const VerifyView({super.key});
+class LockedAccountView extends StatefulWidget {
+  const LockedAccountView({super.key});
 
   @override
-  State<VerifyView> createState() => _VerifyViewState();
+  State<LockedAccountView> createState() => _LockedAccountViewState();
 }
 
-class _VerifyViewState extends State<VerifyView> {
+class _LockedAccountViewState extends State<LockedAccountView> {
   // Dùng List controller & focusNode riêng biệt cho từng ô OTP
   final List<TextEditingController> _controllers =
       List.generate(6, (_) => TextEditingController());
@@ -117,8 +117,8 @@ class _VerifyViewState extends State<VerifyView> {
       child: Column(
         children: [
           Text(
-            'Xác minh / Mở khóa Email',
-            style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.bold),
+            'Tài khoản đã bị khóa',
+            style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.error),
           ),
           const SizedBox(height: 16),
           Text(
@@ -159,7 +159,7 @@ class _VerifyViewState extends State<VerifyView> {
                             strokeWidth: 2,
                           ),
                         )
-                      : const Text('Xác minh'),
+                      : const Text('Mở khóa tài khoản'),
                 ),
               );
             },

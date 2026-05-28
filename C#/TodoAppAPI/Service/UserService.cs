@@ -17,12 +17,15 @@ namespace TodoAppAPI.Service
         private readonly IJwtService _jwtService;
         private readonly ILogger<UserService> _logger;
 
-        public UserService(TodoDbContext context, EmailService emailService, IJwtService jwtService, ILogger<UserService> logger)
+        private readonly IMemoryCache _memoryCache;
+
+        public UserService(TodoDbContext context, EmailService emailService, IJwtService jwtService, ILogger<UserService> logger, IMemoryCache memoryCache)
         {
             _context = context;
             _emailService = emailService;
             _jwtService = jwtService;
             _logger = logger;
+            _memoryCache = memoryCache;
         }
 
         public async Task<IEnumerable<User>> GetAllAsync()
@@ -74,7 +77,7 @@ namespace TodoAppAPI.Service
             if (user == null)
                 throw new Exception("Không tìm thấy tài khoản.");
 
-            if (user.IsEmailVerified)
+            if (user.IsEmailVerified && user.StatusAccount != "Locked")
                 return "Tài khoản này đã được xác thực trước đó.";
 
             //  Sinh mã xác thực mới
@@ -203,12 +206,11 @@ namespace TodoAppAPI.Service
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
             if (user == null) return new AuthResponse { Message = "Account not found!" };
 
-            if (user.IsEmailVerified) return new AuthResponse { Message = "Email already verified!" };
+            if (user.IsEmailVerified && user.StatusAccount != "Locked") return new AuthResponse { Message = "Email already verified!" };
 
             var now = DateTime.UtcNow;
 
-            // Nếu chưa có thời gian hết hạn hoặc đã hết hạn
-            if (user.VerificationTokenExpiresAt == null || user.VerificationTokenExpiresAt <= now)
+            if (user.VerificationTokenExpiresAt == null || now >= user.VerificationTokenExpiresAt.Value.AddMinutes(-4.5))
             {
                 await ResendVerificationCodeAsync(email);
                 return new AuthResponse
@@ -216,17 +218,19 @@ namespace TodoAppAPI.Service
                     Message = "Mã xác thực đã hết hạn và đã được gửi lại tự động.",
                     Email = email,
                     requiresVerification = true,
-                    ExpiresInSeconds = 300 // Thường là 5 phút trong ResendVerificationCodeAsync
+                    ExpiresInSeconds = 30
                 };
             }
 
-            var remaining = (int)(user.VerificationTokenExpiresAt.Value - now).TotalSeconds;
+            var nextAllowedResendTime = user.VerificationTokenExpiresAt.Value.AddMinutes(-4.5);
+            var remainingWait = (int)(nextAllowedResendTime - now).TotalSeconds;
+
             return new AuthResponse
             {
                 Message = "Mã xác thực vẫn còn hiệu lực.",
                 Email = email,
                 requiresVerification = true,
-                ExpiresInSeconds = remaining
+                ExpiresInSeconds = remainingWait > 0 ? remainingWait : 0
             };
         }
 
@@ -301,18 +305,15 @@ namespace TodoAppAPI.Service
             await _context.SaveChangesAsync();
 
             // 7. Email thông báo (Fire-and-forget – không block HTTP request)
-            _ = Task.Run(async () =>
+            try
             {
-                try
-                {
-                    await _emailService.SendChangePasswordNotificationEmailAsync(user.Email);
-                    _logger.LogInformation($"[ChangePassword] Notification email sent to: {user.Email}");
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError($"[ChangePassword] Failed to send notification email: {ex.Message}");
-                }
-            });
+                await _emailService.SendChangePasswordNotificationEmailAsync(user.Email);
+                _logger.LogInformation($"[ChangePassword] Notification email sent to: {user.Email}");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"[ChangePassword] Failed to send notification email: {ex.Message}");
+            }
 
             _logger.LogInformation($"[ChangePassword] Password changed successfully for user: {userUId}");
 
@@ -326,6 +327,130 @@ namespace TodoAppAPI.Service
                 UserName = user.UserName,
                 IsTwoFactorEnabled = user.IsTwoFactorEnabled
             };
+        }
+        public async Task<object> CheckChangeEmailAsync(string userUId, string newEmail, string currentPassword)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserUId == userUId);
+            if (user == null)
+                throw new KeyNotFoundException("Không tìm thấy tài khoản.");
+
+            if (!BCrypt.Net.BCrypt.Verify(currentPassword, user.PasswordHash))
+                throw new UnauthorizedAccessException("Mật khẩu hiện tại không chính xác.");
+
+            if (await _context.Users.AnyAsync(u => u.Email == newEmail))
+                throw new InvalidOperationException("Email này đã được sử dụng bởi tài khoản khác.");
+
+            return new { success = true, is2FAEnabled = user.IsTwoFactorEnabled };
+        }
+
+        public async Task<bool> SendChangeEmailOtpAsync(string userUId, string newEmail, string currentPassword, string? twoFactorCode)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserUId == userUId);
+            if (user == null)
+                throw new KeyNotFoundException("Không tìm thấy tài khoản.");
+
+            if (!BCrypt.Net.BCrypt.Verify(currentPassword, user.PasswordHash))
+                throw new UnauthorizedAccessException("Mật khẩu hiện tại không chính xác.");
+
+            if (await _context.Users.AnyAsync(u => u.Email == newEmail))
+                throw new InvalidOperationException("Email này đã được sử dụng bởi tài khoản khác.");
+
+            if (user.IsTwoFactorEnabled)
+            {
+                if (string.IsNullOrWhiteSpace(twoFactorCode))
+                    throw new ArgumentException("Vui lòng nhập mã xác thực 2FA.");
+
+                if (string.IsNullOrEmpty(user.TwoFactorSecret))
+                    throw new InvalidOperationException("Tài khoản chưa thiết lập khóa bí mật 2FA.");
+
+                var secretBytes = Base32Encoding.ToBytes(user.TwoFactorSecret);
+                var totp = new Totp(secretBytes, step: 30, totpSize: 6);
+                var window = new VerificationWindow(previous: 1, future: 1);
+
+                bool isValid = totp.VerifyTotp(twoFactorCode, out long timeStepMatched, window);
+                if (!isValid)
+                    throw new UnauthorizedAccessException("Mã 2FA không hợp lệ.");
+            }
+
+            var otpCode = new Random().Next(100000, 999999).ToString();
+            var cacheKey = $"ChangeEmailOtp_{userUId}_{newEmail}";
+            _memoryCache.Set(cacheKey, otpCode, TimeSpan.FromMinutes(15));
+
+            var lockToken = Guid.NewGuid().ToString("N");
+            var lockKey = $"LockAccount_{lockToken}";
+            _memoryCache.Set(lockKey, $"{userUId}|{user.Email}", TimeSpan.FromDays(3));
+
+            try
+            {
+                await _emailService.SendEmailChangeOtpAsync(newEmail, otpCode);
+                await _emailService.SendEmailChangeWarningAsync(user.Email, newEmail, lockToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Lỗi gửi email thay đổi địa chỉ email: {ex.Message}");
+                throw new InvalidOperationException($"Không thể gửi email: {ex.Message}");
+            }
+
+            return true;
+        }
+
+        public async Task<bool> ConfirmChangeEmailAsync(string userUId, string newEmail, string otpCode)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserUId == userUId);
+            if (user == null)
+                throw new KeyNotFoundException("Không tìm thấy tài khoản.");
+
+            var cacheKey = $"ChangeEmailOtp_{userUId}_{newEmail}";
+            if (!_memoryCache.TryGetValue(cacheKey, out string? cachedOtp) || cachedOtp != otpCode)
+            {
+                throw new UnauthorizedAccessException("Mã OTP không chính xác hoặc đã hết hạn.");
+            }
+
+            user.Email = newEmail;
+            user.IsEmailVerified = true;
+            _context.Users.Update(user);
+            await _context.SaveChangesAsync();
+
+            _memoryCache.Remove(cacheKey);
+
+            return true;
+        }
+
+        public async Task<bool> LockAccountAsync(string token)
+        {
+            var lockKey = $"LockAccount_{token}";
+            if (!_memoryCache.TryGetValue(lockKey, out string? cachedData))
+            {
+                throw new UnauthorizedAccessException("Link khóa tài khoản không hợp lệ hoặc đã hết hạn.");
+            }
+
+            var parts = cachedData?.Split('|');
+            if (parts == null || parts.Length != 2) return false;
+
+            var userUId = parts[0];
+            var oldEmail = parts[1];
+
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserUId == userUId);
+            if (user != null)
+            {
+                // Restore old email and lock account
+                user.Email = oldEmail;
+                user.StatusAccount = "Locked";
+                
+                // Revoke all sessions
+                var sessions = await _context.UserSessions.Where(s => s.UserUId == userUId).ToListAsync();
+                foreach (var session in sessions)
+                {
+                    session.IsRevoked = true;
+                }
+                _context.UserSessions.UpdateRange(sessions);
+                _context.Users.Update(user);
+                await _context.SaveChangesAsync();
+                
+                _memoryCache.Remove(lockKey);
+                return true;
+            }
+            return false;
         }
     }
 }

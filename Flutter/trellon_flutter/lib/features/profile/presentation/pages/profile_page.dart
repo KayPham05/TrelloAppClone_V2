@@ -182,7 +182,9 @@ class _ProfilePageState extends State<ProfilePage> {
             }
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Cập nhật ảnh đại diện thành công')),
+                const SnackBar(
+                  content: Text('Cập nhật ảnh đại diện thành công'),
+                ),
               );
             }
           }
@@ -221,82 +223,75 @@ class _ProfilePageState extends State<ProfilePage> {
           Stack(
             clipBehavior: Clip.none,
             children: [
-            Container(
-              width: 96,
-              height: 96,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: AppColors.primaryContainer.withValues(alpha: 0.1),
-                  width: 4,
-                ),
-                image: DecorationImage(image: avatarImage, fit: BoxFit.cover),
-              ),
-            ),
-            Positioned(
-              bottom: 0,
-              right: 0,
-              child: Container(
-                padding: const EdgeInsets.all(6),
+              Container(
+                width: 96,
+                height: 96,
                 decoration: BoxDecoration(
-                  color: AppColors.primary,
                   shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 2),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Colors.black12,
-                      blurRadius: 4,
-                      offset: Offset(0, 2),
-                    ),
-                  ],
+                  border: Border.all(
+                    color: AppColors.primaryContainer.withValues(alpha: 0.1),
+                    width: 4,
+                  ),
+                  image: DecorationImage(image: avatarImage, fit: BoxFit.cover),
                 ),
-                child: _isUploadingAvatar 
-                  ? const SizedBox(
-                      width: 14,
-                      height: 14,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                      ),
-                    )
-                  : const Icon(
-                      Icons.camera_alt_rounded,
-                      color: Colors.white,
-                      size: 14,
-                    ),
               ),
+              Positioned(
+                bottom: 0,
+                right: 0,
+                child: Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 2),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Colors.black12,
+                        blurRadius: 4,
+                        offset: Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: _isUploadingAvatar
+                      ? const SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.white,
+                            ),
+                          ),
+                        )
+                      : const Icon(
+                          Icons.camera_alt_rounded,
+                          color: Colors.white,
+                          size: 14,
+                        ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            name, // HIỂN THỊ TÊN TỪ THAM SỐ
+            style: GoogleFonts.inter(
+              fontSize: 24,
+              fontWeight: FontWeight.w700,
+              color: AppColors.onSurface,
+              letterSpacing: -0.5,
             ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        Text(
-          'Chạm để đổi ảnh đại diện',
-          style: GoogleFonts.inter(
-            fontSize: 12,
-            color: AppColors.primary,
-            fontWeight: FontWeight.w500,
           ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          name, // HIỂN THỊ TÊN TỪ THAM SỐ
-          style: GoogleFonts.inter(
-            fontSize: 24,
-            fontWeight: FontWeight.w700,
-            color: AppColors.onSurface,
-            letterSpacing: -0.5,
+          const SizedBox(height: 4),
+          Text(
+            email, // HIỂN THỊ EMAIL TỪ THAM SỐ
+            style: GoogleFonts.inter(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: AppColors.onSurfaceVariant,
+            ),
           ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          email, // HIỂN THỊ EMAIL TỪ THAM SỐ
-          style: GoogleFonts.inter(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-            color: AppColors.onSurfaceVariant,
-          ),
-        ),
-      ],
+        ],
       ),
     );
   }
@@ -345,7 +340,9 @@ class _ProfilePageState extends State<ProfilePage> {
                     for (int i = 0; i < topWorkspaces.length; i++) ...[
                       _buildWorkspaceItem(
                         topWorkspaces[i].name,
-                        topWorkspaces[i].type == WorkspaceType.personal ? 'Cá nhân' : 'Nhóm',
+                        topWorkspaces[i].type == WorkspaceType.personal
+                            ? 'Cá nhân'
+                            : 'Nhóm',
                         AppColors.primary,
                         false,
                         true,
@@ -359,14 +356,20 @@ class _ProfilePageState extends State<ProfilePage> {
                       ),
                       _buildDivider(),
                     ],
-                    _buildAddItem('Tạo không gian làm việc mới', onTap: _showCreateWorkspaceSheet),
+                    _buildAddItem(
+                      'Tạo không gian làm việc mới',
+                      onTap: _showCreateWorkspaceSheet,
+                    ),
                   ],
                 );
               }
 
               return Column(
                 children: [
-                  _buildAddItem('Tạo không gian làm việc mới', onTap: _showCreateWorkspaceSheet),
+                  _buildAddItem(
+                    'Tạo không gian làm việc mới',
+                    onTap: _showCreateWorkspaceSheet,
+                  ),
                 ],
               );
             },

@@ -217,6 +217,25 @@ class _InformationPageState extends State<InformationPage> {
               icon: Icons.email_outlined,
               readOnly: true,
             ),
+            const SizedBox(height: 16),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton.icon(
+                onPressed: () async {
+                  final result = await Navigator.pushNamed(context, '/change-email');
+                  if (result == true) {
+                    _loadUserInfo();
+                  }
+                },
+                icon: const Icon(Icons.edit_outlined, size: 18),
+                label: Text(
+                  'Đổi email liên kết',
+                  style: GoogleFonts.inter(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
           ],
         ),
       ),
