@@ -12,12 +12,14 @@ namespace TodoAppAPI.Controllers
     {
         public readonly IUserService _userService;
         private readonly IAuthService _authService;
+        private readonly ICloudinaryService _cloudinaryService;
         private readonly ILogger<UserController> _logger;
 
-        public UserController(IUserService userService, IAuthService authService, ILogger<UserController> logger)
+        public UserController(IUserService userService, IAuthService authService, ICloudinaryService cloudinaryService, ILogger<UserController> logger)
         {
             _userService = userService;
             _authService = authService;
+            _cloudinaryService = cloudinaryService;
             _logger = logger;
         }
 
@@ -238,5 +240,45 @@ namespace TodoAppAPI.Controllers
             }
         }
 
+        [Authorize]
+        [HttpPut("update-profile")]
+        public async Task<IActionResult> UpdateProfile([FromForm] UpdateProfileRequest request)
+        {
+            var userUId = User.FindFirstValue("UserUId");
+            if (string.IsNullOrEmpty(userUId))
+                return Unauthorized(new { message = "Không xác định được người dùng." });
+
+            var user = await _userService.GetByIdAsync(userUId);
+            if (user == null)
+                return NotFound(new { message = "Không tìm thấy người dùng." });
+
+            if (!string.IsNullOrEmpty(request.UserName))
+            {
+                user.UserName = request.UserName;
+            }
+
+            if (request.Bio != null)
+            {
+                user.Bio = request.Bio;
+            }
+
+            if (request.Avatar != null)
+            {
+                var uploadResult = await _cloudinaryService.UploadFileAsync(request.Avatar);
+                if (uploadResult != null)
+                {
+                    user.AvatarUrl = uploadResult.Value.Url;
+                }
+            }
+
+            await _userService.UpdateAsync(user);
+
+            return Ok(new
+            {
+                message = "Cập nhật thông tin thành công.",
+                userName = user.UserName,
+                avatarUrl = user.AvatarUrl
+            });
+        }
     }
 }

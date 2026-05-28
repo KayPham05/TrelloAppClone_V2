@@ -14,18 +14,26 @@ import '../../../activity/presentation/cubit/notification_cubit.dart';
 import '../../../../core/data_sources/user_local_data_source.dart';
 import '../../../../features/auth/domain/repositories/i_auth_repository.dart';
 
-class ProfilePage extends StatelessWidget {
+class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
+
+  @override
+  State<ProfilePage> createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends State<ProfilePage> {
 
   Future<Map<String, String>> _getUserInfo() async {
     final prefs = await SharedPreferences.getInstance();
     final nameStr = prefs.getString('user_name');
     final emailStr = prefs.getString('user_email');
-    
+    final avatarStr = prefs.getString('user_avatar');
+
     final name = (nameStr == null || nameStr.isEmpty) ? 'Khách' : nameStr;
     final email = (emailStr == null || emailStr.isEmpty) ? 'Chưa cập nhật' : emailStr;
+    final avatar = avatarStr ?? '';
     
-    return {'name': name, 'email': email};
+    return {'name': name, 'email': email, 'avatar': avatar};
   }
 
   @override
@@ -54,10 +62,10 @@ class ProfilePage extends StatelessWidget {
                         }
 
                         final name = snapshot.data?['name'] ?? 'Khách';
-                        final email =
-                            snapshot.data?['email'] ?? 'Chưa cập nhật';
+                        final email = snapshot.data?['email'] ?? 'Chưa cập nhật';
+                        final avatar = snapshot.data?['avatar'] ?? '';
 
-                        return _buildProfileHeader(name, email);
+                        return _buildProfileHeader(name, email, avatar);
                       },
                     ),
                     const SizedBox(height: 40),
@@ -110,7 +118,14 @@ class ProfilePage extends StatelessWidget {
   }
 
   // BỎ ASYNC VÀ FUTURE Ở ĐÂY, TRUYỀN THAM SỐ VÀO
-  Widget _buildProfileHeader(String name, String email) {
+  Widget _buildProfileHeader(String name, String email, String avatarUrl) {
+    ImageProvider avatarImage;
+    if (avatarUrl.isNotEmpty) {
+      avatarImage = CachedNetworkImageProvider(avatarUrl);
+    } else {
+      avatarImage = const CachedNetworkImageProvider('https://i.pravatar.cc/150?u=jordan');
+    }
+
     return Column(
       children: [
         Stack(
@@ -125,10 +140,8 @@ class ProfilePage extends StatelessWidget {
                   color: AppColors.primaryContainer.withValues(alpha: 0.1),
                   width: 4,
                 ),
-                image: const DecorationImage(
-                  image: CachedNetworkImageProvider(
-                    'https://i.pravatar.cc/150?u=jordan',
-                  ),
+                image: DecorationImage(
+                  image: avatarImage,
                   fit: BoxFit.cover,
                 ),
               ),
@@ -246,6 +259,10 @@ class ProfilePage extends StatelessWidget {
                 subtitle: 'Tên, email và ảnh',
                 iconBgColor: AppColors.primaryContainer.withValues(alpha: 0.1),
                 iconColor: AppColors.primaryContainer,
+                onTap: () async {
+                  await Navigator.pushNamed(context, '/information');
+                  setState(() {}); // Refresh info when returning
+                },
               ),
               _buildDivider(),
               SettingItem(
