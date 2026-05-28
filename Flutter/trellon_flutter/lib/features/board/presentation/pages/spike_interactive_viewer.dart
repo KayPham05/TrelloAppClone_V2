@@ -21,7 +21,7 @@ class _SpikeInteractiveViewerState extends State<SpikeInteractiveViewer> {
   final ScrollController _scrollController = ScrollController();
   
   bool _isDragging = false;
-  List<String> _items = List.generate(10, (index) => 'List ${index + 1}');
+  final List<String> _items = List.generate(10, (index) => 'List ${index + 1}');
 
   @override
   void dispose() {

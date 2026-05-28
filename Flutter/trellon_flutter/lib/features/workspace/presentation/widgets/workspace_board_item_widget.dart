@@ -15,6 +15,7 @@ class WorkspaceBoardItemWidget extends StatelessWidget {
   final VoidCallback? onRename;
   final VoidCallback? onDelete;
   final VoidCallback? onToggleVisibility;
+  final bool isStarred;
 
   const WorkspaceBoardItemWidget({
     super.key,
@@ -23,6 +24,7 @@ class WorkspaceBoardItemWidget extends StatelessWidget {
     this.onRename,
     this.onDelete,
     this.onToggleVisibility,
+    this.isStarred = false,
   });
 
   @override
@@ -56,7 +58,7 @@ class WorkspaceBoardItemWidget extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: AppColors.outlineVariant.withOpacity(0.35),
+              color: AppColors.outlineVariant.withValues(alpha: 0.35),
             ),
           ),
           child: Row(

@@ -480,7 +480,7 @@ class _LabelPickerContentState extends State<_LabelPickerContent> {
           Switch(
             value: false,
             onChanged: (v) {},
-            activeColor: Colors.blue,
+            activeThumbColor: Colors.blue,
             inactiveThumbColor: Colors.black54,
             inactiveTrackColor: Colors.black12,
           ),

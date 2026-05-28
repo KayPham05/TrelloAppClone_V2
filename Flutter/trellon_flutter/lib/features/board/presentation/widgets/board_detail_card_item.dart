@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../card/domain/entities/card_entity.dart';
 import '../../../card/presentation/pages/card_detail_page.dart';
-import '../../../card/presentation/widgets/card_detail/label_picker_sheet.dart';
 import '../cubit/board_detail_cubit.dart';
 import '../cubit/board_detail_state.dart';
 
@@ -87,7 +86,7 @@ class BoardDetailCardItem extends StatelessWidget {
                   height: 100, // Roughly 50% increase max for small cards
                   width: double.infinity,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                  errorBuilder: (_, _, _) => const SizedBox.shrink(),
                 ),
               ),
             Padding(
@@ -220,7 +219,7 @@ class BoardDetailCardItem extends StatelessWidget {
                 padding: const EdgeInsets.only(left: 4),
                 child: CircleAvatar(
                   radius: 12,
-                  backgroundColor: AppColors.primary.withOpacity(0.2),
+                  backgroundColor: AppColors.primary.withValues(alpha: 0.2),
                   child: Text(
                     (m.userName ?? 'U').substring(0, 1),
                     style: const TextStyle(fontSize: 10, color: AppColors.primary, fontWeight: FontWeight.bold),

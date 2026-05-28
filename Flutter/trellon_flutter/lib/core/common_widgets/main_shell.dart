@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../../features/board/presentation/pages/home_overview_page.dart';
 import '../../../features/board/presentation/pages/board_list_page.dart';
 import '../../../features/inbox/presentation/pages/inbox_page.dart';
@@ -8,6 +9,9 @@ import '../../../features/planner/presentation/pages/planner_page.dart';
 import '../../../features/activity/presentation/pages/activity_page.dart';
 import '../../../features/profile/presentation/pages/profile_page.dart';
 import '../../../features/workspace/presentation/cubit/workspace_cubit.dart';
+import '../../../features/activity/presentation/cubit/notification_cubit.dart';
+import '../../../features/activity/presentation/cubit/notification_state.dart';
+import '../../../features/activity/data/services/notification_realtime_service.dart';
 import '../../../init_dependencies.dart';
 import '../../../core/data_sources/user_local_data_source.dart';
 import '../constants/app_colors.dart';
@@ -19,17 +23,22 @@ class MainShell extends StatefulWidget {
   State<MainShell> createState() => _MainShellState();
 }
 
-class _MainShellState extends State<MainShell> with SingleTickerProviderStateMixin {
+class _MainShellState extends State<MainShell>
+    with SingleTickerProviderStateMixin {
   int _currentIndex = 0;
   late final WorkspaceCubit _workspaceCubit = serviceLocator<WorkspaceCubit>();
+  late final NotificationCubit _notificationCubit =
+      serviceLocator<NotificationCubit>();
+  late final NotificationRealtimeService _notificationRealtimeService =
+      serviceLocator<NotificationRealtimeService>();
 
   // 5 tabs: Boards, Inbox, Planner, Notifications/Activity, Account
   final List<Widget> _pages = const [
-    BoardListPage(),     // Tab 0 – Boards
-    InboxPage(),         // Tab 1 – Inbox
-    PlannerPage(),       // Tab 2 – Planner
-    ActivityPage(),      // Tab 3 – Notifications
-    ProfilePage(),       // Tab 4 – Account
+    BoardListPage(), // Tab 0 – Boards
+    InboxPage(), // Tab 1 – Inbox
+    PlannerPage(), // Tab 2 – Planner
+    ActivityPage(), // Tab 3 – Notifications
+    ProfilePage(), // Tab 4 – Account
   ];
 
   static const List<_NavDestination> _destinations = [
@@ -71,16 +80,26 @@ class _MainShellState extends State<MainShell> with SingleTickerProviderStateMix
     final uid = await serviceLocator<UserLocalDataSource>().getUserId();
     if (uid != null && uid.isNotEmpty) {
       _workspaceCubit.loadWorkspaces();
+      _notificationCubit.fetchNotifications(refresh: true);
+      await _notificationRealtimeService.start();
     }
   }
 
+  @override
+  void dispose() {
+    _notificationRealtimeService.stop();
+    super.dispose();
+  }
+
   void _setSystemUI() {
-    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.dark,
-      systemNavigationBarColor: AppColors.navBackground,
-      systemNavigationBarIconBrightness: Brightness.dark,
-    ));
+    SystemChrome.setSystemUIOverlayStyle(
+      const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.dark,
+        systemNavigationBarColor: AppColors.navBackground,
+        systemNavigationBarIconBrightness: Brightness.dark,
+      ),
+    );
   }
 
   void _onTap(int index) {
@@ -89,14 +108,14 @@ class _MainShellState extends State<MainShell> with SingleTickerProviderStateMix
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider<WorkspaceCubit>.value(
-      value: _workspaceCubit,
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<WorkspaceCubit>.value(value: _workspaceCubit),
+        BlocProvider<NotificationCubit>.value(value: _notificationCubit),
+      ],
       child: Scaffold(
         backgroundColor: AppColors.background,
-        body: IndexedStack(
-          index: _currentIndex,
-          children: _pages,
-        ),
+        body: IndexedStack(index: _currentIndex, children: _pages),
         bottomNavigationBar: _buildBottomNavBar(),
       ),
     );
@@ -106,9 +125,7 @@ class _MainShellState extends State<MainShell> with SingleTickerProviderStateMix
     return Container(
       decoration: const BoxDecoration(
         color: AppColors.navBackground,
-        border: Border(
-           top: BorderSide(color: AppColors.outline, width: 0.5),
-        )
+        border: Border(top: BorderSide(color: AppColors.outline, width: 0.5)),
       ),
       child: SafeArea(
         top: false,
@@ -171,10 +188,56 @@ class _NavItem extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              isSelected ? destination.activeIcon : destination.icon,
-              color: color,
-              size: 24,
+            // Pill-shaped active indicator (theo mockup: bg-blue-100 rounded-2xl)
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeInOut,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? AppColors
+                          .navSelectedBg // blue-100 = #DBEAFE
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 150),
+                child:
+                    index ==
+                        3 // Activity tab
+                    ? BlocBuilder<NotificationCubit, NotificationState>(
+                        builder: (context, state) {
+                          final unreadCount = context
+                              .read<NotificationCubit>()
+                              .unreadCount;
+                          return Badge(
+                            isLabelVisible: unreadCount > 0,
+                            label: Text(
+                              unreadCount > 99 ? '99+' : unreadCount.toString(),
+                            ),
+                            backgroundColor: AppColors.error,
+                            child: Icon(
+                              isSelected
+                                  ? destination.activeIcon
+                                  : destination.icon,
+                              key: ValueKey(isSelected),
+                              color: isSelected
+                                  ? AppColors.navSelected
+                                  : AppColors.navUnselected,
+                              size: 24,
+                            ),
+                          );
+                        },
+                      )
+                    : Icon(
+                        isSelected ? destination.activeIcon : destination.icon,
+                        key: ValueKey(isSelected),
+                        color: isSelected
+                            ? AppColors.navSelected
+                            : AppColors.navUnselected,
+                        size: 24,
+                      ),
+              ),
             ),
             const SizedBox(height: 2),
             Text(

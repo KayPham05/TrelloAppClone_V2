@@ -10,6 +10,9 @@ import 'package:dio/dio.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../init_dependencies.dart';
 import '../../../../core/constants/api_endpoints.dart';
+import '../../../activity/presentation/cubit/notification_cubit.dart';
+import '../../../../core/data_sources/user_local_data_source.dart';
+import '../../../../features/auth/domain/repositories/i_auth_repository.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
@@ -355,6 +358,28 @@ class ProfilePage extends StatelessWidget {
                 },
               ),
               _buildDivider(),
+              _buildSettingItem(
+                Icons.logout_rounded,
+                'Đăng xuất',
+                null,
+                const Color(0xFFFFDAD6).withValues(alpha: 0.2),
+                AppColors.error,
+                showChevron: false,
+                onTap: () async {
+                  final userId = await serviceLocator<UserLocalDataSource>().getUserId();
+                  if (userId != null) {
+                    try {
+                      await serviceLocator<AuthRepository>().logout(userUId: userId);
+                    } catch (_) {}
+                  }
+                  await serviceLocator<UserLocalDataSource>().clearUserData();
+                  await serviceLocator<CookieJar>().deleteAll();
+                  serviceLocator<NotificationCubit>().reset();
+                  if (context.mounted) {
+                    Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+                  }
+                },
+              ),
             ],
           ),
         ),
@@ -592,6 +617,71 @@ class ProfilePage extends StatelessWidget {
           ],
         );
       },
+    );
+  }
+
+  Widget _buildSettingItem(
+    IconData icon,
+    String title,
+    String? subtitle,
+    Color iconBgColor,
+    Color iconColor, {
+    Widget? trailing,
+    bool showChevron = true,
+    VoidCallback? onTap,
+  }) {
+    return InkWell(
+      onTap: onTap ?? () {},
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: iconBgColor,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: iconColor, size: 20),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.onSurface,
+                    ),
+                  ),
+                  if (subtitle != null) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        color: AppColors.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            trailing ??
+                (showChevron
+                    ? const Icon(
+                        Icons.chevron_right_rounded,
+                        color: AppColors.outlineVariant,
+                        size: 24,
+                      )
+                    : const SizedBox.shrink()),
+          ],
+        ),
+      ),
     );
   }
 }

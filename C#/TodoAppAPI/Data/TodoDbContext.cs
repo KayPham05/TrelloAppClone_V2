@@ -38,6 +38,7 @@ namespace TodoAppAPI.Data
             modelBuilder.ApplyConfiguration(new UserSessionConfiguration());
             modelBuilder.ApplyConfiguration(new UserOtpConfiguration());
             modelBuilder.ApplyConfiguration(new NotificationConfiguration());
+            modelBuilder.ApplyConfiguration(new CardDueDateReminderDeliveryConfiguration());
             modelBuilder.ApplyConfiguration(new FileUrlConfiguration());
             modelBuilder.ApplyConfiguration(new User2FABackupCodeConfiguration());
             modelBuilder.ApplyConfiguration(new CardLabelConfiguration());
@@ -65,6 +66,7 @@ namespace TodoAppAPI.Data
         public DbSet<UserSession> UserSessions { get; set; }
         public DbSet<UserOtp> UserOtps { get; set; }
         public DbSet<Notification> Notifications { get; set; }
+        public DbSet<CardDueDateReminderDelivery> CardDueDateReminderDeliveries { get; set; }
         public DbSet<FileUrl> FileUrls { get; set; }
         public DbSet<User2FABackupCode> User2FABackupCodes { get; set; }
         public DbSet<CardLabel> CardLabels { get; set; }

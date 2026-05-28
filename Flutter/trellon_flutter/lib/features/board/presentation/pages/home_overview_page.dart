@@ -9,8 +9,6 @@ import '../widgets/home_overview/home_section_header_widget.dart';
 import '../widgets/home_overview/personal_board_tile_widget.dart';
 import '../widgets/home_overview/guest_workspace_tile_widget.dart';
 import '../widgets/home_overview/create_personal_board_sheet.dart';
-import 'board_list_page.dart';
-import '../widgets/home_overview/home_create_board_widget.dart';
 
 class HomeOverviewPage extends StatefulWidget {
   const HomeOverviewPage({super.key});
@@ -163,7 +161,7 @@ class _HomeOverviewPageState extends State<HomeOverviewPage> {
       child: Column(
         children: [
           Icon(Icons.dashboard_customize_outlined,
-              size: 40, color: AppColors.outlineVariant.withOpacity(0.5)),
+              size: 40, color: AppColors.outlineVariant.withValues(alpha: 0.5)),
           const SizedBox(height: 10),
           Text(
             'Bạn chưa có bảng cá nhân nào',
@@ -176,7 +174,7 @@ class _HomeOverviewPageState extends State<HomeOverviewPage> {
           const SizedBox(height: 4),
           Text(
             'Nhấn + để tạo bảng đầu tiên của bạn.',
-            style: GoogleFonts.inter(fontSize: 12, color: AppColors.onSurfaceVariant.withOpacity(0.7)),
+            style: GoogleFonts.inter(fontSize: 12, color: AppColors.onSurfaceVariant.withValues(alpha: 0.7)),
           ),
         ],
       ),
@@ -189,7 +187,7 @@ class _HomeOverviewPageState extends State<HomeOverviewPage> {
       child: Column(
         children: [
           Icon(Icons.group_add_outlined,
-              size: 40, color: AppColors.outlineVariant.withOpacity(0.5)),
+              size: 40, color: AppColors.outlineVariant.withValues(alpha: 0.5)),
           const SizedBox(height: 10),
           Text(
             'Bạn chưa được mời vào workspace nào',

@@ -7,6 +7,7 @@ import '../../domain/usecases/get_recent_boards_usecase.dart';
 import '../../domain/usecases/create_board_usecase.dart';
 import '../../../workspace/domain/usecases/get_workspaces_usecase.dart';
 import '../../../../core/data_sources/user_local_data_source.dart';
+import '../../../../core/errors/app_exception_mapper.dart';
 
 // ─── States ──────────────────────────────────────────────────────────────────
 
@@ -65,8 +66,13 @@ class BoardCubit extends Cubit<BoardState> {
     required this.userLocalDataSource,
   }) : super(BoardInitial());
 
-  Future<void> fetchBoardData(String userUid, String userName) async {
-    emit(BoardLoading());
+  Future<void> fetchBoardData(
+      String userUid,
+      String userName, {
+        bool showLoading = true,
+      }) async {
+    if (showLoading) emit(BoardLoading());
+
     try {
       final results = await Future.wait([
         getPersonalBoardsUseCase(userUid),
@@ -78,9 +84,8 @@ class BoardCubit extends Cubit<BoardState> {
       final allWorkspaces = results[1] as List<WorkspaceEntity>;
       final recentBoards = results[2] as List<BoardEntity>;
 
-      // Guest workspaces are workspaces the user is a member of but NOT the owner
       final guestWorkspaces = allWorkspaces
-          .where((w) => w.ownerUId != userUid)
+          .where((workspace) => workspace.ownerUId != userUid)
           .toList();
 
       emit(BoardLoaded(
@@ -90,7 +95,7 @@ class BoardCubit extends Cubit<BoardState> {
         recentBoards: recentBoards,
       ));
     } catch (e) {
-      emit(BoardError(message: e.toString()));
+      emit(BoardError(message: AppExceptionMapper.map(e)));
     }
   }
 
@@ -111,7 +116,7 @@ class BoardCubit extends Cubit<BoardState> {
       emit(BoardCreated());
       await fetchBoardData(userUid, '');
     } catch (e) {
-      emit(BoardError(message: e.toString()));
+      emit(BoardError(message: AppExceptionMapper.map(e)));
     }
   }
 
@@ -137,7 +142,20 @@ class BoardCubit extends Cubit<BoardState> {
       emit(BoardCreated());
       await fetchBoardData(userUid, '');
     } catch (e) {
-      emit(BoardError(message: e.toString()));
+      emit(BoardError(message: AppExceptionMapper.map(e)));
     }
+  }
+
+  Future<void> refreshBoardData() async {
+    final userUid = await userLocalDataSource.getUserId();
+
+    if (userUid == null || userUid.isEmpty) {
+      emit(const BoardError(
+        message: 'Không tìm thấy tài khoản. Vui lòng đăng nhập lại.',
+      ));
+      return;
+    }
+
+    await fetchBoardData(userUid, '', showLoading: false);
   }
 }

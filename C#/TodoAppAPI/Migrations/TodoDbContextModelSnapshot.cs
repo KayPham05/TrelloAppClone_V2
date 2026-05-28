@@ -191,6 +191,34 @@ namespace TodoAppAPI.Migrations
                     b.ToTable("Cards", (string)null);
                 });
 
+            modelBuilder.Entity("TodoAppAPI.Models.CardDueDateReminderDelivery", b =>
+                {
+                    b.Property<string>("ReminderDeliveryId")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<string>("CardUId")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<DateTime>("DueDateSnapshot")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Milestone")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("SentAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("ReminderDeliveryId");
+
+                    b.HasIndex("CardUId", "Milestone")
+                        .IsUnique();
+
+                    b.ToTable("CardDueDateReminderDeliveries", (string)null);
+                });
+
             modelBuilder.Entity("TodoAppAPI.Models.CardLabel", b =>
                 {
                     b.Property<string>("CardLabelUId")
@@ -1047,6 +1075,17 @@ namespace TodoAppAPI.Migrations
                         .OnDelete(DeleteBehavior.Cascade);
 
                     b.Navigation("List");
+                });
+
+            modelBuilder.Entity("TodoAppAPI.Models.CardDueDateReminderDelivery", b =>
+                {
+                    b.HasOne("TodoAppAPI.Models.Card", "Card")
+                        .WithMany()
+                        .HasForeignKey("CardUId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Card");
                 });
 
             modelBuilder.Entity("TodoAppAPI.Models.CardLabel", b =>

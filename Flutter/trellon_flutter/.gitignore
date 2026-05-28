@@ -65,6 +65,12 @@ google-services.json
 GoogleService-Info.plist
 
 # -----------------------------
+# Local outputs
+# -----------------------------
+analyze*.txt
+out.txt
+
+# -----------------------------
 # Android
 # -----------------------------
 /android/.gradle/
