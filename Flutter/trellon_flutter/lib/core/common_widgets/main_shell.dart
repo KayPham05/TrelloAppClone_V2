@@ -2,13 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../../features/board/presentation/pages/home_overview_page.dart';
 import '../../../features/board/presentation/pages/board_list_page.dart';
 import '../../../features/inbox/presentation/pages/inbox_page.dart';
 import '../../../features/planner/presentation/pages/planner_page.dart';
 import '../../../features/activity/presentation/pages/activity_page.dart';
 import '../../../features/profile/presentation/pages/profile_page.dart';
 import '../../../features/workspace/presentation/cubit/workspace_cubit.dart';
+import '../../../features/activity/presentation/cubit/notification_cubit.dart';
+import '../../../features/activity/presentation/cubit/notification_state.dart';
+import '../../../features/activity/data/services/notification_realtime_service.dart';
 import '../../../init_dependencies.dart';
 import '../../../core/data_sources/user_local_data_source.dart';
 import '../constants/app_colors.dart';
@@ -27,6 +29,10 @@ class _MainShellState extends State<MainShell>
   int _currentIndex = 0;
   late final WorkspaceCubit _workspaceCubit =
       serviceLocator<WorkspaceCubit>();
+  late final NotificationCubit _notificationCubit =
+      serviceLocator<NotificationCubit>();
+  late final NotificationRealtimeService _notificationRealtimeService =
+      serviceLocator<NotificationRealtimeService>();
 
   // 5 tabs: Boards, Inbox, Planner, Notifications/Activity, Account
   final List<Widget> _pages = const [
@@ -76,7 +82,15 @@ class _MainShellState extends State<MainShell>
     final uid = await serviceLocator<UserLocalDataSource>().getUserId();
     if (uid != null && uid.isNotEmpty) {
       _workspaceCubit.loadWorkspaces();
+      _notificationCubit.fetchNotifications(refresh: true);
+      await _notificationRealtimeService.start();
     }
+  }
+
+  @override
+  void dispose() {
+    _notificationRealtimeService.stop();
+    super.dispose();
   }
 
   void _setSystemUI() {
@@ -94,8 +108,11 @@ class _MainShellState extends State<MainShell>
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider<WorkspaceCubit>.value(
-      value: _workspaceCubit,
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<WorkspaceCubit>.value(value: _workspaceCubit),
+        BlocProvider<NotificationCubit>.value(value: _notificationCubit),
+      ],
       child: Scaffold(
         backgroundColor: AppColors.background,
         body: IndexedStack(
@@ -192,14 +209,33 @@ class _NavItem extends StatelessWidget {
               ),
               child: AnimatedSwitcher(
                 duration: const Duration(milliseconds: 150),
-                child: Icon(
-                  isSelected ? destination.activeIcon : destination.icon,
-                  key: ValueKey(isSelected),
-                  color: isSelected
-                      ? AppColors.navSelected   // blue-800 = #1D4ED8
-                      : AppColors.navUnselected, // slate-500 = #64748B
-                  size: 24,
-                ),
+                child: index == 3 // Activity tab
+                    ? BlocBuilder<NotificationCubit, NotificationState>(
+                        builder: (context, state) {
+                          final unreadCount = context.read<NotificationCubit>().unreadCount;
+                          return Badge(
+                            isLabelVisible: unreadCount > 0,
+                            label: Text(unreadCount > 99 ? '99+' : unreadCount.toString()),
+                            backgroundColor: AppColors.error,
+                            child: Icon(
+                              isSelected ? destination.activeIcon : destination.icon,
+                              key: ValueKey(isSelected),
+                              color: isSelected
+                                  ? AppColors.navSelected
+                                  : AppColors.navUnselected,
+                              size: 24,
+                            ),
+                          );
+                        },
+                      )
+                    : Icon(
+                        isSelected ? destination.activeIcon : destination.icon,
+                        key: ValueKey(isSelected),
+                        color: isSelected
+                            ? AppColors.navSelected
+                            : AppColors.navUnselected,
+                        size: 24,
+                      ),
               ),
             ),
             const SizedBox(height: 2),

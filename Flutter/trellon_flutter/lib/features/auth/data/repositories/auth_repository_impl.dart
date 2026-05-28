@@ -117,7 +117,7 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<void> verifyCode({
+  Future<UserEntity> verifyCode({
     required String email,
     required String code,
   }) async {
@@ -126,9 +126,23 @@ class AuthRepositoryImpl implements AuthRepository {
         ApiEndpoints.verifyCode,
         data: {'email': email, 'code': code},
       );
-      if (response.statusCode != 200) {
-        throw Exception("Xác thực thất bại");
+      if (response.statusCode == 200) {
+        final data = response.data;
+        // Backend trả về token sau khi xác thực thành công
+        final token = data is Map ? data['accessToken'] as String? ?? data['token'] as String? : null;
+        final refreshToken = data is Map ? data['refreshToken'] as String? : null;
+        final userUId = data is Map ? data['userUId'] as String? ?? '' : '';
+        final userName = data is Map ? data['userName'] as String? ?? '' : '';
+        return UserEntity(
+          id: userUId,
+          userUId: userUId,
+          userName: userName,
+          email: email,
+          token: token,
+          refreshToken: refreshToken,
+        );
       }
+      throw Exception("Xác thực thất bại");
     } on DioException catch (e) {
       // BE trả lỗi dạng string plain text hoặc object
       final rawData = e.response?.data;

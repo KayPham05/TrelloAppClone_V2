@@ -14,7 +14,7 @@ abstract class AuthRepository {
 
   Future<void> logout({required String userUId});
 
-  Future<void> verifyCode({
+  Future<UserEntity> verifyCode({
     required String email,
     required String code,
   });

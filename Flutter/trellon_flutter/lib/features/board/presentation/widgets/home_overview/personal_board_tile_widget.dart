@@ -27,7 +27,7 @@ class PersonalBoardTileWidget extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: AppColors.onSurface.withOpacity(0.06),
+              color: AppColors.onSurface.withValues(alpha: 0.06),
               blurRadius: 16,
               offset: const Offset(0, 4),
             ),
@@ -89,10 +89,10 @@ class _BoardIcon extends StatelessWidget {
         borderRadius: BorderRadius.circular(10),
         child: Image.network(
           board.backgroundUrl!,
-          width: 44,
+          width: 66,
           height: 44,
           fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => _buildColorBox(),
+          errorBuilder: (_, _, _) => _buildColorBox(),
         ),
       );
     }
@@ -104,7 +104,7 @@ class _BoardIcon extends StatelessWidget {
         ? Color(int.tryParse('0xFF${board.coverColor!.replaceAll('#', '')}') ?? 0xFF0052CC)
         : AppColors.primaryContainer;
     return Container(
-      width: 44,
+      width: 66,
       height: 44,
       decoration: BoxDecoration(
         color: color,

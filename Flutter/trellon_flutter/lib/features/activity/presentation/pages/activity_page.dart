@@ -1,111 +1,49 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/data_sources/user_local_data_source.dart';
+import '../../../../init_dependencies.dart';
+import '../../../board/data/datasources/board_remote_data_source.dart';
+import '../../../workspace/domain/usecases/get_workspaces_usecase.dart';
+import '../../data/services/notification_navigation_service.dart';
+import '../../domain/entities/notification_entity.dart';
+import '../controllers/notification_tab_coordinator.dart';
+import '../cubit/notification_cubit.dart';
+import '../cubit/notification_state.dart';
 
-// ── Mock Data Models ──────────────────────────────────────────────────────
-
-enum NotificationType { mention, addedToCard, dueDate, completed, system }
-
-class _MockNotification {
-  final NotificationType type;
-  final String authorName;
-  final String titleHtml; // Text rich: "added you to card [Design UI]"
-  final String timeText;
-  final bool isUnread;
-  
-  // For avatar
-  final String? avatarInitials;
-  final Color? avatarColor;
-  
-  // For icon (if no avatar)
-  final IconData? icon;
-  final Color? iconContainerColor;
-  final Color? iconColor;
-
-  // Extra content
-  final String? boardName;
-  final String? quote;
-
-  const _MockNotification({
-    required this.type,
-    required this.authorName,
-    required this.titleHtml,
-    required this.timeText,
-    this.isUnread = false,
-    this.avatarInitials,
-    this.avatarColor,
-    this.icon,
-    this.iconContainerColor,
-    this.iconColor,
-    this.boardName,
-    this.quote,
-  });
-}
-
-final List<_MockNotification> _mockNotifications = [
-  const _MockNotification(
-    type: NotificationType.addedToCard,
-    authorName: 'John Doe',
-    titleHtml: 'đã thêm bạn vào thẻ Design UI',
-    timeText: '2p trước',
-    isUnread: true,
-    avatarInitials: 'JD',
-    avatarColor: Color(0xFF3B82F6), // blue
-    boardName: 'Mobile App Redesign',
-  ),
-  const _MockNotification(
-    type: NotificationType.mention,
-    authorName: 'Sarah Jenkins',
-    titleHtml: 'đã nhắc đến bạn trong Màn hình người dùng',
-    timeText: '45p trước',
-    isUnread: false,
-    avatarInitials: 'SJ',
-    avatarColor: Color(0xFF10B981), // green
-    quote: '@alex Bạn có thể kiểm tra Prototype trước buổi họp 2h chiều mai không?',
-  ),
-  const _MockNotification(
-    type: NotificationType.dueDate,
-    authorName: '', // System alert
-    titleHtml: 'Thẻ Chốt ngân sách Q3 sẽ hết hạn trong 1 giờ',
-    timeText: '1 giờ trước',
-    isUnread: false,
-    icon: Icons.schedule_rounded,
-    iconContainerColor: Color(0xFFFFEDD5), // orange-100
-    iconColor: Color(0xFFEA580C), // orange-600
-    boardName: 'Kế hoạch 2024',
-  ),
-  const _MockNotification(
-    type: NotificationType.completed,
-    authorName: 'Mike Chen',
-    titleHtml: 'đã hoàn thành mục Cập nhật Design Tokens',
-    timeText: '3 giờ trước',
-    isUnread: false,
-    avatarInitials: 'MC',
-    avatarColor: Color(0xFF8B5CF6), // purple
-  ),
-  const _MockNotification(
-    type: NotificationType.system,
-    authorName: 'Hệ thống',
-    titleHtml: 'đã tự động lưu trữ 4 thẻ không hoạt động',
-    timeText: 'Hôm qua',
-    isUnread: false,
-    icon: Icons.rocket_launch_rounded,
-    iconContainerColor: Color(0xFFF3E8FF), // purple-100
-    iconColor: Color(0xFF9333EA), // purple-600
-  ),
-];
-
-// ── Page ──────────────────────────────────────────────────────────────────
-
-class ActivityPage extends StatefulWidget {
+class ActivityPage extends StatelessWidget {
   const ActivityPage({super.key});
 
   @override
-  State<ActivityPage> createState() => _ActivityPageState();
+  Widget build(BuildContext context) {
+    return const ActivityPageView();
+  }
 }
 
-class _ActivityPageState extends State<ActivityPage> {
-  int _selectedTabIndex = 0; // 0: All, 1: Me, 2: Unread
+class ActivityPageView extends StatefulWidget {
+  const ActivityPageView({super.key});
+
+  @override
+  State<ActivityPageView> createState() => _ActivityPageViewState();
+}
+
+class _ActivityPageViewState extends State<ActivityPageView> {
+  int _selectedTabIndex = 0; // 0: All, 1: Me, 2: Read
+  final NotificationTabCoordinator _tabCoordinator = NotificationTabCoordinator();
+  late final PageController _pageController;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController(initialPage: _selectedTabIndex);
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -116,16 +54,25 @@ class _ActivityPageState extends State<ActivityPage> {
         child: Column(
           children: [
             _buildTopBar(),
+            _buildHeader(),
             Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildHeader(),
-                    _buildNotificationList(),
-                    const SizedBox(height: 80), // Padding cho bottom nav
-                  ],
-                ),
+              child: PageView(
+                controller: _pageController,
+                onPageChanged: (index) {
+                  final action = _tabCoordinator.onPageChanged(index);
+                  setState(() => _selectedTabIndex = index);
+                  if (action.fetchNotifications) {
+                    context.read<NotificationCubit>().fetchNotifications(
+                      refresh: true,
+                      tab: action.tab,
+                    );
+                  }
+                },
+                children: const [
+                  NotificationListTab(tabIndex: 0),
+                  NotificationListTab(tabIndex: 1),
+                  NotificationListTab(tabIndex: 2),
+                ],
               ),
             ),
           ],
@@ -187,15 +134,54 @@ class _ActivityPageState extends State<ActivityPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Thông báo',
-            style: GoogleFonts.inter(
-              fontSize: 24,
-              fontWeight: FontWeight.w700,
-              color: AppColors.onSurface,
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Thông báo',
+                style: GoogleFonts.inter(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.onSurface,
+                ),
+              ),
+              BlocBuilder<NotificationCubit, NotificationState>(
+                builder: (context, state) {
+                  final unreadCount = context.read<NotificationCubit>().unreadCount;
+                  return IgnorePointer(
+                    ignoring: unreadCount == 0,
+                    child: AnimatedOpacity(
+                      opacity: unreadCount == 0 ? 0.5 : 1.0,
+                      duration: const Duration(milliseconds: 200),
+                      child: TextButton(
+                        onPressed: () async {
+                          final success = await context.read<NotificationCubit>().markAllAsRead();
+                          if (!context.mounted) return;
+                          if (success) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Đã đánh dấu tất cả đã đọc')),
+                            );
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Đã xảy ra lỗi, không thể đánh dấu')),
+                            );
+                          }
+                        },
+                        child: Text(
+                          'Đánh dấu đã đọc',
+                          style: GoogleFonts.inter(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ],
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
           Container(
             padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
@@ -206,7 +192,7 @@ class _ActivityPageState extends State<ActivityPage> {
               children: [
                 _buildTab('Tất cả', 0),
                 _buildTab('Gửi tôi', 1),
-                _buildTab('Chưa đọc', 2, hasUnreadDot: true),
+                _buildTab('Đã đọc', 2),
               ],
             ),
           ),
@@ -215,12 +201,22 @@ class _ActivityPageState extends State<ActivityPage> {
     );
   }
 
-  Widget _buildTab(String label, int index, {bool hasUnreadDot = false}) {
+  Widget _buildTab(String label, int index) {
     final isSelected = _selectedTabIndex == index;
     return Expanded(
       child: GestureDetector(
-        onTap: () => setState(() => _selectedTabIndex = index),
-        child: Container(
+        onTap: () {
+          final action = _tabCoordinator.onTap(index);
+          if (!action.animateToPage) return;
+          setState(() => _selectedTabIndex = index);
+          _pageController.animateToPage(
+            index,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+          );
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
           padding: const EdgeInsets.symmetric(vertical: 6),
           decoration: BoxDecoration(
             color: isSelected ? Colors.white : Colors.transparent,
@@ -229,117 +225,294 @@ class _ActivityPageState extends State<ActivityPage> {
                 ? [const BoxShadow(color: Color(0x0A000000), blurRadius: 4, offset: Offset(0, 2))]
                 : [],
           ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                label,
-                style: GoogleFonts.inter(
-                  fontSize: 14,
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                  color: isSelected ? AppColors.primary : AppColors.onSurfaceVariant,
-                ),
+          child: Center(
+            child: Text(
+              label,
+              style: GoogleFonts.inter(
+                fontSize: 14,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                color: isSelected ? AppColors.primary : AppColors.onSurfaceVariant,
               ),
-              if (hasUnreadDot) ...[
-                const SizedBox(width: 4),
-                Container(
-                  width: 8,
-                  height: 8,
-                  decoration: const BoxDecoration(
-                    color: AppColors.primaryContainer,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-              ],
-            ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  // ── Notification List ─────────────────────────────────────────────────────
-  Widget _buildNotificationList() {
-    return Column(
-      children: _mockNotifications.map((notif) => _buildNotificationItem(notif)).toList(),
+}
+
+class NotificationListTab extends StatefulWidget {
+  final int tabIndex;
+
+  const NotificationListTab({super.key, required this.tabIndex});
+
+  @override
+  State<NotificationListTab> createState() => _NotificationListTabState();
+}
+
+class _NotificationListTabState extends State<NotificationListTab> {
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
+      context.read<NotificationCubit>().fetchNotifications(tab: _tabForIndex(widget.tabIndex));
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _onRefresh() async {
+    await context.read<NotificationCubit>().fetchNotifications(
+      refresh: true,
+      tab: _tabForIndex(widget.tabIndex),
     );
   }
 
-  Widget _buildNotificationItem(_MockNotification notif) {
-    return Container(
-      decoration: BoxDecoration(
-        color: notif.isUnread ? const Color(0xFFEFF6FF) : Colors.white, // blue-50 for unread
-        border: const Border(bottom: BorderSide(color: Color(0xFFE2E8F0))), // slate-200
+  NotificationTab _tabForIndex(int index) {
+    return switch (index) {
+      1 => NotificationTab.sentToMe,
+      2 => NotificationTab.read,
+      _ => NotificationTab.all,
+    };
+  }
+
+  String _formatTime(DateTime time) {
+    final now = DateTime.now();
+    final difference = now.difference(time);
+    if (difference.inMinutes < 60) {
+      return '${difference.inMinutes}p trước';
+    } else if (difference.inHours < 24) {
+      return '${difference.inHours} giờ trước';
+    } else if (difference.inDays < 7) {
+      return '${difference.inDays} ngày trước';
+    } else {
+      return '${time.day.toString().padLeft(2, '0')}/${time.month.toString().padLeft(2, '0')}/${time.year}';
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return RefreshIndicator(
+      onRefresh: _onRefresh,
+      child: CustomScrollView(
+        controller: _scrollController,
+        key: PageStorageKey('tab_${widget.tabIndex}'),
+        physics: const AlwaysScrollableScrollPhysics(),
+        slivers: [
+          BlocBuilder<NotificationCubit, NotificationState>(
+            builder: (context, state) {
+              if (state is NotificationInitial || state is NotificationLoading) {
+                return const SliverFillRemaining(
+                  child: Center(child: CircularProgressIndicator()),
+                );
+              }
+
+              if (state is NotificationError) {
+                return SliverFillRemaining(
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.error_outline, color: Colors.red, size: 48),
+                        const SizedBox(height: 16),
+                        Text(state.message, style: GoogleFonts.inter(color: Colors.red)),
+                        TextButton(
+                          onPressed: _onRefresh,
+                          child: const Text('Thử lại'),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }
+
+              if (state is NotificationLoaded) {
+                final tab = _tabForIndex(widget.tabIndex);
+                if (state.tab != tab) {
+                  return const SliverFillRemaining(
+                    child: Center(child: CircularProgressIndicator()),
+                  );
+                }
+
+                final notifications = state.notifications.toList();
+
+                if (notifications.isEmpty) {
+                  return SliverFillRemaining(
+                    child: Center(
+                      child: Text('Không có thông báo nào', style: GoogleFonts.inter(color: AppColors.onSurfaceVariant)),
+                    ),
+                  );
+                }
+
+                return SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                      if (index == notifications.length) {
+                        return state.hasReachedMax
+                            ? const SizedBox.shrink()
+                            : const Padding(
+                                padding: EdgeInsets.symmetric(vertical: 16),
+                                child: Center(child: CircularProgressIndicator()),
+                              );
+                      }
+                      return _buildNotificationItem(notifications[index]);
+                    },
+                    childCount: notifications.length + (state.hasReachedMax ? 0 : 1),
+                  ),
+                );
+              }
+
+              return const SliverToBoxAdapter(child: SizedBox.shrink());
+            },
+          ),
+          const SliverToBoxAdapter(
+            child: SizedBox(height: 80),
+          ),
+        ],
       ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () {},
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
+    );
+  }
+
+  Widget _buildNotificationItem(NotificationEntity notif) {
+    return Dismissible(
+      key: Key(notif.id),
+      direction: DismissDirection.endToStart,
+      background: Container(
+        color: Colors.red,
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: 20),
+        child: const Icon(Icons.delete, color: Colors.white),
+      ),
+      confirmDismiss: (direction) async {
+        final cubit = context.read<NotificationCubit>();
+        final result = cubit.removeNotificationLocally(notif.id);
+        if (result == null) return false;
+        final entity = result.$1;
+        final index = result.$2;
+
+        var undone = false;
+        final messenger = ScaffoldMessenger.of(context);
+        final availableSnackBarWidth = MediaQuery.sizeOf(context).width - 32;
+        final snackBarWidth = availableSnackBarWidth < 320 ? availableSnackBarWidth : 320.0;
+        messenger.hideCurrentSnackBar();
+        messenger
+            .showSnackBar(
+              SnackBar(
+                duration: const Duration(seconds: 2),
+                behavior: SnackBarBehavior.floating,
+                width: snackBarWidth,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                content: Row(
+                  children: [
+                    const Expanded(child: Text('Đã xóa thông báo')),
+                    TextButton(
+                      style: TextButton.styleFrom(
+                        foregroundColor: Colors.white,
+                        minimumSize: Size.zero,
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      onPressed: () {
+                        undone = true;
+                        cubit.undoDeleteNotification(entity, index);
+                        messenger.hideCurrentSnackBar();
+                      },
+                      child: const Text('Hoàn tác'),
+                    ),
+                  ],
+                ),
+              ),
+            )
+            .closed
+            .then((_) async {
+              if (undone) return;
+              final success = await cubit.confirmDeleteNotification(notif.id, entity, index);
+              if (!success && mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Xóa thông báo thất bại. Đã khôi phục.')),
+                );
+              }
+            });
+
+        return true;
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        decoration: BoxDecoration(
+          color: !notif.isRead ? const Color(0xFFEFF6FF) : Colors.white,
+          border: const Border(bottom: BorderSide(color: Color(0xFFE2E8F0))),
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () {
+              _handleNotificationTap(context, notif);
+            },
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: _notificationTileContent(notif: notif),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _handleNotificationTap(BuildContext context, NotificationEntity notif) async {
+    if (!notif.isRead) {
+      await context.read<NotificationCubit>().markAsRead(notif.id);
+    }
+    if (!context.mounted) return;
+
+    final target = await _notificationNavigationService().resolve(notif);
+    if (!context.mounted) return;
+
+    if (target == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Không thể mở nội dung thông báo')),
+      );
+      return;
+    }
+
+    await Navigator.pushNamed(context, target.routeName, arguments: target.arguments);
+  }
+
+  NotificationNavigationService _notificationNavigationService() {
+    return NotificationNavigationService(
+      loadCardsByBoard: (boardId) async {
+        final cards = await serviceLocator<BoardRemoteDataSource>().getCardsByBoard(boardId);
+        return cards.map((card) => card.toEntity()).toList();
+      },
+      loadWorkspaces: () async {
+        final userId = await serviceLocator<UserLocalDataSource>().getUserId();
+        if (userId == null || userId.isEmpty) return [];
+        return serviceLocator<GetWorkspacesUseCase>().call(userId);
+      },
+    );
+  }
+
+  Widget _notificationTileContent({required NotificationEntity notif}) {
+    return Builder(
+      builder: (context) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Avatar / Icon
-                SizedBox(
-                  width: 52,
-                  child: Stack(
-                    children: [
-                      if (notif.avatarInitials != null)
-                        Container(
-                          width: 48,
-                          height: 48,
-                          decoration: BoxDecoration(
-                            color: notif.avatarColor,
-                            shape: BoxShape.circle,
-                          ),
-                          child: Center(
-                            child: Text(
-                              notif.avatarInitials!,
-                              style: GoogleFonts.inter(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                        )
-                      else if (notif.icon != null)
-                        Container(
-                          width: 48,
-                          height: 48,
-                          decoration: BoxDecoration(
-                            color: notif.iconContainerColor,
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(notif.icon, color: notif.iconColor, size: 24),
-                        ),
-                      
-                      // Type badge (bottom right of avatar)
-                      if (notif.type == NotificationType.addedToCard)
-                        Positioned(
-                          right: 0,
-                          bottom: 0,
-                          child: _buildBadge(Icons.person_add_rounded, AppColors.primaryContainer),
-                        )
-                      else if (notif.type == NotificationType.mention)
-                        Positioned(
-                          right: 0,
-                          bottom: 0,
-                          child: _buildBadge(Icons.chat_bubble_rounded, AppColors.secondary),
-                        )
-                      else if (notif.type == NotificationType.completed)
-                        Positioned(
-                          right: 0,
-                          bottom: 0,
-                          child: _buildBadge(Icons.check_circle_rounded, const Color(0xFF16A34A)), // green-600
-                        ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 16),
-                
-                // Content
+                _buildNotificationIcon(notif.type),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -348,120 +521,110 @@ class _ActivityPageState extends State<ActivityPage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Expanded(
-                            child: Text.rich(
-                              TextSpan(
-                                children: [
-                                  if (notif.authorName.isNotEmpty)
-                                    TextSpan(
-                                      text: '${notif.authorName} ',
-                                      style: GoogleFonts.inter(fontWeight: FontWeight.w700, color: AppColors.onSurface),
-                                    ),
-                                  TextSpan(
-                                    text: notif.titleHtml,
-                                    style: GoogleFonts.inter(color: AppColors.onSurface),
-                                  ),
-                                ],
+                            child: Text(
+                              notif.title,
+                              style: GoogleFonts.inter(
+                                fontSize: 15,
+                                fontWeight: !notif.isRead ? FontWeight.w700 : FontWeight.w600,
+                                color: const Color(0xFF1E293B),
                               ),
-                              style: GoogleFonts.inter(fontSize: 14, height: 1.4),
                             ),
                           ),
-                          const SizedBox(width: 12),
-                          Text(
-                            notif.timeText,
-                            style: GoogleFonts.inter(
-                              fontSize: 11,
-                              color: AppColors.onSurfaceVariant,
+                          if (!notif.isRead)
+                            Container(
+                              width: 8,
+                              height: 8,
+                              margin: const EdgeInsets.only(top: 6, left: 8),
+                              decoration: const BoxDecoration(
+                                color: Color(0xFF3B82F6),
+                                shape: BoxShape.circle,
+                              ),
                             ),
-                          ),
                         ],
                       ),
-                      
-                      // Quote
-                      if (notif.quote != null) ...[
-                        const SizedBox(height: 6),
-                        Container(
-                          padding: const EdgeInsets.only(left: 12, top: 4, bottom: 4),
-                          decoration: const BoxDecoration(
-                            border: Border(left: BorderSide(color: AppColors.outlineVariant, width: 2)),
-                          ),
-                          child: Text(
-                            notif.quote!,
+                      const SizedBox(height: 4),
+                      Text(
+                        notif.message,
+                        style: GoogleFonts.inter(
+                          fontSize: 13,
+                          color: const Color(0xFF64748B),
+                          height: 1.35,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Text(
+                            _formatTime(notif.createdAt),
                             style: GoogleFonts.inter(
-                              fontSize: 14,
-                              fontStyle: FontStyle.italic,
-                              color: AppColors.onSurfaceVariant,
+                              fontSize: 12,
+                              color: const Color(0xFF94A3B8),
                             ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
                           ),
-                        ),
-                      ],
-                      
-                      // Board chip
-                      if (notif.boardName != null) ...[
-                        const SizedBox(height: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: AppColors.surfaceContainerLow,
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: AppColors.outlineVariant.withValues(alpha: 0.3)),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                notif.type == NotificationType.dueDate ? Icons.folder_rounded : Icons.dashboard_rounded,
-                                size: 14,
-                                color: AppColors.onSurfaceVariant,
+                          if (notif.actorName != null && notif.actorName!.isNotEmpty) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              width: 4,
+                              height: 4,
+                              decoration: const BoxDecoration(
+                                color: Color(0xFFCBD5E1),
+                                shape: BoxShape.circle,
                               ),
-                              const SizedBox(width: 6),
-                              Text(
-                                notif.boardName!,
-                                style: GoogleFonts.inter(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500,
-                                  color: AppColors.onSurfaceVariant,
-                                ),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              notif.actorName!,
+                              style: GoogleFonts.inter(
+                                fontSize: 12,
+                                color: const Color(0xFF94A3B8),
                               ),
-                            ],
-                          ),
-                        ),
-                      ],
+                            ),
+                          ],
+                        ],
+                      ),
                     ],
                   ),
                 ),
-                
-                // Unread dot (rightmost)
-                if (notif.isUnread) ...[
-                  const SizedBox(width: 12),
-                  Container(
-                    margin: const EdgeInsets.only(top: 6),
-                    width: 10,
-                    height: 10,
-                    decoration: const BoxDecoration(
-                      color: AppColors.primaryContainer,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                ],
               ],
             ),
-          ),
-        ),
-      ),
+          ],
+        );
+      },
     );
   }
 
-  Widget _buildBadge(IconData icon, Color color) {
+  Widget _buildNotificationIcon(NotificationTypeEnum type) {
+    final (icon, color, background) = switch (type) {
+      NotificationTypeEnum.assign => (
+          Icons.person_add_rounded,
+          AppColors.primaryContainer,
+          const Color(0xFFEFF6FF),
+        ),
+      NotificationTypeEnum.mention => (
+          Icons.chat_bubble_rounded,
+          AppColors.secondary,
+          const Color(0xFFF1F5F9),
+        ),
+      NotificationTypeEnum.due || NotificationTypeEnum.dueDateChanged || NotificationTypeEnum.dueDateReminder => (
+          Icons.schedule_rounded,
+          const Color(0xFFEA580C),
+          const Color(0xFFFFEDD5),
+        ),
+      _ => (
+          Icons.notifications_rounded,
+          AppColors.primary,
+          const Color(0xFFEFF6FF),
+        ),
+    };
+
     return Container(
-      padding: const EdgeInsets.all(2),
+      width: 40,
+      height: 40,
       decoration: BoxDecoration(
-        color: color,
+        color: background,
         shape: BoxShape.circle,
-        border: Border.all(color: Colors.white, width: 2),
       ),
-      child: Icon(icon, size: 10, color: Colors.white),
+      child: Icon(icon, size: 20, color: color),
     );
   }
 }

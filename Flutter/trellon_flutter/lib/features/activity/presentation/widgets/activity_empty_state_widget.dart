@@ -22,7 +22,7 @@ class ActivityEmptyStateWidget extends StatelessWidget {
                 color: AppColors.surface,
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.accent.withOpacity(0.15),
+                    color: AppColors.accent.withValues(alpha: 0.15),
                     blurRadius: 30,
                     spreadRadius: 5,
                   ),
@@ -36,12 +36,12 @@ class ActivityEmptyStateWidget extends StatelessWidget {
                   Positioned(
                     top: 10,
                     right: 18,
-                    child: Icon(Icons.auto_awesome, color: AppColors.accent.withOpacity(0.8), size: 16),
+                    child: Icon(Icons.auto_awesome, color: AppColors.accent.withValues(alpha: 0.8), size: 16),
                   ),
                   Positioned(
                     top: 16,
                     left: 14,
-                    child: Icon(Icons.auto_awesome, color: AppColors.accent.withOpacity(0.5), size: 10),
+                    child: Icon(Icons.auto_awesome, color: AppColors.accent.withValues(alpha: 0.5), size: 10),
                   ),
                 ],
               ),

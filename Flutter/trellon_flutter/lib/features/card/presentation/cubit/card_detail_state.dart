@@ -59,3 +59,5 @@ class CardDetailError extends CardDetailState {
   @override
   List<Object?> get props => [message];
 }
+
+class CardDetailMoved extends CardDetailState {}

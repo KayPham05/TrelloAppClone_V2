@@ -235,6 +235,10 @@ namespace TodoAppAPI.Service
             };
         }
 
+        // Public wrapper để các controller khác có thể gọi
+        public Task<AuthResponse> GenerateTokensAndSessionPublic(User user)
+            => GenerateTokensAndSession(user);
+
         public async Task<UserSession?> GetUserSessionByUserId(string userUId)
         {
             return await _context.UserSessions.AsNoTracking().FirstOrDefaultAsync(s => s.UserUId == userUId);

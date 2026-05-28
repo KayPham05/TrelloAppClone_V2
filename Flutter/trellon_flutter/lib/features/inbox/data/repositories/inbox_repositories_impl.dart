@@ -90,4 +90,14 @@ class InboxRepositoriesImpl extends InboxRepositories {
   Future<void> updateAttachmentDescription({required String cardId, required String fileId, required String userUId, String? description}) async {
     await remoteDataSource.updateAttachmentDescription(cardId, fileId, userUId, description);
   }
+
+  @override
+  Future<void> moveCardToInbox({required String cardId, required String userUId, required int position}) async {
+    await remoteDataSource.moveCardToInbox(cardId, userUId, position);
+  }
+
+  @override
+  Future<void> reorderInboxCards({required String userUId, required List<Map<String, dynamic>> items}) async {
+    await remoteDataSource.reorderInboxCards(userUId, items);
+  }
 }

@@ -54,7 +54,7 @@ class _CreateWorkspaceDialogState extends State<CreateWorkspaceDialog> {
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<WorkspaceType>(
-                value: _type,
+                initialValue: _type,
                 decoration: const InputDecoration(labelText: 'Loại không gian'),
                 items: WorkspaceType.values.map((type) {
                   return DropdownMenuItem(

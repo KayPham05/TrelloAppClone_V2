@@ -58,7 +58,7 @@ class _CreateBoardBottomSheetContentState
   ];
 
   String get _colorHex =>
-      '#${_selectedColor.value.toRadixString(16).substring(2).toUpperCase()}';
+      '#${_selectedColor.toARGB32().toRadixString(16).substring(2).toUpperCase()}';
 
   @override
   void initState() {
@@ -147,7 +147,7 @@ class _CreateBoardBottomSheetContentState
               borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.18),
+                  color: Colors.black.withValues(alpha: 0.18),
                   blurRadius: 24,
                   offset: const Offset(0, -4),
                 ),

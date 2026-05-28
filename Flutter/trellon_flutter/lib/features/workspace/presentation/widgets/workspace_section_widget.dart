@@ -32,7 +32,7 @@ class WorkspaceSectionWidget extends StatelessWidget {
                   width: 30,
                   height: 30,
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.2),
+                    color: AppColors.primary.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: const Icon(Icons.people_outline, color: AppColors.primary, size: 18),
@@ -46,7 +46,7 @@ class WorkspaceSectionWidget extends StatelessWidget {
                 ),
                 Text(
                   'Bảng',
-                  style: TextStyle(color: AppColors.primary.withOpacity(0.8), fontSize: 13),
+                  style: TextStyle(color: AppColors.primary.withValues(alpha: 0.8), fontSize: 13),
                 ),
                 const SizedBox(width: 4),
                 Icon(
@@ -80,6 +80,8 @@ class BoardRowWidget extends StatelessWidget {
           'boardId': board.id,
           'boardName': board.name,
           'backgroundUrl': board.backgroundUrl,
+          'workspaceId': board.workspaceId,
+          'workspaceName': board.workspaceName,
         });
       },
       child: Padding(

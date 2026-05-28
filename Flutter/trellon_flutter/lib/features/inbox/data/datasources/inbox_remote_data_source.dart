@@ -19,6 +19,8 @@ abstract class InboxRemoteDataSource {
   Future<FileUrlEntity> uploadAttachment(String cardId, String filePath, String userUId, String? description);
   Future<void> deleteAttachment(String cardId, String fileId, String userUId);
   Future<void> updateAttachmentDescription(String cardId, String fileId, String userUId, String? description);
+  Future<void> moveCardToInbox(String cardId, String userUId, int position);
+  Future<void> reorderInboxCards(String userUId, List<Map<String, dynamic>> items);
 }
 
 class InboxRemoteDataSourceImpl implements InboxRemoteDataSource {
@@ -186,6 +188,28 @@ class InboxRemoteDataSourceImpl implements InboxRemoteDataSource {
     );
     if (response.statusCode != 200) {
       throw Exception("Lỗi update attachment description inbox");
+    }
+  }
+
+  @override
+  Future<void> moveCardToInbox(String cardId, String userUId, int position) async {
+    final response = await dio.post(
+      '${ApiEndpoints.userInbox}/$userUId/move/$cardId',
+      queryParameters: {'position': position},
+    );
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw Exception("Lỗi khi chuyển card vào inbox");
+    }
+  }
+
+  @override
+  Future<void> reorderInboxCards(String userUId, List<Map<String, dynamic>> items) async {
+    final response = await dio.put(
+      '${ApiEndpoints.userInbox}/$userUId/reorder',
+      data: {'items': items},
+    );
+    if (response.statusCode != 200) {
+      throw Exception("Lỗi khi reorder inbox");
     }
   }
 }

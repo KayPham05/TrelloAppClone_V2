@@ -78,7 +78,7 @@ class PlannerDayRowWidget extends StatelessWidget {
                           decoration: BoxDecoration(
                             color: AppColors.surface,
                             borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: AppColors.border.withOpacity(0.5)),
+                            border: Border.all(color: AppColors.border.withValues(alpha: 0.5)),
                           ),
                           child: Text(
                             task,
@@ -92,7 +92,7 @@ class PlannerDayRowWidget extends StatelessWidget {
                         child: Text(
                           'Chưa lên kế hoạch nào',
                           style: TextStyle(
-                            color: AppColors.textSecondary.withOpacity(0.6),
+                            color: AppColors.textSecondary.withValues(alpha: 0.6),
                             fontSize: 14,
                           ),
                         ),
@@ -105,9 +105,9 @@ class PlannerDayRowWidget extends StatelessWidget {
         ),
         // Today separator line
         if (isToday)
-          Container(height: 1.5, color: AppColors.accent.withOpacity(0.5)),
+          Container(height: 1.5, color: AppColors.accent.withValues(alpha: 0.5)),
         if (!isToday && !isLast)
-          Container(height: 0.3, margin: const EdgeInsets.only(left: 60), color: AppColors.border.withOpacity(0.3)),
+          Container(height: 0.3, margin: const EdgeInsets.only(left: 60), color: AppColors.border.withValues(alpha: 0.3)),
       ],
     );
   }

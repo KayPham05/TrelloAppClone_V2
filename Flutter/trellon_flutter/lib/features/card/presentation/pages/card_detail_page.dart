@@ -16,6 +16,8 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../core/services/authorization_service.dart';
 import '../widgets/card_detail/card_member_picker_sheet.dart';
 import '../widgets/card_detail/label_picker_sheet.dart';
+import '../widgets/card_detail/move_card_sheet.dart';
+import 'package:apptreolon/features/board/data/datasources/board_remote_data_source.dart';
 
 class CardDetailPage extends StatefulWidget {
   final CardEntity card;
@@ -33,10 +35,7 @@ class _CardDetailPageState extends State<CardDetailPage> {
   @override
   void initState() {
     super.initState();
-    _cubit = serviceLocator<CardDetailCubit>()..loadCardDetails(widget.card, isInboxCard: widget.isInboxCard);
-    if (widget.boardId != null) {
-      _cubit.loadPotentialMembers(widget.boardId!);
-    }
+    _cubit = serviceLocator<CardDetailCubit>()..loadCardDetails(widget.card, isInboxCard: widget.isInboxCard, boardId: widget.boardId);
   }
 
   @override
@@ -49,7 +48,17 @@ class _CardDetailPageState extends State<CardDetailPage> {
   Widget build(BuildContext context) {
     return BlocProvider.value(
       value: _cubit,
-      child: Scaffold(
+      child: BlocListener<CardDetailCubit, CardDetailState>(
+        listener: (context, state) {
+          if (state is CardDetailMoved) {
+            Navigator.of(context).pop(true); // signal to parent to refresh
+          } else if (state is CardDetailError) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(state.message)),
+            );
+          }
+        },
+        child: Scaffold(
         backgroundColor: AppColors.surface, // Standard white surface for Lucid Sanctuary
         body: BlocBuilder<CardDetailCubit, CardDetailState>(
           builder: (context, state) {
@@ -117,6 +126,7 @@ class _CardDetailPageState extends State<CardDetailPage> {
                                        context,
                                        allBoardMembers: state.potentialMembers,
                                        currentCardMembers: state.members,
+                                       canManage: canEdit,
                                        onMemberToggled: (member) {
                                          final isAssigned = state.members.any((m) => m.userUId == member.userUId);
                                          if (isAssigned) {
@@ -185,7 +195,7 @@ class _CardDetailPageState extends State<CardDetailPage> {
                             begin: Alignment.topCenter,
                             end: Alignment.bottomCenter,
                             colors: [
-                              Colors.black.withOpacity(0.5),
+                              Colors.black.withValues(alpha: 0.5),
                               Colors.transparent,
                             ],
                           ),
@@ -198,6 +208,23 @@ class _CardDetailPageState extends State<CardDetailPage> {
                                onPressed: () => Navigator.pop(context),
                              ),
                              const Spacer(),
+                             // Move card button — always visible
+                             IconButton(
+                               icon: const Icon(Icons.drive_file_move_outline, color: Colors.white),
+                               tooltip: 'Di chuyển thẻ',
+                               onPressed: () {
+                                 final s = context.read<CardDetailCubit>().state;
+                                 if (s is CardDetailLoaded) {
+                                   MoveCardSheet.show(
+                                     context,
+                                     card: s.card,
+                                     currentBoardId: widget.boardId,
+                                     boardDataSource: serviceLocator<BoardRemoteDataSource>(),
+                                     cubit: context.read<CardDetailCubit>(),
+                                   );
+                                 }
+                               },
+                             ),
                              if (canEdit)
                                IconButton(
                                  icon: const Icon(Icons.image, color: Colors.white),
@@ -245,6 +272,7 @@ class _CardDetailPageState extends State<CardDetailPage> {
                 ]
               );
           },
+        ),
         ),
       ),
     );

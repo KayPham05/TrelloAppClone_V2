@@ -9,6 +9,9 @@ import '../../domain/entities/board_entity.dart';
 import '../cubit/board_detail_cubit.dart';
 import '../cubit/board_detail_state.dart';
 import '../widgets/board_detail/board_menu_sheet.dart';
+import '../widgets/zoom_controls_widget.dart';
+import '../widgets/board_detail/board_detail_top_bar_widget.dart';
+import '../widgets/board_detail/board_detail_sub_bar_widget.dart';
 import '../widgets/board_detail/board_kanban_add_list.dart';
 import '../widgets/board_detail/board_kanban_card_ui_widget.dart';
 import '../widgets/board_detail/board_kanban_card_wrapper.dart';
@@ -126,6 +129,8 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
       boardId = arguments['boardId'] as String? ?? '';
       boardName = arguments['boardName'] as String? ?? 'Board';
       backgroundUrl = arguments['backgroundUrl'] as String?;
+      workspaceId = arguments['workspaceId'] as String?;
+      workspaceName = arguments['workspaceName'] as String?;
     } else if (arguments is BoardEntity) {
       boardId = arguments.id;
       boardName = arguments.name;

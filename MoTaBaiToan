@@ -1,0 +1,78 @@
+3.1 Mô tả bài toán.
+3.1.1.Mô tả bài toán.
+− Hệ thống quản lý công việc Trello clone được đề xuất là một ứng dụng mobile 
+cho phép người dùng tổ chức và theo dõi công việc theo mô hình bảng, tương 
+tự như công cụ Trello phổ biến. Người dùng có thể tạo bảng (board) để đại 
+diện cho dự án hoặc nhóm công việc, bên trong mỗi bảng chứa các danh sách 
+(list) tương ứng với các giai đoạn hoặc phân loại công việc, và trong mỗi danh 
+sách là các thẻ công việc (card) cụ thể. Hệ thống hỗ trợ các thao tác trực quan 
+như kéo-thả thẻ giữa các danh sách để cập nhật trạng thái công việc, đồng thời 
+cho phép gắn thông tin chi tiết cho mỗi thẻ như mô tả công việc, thời hạn hoàn 
+thành (due date), nhãn màu (label) và phân công người thực hiện.
+− Bên cạnh việc quản lý công việc cá nhân, hệ thống Trello clone còn hỗ trợ làm 
+việc nhóm. Nhiều người dùng có thể cộng tác trên cùng một bảng với các mức 
+phân quyền truy cập theo vai trò khác nhau (ví dụ: chủ sở hữu bảng, thành 
+viên, khách). Ngoài ra, hệ thống cung cấp các tính năng hỗ trợ giao tiếp và 
+nhắc nhở trong quá trình làm việc nhóm, bao gồm chức năng bình luận trực 
+tiếp trên thẻ để thảo luận công việc, đính kèm tệp tin vào thẻ (ví dụ: tài liệu 
+hoặc hình ảnh minh họa), thiết lập nhắc nhở (reminder) về các công việc sắp 
+đến hạn, và gửi thông báo (notification) cho các thành viên liên quan khi có 
+thay đổi hoặc cập nhật mới.
+3.1.2. Hiện trạng và Phân tích Vấn đề
+Hiện trạng: Nhóm người dùng mục tiêu hiện nay thường sử dụng phiên bản 
+miễn phí của Trello hoặc kết hợp các công cụ rời rạc khác (như ứng dụng chat Zalo, 
+bảng tính Excel, v.v.) để quản lý và trao đổi công việc. Việc sử dụng những công cụ
+không đồng bộ và hạn chế này đã bộc lộ nhiều bất cập trong việc phối hợp nhóm và 
+theo dõi tiến độ dự án.
+Vấn đề: Cách thức quản lý công việc hiện tại tồn tại một số vấn đề chính như 
+sau:
+− Kém hiệu lực: Giải pháp hiện tại thiếu tính tùy chỉnh theo nhu cầu nội bộ
+và khó kiểm soát thông tin trong phạm vi doanh nghiệp. Dữ liệu công việc 
+thường bị phân tán trên nhiều nền tảng và không được đồng bộ kịp thời 
+giữa các thiết bị cũng như giữa các thành viên, dẫn đến giảm hiệu quả làm 
+việc và dễ xảy ra sai sót trong phối hợp.
+− Thiếu chức năng quan trọng: Các công cụ đang dùng (đặc biệt là bản miễn 
+phí của Trello) chưa cung cấp đầy đủ những tính năng cần thiết. Chẳng 
+hạn, chưa có phân quyền chi tiết cho từng thành viên tham gia dự án, thiếu 
+khả năng thống kê và theo dõi tiến độ công việc theo thời gian thực, gây 
+khó khăn cho nhà quản lý trong việc giám sát và đánh giá hiệu quả công 
+việc của nhóm.
+− Chi phí cao hoặc bị giới hạn: Để sử dụng đầy đủ các tính năng nâng cao 
+của công cụ nước ngoài như Trello, doanh nghiệp phải trả phí để nâng cấp 
+lên gói dịch vụ cao cấp. Điều này có thể làm tăng chi phí quản lý công 
+việc về lâu dài. Ngược lại, nếu chỉ sử dụng gói miễn phí thì nhiều tính 
+năng bị giới hạn, không đáp ứng đủ nhu cầu quản lý chuyên nghiệp.
+Cơ hội cải thiện: Trước những hạn chế nêu trên, doanh nghiệp có cơ hội phát 
+triển một hệ thống quản lý công việc nội bộ tương tự Trello nhằm khắc phục các 
+nhược điểm hiện tại. Hệ thống mới cho phép doanh nghiệp kiểm soát hoàn toàn dữ
+liệu công việc của mình và tùy biến các chức năng theo đặc thù nội bộ. Đồng thời, hệ
+thống có thể tích hợp sâu với các quy trình quản lý hiện có của doanh nghiệp, qua đó 
+nâng cao hiệu quả phối hợp nhóm và đảm bảo thông tin luôn được đồng bộ, bảo mật.
+3.1.3. Mục tiêu và Xác định Phạm vi 
+Phạm vi: Xây dựng một ứng dụng app flutter nội bộ mô phỏng các chức năng chính 
+của Trello, tập trung vào các tính năng cốt lõi. Cụ thể, hệ thống sẽ bao gồm các 
+chức năng như tạo bảng, danh sách và thẻ công việc; hỗ trợ thao tác kéo-thả thẻ
+giữa các danh sách; quản lý phân quyền người dùng theo vai trò (chủ bảng, thành 
+16
+viên, khách); cùng với các chức năng nhắc việc và thông báo cơ bản để hỗ trợ làm 
+việc nhóm. Phạm vi dự án tập trung vào việc phát triển những tính năng trọng yếu 
+nhất, đảm bảo hệ thống hoạt động ổn định trên môi trường mobile và phù hợp với 
+nhu cầu nội bộ của doanh nghiệp.
+Mục tiêu của Hệ thống mới:
+− Khắc phục những yếu điểm của giải pháp hiện tại: Cung cấp một hệ thống 
+được tùy biến theo nhu cầu của doanh nghiệp và lưu trữ dữ liệu công việc 
+nội bộ, giúp doanh nghiệp chủ động kiểm soát thông tin và không phụ
+thuộc vào nền tảng của bên thứ ba. Điều này đảm bảo tính bảo mật và riêng 
+tư cho dữ liệu công việc quan trọng.
+− Đáp ứng nhu cầu làm việc nhóm linh hoạt: Xây dựng một công cụ quản lý 
+công việc hỗ trợ linh hoạt cho các nhóm làm việc. Hệ thống phải đáp ứng 
+tốt các yêu cầu đa dạng trong việc theo dõi và phối hợp công việc nhóm, 
+cho phép các thành viên dễ dàng cập nhật tình trạng công việc và người 
+quản lý có thể theo dõi tiến độ một cách trực quan, mọi lúc mọi nơi.
+− Nền tảng có khả năng mở rộng và tích hợp: Tạo ra một nền tảng có khả
+năng mở rộng trong tương lai và dễ dàng tích hợp với các hệ thống khác. 
+Ví dụ, hệ thống sẽ thiết kế mở để có thể cung cấp API kết nối với các phần 
+mềm quản lý khác của doanh nghiệp, tích hợp chatbot hỗ trợ trao đổi thông 
+tin nhanh chóng, và bổ sung các chức năng thống kê, báo cáo phục vụ công 
+tác quản lý. Điều này giúp hệ thống có thể phát triển thêm các tính năng 
+mới hoặc tích hợp công nghệ mới theo nhu cầu thực tế sau khi triển khai.

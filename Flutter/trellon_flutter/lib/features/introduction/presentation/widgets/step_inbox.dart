@@ -45,7 +45,7 @@ class StepInbox extends StatelessWidget {
                         borderRadius: BorderRadius.circular(32),
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.onSurface.withOpacity(0.04),
+                            color: AppColors.onSurface.withValues(alpha: 0.04),
                             blurRadius: 24,
                             offset: const Offset(0, 8),
                           ),

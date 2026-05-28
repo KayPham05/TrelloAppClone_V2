@@ -8,6 +8,15 @@
         Due = 3,
         Mention = 4,
         Workspace = 5,
-        Board = 6
+        Board = 6,
+        CardUnassigned = 7,
+        BoardMemberAdded = 8,
+        BoardMemberRemoved = 9,
+        BoardRoleChanged = 10,
+        WorkspaceMemberAdded = 11,
+        WorkspaceMemberRemoved = 12,
+        WorkspaceRoleChanged = 13,
+        DueDateChanged = 14,
+        DueDateReminder = 15
     }
 }

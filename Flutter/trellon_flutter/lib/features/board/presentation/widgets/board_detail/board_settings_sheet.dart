@@ -71,7 +71,10 @@ class _BoardSettingsSheetState extends State<BoardSettingsSheet> {
       backgroundColor: Colors.transparent,
       builder: (_) => BlocProvider.value(
         value: ctx.read<BoardDetailCubit>(),
-        child: BoardTransferWorkspaceSheet(currentWorkspaceId: state.workspaceId ?? ''),
+        child: BoardTransferWorkspaceSheet(
+                  currentWorkspaceId: state.workspaceId ?? '',
+                  isCurrentlyPersonal: (state.workspaceId == null || state.workspaceId!.isEmpty),
+                ),
       ),
     );
   }

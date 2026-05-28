@@ -31,6 +31,18 @@ jobs:
         run: flutter pub get
         continue-on-error: false
 
+      - name: Prepare Flutter env for CI
+        working-directory: Flutter/trellon_flutter
+        env:
+          FLUTTER_API_URL: ${{ secrets.FLUTTER_API_URL }}
+        run: |
+          if [ -n "$FLUTTER_API_URL" ]; then
+            printf 'API_URL=%s\n' "$FLUTTER_API_URL" > .env
+          else
+            printf 'API_URL=http://127.0.0.1:5293/v1/api/\n' > .env
+          fi
+        continue-on-error: false
+
       - name: Run Flutter tests with coverage
         working-directory: Flutter/trellon_flutter
         run: |

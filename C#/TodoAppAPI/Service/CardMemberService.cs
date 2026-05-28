@@ -9,9 +9,12 @@ namespace TodoAppAPI.Service
     public class CardMemberService : ICardMemberService
     {
         private readonly TodoDbContext _dbContext;
-        public CardMemberService(TodoDbContext dbContext)
+        private readonly INotificationService _notificationService;
+
+        public CardMemberService(TodoDbContext dbContext, INotificationService notificationService)
         {
             _dbContext = dbContext;
+            _notificationService = notificationService;
         }
 
         public async Task<bool> AddCardMember(string userUId, string requesterUId, string boardUId, string cardUId)
@@ -70,6 +73,21 @@ namespace TodoAppAPI.Service
                 _dbContext.Add(newMember);
                 await _dbContext.SaveChangesAsync();
 
+                if (userUId != requesterUId)
+                {
+                    await _notificationService.TryCreateInternalAsync(new NotificationDTO
+                    {
+                        RecipientId = userUId,
+                        ActorId = requesterUId,
+                        Type = NotificationType.Assign,
+                        Title = "You were assigned to a card",
+                        Message = $"You were added to card '{card.Title ?? card.CardUId}'.",
+                        BoardId = boardUId,
+                        CardId = cardUId,
+                        Link = $"/card-detail/{cardUId}"
+                    }, "card member add");
+                }
+
                 Console.WriteLine("Thêm thành viên vào card thành công");
                 return true;
             }
@@ -126,8 +144,27 @@ namespace TodoAppAPI.Service
                 }
 
                 // 3: Xóa
+                var card = await _dbContext.Todos
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(c => c.CardUId == cardUId);
+
                 _dbContext.CardMembers.Remove(targetMember);
                 await _dbContext.SaveChangesAsync();
+
+                if (userUId != requesterUId)
+                {
+                    await _notificationService.TryCreateInternalAsync(new NotificationDTO
+                    {
+                        RecipientId = userUId,
+                        ActorId = requesterUId,
+                        Type = NotificationType.CardUnassigned,
+                        Title = "You were removed from a card",
+                        Message = $"You were removed from card '{card?.Title ?? cardUId}'.",
+                        BoardId = boardUId,
+                        CardId = cardUId,
+                        Link = $"/card-detail/{cardUId}"
+                    }, "card member remove");
+                }
 
                 Console.WriteLine($"Đã xóa user {userUId} khỏi card {cardUId}");
                 return true;
