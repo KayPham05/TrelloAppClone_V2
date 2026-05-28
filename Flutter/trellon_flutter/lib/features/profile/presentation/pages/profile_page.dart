@@ -18,8 +18,7 @@ import '../../../workspace/presentation/cubit/workspace_cubit.dart';
 import '../../../workspace/domain/entities/workspace_entity.dart';
 import '../../../board/presentation/widgets/board_list/create_workspace_sheet.dart';
 import 'dart:io';
-import 'package:image_picker/image_picker.dart';
-import 'package:image_cropper/image_cropper.dart';
+import '../../../../core/utils/image_picker_helper.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -130,30 +129,9 @@ class _ProfilePageState extends State<ProfilePage> {
 
   // ── Thêm Avatar Upload vào Header ─────────────────────────────────────────
   Future<void> _pickAndUploadAvatar() async {
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    final croppedFile = await ImagePickerHelper.pickAndCropImage();
 
-    if (pickedFile != null) {
-      final croppedFile = await ImageCropper().cropImage(
-        sourcePath: pickedFile.path,
-        aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1),
-        uiSettings: [
-          AndroidUiSettings(
-            toolbarTitle: 'Cắt ảnh',
-            toolbarColor: AppColors.primary,
-            toolbarWidgetColor: Colors.white,
-            initAspectRatio: CropAspectRatioPreset.square,
-            lockAspectRatio: true,
-          ),
-          IOSUiSettings(
-            title: 'Cắt ảnh',
-            aspectRatioLockEnabled: true,
-            resetAspectRatioEnabled: false,
-          ),
-        ],
-      );
-
-      if (croppedFile != null) {
+    if (croppedFile != null) {
         setState(() {
           _isUploadingAvatar = true;
         });
@@ -202,7 +180,6 @@ class _ProfilePageState extends State<ProfilePage> {
           }
         }
       }
-    }
   }
 
   // BỎ ASYNC VÀ FUTURE Ở ĐÂY, TRUYỀN THAM SỐ VÀO
@@ -761,68 +738,6 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _buildSettingItem(
-    IconData icon,
-    String title,
-    String? subtitle,
-    Color iconBgColor,
-    Color iconColor, {
-    Widget? trailing,
-    bool showChevron = true,
-    VoidCallback? onTap,
-  }) {
-    return InkWell(
-      onTap: onTap ?? () {},
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: iconBgColor,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(icon, color: iconColor, size: 20),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: GoogleFonts.inter(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.onSurface,
-                    ),
-                  ),
-                  if (subtitle != null) ...[
-                    const SizedBox(height: 2),
-                    Text(
-                      subtitle,
-                      style: GoogleFonts.inter(
-                        fontSize: 12,
-                        color: AppColors.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-            trailing ??
-                (showChevron
-                    ? const Icon(
-                        Icons.chevron_right_rounded,
-                        color: AppColors.outlineVariant,
-                        size: 24,
-                      )
-                    : const SizedBox.shrink()),
-          ],
-        ),
-      ),
-    );
-  }
+
+
 }

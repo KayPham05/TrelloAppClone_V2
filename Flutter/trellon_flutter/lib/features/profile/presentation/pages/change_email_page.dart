@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../init_dependencies.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/api_endpoints.dart';
+import '../widgets/profile_text_field_widget.dart';
 
 class ChangeEmailPage extends StatefulWidget {
   const ChangeEmailPage({super.key});
@@ -224,7 +225,7 @@ class _ChangeEmailPageState extends State<ChangeEmailPage> {
                     ),
                   ),
                   const SizedBox(height: 24),
-                  _buildTextField(
+                  ProfileTextFieldWidget(
                     label: 'Email mới',
                     hintText: "Nhập địa chỉ email mới",
                     controller: _newEmailController,
@@ -235,7 +236,7 @@ class _ChangeEmailPageState extends State<ChangeEmailPage> {
                         : null,
                   ),
                   const SizedBox(height: 16),
-                  _buildTextField(
+                  ProfileTextFieldWidget(
                     label: 'Mật khẩu hiện tại',
                     hintText: "Nhập mật khẩu hiện tại",
                     controller: _passwordController,
@@ -256,7 +257,7 @@ class _ChangeEmailPageState extends State<ChangeEmailPage> {
                     ),
                   ),
                   const SizedBox(height: 24),
-                  _buildTextField(
+                  ProfileTextFieldWidget(
                     label: 'Mã 2FA',
                     hintText: 'Nhập mã 2FA',
                     controller: _2faController,
@@ -314,58 +315,6 @@ class _ChangeEmailPageState extends State<ChangeEmailPage> {
     );
   }
 
-  Widget _buildTextField({
-    required String label,
-    required TextEditingController controller,
-    required IconData icon,
-    bool obscureText = false,
-    TextInputType keyboardType = TextInputType.text,
-    String? hintText,
-    String? Function(String?)? validator,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: GoogleFonts.inter(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: AppColors.onSurface,
-          ),
-        ),
-        const SizedBox(height: 8),
-        TextFormField(
-          controller: controller,
-          obscureText: obscureText,
-          keyboardType: keyboardType,
-          validator: validator,
-          decoration: InputDecoration(
-            hintText: hintText ?? '',
-            prefixIcon: Icon(icon, color: AppColors.outline),
-            filled: true,
-            fillColor: Colors.white,
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 16,
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: AppColors.outlineVariant),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: AppColors.outlineVariant),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.primary, width: 2),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
 
   Widget _buildOtpRow() {
     return Column(

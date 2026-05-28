@@ -3,13 +3,12 @@ import 'package:apptreolon/core/constants/app_colors.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:image_cropper/image_cropper.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:dio/dio.dart';
 import '../../../../init_dependencies.dart';
 import '../../../../core/constants/api_endpoints.dart';
-
+import '../../../../core/utils/image_picker_helper.dart';
+import '../widgets/profile_text_field_widget.dart';
 class InformationPage extends StatefulWidget {
   const InformationPage({super.key});
 
@@ -51,34 +50,12 @@ class _InformationPageState extends State<InformationPage> {
   }
 
   Future<void> _pickAndCropImage() async {
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    final croppedFile = await ImagePickerHelper.pickAndCropImage();
 
-    if (pickedFile != null) {
-      final croppedFile = await ImageCropper().cropImage(
-        sourcePath: pickedFile.path,
-        aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1),
-        uiSettings: [
-          AndroidUiSettings(
-            toolbarTitle: 'Cắt ảnh',
-            toolbarColor: AppColors.primary,
-            toolbarWidgetColor: Colors.white,
-            initAspectRatio: CropAspectRatioPreset.square,
-            lockAspectRatio: true,
-          ),
-          IOSUiSettings(
-            title: 'Cắt ảnh',
-            aspectRatioLockEnabled: true,
-            resetAspectRatioEnabled: false,
-          ),
-        ],
-      );
-
-      if (croppedFile != null) {
-        setState(() {
-          _selectedAvatar = File(croppedFile.path);
-        });
-      }
+    if (croppedFile != null) {
+      setState(() {
+        _selectedAvatar = File(croppedFile.path);
+      });
     }
   }
 
@@ -199,19 +176,19 @@ class _InformationPageState extends State<InformationPage> {
           children: [
             _buildAvatarSection(),
             const SizedBox(height: 32),
-            _buildTextField(
+            ProfileTextFieldWidget(
               label: 'Họ và tên',
               controller: _nameController,
               icon: Icons.person_outline_rounded,
             ),
             const SizedBox(height: 24),
-            _buildTextField(
+            ProfileTextFieldWidget(
               label: 'Tiểu sử (Bio)',
               controller: _bioController,
               maxLines: 4,
             ),
             const SizedBox(height: 24),
-            _buildTextField(
+            ProfileTextFieldWidget(
               label: 'Email',
               controller: _emailController,
               icon: Icons.email_outlined,
@@ -313,60 +290,4 @@ class _InformationPageState extends State<InformationPage> {
     );
   }
 
-  Widget _buildTextField({
-    required String label,
-    required TextEditingController controller,
-    IconData? icon,
-    bool readOnly = false,
-    int maxLines = 1,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: GoogleFonts.inter(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: AppColors.onSurface,
-          ),
-        ),
-        const SizedBox(height: 8),
-        TextFormField(
-          controller: controller,
-          readOnly: readOnly,
-          maxLines: maxLines,
-          style: GoogleFonts.inter(
-            fontSize: 16,
-            color: readOnly ? AppColors.onSurfaceVariant : AppColors.onSurface,
-          ),
-          decoration: InputDecoration(
-            prefixIcon: icon != null
-                ? Icon(icon, color: AppColors.outline)
-                : null,
-            filled: true,
-            fillColor: readOnly
-                ? AppColors.surfaceContainerLowest
-                : Colors.white,
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 16,
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: AppColors.outlineVariant),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: AppColors.outlineVariant),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.primary, width: 2),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
 }
