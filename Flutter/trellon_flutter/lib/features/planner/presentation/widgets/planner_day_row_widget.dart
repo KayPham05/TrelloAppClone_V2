@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../../core/constants/app_colors.dart';
 import '../../domain/entities/planner_entity.dart';
+import '../../../card/presentation/pages/card_detail_page.dart';
 
 class PlannerDayRowWidget extends StatelessWidget {
   final PlannerDayEntity day;
@@ -19,14 +19,28 @@ class PlannerDayRowWidget extends StatelessWidget {
     return days[weekday - 1];
   }
 
+  Color _getCardColor(String id) {
+    // Miro pastel colors
+    const colors = [
+      Color(0xFFFFF2B2), // Soft Yellow
+      Color(0xFFFFE0D9), // Coral Light
+      Color(0xFFD9F4F0), // Teal Light
+      Color(0xFFFFE4EE), // Rose Light
+      Color(0xFFE4F0FF), // Blue Light
+    ];
+    final hash = id.hashCode;
+    return colors[hash.abs() % colors.length];
+  }
+
   @override
   Widget build(BuildContext context) {
     final weekday = _getShortWeekday(day.date.weekday);
+    final accentColor = const Color(0xFF0055FF); // Miro Action Blue for today
 
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(vertical: 10),
+          padding: const EdgeInsets.symmetric(vertical: 16),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -38,51 +52,73 @@ class PlannerDayRowWidget extends StatelessWidget {
                     Text(
                       weekday,
                       style: TextStyle(
-                        color: isToday ? AppColors.accent : AppColors.textSecondary,
-                        fontSize: 11,
+                        color: isToday ? accentColor : const Color(0xFF6B6D76), // Slate
+                        fontSize: 12,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: 4),
                     Container(
-                      width: 34,
-                      height: 34,
+                      width: 36,
+                      height: 36,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: isToday ? AppColors.accent : Colors.transparent,
+                        color: isToday ? accentColor : Colors.transparent,
                       ),
                       alignment: Alignment.center,
                       child: Text(
                         '${day.date.day}',
                         style: TextStyle(
-                          color: isToday ? Colors.white : AppColors.textPrimary,
+                          color: isToday ? Colors.white : const Color(0xFF050505), // Ink
                           fontSize: 16,
-                          fontWeight: isToday ? FontWeight.bold : FontWeight.normal,
+                          fontWeight: isToday ? FontWeight.bold : FontWeight.w500,
                         ),
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 16),
               // Tasks or empty state
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     if (day.hasTask)
-                      ...day.taskTitles.map((task) => Padding(
-                        padding: const EdgeInsets.only(bottom: 4),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: AppColors.surface,
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: AppColors.border.withOpacity(0.5)),
-                          ),
-                          child: Text(
-                            task,
-                            style: const TextStyle(color: AppColors.textPrimary, fontSize: 14),
+                      ...day.cards.map((card) => Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => CardDetailPage(card: card, boardId: null),
+                              ),
+                            );
+                          },
+                          child: Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            decoration: BoxDecoration(
+                              color: _getCardColor(card.id),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: Colors.black.withOpacity(0.05)),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.02),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 2),
+                                )
+                              ]
+                            ),
+                            child: Text(
+                              card.title,
+                              style: const TextStyle(
+                                color: Color(0xFF050505), // Ink Deep
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
                           ),
                         ),
                       ))
@@ -92,7 +128,7 @@ class PlannerDayRowWidget extends StatelessWidget {
                         child: Text(
                           'Chưa lên kế hoạch nào',
                           style: TextStyle(
-                            color: AppColors.textSecondary.withOpacity(0.6),
+                            color: const Color(0xFF6B6D76).withOpacity(0.6), // Slate
                             fontSize: 14,
                           ),
                         ),
@@ -105,9 +141,9 @@ class PlannerDayRowWidget extends StatelessWidget {
         ),
         // Today separator line
         if (isToday)
-          Container(height: 1.5, color: AppColors.accent.withOpacity(0.5)),
+          Container(height: 2, color: accentColor),
         if (!isToday && !isLast)
-          Container(height: 0.3, margin: const EdgeInsets.only(left: 60), color: AppColors.border.withOpacity(0.3)),
+          Container(height: 1, margin: const EdgeInsets.only(left: 64), color: const Color(0xFFE5E5E5)), // Hairline Soft
       ],
     );
   }
