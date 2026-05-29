@@ -22,14 +22,16 @@ class VerifyCubit extends Cubit<VerifyState> {
   }) : super(VerifyInitial());
 
   Future<void> checkOtpStatus(String email) async {
+    // Khóa nút Gửi lại mã ngay lập tức bằng cách set timer 30s
+    startCountdown(seconds: 30);
     try {
       final remainingSeconds = await checkOtpStatusUseCase(email: email);
       if (remainingSeconds > 0) {
         startCountdown(seconds: remainingSeconds);
       } else {
         // Nếu backend trả về 0 (hoặc lỗi), nó đã tự động gửi lại mã rồi,
-        // nên chúng ta bắt đầu countdown mới 5p
-        startCountdown(seconds: 300);
+        // nên chúng ta bắt đầu countdown mới 30s
+        startCountdown(seconds: 30);
       }
     } catch (e) {
       // Bỏ qua lỗi check status để không làm phiền UX quá mức
@@ -38,8 +40,16 @@ class VerifyCubit extends Cubit<VerifyState> {
   }
 
   /// Bắt đầu đếm ngược sau khi mã được gửi lần đầu
-  void startCountdown({int seconds = 60}) {
+  void startCountdown({int seconds = 30}) {
     _secondsRemaining = seconds;
+    
+    // Emit ngay lập tức để giao diện cập nhật và khóa nút
+    if (_secondsRemaining > 0) {
+      emit(VerifyCountdown(_secondsRemaining));
+    } else {
+      emit(VerifyCountdownDone());
+    }
+
     _countdownTimer?.cancel();
     _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_secondsRemaining <= 0) {

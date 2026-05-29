@@ -4,8 +4,8 @@ import '../../../../init_dependencies.dart';
 import '../cubit/verify_cubit.dart';
 import '../widgets/otp_verification_view.dart';
 
-class VerifyPage extends StatelessWidget {
-  const VerifyPage({super.key});
+class LockedAccountPage extends StatelessWidget {
+  const LockedAccountPage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -14,9 +14,9 @@ class VerifyPage extends StatelessWidget {
     return BlocProvider(
       create: (context) => serviceLocator<VerifyCubit>()..checkOtpStatus(email),
       child: OtpVerificationView(
-        title: 'Xác minh / Mở khóa Email',
+        title: 'Tài khoản đã bị khóa',
         email: email,
-        buttonText: 'Xác minh',
+        buttonText: 'Mở khóa tài khoản',
         onVerifySuccess: () {
           Navigator.pushReplacementNamed(context, '/introduction');
         },

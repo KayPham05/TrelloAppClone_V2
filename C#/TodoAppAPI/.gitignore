@@ -17,3 +17,4 @@ appsettings.Development.json
 # Optional local overrides
 appsettings.Local.json
 appsettings.*.local.json
+appsettings.json

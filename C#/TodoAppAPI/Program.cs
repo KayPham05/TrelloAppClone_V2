@@ -142,6 +142,8 @@ app.UseCors("AllowFrontend");
 //app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseMiddleware<TodoAppAPI.Middlewares.AccountLockMiddleware>();
+
 app.MapControllers();
 app.MapHub<NotificationHub>("/hubs/notifications");
 app.Run();

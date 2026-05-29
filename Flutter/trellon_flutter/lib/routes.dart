@@ -1,3 +1,4 @@
+import 'package:apptreolon/features/auth/presentation/pages/locked_account_page.dart';
 import 'package:apptreolon/features/profile/presentation/pages/change_pass_page.dart';
 import 'package:apptreolon/features/profile/presentation/pages/enable_2fa_screen.dart';
 import 'package:apptreolon/features/profile/presentation/pages/profile_page.dart';
@@ -11,6 +12,8 @@ import 'features/auth/presentation/pages/register_page.dart';
 import 'features/auth/presentation/pages/two_factor_auth_page.dart';
 import 'features/auth/presentation/pages/verify_page.dart';
 import 'features/introduction/presentation/pages/introduction_page.dart';
+import 'features/profile/presentation/pages/information_page.dart';
+import 'features/profile/presentation/pages/change_email_page.dart';
 import 'features/workspace/presentation/pages/workspace_menu_page.dart';
 import 'features/workspace/domain/entities/workspace_entity.dart';
 import 'features/workspace/presentation/cubit/workspace_cubit.dart';
@@ -36,6 +39,9 @@ class AppRoutes {
   static const String workspaceDetail = '/workspace-detail';
   static const String introduction = '/introduction';
   static const String cardDetail = '/card-detail';
+  static const String information = '/information';
+  static const String changeEmail = '/change-email';
+  static const String lockedAccount = '/locked-account';
 
   static Map<String, WidgetBuilder> routes = {
     login: (context) => const LoginPage(),
@@ -47,6 +53,9 @@ class AppRoutes {
     changePassPage: (context) => const ChangePassword(),
     enable2FA: (context) => const Enable2FAScreen(),
     twoFactorAuthPage: (context) => const TwoFactorAuthPage(),
+    information: (context) => const InformationPage(),
+    changeEmail: (context) => const ChangeEmailPage(),
+    lockedAccount: (context) => const LockedAccountPage(),
     introduction: (context) => MultiBlocProvider(
       providers: [
         BlocProvider(create: (_) => serviceLocator<WorkspaceCubit>()),

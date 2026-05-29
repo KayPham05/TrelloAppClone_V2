@@ -4,8 +4,7 @@ import 'package:apptreolon/routes.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-
-class SecurityPage extends StatelessWidget{
+class SecurityPage extends StatelessWidget {
   const SecurityPage({super.key});
 
   @override
@@ -13,24 +12,24 @@ class SecurityPage extends StatelessWidget{
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          onPressed: (){
+          onPressed: () {
             Navigator.pop(context);
-          }, 
+          },
           icon: Icon(
             Icons.arrow_back_ios_new_rounded,
             color: Color(0xFF1D4ED8),
-          )),
+          ),
+        ),
         backgroundColor: const Color(0xFFF1F2F4),
         title: Text(
-            'Bảo mật',
-            style: GoogleFonts.inter(
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
-              color: const Color(0xFF1E3A8A),
-              letterSpacing: -0.3,
-            ),
+          'Bảo mật',
+          style: GoogleFonts.inter(
+            fontSize: 20,
+            fontWeight: FontWeight.w700,
+            color: const Color(0xFF1E3A8A),
+            letterSpacing: -0.3,
           ),
-
+        ),
       ),
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -40,16 +39,17 @@ class SecurityPage extends StatelessWidget{
           child: Column(
             children: [
               _buildAccountSettingsGroup(context),
-              SizedBox(height: 16,),
-              buildTwoFactorialGroup(context)
+              SizedBox(height: 16),
+              buildTwoFactorialGroup(context),
             ],
           ),
-        )
-      )
+        ),
+      ),
     );
   }
+
   Widget _buildDivider() =>
-    const Divider(height: 1, indent: 64, color: AppColors.surfaceContainer);
+      const Divider(height: 1, indent: 64, color: AppColors.surfaceContainer);
   Widget _buildSectionTitle(String text) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -64,6 +64,7 @@ class SecurityPage extends StatelessWidget{
       ),
     );
   }
+
   Widget _buildAccountSettingsGroup(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -78,30 +79,26 @@ class SecurityPage extends StatelessWidget{
           child: Column(
             children: [
               SettingItem(
-              icon: Icons.lock_outline,
-              title: 'Đổi mật khẩu',
-              iconBgColor: AppColors.primaryContainer.withValues(alpha: 0.1),
-              iconColor: AppColors.primaryContainer,
-              onTap: (){
-                Navigator.pushNamed(context, AppRoutes.changePassPage);
-              },
-            ),
-            _buildDivider(),
-            
-            SettingItem(
-              icon: Icons.email_outlined,
-              title: 'Đổi Email',
-              iconBgColor: AppColors.primaryContainer.withValues(alpha: 0.1),
-              iconColor: AppColors.primaryContainer
-            ),
-            _buildDivider(),
+                icon: Icons.lock_outline,
+                title: 'Đổi mật khẩu',
+                iconBgColor: AppColors.primaryContainer.withValues(alpha: 0.1),
+                iconColor: AppColors.primaryContainer,
+                onTap: () {
+                  Navigator.pushNamed(context, AppRoutes.changePassPage);
+                },
+              ),
+              _buildDivider(),
 
-            SettingItem(
-              icon: Icons.phone_outlined,
-              title: 'Đổi số điện thoại',
-              iconBgColor: AppColors.primaryContainer.withValues(alpha: 0.1),
-              iconColor: AppColors.primaryContainer
-            ),
+              SettingItem(
+                icon: Icons.email_outlined,
+                title: 'Đổi Email',
+                iconBgColor: AppColors.primaryContainer.withValues(alpha: 0.1),
+                iconColor: AppColors.primaryContainer,
+                onTap: () {
+                  Navigator.pushNamed(context, AppRoutes.changeEmail);
+                },
+              ),
+              _buildDivider(),
             ],
           ),
         ),

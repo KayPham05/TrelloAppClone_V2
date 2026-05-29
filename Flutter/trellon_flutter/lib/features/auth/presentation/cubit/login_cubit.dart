@@ -42,7 +42,12 @@ class LoginCubit extends Cubit<LoginState> {
 
       emit(LoginSuccess(user));
     } catch (e) {
-      emit(LoginError(e.toString().replaceFirst('Exception: ', '')));
+      if (e.toString().contains('ACCOUNT_LOCKED|')) {
+        final emailStr = e.toString().split('|').last;
+        emit(LoginAccountLocked(emailStr));
+      } else {
+        emit(LoginError(e.toString().replaceFirst('Exception: ', '')));
+      }
     }
   }
 }
