@@ -80,6 +80,12 @@ dist/
 [Oo]bj/
 
 # -----------------------------
+# Entity Framework Migrations
+# -----------------------------
+**/Migrations/*
+!**/Migrations/.gitkeep
+
+# -----------------------------
 # Flutter / Dart Build Artifacts
 # -----------------------------
 .dart_tool/
