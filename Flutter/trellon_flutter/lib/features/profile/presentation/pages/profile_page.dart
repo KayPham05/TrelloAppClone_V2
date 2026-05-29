@@ -21,10 +21,12 @@ class ProfilePage extends StatelessWidget {
     final prefs = await SharedPreferences.getInstance();
     final nameStr = prefs.getString('user_name');
     final emailStr = prefs.getString('user_email');
-    
+
     final name = (nameStr == null || nameStr.isEmpty) ? 'Khách' : nameStr;
-    final email = (emailStr == null || emailStr.isEmpty) ? 'Chưa cập nhật' : emailStr;
-    
+    final email = (emailStr == null || emailStr.isEmpty)
+        ? 'Chưa cập nhật'
+        : emailStr;
+
     return {'name': name, 'email': email};
   }
 
@@ -348,15 +350,6 @@ class ProfilePage extends StatelessWidget {
                 iconColor: AppColors.onSurfaceVariant,
                 onTap: () {},
               ),
-              SettingItem(
-                icon: Icons.logout_rounded,
-                title: 'Đăng xuất',
-                iconBgColor: const Color(0xFFFFDAD6).withValues(alpha: 0.2),
-                iconColor: AppColors.error,
-                onTap: () {
-                  _showLogoutDialog(context);
-                },
-              ),
               _buildDivider(),
               _buildSettingItem(
                 Icons.logout_rounded,
@@ -366,17 +359,24 @@ class ProfilePage extends StatelessWidget {
                 AppColors.error,
                 showChevron: false,
                 onTap: () async {
-                  final userId = await serviceLocator<UserLocalDataSource>().getUserId();
+                  final userId = await serviceLocator<UserLocalDataSource>()
+                      .getUserId();
                   if (userId != null) {
                     try {
-                      await serviceLocator<AuthRepository>().logout(userUId: userId);
+                      await serviceLocator<AuthRepository>().logout(
+                        userUId: userId,
+                      );
                     } catch (_) {}
                   }
                   await serviceLocator<UserLocalDataSource>().clearUserData();
                   await serviceLocator<CookieJar>().deleteAll();
                   serviceLocator<NotificationCubit>().reset();
                   if (context.mounted) {
-                    Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+                    Navigator.pushNamedAndRemoveUntil(
+                      context,
+                      '/login',
+                      (route) => false,
+                    );
                   }
                 },
               ),
@@ -535,7 +535,9 @@ class ProfilePage extends StatelessWidget {
             'Bạn có chắc chắn muốn đăng xuất?',
             style: GoogleFonts.inter(),
           ),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(),
@@ -559,7 +561,8 @@ class ProfilePage extends StatelessWidget {
                 showDialog(
                   context: context,
                   barrierDismissible: false,
-                  builder: (_) => const Center(child: CircularProgressIndicator()),
+                  builder: (_) =>
+                      const Center(child: CircularProgressIndicator()),
                 );
 
                 // 1. Gọi API Logout (Có thể fail nếu rớt mạng, không sao cả)
@@ -567,7 +570,9 @@ class ProfilePage extends StatelessWidget {
                   final prefs = await SharedPreferences.getInstance();
                   final userUId = prefs.getString('user_uid');
                   const secureStorage = FlutterSecureStorage();
-                  final refreshToken = await secureStorage.read(key: 'refresh_token');
+                  final refreshToken = await secureStorage.read(
+                    key: 'refresh_token',
+                  );
                   if (userUId != null && userUId.isNotEmpty) {
                     final dio = serviceLocator<Dio>();
                     await dio.post(
@@ -603,15 +608,18 @@ class ProfilePage extends StatelessWidget {
                 // 5. Điều hướng về Login
                 if (context.mounted) {
                   // Dùng rootNavigator để xóa sạch cả loading dialog nếu có và các trang trước đó
-                  Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil(
-                    AppRoutes.login,
-                    (route) => false,
-                  );
+                  Navigator.of(
+                    context,
+                    rootNavigator: true,
+                  ).pushNamedAndRemoveUntil(AppRoutes.login, (route) => false);
                 }
               },
               child: Text(
                 'Đăng xuất',
-                style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w600),
+                style: GoogleFonts.inter(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
           ],

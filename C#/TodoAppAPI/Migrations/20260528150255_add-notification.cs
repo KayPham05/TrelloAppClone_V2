@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace TodoAppAPI.Migrations
 {
     /// <inheritdoc />
-    public partial class InitDb : Migration
+    public partial class addnotification : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -231,6 +231,35 @@ namespace TodoAppAPI.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "WorkflowDesigns",
+                columns: table => new
+                {
+                    WorkflowDesignUId = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
+                    Description = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETDATE()"),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETDATE()"),
+                    WorkspaceUId = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: false),
+                    CreatedByUserUId = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_WorkflowDesigns", x => x.WorkflowDesignUId);
+                    table.ForeignKey(
+                        name: "FK_WorkflowDesigns_Users_CreatedByUserUId",
+                        column: x => x.CreatedByUserUId,
+                        principalTable: "Users",
+                        principalColumn: "UserUId",
+                        onDelete: ReferentialAction.SetNull);
+                    table.ForeignKey(
+                        name: "FK_WorkflowDesigns_Workspaces_WorkspaceUId",
+                        column: x => x.WorkspaceUId,
+                        principalTable: "Workspaces",
+                        principalColumn: "WorkspaceUId",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "WorkspaceMembers",
                 columns: table => new
                 {
@@ -331,6 +360,29 @@ namespace TodoAppAPI.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "WorkflowNodes",
+                columns: table => new
+                {
+                    WorkflowNodeUId = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: false),
+                    NodeType = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false, defaultValue: "Board"),
+                    ReferenceId = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: true),
+                    PositionX = table.Column<double>(type: "float", nullable: false),
+                    PositionY = table.Column<double>(type: "float", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETDATE()"),
+                    WorkflowDesignUId = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_WorkflowNodes", x => x.WorkflowNodeUId);
+                    table.ForeignKey(
+                        name: "FK_WorkflowNodes_WorkflowDesigns_WorkflowDesignUId",
+                        column: x => x.WorkflowDesignUId,
+                        principalTable: "WorkflowDesigns",
+                        principalColumn: "WorkflowDesignUId",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Cards",
                 columns: table => new
                 {
@@ -357,6 +409,40 @@ namespace TodoAppAPI.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "WorkflowEdges",
+                columns: table => new
+                {
+                    WorkflowEdgeUId = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: false),
+                    EdgeType = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false, defaultValue: "dependency"),
+                    Label = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    IsReversed = table.Column<bool>(type: "bit", nullable: false, defaultValue: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETDATE()"),
+                    WorkflowDesignUId = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: false),
+                    SourceNodeUId = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: false),
+                    TargetNodeUId = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_WorkflowEdges", x => x.WorkflowEdgeUId);
+                    table.ForeignKey(
+                        name: "FK_WorkflowEdges_WorkflowDesigns_WorkflowDesignUId",
+                        column: x => x.WorkflowDesignUId,
+                        principalTable: "WorkflowDesigns",
+                        principalColumn: "WorkflowDesignUId",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_WorkflowEdges_WorkflowNodes_SourceNodeUId",
+                        column: x => x.SourceNodeUId,
+                        principalTable: "WorkflowNodes",
+                        principalColumn: "WorkflowNodeUId");
+                    table.ForeignKey(
+                        name: "FK_WorkflowEdges_WorkflowNodes_TargetNodeUId",
+                        column: x => x.TargetNodeUId,
+                        principalTable: "WorkflowNodes",
+                        principalColumn: "WorkflowNodeUId");
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Activities",
                 columns: table => new
                 {
@@ -379,6 +465,27 @@ namespace TodoAppAPI.Migrations
                         column: x => x.UserUId,
                         principalTable: "Users",
                         principalColumn: "UserUId");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "CardDueDateReminderDeliveries",
+                columns: table => new
+                {
+                    ReminderDeliveryId = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: false),
+                    CardUId = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: false),
+                    Milestone = table.Column<int>(type: "int", nullable: false),
+                    DueDateSnapshot = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    SentAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_CardDueDateReminderDeliveries", x => x.ReminderDeliveryId);
+                    table.ForeignKey(
+                        name: "FK_CardDueDateReminderDeliveries_Cards_CardUId",
+                        column: x => x.CardUId,
+                        principalTable: "Cards",
+                        principalColumn: "CardUId",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -506,7 +613,8 @@ namespace TodoAppAPI.Migrations
                 {
                     UserUId = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: false),
                     CardUId = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: false),
-                    AddedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETDATE()")
+                    AddedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETDATE()"),
+                    Position = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -564,6 +672,12 @@ namespace TodoAppAPI.Migrations
                 name: "IX_Boards_WorkspaceUId",
                 table: "Boards",
                 column: "WorkspaceUId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_CardDueDateReminderDeliveries_CardUId_Milestone",
+                table: "CardDueDateReminderDeliveries",
+                columns: new[] { "CardUId", "Milestone" },
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_CardLabels_CardUId",
@@ -668,6 +782,42 @@ namespace TodoAppAPI.Migrations
                 column: "RoleId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_WorkflowDesigns_CreatedByUserUId",
+                table: "WorkflowDesigns",
+                column: "CreatedByUserUId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_WorkflowDesigns_WorkspaceUId",
+                table: "WorkflowDesigns",
+                column: "WorkspaceUId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_WorkflowEdges_SourceNodeUId_TargetNodeUId",
+                table: "WorkflowEdges",
+                columns: new[] { "SourceNodeUId", "TargetNodeUId" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_WorkflowEdges_TargetNodeUId",
+                table: "WorkflowEdges",
+                column: "TargetNodeUId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_WorkflowEdges_WorkflowDesignUId",
+                table: "WorkflowEdges",
+                column: "WorkflowDesignUId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_WorkflowNodes_ReferenceId",
+                table: "WorkflowNodes",
+                column: "ReferenceId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_WorkflowNodes_WorkflowDesignUId",
+                table: "WorkflowNodes",
+                column: "WorkflowDesignUId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_WorkspaceMembers_UserUId",
                 table: "WorkspaceMembers",
                 column: "UserUId");
@@ -692,6 +842,9 @@ namespace TodoAppAPI.Migrations
 
             migrationBuilder.DropTable(
                 name: "BoardMembers");
+
+            migrationBuilder.DropTable(
+                name: "CardDueDateReminderDeliveries");
 
             migrationBuilder.DropTable(
                 name: "CardLabels");
@@ -730,13 +883,22 @@ namespace TodoAppAPI.Migrations
                 name: "UserSessions");
 
             migrationBuilder.DropTable(
+                name: "WorkflowEdges");
+
+            migrationBuilder.DropTable(
                 name: "WorkspaceMembers");
 
             migrationBuilder.DropTable(
                 name: "Cards");
 
             migrationBuilder.DropTable(
+                name: "WorkflowNodes");
+
+            migrationBuilder.DropTable(
                 name: "Lists");
+
+            migrationBuilder.DropTable(
+                name: "WorkflowDesigns");
 
             migrationBuilder.DropTable(
                 name: "Boards");

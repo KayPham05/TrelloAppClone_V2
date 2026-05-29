@@ -12,8 +12,8 @@ using TodoAppAPI.Data;
 namespace TodoAppAPI.Migrations
 {
     [DbContext(typeof(TodoDbContext))]
-    [Migration("20260519182208_AddWorkflowEdgeMetadata")]
-    partial class AddWorkflowEdgeMetadata
+    [Migration("20260528150255_add-notification")]
+    partial class addnotification
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -192,6 +192,34 @@ namespace TodoAppAPI.Migrations
                     b.HasIndex("ListUId");
 
                     b.ToTable("Cards", (string)null);
+                });
+
+            modelBuilder.Entity("TodoAppAPI.Models.CardDueDateReminderDelivery", b =>
+                {
+                    b.Property<string>("ReminderDeliveryId")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<string>("CardUId")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<DateTime>("DueDateSnapshot")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Milestone")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("SentAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("ReminderDeliveryId");
+
+                    b.HasIndex("CardUId", "Milestone")
+                        .IsUnique();
+
+                    b.ToTable("CardDueDateReminderDeliveries", (string)null);
                 });
 
             modelBuilder.Entity("TodoAppAPI.Models.CardLabel", b =>
@@ -1050,6 +1078,17 @@ namespace TodoAppAPI.Migrations
                         .OnDelete(DeleteBehavior.Cascade);
 
                     b.Navigation("List");
+                });
+
+            modelBuilder.Entity("TodoAppAPI.Models.CardDueDateReminderDelivery", b =>
+                {
+                    b.HasOne("TodoAppAPI.Models.Card", "Card")
+                        .WithMany()
+                        .HasForeignKey("CardUId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Card");
                 });
 
             modelBuilder.Entity("TodoAppAPI.Models.CardLabel", b =>
