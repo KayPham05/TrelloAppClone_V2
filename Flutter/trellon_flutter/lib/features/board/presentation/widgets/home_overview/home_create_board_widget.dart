@@ -16,7 +16,7 @@ class HomeCreateBoardWidget extends StatelessWidget {
           color: AppColors.surfaceContainer,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: AppColors.outlineVariant.withOpacity(0.5),
+            color: AppColors.outlineVariant.withValues(alpha: 0.5),
             width: 1.5,
             style: BorderStyle.solid,
           ),

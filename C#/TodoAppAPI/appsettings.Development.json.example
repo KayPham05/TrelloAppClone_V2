@@ -14,5 +14,16 @@
     "Audience": "TodoAppClient",
     "AccessTokenExpiryMinutes": 15
   },
+  "CloudinarySettings": {
+    "CloudName": "REPLACE_WITH_YOUR_CLOUD_NAME",
+    "ApiKey": "REPLACE_WITH_YOUR_API_KEY",
+    "ApiSecret": "REPLACE_WITH_YOUR_API_SECRET"
+  },
+  "EmailSettings": {
+    "SmtpServer": "smtp.gmail.com",
+    "Port": 587,
+    "SenderEmail": "REPLACE_WITH_YOUR_SENDER_EMAIL",
+    "SenderPassword": "REPLACE_WITH_YOUR_APP_PASSWORD"
+  },
   "AllowedHosts": "*"
 }

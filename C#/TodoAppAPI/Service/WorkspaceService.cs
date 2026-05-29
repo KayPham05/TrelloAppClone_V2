@@ -11,11 +11,16 @@ namespace TodoAppAPI.Service
     {
         private readonly TodoDbContext _context;
         private readonly IAuthorizationService _authService;
+        private readonly INotificationService _notificationService;
 
-        public WorkspaceService(TodoDbContext context, IAuthorizationService authService)
+        public WorkspaceService(
+            TodoDbContext context,
+            IAuthorizationService authService,
+            INotificationService notificationService)
         {
             _context = context;
             _authService = authService;
+            _notificationService = notificationService;
         }
         
         public async Task<bool> AddWorkspace(string creatorUserId, string name, string? description = null)
@@ -209,6 +214,21 @@ namespace TodoAppAPI.Service
 
                 await _authService.LogPermissionChangeAsync(workspaceId, "Workspace", userId, requesterUId, "InviteMember", null, role);
 
+                if (userId != requesterUId)
+                {
+                    var workspace = await _context.Workspaces.AsNoTracking().FirstOrDefaultAsync(w => w.WorkspaceUId == workspaceId);
+                    await _notificationService.TryCreateInternalAsync(new NotificationDTO
+                    {
+                        RecipientId = userId,
+                        ActorId = requesterUId,
+                        Type = NotificationType.WorkspaceMemberAdded,
+                        Title = "You were added to a workspace",
+                        Message = $"You were added to workspace '{workspace?.Name ?? workspaceId}' as {role}.",
+                        WorkspaceId = workspaceId,
+                        Link = $"/workspace-menu/{workspaceId}"
+                    }, "workspace member invite");
+                }
+
                 return true;
             }
             catch (Exception ex)
@@ -259,6 +279,21 @@ namespace TodoAppAPI.Service
 
             await _authService.LogPermissionChangeAsync(workspaceId, "Workspace", userId, requesterUId, "RemoveMember", target.Role, null);
 
+            if (userId != requesterUId)
+            {
+                var workspace = await _context.Workspaces.AsNoTracking().FirstOrDefaultAsync(w => w.WorkspaceUId == workspaceId);
+                await _notificationService.TryCreateInternalAsync(new NotificationDTO
+                {
+                    RecipientId = userId,
+                    ActorId = requesterUId,
+                    Type = NotificationType.WorkspaceMemberRemoved,
+                    Title = "You were removed from a workspace",
+                    Message = $"You were removed from workspace '{workspace?.Name ?? workspaceId}'.",
+                    WorkspaceId = workspaceId,
+                    Link = $"/workspace-menu/{workspaceId}"
+                }, "workspace member remove");
+            }
+
             return true;
         }
 
@@ -287,6 +322,21 @@ namespace TodoAppAPI.Service
             await _context.SaveChangesAsync();
 
             await _authService.LogPermissionChangeAsync(workspaceId, "Workspace", userId, requesterUId, "UpdateRole", oldRole, newRole);
+
+            if (userId != requesterUId)
+            {
+                var workspace = await _context.Workspaces.AsNoTracking().FirstOrDefaultAsync(w => w.WorkspaceUId == workspaceId);
+                await _notificationService.TryCreateInternalAsync(new NotificationDTO
+                {
+                    RecipientId = userId,
+                    ActorId = requesterUId,
+                    Type = NotificationType.WorkspaceRoleChanged,
+                    Title = "Your workspace role changed",
+                    Message = $"Your role in workspace '{workspace?.Name ?? workspaceId}' changed from {oldRole} to {newRole}.",
+                    WorkspaceId = workspaceId,
+                    Link = $"/workspace-menu/{workspaceId}"
+                }, "workspace member role update");
+            }
             
             return true;
         }

@@ -10,19 +10,39 @@ import 'package:dio/dio.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../init_dependencies.dart';
 import '../../../../core/constants/api_endpoints.dart';
+import '../../../activity/presentation/cubit/notification_cubit.dart';
+import '../../../../core/data_sources/user_local_data_source.dart';
+import '../../../../features/auth/domain/repositories/i_auth_repository.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../workspace/presentation/cubit/workspace_cubit.dart';
+import '../../../workspace/domain/entities/workspace_entity.dart';
+import '../../../board/presentation/widgets/board_list/create_workspace_sheet.dart';
+import 'dart:io';
+import '../../../../core/utils/image_picker_helper.dart';
 
-class ProfilePage extends StatelessWidget {
+class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
+
+  @override
+  State<ProfilePage> createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends State<ProfilePage> {
+  bool _isUploadingAvatar = false;
 
   Future<Map<String, String>> _getUserInfo() async {
     final prefs = await SharedPreferences.getInstance();
     final nameStr = prefs.getString('user_name');
     final emailStr = prefs.getString('user_email');
-    
+    final avatarStr = prefs.getString('user_avatar');
+
     final name = (nameStr == null || nameStr.isEmpty) ? 'Khách' : nameStr;
-    final email = (emailStr == null || emailStr.isEmpty) ? 'Chưa cập nhật' : emailStr;
-    
-    return {'name': name, 'email': email};
+    final email = (emailStr == null || emailStr.isEmpty)
+        ? 'Chưa cập nhật'
+        : emailStr;
+    final avatar = avatarStr ?? '';
+
+    return {'name': name, 'email': email, 'avatar': avatar};
   }
 
   @override
@@ -53,8 +73,9 @@ class ProfilePage extends StatelessWidget {
                         final name = snapshot.data?['name'] ?? 'Khách';
                         final email =
                             snapshot.data?['email'] ?? 'Chưa cập nhật';
+                        final avatar = snapshot.data?['avatar'] ?? '';
 
-                        return _buildProfileHeader(name, email);
+                        return _buildProfileHeader(name, email, avatar);
                       },
                     ),
                     const SizedBox(height: 40),
@@ -106,118 +127,229 @@ class ProfilePage extends StatelessWidget {
     );
   }
 
+  // ── Thêm Avatar Upload vào Header ─────────────────────────────────────────
+  Future<void> _pickAndUploadAvatar() async {
+    final croppedFile = await ImagePickerHelper.pickAndCropImage();
+
+    if (croppedFile != null) {
+        setState(() {
+          _isUploadingAvatar = true;
+        });
+
+        try {
+          final dio = serviceLocator<Dio>();
+          String fileName = croppedFile.path.split('/').last;
+
+          FormData formData = FormData.fromMap({
+            'avatar': await MultipartFile.fromFile(
+              croppedFile.path,
+              filename: fileName,
+            ),
+          });
+
+          final response = await dio.put(
+            ApiEndpoints.updateProfile,
+            data: formData,
+          );
+
+          if (response.statusCode == 200) {
+            final data = response.data;
+            final prefs = await SharedPreferences.getInstance();
+            if (data['avatarUrl'] != null) {
+              await prefs.setString('user_avatar', data['avatarUrl']);
+            }
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Cập nhật ảnh đại diện thành công'),
+                ),
+              );
+            }
+          }
+        } catch (e) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Lỗi cập nhật ảnh: ${e.toString()}')),
+            );
+          }
+        } finally {
+          if (mounted) {
+            setState(() {
+              _isUploadingAvatar = false;
+            });
+          }
+        }
+      }
+  }
+
   // BỎ ASYNC VÀ FUTURE Ở ĐÂY, TRUYỀN THAM SỐ VÀO
-  Widget _buildProfileHeader(String name, String email) {
-    return Column(
-      children: [
-        Stack(
-          clipBehavior: Clip.none,
-          children: [
-            Container(
-              width: 96,
-              height: 96,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: AppColors.primaryContainer.withValues(alpha: 0.1),
-                  width: 4,
-                ),
-                image: const DecorationImage(
-                  image: CachedNetworkImageProvider(
-                    'https://i.pravatar.cc/150?u=jordan',
-                  ),
-                  fit: BoxFit.cover,
-                ),
-              ),
-            ),
-            Positioned(
-              bottom: 0,
-              right: 0,
-              child: Container(
-                padding: const EdgeInsets.all(6),
+  Widget _buildProfileHeader(String name, String email, String avatarUrl) {
+    ImageProvider avatarImage;
+    if (avatarUrl.isNotEmpty) {
+      avatarImage = CachedNetworkImageProvider(avatarUrl);
+    } else {
+      avatarImage = const CachedNetworkImageProvider(
+        'https://i.pravatar.cc/150?u=jordan',
+      );
+    }
+
+    return GestureDetector(
+      onTap: _pickAndUploadAvatar,
+      child: Column(
+        children: [
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Container(
+                width: 96,
+                height: 96,
                 decoration: BoxDecoration(
-                  color: AppColors.primary,
                   shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 2),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Colors.black12,
-                      blurRadius: 4,
-                      offset: Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: const Icon(
-                  Icons.edit_rounded,
-                  color: Colors.white,
-                  size: 14,
+                  border: Border.all(
+                    color: AppColors.primaryContainer.withValues(alpha: 0.1),
+                    width: 4,
+                  ),
+                  image: DecorationImage(image: avatarImage, fit: BoxFit.cover),
                 ),
               ),
+              Positioned(
+                bottom: 0,
+                right: 0,
+                child: Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 2),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Colors.black12,
+                        blurRadius: 4,
+                        offset: Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: _isUploadingAvatar
+                      ? const SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.white,
+                            ),
+                          ),
+                        )
+                      : const Icon(
+                          Icons.camera_alt_rounded,
+                          color: Colors.white,
+                          size: 14,
+                        ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            name, // HIỂN THỊ TÊN TỪ THAM SỐ
+            style: GoogleFonts.inter(
+              fontSize: 24,
+              fontWeight: FontWeight.w700,
+              color: AppColors.onSurface,
+              letterSpacing: -0.5,
             ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        Text(
-          name, // HIỂN THỊ TÊN TỪ THAM SỐ
-          style: GoogleFonts.inter(
-            fontSize: 24,
-            fontWeight: FontWeight.w700,
-            color: AppColors.onSurface,
-            letterSpacing: -0.5,
           ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          email, // HIỂN THỊ EMAIL TỪ THAM SỐ
-          style: GoogleFonts.inter(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-            color: AppColors.onSurfaceVariant,
+          const SizedBox(height: 4),
+          Text(
+            email, // HIỂN THỊ EMAIL TỪ THAM SỐ
+            style: GoogleFonts.inter(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: AppColors.onSurfaceVariant,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
   // ── Groups ───────────────────────────────────────────────────────────────
 
+  void _showCreateWorkspaceSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => BlocProvider.value(
+        value: context.read<WorkspaceCubit>(),
+        child: const CreateWorkspaceSheet(),
+      ),
+    );
+  }
+
   Widget _buildWorkspacesGroup(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionTitle('KHÔNG GIAN LÀM VIỆC'),
+        _buildSectionTitle('KHÔNG GIAN LÀM VIỆC (GẦN ĐÂY)'),
         const SizedBox(height: 12),
         Container(
           decoration: BoxDecoration(
             color: AppColors.surfaceContainerLowest,
             borderRadius: BorderRadius.circular(12),
           ),
-          child: Column(
-            children: [
-              _buildWorkspaceItem(
-                'Thiết kế & UI/UX',
-                'Đang hoạt động',
-                const Color(0xFF2563EB),
-                true,
-                true,
-                () {
-                  Navigator.pushNamed(context, AppRoutes.workspaceMenu);
-                },
-              ),
-              _buildDivider(),
-              _buildWorkspaceItem(
-                'Engineering Workspace',
-                'Chuyển không gian',
-                const Color(0xFF059669),
-                false,
-                true,
-                () {
-                  Navigator.pushNamed(context, '/workspace-menu');
-                },
-              ),
-              _buildDivider(),
-              _buildAddItem('Tạo không gian làm việc mới'),
-            ],
+          child: BlocBuilder<WorkspaceCubit, WorkspaceState>(
+            builder: (context, state) {
+              if (state is WorkspaceLoading) {
+                return const Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: Center(child: CircularProgressIndicator()),
+                );
+              }
+
+              if (state is WorkspaceLoaded) {
+                final allWorkspaces = [...state.personal, ...state.team];
+                // Limit to top 3 workspaces
+                final topWorkspaces = allWorkspaces.take(3).toList();
+
+                return Column(
+                  children: [
+                    for (int i = 0; i < topWorkspaces.length; i++) ...[
+                      _buildWorkspaceItem(
+                        topWorkspaces[i].name,
+                        topWorkspaces[i].type == WorkspaceType.personal
+                            ? 'Cá nhân'
+                            : 'Nhóm',
+                        AppColors.primary,
+                        false,
+                        true,
+                        () {
+                          Navigator.pushNamed(
+                            context,
+                            AppRoutes.workspaceMenu,
+                            arguments: topWorkspaces[i],
+                          );
+                        },
+                      ),
+                      _buildDivider(),
+                    ],
+                    _buildAddItem(
+                      'Tạo không gian làm việc mới',
+                      onTap: _showCreateWorkspaceSheet,
+                    ),
+                  ],
+                );
+              }
+
+              return Column(
+                children: [
+                  _buildAddItem(
+                    'Tạo không gian làm việc mới',
+                    onTap: _showCreateWorkspaceSheet,
+                  ),
+                ],
+              );
+            },
           ),
         ),
       ],
@@ -243,6 +375,10 @@ class ProfilePage extends StatelessWidget {
                 subtitle: 'Tên, email và ảnh',
                 iconBgColor: AppColors.primaryContainer.withValues(alpha: 0.1),
                 iconColor: AppColors.primaryContainer,
+                onTap: () async {
+                  await Navigator.pushNamed(context, '/information');
+                  setState(() {}); // Refresh info when returning
+                },
               ),
               _buildDivider(),
               SettingItem(
@@ -354,7 +490,6 @@ class ProfilePage extends StatelessWidget {
                   _showLogoutDialog(context);
                 },
               ),
-              _buildDivider(),
             ],
           ),
         ),
@@ -458,9 +593,9 @@ class ProfilePage extends StatelessWidget {
     );
   }
 
-  Widget _buildAddItem(String text) {
+  Widget _buildAddItem(String text, {VoidCallback? onTap}) {
     return InkWell(
-      onTap: () {},
+      onTap: onTap ?? () {},
       borderRadius: const BorderRadius.vertical(bottom: Radius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -510,7 +645,9 @@ class ProfilePage extends StatelessWidget {
             'Bạn có chắc chắn muốn đăng xuất?',
             style: GoogleFonts.inter(),
           ),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(),
@@ -534,7 +671,8 @@ class ProfilePage extends StatelessWidget {
                 showDialog(
                   context: context,
                   barrierDismissible: false,
-                  builder: (_) => const Center(child: CircularProgressIndicator()),
+                  builder: (_) =>
+                      const Center(child: CircularProgressIndicator()),
                 );
 
                 // 1. Gọi API Logout (Có thể fail nếu rớt mạng, không sao cả)
@@ -542,7 +680,9 @@ class ProfilePage extends StatelessWidget {
                   final prefs = await SharedPreferences.getInstance();
                   final userUId = prefs.getString('user_uid');
                   const secureStorage = FlutterSecureStorage();
-                  final refreshToken = await secureStorage.read(key: 'refresh_token');
+                  final refreshToken = await secureStorage.read(
+                    key: 'refresh_token',
+                  );
                   if (userUId != null && userUId.isNotEmpty) {
                     final dio = serviceLocator<Dio>();
                     await dio.post(
@@ -578,15 +718,18 @@ class ProfilePage extends StatelessWidget {
                 // 5. Điều hướng về Login
                 if (context.mounted) {
                   // Dùng rootNavigator để xóa sạch cả loading dialog nếu có và các trang trước đó
-                  Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil(
-                    AppRoutes.login,
-                    (route) => false,
-                  );
+                  Navigator.of(
+                    context,
+                    rootNavigator: true,
+                  ).pushNamedAndRemoveUntil(AppRoutes.login, (route) => false);
                 }
               },
               child: Text(
                 'Đăng xuất',
-                style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w600),
+                style: GoogleFonts.inter(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
           ],
@@ -594,4 +737,7 @@ class ProfilePage extends StatelessWidget {
       },
     );
   }
+
+
+
 }

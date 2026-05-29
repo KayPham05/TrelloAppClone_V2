@@ -62,7 +62,7 @@ class WorkspacePickerSheet extends StatelessWidget {
                   width: 32,
                   height: 32,
                   decoration: BoxDecoration(
-                    color: Colors.blueGrey.withOpacity(0.8),
+                    color: Colors.blueGrey.withValues(alpha: 0.8),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: const Icon(
@@ -114,8 +114,8 @@ class WorkspacePickerSheet extends StatelessWidget {
                       height: 32,
                       decoration: BoxDecoration(
                         color: ws.type == WorkspaceType.personal
-                            ? AppColors.primaryContainer.withOpacity(0.8)
-                            : const Color(0xFF7C3AED).withOpacity(0.8),
+                            ? AppColors.primaryContainer.withValues(alpha: 0.8)
+                            : const Color(0xFF7C3AED).withValues(alpha: 0.8),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Icon(

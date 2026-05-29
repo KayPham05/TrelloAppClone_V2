@@ -72,6 +72,11 @@ class AuthRepositoryImpl implements AuthRepository {
         final refreshToken = data['refreshToken'] as String?;
         final requiresVerification = data['requiresVerification'] as bool? ?? false;
         final requires2FA = data['requires2FA'] as bool? ?? false;
+        final msg = data['message'] as String? ?? '';
+
+        if (requiresVerification && msg.contains('bị khóa')) {
+           throw Exception('ACCOUNT_LOCKED|${data['email'] ?? email}');
+        }
 
         // Email chưa verify hoặc Cần 2FA → trả entity với flag để cubit xử lý
         if (requiresVerification || requires2FA || (token == null || token.isEmpty)) {

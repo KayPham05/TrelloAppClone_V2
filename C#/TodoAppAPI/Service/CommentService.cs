@@ -1,5 +1,7 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
+using System.Text.RegularExpressions;
 using TodoAppAPI.Data;
+using TodoAppAPI.DTOs;
 using TodoAppAPI.Interfaces;
 using TodoAppAPI.Models;
 
@@ -8,17 +10,19 @@ namespace TodoAppAPI.Service
     public class CommentService : ICommentService
     {
         private readonly TodoDbContext _dbContext;
+        private readonly INotificationService _notificationService;
 
-        public CommentService(TodoDbContext dbContext)
+        public CommentService(TodoDbContext dbContext, INotificationService notificationService)
         {
             _dbContext = dbContext;
+            _notificationService = notificationService;
         }
 
         public async Task<List<Comment>> GetCommentsByCardAsync(string cardUId)
         {
             return await _dbContext.Comments
                 .Where(c => c.CardUId == cardUId)
-                .Include(c => c.User) // lấy thông tin người comment
+                .Include(c => c.User)
                 .OrderByDescending(c => c.CreatedAt)
                 .ToListAsync();
         }
@@ -39,6 +43,7 @@ namespace TodoAppAPI.Service
 
                 await _dbContext.Comments.AddAsync(comment);
                 await _dbContext.SaveChangesAsync();
+                await CreateMentionNotificationsAsync(comment);
 
                 return await _dbContext.Comments
                     .Include(c => c.User)
@@ -46,7 +51,7 @@ namespace TodoAppAPI.Service
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Lỗi khi thêm comment: {ex.Message}");
+                Console.WriteLine($"Error adding comment: {ex.Message}");
                 return null;
             }
         }
@@ -64,7 +69,7 @@ namespace TodoAppAPI.Service
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Lỗi khi cập nhật comment: {ex.Message}");
+                Console.WriteLine($"Error updating comment: {ex.Message}");
                 return false;
             }
         }
@@ -82,9 +87,72 @@ namespace TodoAppAPI.Service
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Lỗi khi xóa comment: {ex.Message}");
+                Console.WriteLine($"Error deleting comment: {ex.Message}");
                 return false;
             }
+        }
+
+        private async Task CreateMentionNotificationsAsync(Comment comment)
+        {
+            var mentionedTokens = Regex.Matches(comment.Content ?? string.Empty, @"@([A-Za-z0-9._-]+)")
+                .Select(m => m.Groups[1].Value)
+                .Where(token => !string.IsNullOrWhiteSpace(token))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            if (mentionedTokens.Count == 0)
+                return;
+
+            var card = await _dbContext.Todos
+                .AsNoTracking()
+                .Include(c => c.List)
+                .Include(c => c.CardMembers)
+                .FirstOrDefaultAsync(c => c.CardUId == comment.CardUId);
+
+            if (card == null)
+                return;
+
+            var memberIds = card.CardMembers?
+                .Select(cm => cm.UserUId)
+                .Distinct()
+                .ToList() ?? new List<string>();
+
+            if (memberIds.Count == 0)
+                return;
+
+            var users = await _dbContext.Users
+                .AsNoTracking()
+                .Where(u => memberIds.Contains(u.UserUId))
+                .ToListAsync();
+
+            var recipients = users
+                .Where(u => u.UserUId != comment.UserUId)
+                .Where(u => mentionedTokens.Any(token =>
+                    string.Equals(u.UserName, token, StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(GetEmailPrefix(u.Email), token, StringComparison.OrdinalIgnoreCase)))
+                .Select(u => u.UserUId)
+                .Distinct()
+                .Select(userId => new NotificationDTO
+                {
+                    RecipientId = userId,
+                    ActorId = comment.UserUId,
+                    Type = NotificationType.Mention,
+                    Title = "You were mentioned in a card",
+                    Message = $"You were mentioned in card '{card.Title ?? card.CardUId}'.",
+                    BoardId = card.List?.BoardUId,
+                    ListId = card.ListUId,
+                    CardId = card.CardUId,
+                    Link = $"/card-detail/{card.CardUId}"
+                })
+                .ToList();
+
+            await _notificationService.TryCreateManyInternalAsync(recipients, "comment mention");
+        }
+
+        private static string GetEmailPrefix(string email)
+        {
+            var atIndex = email.IndexOf('@');
+            return atIndex > 0 ? email[..atIndex] : email;
         }
     }
 }

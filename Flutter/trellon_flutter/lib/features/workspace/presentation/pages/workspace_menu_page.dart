@@ -3,11 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../domain/entities/workspace_entity.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../cubit/workspace_cubit.dart';
-import '../../../../init_dependencies.dart';
-import '../../../../core/data_sources/user_local_data_source.dart';
 import '../widgets/dashed_create_board_card.dart';
 import '../widgets/workspace_board_item_widget.dart';
 import '../widgets/create_workspace_dialog.dart';
@@ -16,6 +13,8 @@ import '../widgets/create_board_dialog.dart';
 import 'workspace_members_page.dart';
 import '../../../board/domain/entities/board_entity.dart';
 import '../../../../core/services/authorization_service.dart';
+import '../../../../init_dependencies.dart';
+import '../../../../core/data_sources/user_local_data_source.dart';
 
 class WorkspaceMenuPage extends StatefulWidget {
   final WorkspaceEntity workspace;

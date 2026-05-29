@@ -12,12 +12,14 @@ namespace TodoAppAPI.Controllers
     {
         public readonly IUserService _userService;
         private readonly IAuthService _authService;
+        private readonly ICloudinaryService _cloudinaryService;
         private readonly ILogger<UserController> _logger;
 
-        public UserController(IUserService userService, IAuthService authService, ILogger<UserController> logger)
+        public UserController(IUserService userService, IAuthService authService, ICloudinaryService cloudinaryService, ILogger<UserController> logger)
         {
             _userService = userService;
             _authService = authService;
+            _cloudinaryService = cloudinaryService;
             _logger = logger;
         }
 
@@ -92,8 +94,8 @@ namespace TodoAppAPI.Controllers
             if (user == null)
                 return NotFound("Không tìm thấy tài khoản.");
 
-            //  Nếu đã xác thực rồi thì tạo token và trả về luôn
-            if (!user.IsEmailVerified)
+            //  Nếu đã xác thực và KHÔNG bị khóa thì tạo token và trả về luôn
+            if (!user.IsEmailVerified || user.StatusAccount == "Locked")
             {
                 //  Kiểm tra hết hạn mã
                 if (user.VerificationTokenExpiresAt == null || user.VerificationTokenExpiresAt < DateTime.UtcNow)
@@ -108,7 +110,7 @@ namespace TodoAppAPI.Controllers
                 user.IsEmailVerified = true;
                 user.VerificationTokenHash = null;
                 user.VerificationTokenExpiresAt = null;
-                user.StatusAccount = "Login";
+                user.StatusAccount = "Login"; // Unlock account
                 await _userService.UpdateAsync(user);
             }
 
@@ -133,6 +135,7 @@ namespace TodoAppAPI.Controllers
         }
 
 
+        [AllowAnonymous]
         [HttpPost("resend-code")]
         public async Task<IActionResult> ResendVerificationCode([FromQuery] string email)
         {
@@ -151,6 +154,7 @@ namespace TodoAppAPI.Controllers
             }
         }
 
+        [AllowAnonymous]
         [HttpGet("get-verification-status")]
         public async Task<IActionResult> GetVerificationStatus([FromQuery] string email)
         {
@@ -238,5 +242,205 @@ namespace TodoAppAPI.Controllers
             }
         }
 
+        [Authorize]
+        [HttpPut("update-profile")]
+        public async Task<IActionResult> UpdateProfile([FromForm] UpdateProfileRequest request)
+        {
+            var userUId = User.FindFirstValue("UserUId");
+            if (string.IsNullOrEmpty(userUId))
+                return Unauthorized(new { message = "Không xác định được người dùng." });
+
+            var user = await _userService.GetByIdAsync(userUId);
+            if (user == null)
+                return NotFound(new { message = "Không tìm thấy người dùng." });
+
+            if (!string.IsNullOrEmpty(request.UserName))
+            {
+                user.UserName = request.UserName;
+            }
+
+            if (request.Bio != null)
+            {
+                user.Bio = request.Bio;
+            }
+
+            if (request.Avatar != null)
+            {
+                var uploadResult = await _cloudinaryService.UploadFileAsync(request.Avatar);
+                if (uploadResult != null)
+                {
+                    user.AvatarUrl = uploadResult.Value.Url;
+                }
+            }
+
+            await _userService.UpdateAsync(user);
+
+            return Ok(new
+            {
+                message = "Cập nhật thông tin thành công.",
+                userName = user.UserName,
+                avatarUrl = user.AvatarUrl
+            });
+        }
+
+        [Authorize]
+        [HttpPost("check-change-email")]
+        public async Task<IActionResult> CheckChangeEmail([FromBody] CheckChangeEmailRequest request)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var userUId = User.FindFirstValue("UserUId");
+            if (string.IsNullOrEmpty(userUId))
+                return Unauthorized(new { message = "Không xác định được người dùng." });
+
+            try
+            {
+                var result = await _userService.CheckChangeEmailAsync(userUId, request.NewEmail, request.CurrentPassword);
+                return Ok(result);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"[CheckChangeEmail] Error: {ex.Message}");
+                return StatusCode(500, new { message = "Đã xảy ra lỗi." });
+            }
+        }
+
+        [Authorize]
+        [HttpPost("send-change-email-otp")]
+        public async Task<IActionResult> SendChangeEmailOtp([FromBody] SendChangeEmailOtpRequest request)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var userUId = User.FindFirstValue("UserUId");
+            if (string.IsNullOrEmpty(userUId))
+                return Unauthorized(new { message = "Không xác định được người dùng." });
+
+            try
+            {
+                await _userService.SendChangeEmailOtpAsync(userUId, request.NewEmail, request.CurrentPassword, request.TwoFactorCode);
+                return Ok(new { message = "Mã xác nhận đã được gửi đến email mới của bạn." });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"[SendChangeEmailOtp] Error: {ex.Message}");
+                return StatusCode(500, new { message = "Đã xảy ra lỗi." });
+            }
+        }
+
+        [Authorize]
+        [HttpPost("confirm-change-email")]
+        public async Task<IActionResult> ConfirmChangeEmail([FromBody] ConfirmChangeEmailRequest request)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var userUId = User.FindFirstValue("UserUId");
+            if (string.IsNullOrEmpty(userUId))
+                return Unauthorized(new { message = "Không xác định được người dùng." });
+
+            try
+            {
+                await _userService.ConfirmChangeEmailAsync(userUId, request.NewEmail, request.OtpCode);
+                return Ok(new { message = "Đổi email thành công." });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"[ConfirmChangeEmail] Error: {ex.Message}");
+                return StatusCode(500, new { message = "Đã xảy ra lỗi." });
+            }
+        }
+
+        [AllowAnonymous]
+        [HttpGet("lock-account")]
+        public async Task<IActionResult> LockAccount([FromQuery] string token)
+        {
+            if (string.IsNullOrEmpty(token))
+                return BadRequest(new { message = "Token không hợp lệ." });
+
+            try
+            {
+                var result = await _userService.LockAccountAsync(token);
+                if (result)
+                {
+                    var html = @"
+                        <html>
+                            <head>
+                                <meta charset='UTF-8'>
+                                <title>Tài khoản đã bị khóa</title>
+                            </head>
+                            <body style='text-align:center; padding: 50px; font-family: Arial, sans-serif; background-color: #f9f9f9;'>
+                                <div style='background-color: white; padding: 30px; border-radius: 10px; display: inline-block; box-shadow: 0 4px 6px rgba(0,0,0,0.1);'>
+                                    <h1 style='color: #d32f2f;'>Tài khoản đã bị khóa an toàn</h1>
+                                    <p style='color: #555; font-size: 16px; margin-bottom: 20px;'>Tài khoản của bạn đã được khóa ngay lập tức để bảo vệ khỏi truy cập trái phép.</p>
+                                    <p style='color: #777; font-size: 14px;'>Để mở khóa, vui lòng mở ứng dụng Trello Clone, tiến hành Đăng nhập và nhập mã OTP xác thực được gửi về email gốc của bạn.</p>
+                                </div>
+                            </body>
+                        </html>";
+                    return Content(html, "text/html");
+                }
+                
+                var errorHtml = @"
+                        <html>
+                            <head>
+                                <meta charset='UTF-8'>
+                                <title>Lỗi khóa tài khoản</title>
+                            </head>
+                            <body style='text-align:center; padding: 50px; font-family: Arial, sans-serif; background-color: #f9f9f9;'>
+                                <div style='background-color: white; padding: 30px; border-radius: 10px; display: inline-block; box-shadow: 0 4px 6px rgba(0,0,0,0.1);'>
+                                    <h1 style='color: #f57c00;'>Không thể khóa tài khoản</h1>
+                                    <p style='color: #555; font-size: 16px;'>Đường dẫn không hợp lệ hoặc đã hết hạn.</p>
+                                </div>
+                            </body>
+                        </html>";
+                return Content(errorHtml, "text/html");
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"[LockAccount] Error: {ex.Message}");
+                return StatusCode(500, new { message = "Đã xảy ra lỗi." });
+            }
+        }
     }
 }

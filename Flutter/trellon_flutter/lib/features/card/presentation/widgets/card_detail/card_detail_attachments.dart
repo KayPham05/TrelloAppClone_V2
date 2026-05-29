@@ -299,7 +299,7 @@ class CardDetailAttachments extends StatelessWidget {
               width: 52,
               height: 52,
               decoration: BoxDecoration(
-                color: color.withOpacity(0.2),
+                color: color.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(12),
                 image: isImg 
                   ? DecorationImage(image: NetworkImage(file.url), fit: BoxFit.cover)
@@ -351,7 +351,7 @@ class CardDetailAttachments extends StatelessWidget {
                         'Cloudinary URL',
                         style: GoogleFonts.inter(
                           fontSize: 11,
-                          color: AppColors.onSurfaceVariant.withOpacity(0.5),
+                          color: AppColors.onSurfaceVariant.withValues(alpha: 0.5),
                         ),
                       ),
                     ),

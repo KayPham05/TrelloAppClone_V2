@@ -76,7 +76,7 @@ class CardDetailMetaGrid extends StatelessWidget {
               children: [
                 ...labels.map((l) {
                   final color = _parseHexColor(l.colorCode);
-                  return _buildLabelChip(l.title, color.withOpacity(0.2), color);
+                  return _buildLabelChip(l.title, color.withValues(alpha: 0.2), color);
                 }),
                 GestureDetector(
                   onTap: onAddLabel,

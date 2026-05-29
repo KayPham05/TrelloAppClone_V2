@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../../core/constants/app_colors.dart';
 import '../../domain/entities/board_entity.dart';
 import '../../../../core/utils/color_utils.dart';
 
@@ -35,7 +34,7 @@ class BoardCardItem extends StatelessWidget {
                 const Spacer(),
                 Icon(
                   board.visibility == 'Private' ? Icons.lock_outline : Icons.public,
-                  color: Colors.white.withOpacity(0.7),
+                  color: Colors.white.withValues(alpha: 0.7),
                   size: 14,
                 ),
               ],

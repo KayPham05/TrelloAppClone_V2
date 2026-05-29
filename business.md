@@ -857,7 +857,7 @@ sequenceDiagram
     DB-->>API: Success
     API-->>Cubit: 200 OK { message }
     Cubit->>Cubit: emit state mới với workspaceId mới
-    Cubit-->>App: SnackBar "✅ Đã chuyển bảng thành công"
+    Cubit-->>App: SnackBar " Đã chuyển bảng thành công"
 ```
 
 ---

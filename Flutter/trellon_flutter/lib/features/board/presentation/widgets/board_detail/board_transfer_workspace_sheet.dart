@@ -9,6 +9,7 @@ import '../../cubit/board_detail_cubit.dart';
 
 class BoardTransferWorkspaceSheet extends StatefulWidget {
   final String currentWorkspaceId;
+
   /// True when the board currently lives in personal space (IsPersonal == true).
   final bool isCurrentlyPersonal;
 
@@ -19,10 +20,12 @@ class BoardTransferWorkspaceSheet extends StatefulWidget {
   });
 
   @override
-  State<BoardTransferWorkspaceSheet> createState() => _BoardTransferWorkspaceSheetState();
+  State<BoardTransferWorkspaceSheet> createState() =>
+      _BoardTransferWorkspaceSheetState();
 }
 
-class _BoardTransferWorkspaceSheetState extends State<BoardTransferWorkspaceSheet> {
+class _BoardTransferWorkspaceSheetState
+    extends State<BoardTransferWorkspaceSheet> {
   static const String _personalId = '__personal__';
 
   List<Map<String, dynamic>> _workspaces = [];
@@ -71,10 +74,15 @@ class _BoardTransferWorkspaceSheetState extends State<BoardTransferWorkspaceShee
               : 'Chuyển bảng sang "$displayName"?\n\nCác thành viên trong bảng sẽ được tự động thêm vào không gian làm việc mới.',
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Huỷ')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Huỷ'),
+          ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primaryContainer),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primaryContainer,
+            ),
             child: const Text('Chuyển', style: TextStyle(color: Colors.white)),
           ),
         ],
@@ -99,7 +107,7 @@ class _BoardTransferWorkspaceSheetState extends State<BoardTransferWorkspaceShee
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('✅ Đã chuyển bảng thành công'),
+            content: Text(' Đã chuyển bảng thành công'),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -126,10 +134,16 @@ class _BoardTransferWorkspaceSheetState extends State<BoardTransferWorkspaceShee
         width: 36,
         height: 36,
         decoration: BoxDecoration(
-          color: current ? AppColors.primaryContainer.withOpacity(0.15) : AppColors.surfaceContainerLow,
+          color: current
+              ? AppColors.primaryContainer.withOpacity(0.15)
+              : AppColors.surfaceContainerLow,
           borderRadius: BorderRadius.circular(8),
         ),
-        child: Icon(icon, size: 18, color: iconColor ?? AppColors.onSurfaceVariant),
+        child: Icon(
+          icon,
+          size: 18,
+          color: iconColor ?? AppColors.onSurfaceVariant,
+        ),
       ),
       title: Text(
         name,
@@ -140,7 +154,11 @@ class _BoardTransferWorkspaceSheetState extends State<BoardTransferWorkspaceShee
         ),
       ),
       trailing: current
-          ? const Icon(Icons.check_circle_rounded, color: Color(0xFF2563EB), size: 22)
+          ? const Icon(
+              Icons.check_circle_rounded,
+              color: Color(0xFF2563EB),
+              size: 22,
+            )
           : null,
       onTap: _transferring ? null : () => _transfer(id, name),
     );
@@ -182,7 +200,10 @@ class _BoardTransferWorkspaceSheetState extends State<BoardTransferWorkspaceShee
                   child: Text(
                     'Chuyển đến không gian',
                     textAlign: TextAlign.center,
-                    style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600),
+                    style: GoogleFonts.inter(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
                 const SizedBox(width: 48),
@@ -211,7 +232,9 @@ class _BoardTransferWorkspaceSheetState extends State<BoardTransferWorkspaceShee
                           child: Text(
                             'Không có không gian nhóm nào.',
                             textAlign: TextAlign.center,
-                            style: GoogleFonts.inter(color: AppColors.onSurfaceVariant),
+                            style: GoogleFonts.inter(
+                              color: AppColors.onSurfaceVariant,
+                            ),
                           ),
                         )
                       else

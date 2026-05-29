@@ -9,12 +9,14 @@ using TodoAppAPI.Service;
 using TodoAppAPI.Service.JWT;
 using TodoAppAPI.Service.Cloudinary;
 using TodoAppAPI.Services;
+using TodoAppAPI.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
 builder.Services.AddControllers();
+builder.Services.AddSignalR();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ICommentService, CommentService>();
 builder.Services.AddScoped<IBoardService, BoardService>();
@@ -32,7 +34,9 @@ builder.Services.AddScoped<EmailService>();
 builder.Services.AddScoped<IActivity, ActivityService>();
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<ICardDueDateReminderService, CardDueDateReminderService>();
 builder.Services.AddScoped<ITwoFactorService, TwoFactorService>();
+builder.Services.AddHostedService<CardDueDateReminderHostedService>();
 
 // IMemoryCache for 2FA temp secrets
 builder.Services.AddMemoryCache();
@@ -62,6 +66,21 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidAudience = builder.Configuration["Jwt:Audience"],
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
             ClockSkew = TimeSpan.Zero
+        };
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                var accessToken = context.Request.Query["access_token"];
+                var path = context.HttpContext.Request.Path;
+                if (!string.IsNullOrEmpty(accessToken) &&
+                    path.StartsWithSegments("/hubs/notifications"))
+                {
+                    context.Token = accessToken;
+                }
+
+                return Task.CompletedTask;
+            }
         };
     });
 
@@ -129,5 +148,8 @@ else
 //app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseMiddleware<TodoAppAPI.Middlewares.AccountLockMiddleware>();
+
 app.MapControllers();
+app.MapHub<NotificationHub>("/hubs/notifications");
 app.Run();

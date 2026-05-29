@@ -101,16 +101,32 @@ namespace TodoAppAPI.Controllers
                 return Unauthorized(new { message = "Không có refresh token." });
             }
 
-            var accessToken = await _authService.RefreshAccessTokenAsync(refreshToken);
-
-            if (accessToken == null)
+            try
             {
-                _logger.LogWarning(" Refresh token invalid or expired");
-                return Unauthorized(new { message = "Refresh token không hợp lệ hoặc đã hết hạn." });
-            }
+                var accessToken = await _authService.RefreshAccessTokenAsync(refreshToken);
 
-            _logger.LogInformation(" New access token generated successfully");
-            return Ok(new { accessToken });
+                if (accessToken == null)
+                {
+                    _logger.LogWarning(" Refresh token invalid or expired");
+                    return Unauthorized(new { message = "Refresh token không hợp lệ hoặc đã hết hạn." });
+                }
+
+                _logger.LogInformation(" New access token generated successfully");
+                return Ok(new { accessToken });
+            }
+            catch (UnauthorizedAccessException ex) when (ex.Message.StartsWith("ACCOUNT_LOCKED|"))
+            {
+                var email = ex.Message.Split('|')[1];
+                _logger.LogWarning($" Account locked detected on refresh: {email}");
+
+                try
+                {
+                    await _authService.LoginAsync(email, "DUMMY_PASSWORD_JUST_TO_TRIGGER_OTP_FOR_LOCKED_ACCOUNT");
+                }
+                catch { } 
+                
+                return StatusCode(403, new { message = "ACCOUNT_LOCKED", email = email });
+            }
         }
 
         // QUAN TRỌNG: AllowAnonymous cho logout
@@ -140,7 +156,7 @@ namespace TodoAppAPI.Controllers
                 await _authService.LogoutAsync(refreshToken);
                 Response.Cookies.Delete("refreshToken");
 
-                _logger.LogInformation("✅ Logout successful");
+                _logger.LogInformation(" Logout successful");
                 return Ok(new { message = "Đã đăng xuất thành công." });
             }
             catch (Exception ex)
@@ -150,7 +166,7 @@ namespace TodoAppAPI.Controllers
             }
         }
 
-        // ✅ AllowAnonymous cho verify-otp
+        //  AllowAnonymous cho verify-otp
         [AllowAnonymous]
         [HttpPost("verify-otp")]
         public async Task<IActionResult> VerifyOtp([FromBody] VerifyOtpRequest req)

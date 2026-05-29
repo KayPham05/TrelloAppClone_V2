@@ -46,6 +46,13 @@ $RECYCLE.BIN/
 *.pfx
 
 # -----------------------------
+# .NET local settings
+# -----------------------------
+appsettings.Development.json
+appsettings.Local.json
+appsettings.*.local.json
+
+# -----------------------------
 # Local agent folders
 # -----------------------------
 .gemini/
@@ -67,6 +74,32 @@ dist/
 *.7z
 
 # -----------------------------
+# .NET Build Artifacts
+# -----------------------------
+[Bb]in/
+[Oo]bj/
+
+# -----------------------------
+# Entity Framework Migrations
+# -----------------------------
+**/Migrations/*
+!**/Migrations/.gitkeep
+
+# -----------------------------
+# Flutter / Dart Build Artifacts
+# -----------------------------
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+build/
+flutter_export_environment.sh
+GeneratedPluginRegistrant.referenced
+ephemeral/
+
+# -----------------------------
 # Local project notes
 # -----------------------------
-ANTIGRAVITY.md
+AGENT.md
+Docs/Plans/
+Docs/Reviews/

@@ -156,7 +156,7 @@ class _CreatePersonalBoardSheetState extends State<CreatePersonalBoardSheet> {
                     canvasColor: AppColors.surfaceContainerLow,
                   ),
                   child: DropdownButtonFormField<String?>(
-                    value: _selectedWorkspaceId,
+                    initialValue: _selectedWorkspaceId,
                     decoration: InputDecoration(
                       filled: true,
                       fillColor: AppColors.surfaceContainerLow,
@@ -210,11 +210,11 @@ class _CreatePersonalBoardSheetState extends State<CreatePersonalBoardSheet> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
           border: Border.all(
-            color: isSelected ? AppColors.primary : AppColors.outlineVariant.withOpacity(0.5),
+            color: isSelected ? AppColors.primary : AppColors.outlineVariant.withValues(alpha: 0.5),
             width: isSelected ? 2 : 1,
           ),
           borderRadius: BorderRadius.circular(12),
-          color: isSelected ? AppColors.primary.withOpacity(0.05) : null,
+          color: isSelected ? AppColors.primary.withValues(alpha: 0.05) : null,
         ),
         child: Row(
           children: [
