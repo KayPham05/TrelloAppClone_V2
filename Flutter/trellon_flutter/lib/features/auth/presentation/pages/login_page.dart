@@ -70,6 +70,8 @@ class _LoginViewState extends State<LoginView> {
           }
         } else if (state is LoginRequiresVerification) {
           Navigator.pushReplacementNamed(context, '/verify', arguments: state.email);
+        } else if (state is LoginAccountLocked) {
+          Navigator.pushReplacementNamed(context, '/locked-account', arguments: state.email);
         } else if (state is LoginRequires2FA) {
           Navigator.pushReplacementNamed(
             context, 

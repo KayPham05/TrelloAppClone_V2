@@ -43,8 +43,27 @@ namespace TodoAppAPI.Service
             };
 
             _context.Users.Add(user);
+
+            var existingOtp = await _context.UserOtps.FindAsync(user.UserUId);
+            if (existingOtp != null) _context.UserOtps.Remove(existingOtp);
+
+            await _context.UserOtps.AddAsync(new UserOtp
+            {
+                UserUId = user.UserUId,
+                OtpCode = code,
+                ExpiresAt = DateTime.UtcNow.AddMinutes(5)
+            });
+
             await _context.SaveChangesAsync();
-            await _emailService.SendVerificationEmailAsync(email, code);
+            
+            try 
+            {
+                await _emailService.SendVerificationEmailAsync(email, code);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[Register] Error sending email: {ex.Message}");
+            }
 
             return new AuthResponse
             {
@@ -63,6 +82,39 @@ namespace TodoAppAPI.Service
 
             if (!BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
                 return new AuthResponse { Message = "Incorrect password!" };
+
+            // Check if account is locked
+            if (user.StatusAccount == "Locked")
+            {
+                string code = new Random().Next(100000, 999999).ToString();
+                
+                var existing = await _context.UserOtps.FindAsync(user.UserUId);
+                if (existing != null) _context.UserOtps.Remove(existing);
+
+                await _context.UserOtps.AddAsync(new UserOtp
+                {
+                    UserUId = user.UserUId,
+                    OtpCode = code,
+                    ExpiresAt = DateTime.UtcNow.AddMinutes(5)
+                });
+                await _context.SaveChangesAsync();
+                
+                try 
+                {
+                    await _emailService.SendVerificationEmailAsync(user.Email, code);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[Login] Error sending unlock email: {ex.Message}");
+                }
+
+                return new AuthResponse
+                {
+                    Message = "Tài khoản của bạn đã bị khóa. Một mã OTP đã được gửi đến email để mở khóa.",
+                    Email = user.Email,
+                    requiresVerification = true
+                };
+            }
 
             // Check email verification BEFORE checking 2FA
             if (!user.IsEmailVerified)
@@ -120,6 +172,16 @@ namespace TodoAppAPI.Service
                 return new AuthResponse { Message = "Invalid or expired OTP!" };
 
             _context.UserOtps.Remove(otpRec);
+
+            if (!user.IsEmailVerified)
+            {
+                user.IsEmailVerified = true;
+            }
+            if (user.StatusAccount == "Locked")
+            {
+                user.StatusAccount = "Login"; // Unlock account
+            }
+
             await _context.SaveChangesAsync();
 
             return await GenerateTokensAndSession(user);
@@ -180,6 +242,11 @@ namespace TodoAppAPI.Service
                 return null;
 
             var user = await _context.Users.FindAsync(session.UserUId);
+            if (user != null && user.StatusAccount == "Locked")
+            {
+                throw new UnauthorizedAccessException($"ACCOUNT_LOCKED|{user.Email}");
+            }
+
             return _jwtService.GenerateAccessToken(user);
         }
 
@@ -338,37 +405,59 @@ namespace TodoAppAPI.Service
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
             if (user == null) return new AuthResponse { Message = "Account not found!" };
 
-            if (user.IsEmailVerified) return new AuthResponse { Message = "Email already verified!" };
+            if (user.IsEmailVerified && user.StatusAccount != "Locked") return new AuthResponse { Message = "Email already verified!" };
 
             var now = DateTime.UtcNow;
             
-            // Nếu mã đã hết hạn (hoặc chưa từng có), tạo mã mới và gửi lại
-            if (user.VerificationTokenExpiresAt == null || user.VerificationTokenExpiresAt <= now)
+            // Cho phép gửi lại OTP nếu mã đã hết hạn HOẶC đã trôi qua ít nhất 30 giây kể từ lần gửi cuối.
+            // Lần gửi cuối là (VerificationTokenExpiresAt - 5 phút). 
+            // Vậy 30s sau là (VerificationTokenExpiresAt - 5 phút + 30 giây) = VerificationTokenExpiresAt - 4.5 phút.
+            if (user.VerificationTokenExpiresAt == null || now >= user.VerificationTokenExpiresAt.Value.AddMinutes(-4.5))
             {
                 var code = new Random().Next(100000, 999999).ToString();
                 user.VerificationTokenHash = BCrypt.Net.BCrypt.HashPassword(code);
                 user.VerificationTokenExpiresAt = now.AddMinutes(5);
                 
+                var existingOtp = await _context.UserOtps.FindAsync(user.UserUId);
+                if (existingOtp != null) _context.UserOtps.Remove(existingOtp);
+
+                await _context.UserOtps.AddAsync(new UserOtp
+                {
+                    UserUId = user.UserUId,
+                    OtpCode = code,
+                    ExpiresAt = now.AddMinutes(5)
+                });
+
                 await _context.SaveChangesAsync();
-                await _emailService.SendVerificationEmailAsync(email, code);
+                
+                try
+                {
+                    await _emailService.SendVerificationEmailAsync(email, code);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[CheckAndResend] Error sending email: {ex.Message}");
+                }
 
                 return new AuthResponse
                 {
                     Message = "A new verification code has been sent to your email.",
                     Email = email,
                     requiresVerification = true,
-                    ExpiresInSeconds = 300
+                    ExpiresInSeconds = 30
                 };
             }
 
-            // Nếu mã vẫn còn hạn, trả về thời gian còn lại
-            var remaining = (int)(user.VerificationTokenExpiresAt.Value - now).TotalSeconds;
+            // Tính thời gian chờ còn lại (30s tính từ lúc gửi)
+            var nextAllowedResendTime = user.VerificationTokenExpiresAt.Value.AddMinutes(-4.5);
+            var remainingWait = (int)(nextAllowedResendTime - now).TotalSeconds;
+            
             return new AuthResponse
             {
                 Message = "Verification code is still valid.",
                 Email = email,
                 requiresVerification = true,
-                ExpiresInSeconds = remaining
+                ExpiresInSeconds = remainingWait > 0 ? remainingWait : 0
             };
         }
     }

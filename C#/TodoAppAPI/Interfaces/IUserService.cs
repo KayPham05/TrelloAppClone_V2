@@ -26,5 +26,9 @@ namespace TodoAppAPI.Interfaces
         Task<bool> ToggleTwoFactorAsync(string userUId, bool enabled);
         Task<AuthResponse> GetVerificationStatusAndResendIfExpiredAsync(string email);
         Task<AuthResponse> ChangePasswordAsync(string userUId, string oldPassword, string newPassword, string? twoFactorCode);
+        Task<object> CheckChangeEmailAsync(string userUId, string newEmail, string currentPassword);
+        Task<bool> SendChangeEmailOtpAsync(string userUId, string newEmail, string currentPassword, string? twoFactorCode);
+        Task<bool> ConfirmChangeEmailAsync(string userUId, string newEmail, string otpCode);
+        Task<bool> LockAccountAsync(string token);
     }
 }
