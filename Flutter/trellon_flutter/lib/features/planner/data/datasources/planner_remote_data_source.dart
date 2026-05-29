@@ -16,7 +16,7 @@ class PlannerRemoteDataSourceImpl implements PlannerRemoteDataSource {
       final fromStr = '${from.year}-${from.month.toString().padLeft(2, '0')}-${from.day.toString().padLeft(2, '0')}';
       final toStr = '${to.year}-${to.month.toString().padLeft(2, '0')}-${to.day.toString().padLeft(2, '0')}';
       
-      final response = await dio.get('/v1/api/planner/calendar', queryParameters: {
+      final response = await dio.get('planner/calendar', queryParameters: {
         'from': fromStr,
         'to': toStr,
       });
