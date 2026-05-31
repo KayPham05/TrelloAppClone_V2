@@ -4,12 +4,13 @@ class ApiEndpoints {
   static String get baseUrl => dotenv.env['API_URL']!;
   static const String register = 'auth/register';
   static const String login = 'auth/login';
+  static const String googleLogin = 'auth/google-login';
   static const String refreshToken = 'auth/refresh-token';
   static const String logout = 'auth/logout';
   static const String verifyCode = 'users/verify-code';
   static const String resendCode = 'users/resend-code';
   static const String checkOtpStatus = 'users/get-verification-status';
-  static const String userInbox='user-inbox';
+  static const String userInbox = 'user-inbox';
   static const String card = 'cards';
   static const String comments = 'comments';
   static const String cardMember = 'CardMember';

@@ -10,9 +10,16 @@ class LoginUseCase {
     required String email,
     required String password,
   }) async {
-    return await repository.login(
-      email: email,
-      password: password,
+    return await repository.login(email: email, password: password);
+  }
+
+  Future<UserEntity> googleLogin({
+    required String idToken,
+    String? accessToken,
+  }) async {
+    return await repository.googleLogin(
+      idToken: idToken,
+      accessToken: accessToken,
     );
   }
 }
