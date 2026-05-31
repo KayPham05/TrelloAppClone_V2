@@ -54,6 +54,7 @@ dependencies:
   flutter_dotenv: ^6.0.0
   signalr_netcore: ^1.4.4
   image_cropper: ^12.2.1
+  intl: ^0.20.2
 
 dev_dependencies:
   flutter_test:
