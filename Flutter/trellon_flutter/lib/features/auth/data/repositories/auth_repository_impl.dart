@@ -70,16 +70,19 @@ class AuthRepositoryImpl implements AuthRepository {
         final data = response.data;
         final token = data['token'] as String?;
         final refreshToken = data['refreshToken'] as String?;
-        final requiresVerification = data['requiresVerification'] as bool? ?? false;
+        final requiresVerification =
+            data['requiresVerification'] as bool? ?? false;
         final requires2FA = data['requires2FA'] as bool? ?? false;
         final msg = data['message'] as String? ?? '';
 
         if (requiresVerification && msg.contains('bị khóa')) {
-           throw Exception('ACCOUNT_LOCKED|${data['email'] ?? email}');
+          throw Exception('ACCOUNT_LOCKED|${data['email'] ?? email}');
         }
 
         // Email chưa verify hoặc Cần 2FA → trả entity với flag để cubit xử lý
-        if (requiresVerification || requires2FA || (token == null || token.isEmpty)) {
+        if (requiresVerification ||
+            requires2FA ||
+            (token == null || token.isEmpty)) {
           return UserEntity(
             id: data['userUId'] ?? '', // Cần userUId để verify 2FA
             userUId: data['userUId'] ?? '',
@@ -100,6 +103,67 @@ class AuthRepositoryImpl implements AuthRepository {
         );
       }
       throw Exception("Đăng nhập không thành công");
+    } on DioException catch (e) {
+      final data = e.response?.data;
+      String errorMsg = "Lỗi kết nối Server";
+      if (data is Map) {
+        errorMsg = data['message'] ?? errorMsg;
+      } else if (data is String) {
+        errorMsg = data.trim();
+      }
+      throw Exception(errorMsg);
+    }
+  }
+
+  @override
+  Future<UserEntity> googleLogin({
+    required String idToken,
+    String? accessToken,
+  }) async {
+    try {
+      final payload = <String, dynamic>{
+        'idToken': idToken,
+        if (accessToken != null && accessToken.isNotEmpty)
+          'accessToken': accessToken,
+      };
+
+      final response = await dio.post(
+        ApiEndpoints.googleLogin,
+        data: payload,
+        options: Options(extra: {'skipAuthInterceptor': true}),
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data;
+        final token = data['token'] as String?;
+        final refreshToken = data['refreshToken'] as String?;
+        final requiresVerification =
+            data['requiresVerification'] as bool? ?? false;
+        final requires2FA = data['requires2FA'] as bool? ?? false;
+
+        if (requiresVerification ||
+            requires2FA ||
+            (token == null || token.isEmpty)) {
+          return UserEntity(
+            id: data['userUId'] ?? '',
+            userUId: data['userUId'] ?? '',
+            userName: data['userName'] ?? '',
+            email: data['email'] ?? '',
+            requiresVerification: requiresVerification,
+            requires2FA: requires2FA,
+          );
+        }
+
+        return UserEntity(
+          id: data['userUId'] ?? '',
+          userUId: data['userUId'] ?? '',
+          userName: data['userName'] ?? '',
+          email: data['email'] ?? '',
+          token: token,
+          refreshToken: refreshToken,
+        );
+      }
+      throw Exception("Đăng nhập Google không thành công");
     } on DioException catch (e) {
       final data = e.response?.data;
       String errorMsg = "Lỗi kết nối Server";
@@ -134,8 +198,12 @@ class AuthRepositoryImpl implements AuthRepository {
       if (response.statusCode == 200) {
         final data = response.data;
         // Backend trả về token sau khi xác thực thành công
-        final token = data is Map ? data['accessToken'] as String? ?? data['token'] as String? : null;
-        final refreshToken = data is Map ? data['refreshToken'] as String? : null;
+        final token = data is Map
+            ? data['accessToken'] as String? ?? data['token'] as String?
+            : null;
+        final refreshToken = data is Map
+            ? data['refreshToken'] as String?
+            : null;
         final userUId = data is Map ? data['userUId'] as String? ?? '' : '';
         final userName = data is Map ? data['userName'] as String? ?? '' : '';
         return UserEntity(

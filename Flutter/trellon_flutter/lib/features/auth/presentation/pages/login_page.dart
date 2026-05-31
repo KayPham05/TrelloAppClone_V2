@@ -51,9 +51,9 @@ class _LoginViewState extends State<LoginView> {
   void _handleLogin() {
     if (!_formKey.currentState!.validate()) return;
     context.read<LoginCubit>().login(
-          email: _emailController.text.trim(),
-          password: _passwordController.text.trim(),
-        );
+      email: _emailController.text.trim(),
+      password: _passwordController.text.trim(),
+    );
   }
 
   @override
@@ -64,23 +64,38 @@ class _LoginViewState extends State<LoginView> {
           final localDataSource = serviceLocator<UserLocalDataSource>();
           final hasSeen = await localDataSource.getHasSeenIntroduction();
           if (!hasSeen) {
-            if (context.mounted) Navigator.pushReplacementNamed(context, '/introduction');
+            if (context.mounted) {
+              Navigator.pushReplacementNamed(context, '/introduction');
+            }
           } else {
-            if (context.mounted) Navigator.pushReplacementNamed(context, '/home');
+            if (context.mounted) {
+              Navigator.pushReplacementNamed(context, '/home');
+            }
           }
         } else if (state is LoginRequiresVerification) {
-          Navigator.pushReplacementNamed(context, '/verify', arguments: state.email);
+          Navigator.pushReplacementNamed(
+            context,
+            '/verify',
+            arguments: state.email,
+          );
         } else if (state is LoginAccountLocked) {
-          Navigator.pushReplacementNamed(context, '/locked-account', arguments: state.email);
+          Navigator.pushReplacementNamed(
+            context,
+            '/locked-account',
+            arguments: state.email,
+          );
         } else if (state is LoginRequires2FA) {
           Navigator.pushReplacementNamed(
-            context, 
+            context,
             AppRoutes.twoFactorAuthPage, // Make sure this route exists
             arguments: {'userUId': state.userUId, 'email': state.email},
           );
         } else if (state is LoginError) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.message), backgroundColor: AppColors.error),
+            SnackBar(
+              content: Text(state.message),
+              backgroundColor: AppColors.error,
+            ),
           );
         }
       },
@@ -90,17 +105,13 @@ class _LoginViewState extends State<LoginView> {
           child: SingleChildScrollView(
             child: ConstrainedBox(
               constraints: BoxConstraints(
-                minHeight: MediaQuery.of(context).size.height -
+                minHeight:
+                    MediaQuery.of(context).size.height -
                     MediaQuery.of(context).padding.top -
                     MediaQuery.of(context).padding.bottom,
               ),
               child: IntrinsicHeight(
-                child: Column(
-                  children: [
-                    _buildBody(),
-                    _buildFooter(),
-                  ],
-                ),
+                child: Column(children: [_buildBody(), _buildFooter()]),
               ),
             ),
           ),
@@ -137,7 +148,11 @@ class _LoginViewState extends State<LoginView> {
             color: AppColors.primaryContainer,
             borderRadius: BorderRadius.circular(8),
           ),
-          child: const Icon(Icons.view_kanban_rounded, color: Colors.white, size: 22),
+          child: const Icon(
+            Icons.view_kanban_rounded,
+            color: Colors.white,
+            size: 22,
+          ),
         ),
         const SizedBox(width: 8),
         Text(
@@ -184,7 +199,9 @@ class _LoginViewState extends State<LoginView> {
                   controller: _emailController,
                   hint: 'Nhập địa chỉ email',
                   keyboardType: TextInputType.emailAddress,
-                  validator: (v) => (v == null || !v.contains('@')) ? 'Email không hợp lệ' : null,
+                  validator: (v) => (v == null || !v.contains('@'))
+                      ? 'Email không hợp lệ'
+                      : null,
                 ),
                 const SizedBox(height: 12),
                 _buildTextField(
@@ -192,10 +209,17 @@ class _LoginViewState extends State<LoginView> {
                   hint: 'Nhập mật khẩu',
                   obscureText: _obscurePassword,
                   suffixIcon: IconButton(
-                    icon: Icon(_obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined),
-                    onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                    icon: Icon(
+                      _obscurePassword
+                          ? Icons.visibility_off_outlined
+                          : Icons.visibility_outlined,
+                    ),
+                    onPressed: () =>
+                        setState(() => _obscurePassword = !_obscurePassword),
                   ),
-                  validator: (v) => (v == null || v.isEmpty) ? 'Vui lòng nhập mật khẩu' : null,
+                  validator: (v) => (v == null || v.isEmpty)
+                      ? 'Vui lòng nhập mật khẩu'
+                      : null,
                 ),
                 const SizedBox(height: 20),
                 SizedBox(
@@ -205,16 +229,44 @@ class _LoginViewState extends State<LoginView> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primaryContainer,
                       foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
                     ),
                     child: isLoading
-                        ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          )
                         : const Text('Đăng nhập'),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  height: 48,
+                  child: OutlinedButton.icon(
+                    onPressed: isLoading
+                        ? null
+                        : () => context.read<LoginCubit>().loginWithGoogle(),
+                    icon: const Icon(Icons.g_mobiledata_rounded, size: 28),
+                    label: const Text('Đăng nhập với Google'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.onSurface,
+                      side: const BorderSide(color: AppColors.outlineVariant),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 24),
                 TextButton(
-                  onPressed: () => Navigator.pushReplacementNamed(context, '/register'),
+                  onPressed: () =>
+                      Navigator.pushReplacementNamed(context, '/register'),
                   child: const Text('Chưa có tài khoản? Đăng ký'),
                 ),
               ],
@@ -241,7 +293,10 @@ class _LoginViewState extends State<LoginView> {
         hintText: hint,
         filled: true,
         fillColor: AppColors.surfaceContainerLow,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide.none,
+        ),
         suffixIcon: suffixIcon,
       ),
       validator: validator,
@@ -251,7 +306,10 @@ class _LoginViewState extends State<LoginView> {
   Widget _buildFooter() {
     return const Padding(
       padding: EdgeInsets.symmetric(vertical: 24),
-      child: Text('© 2024 Atlassian', style: TextStyle(color: AppColors.onSurfaceVariant)),
+      child: Text(
+        '© 2024 Atlassian',
+        style: TextStyle(color: AppColors.onSurfaceVariant),
+      ),
     );
   }
 }

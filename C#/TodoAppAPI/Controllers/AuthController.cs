@@ -1,5 +1,6 @@
 using System.Net.Http.Json;
 using System.Text.Json.Serialization;
+using Google.Apis.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
@@ -17,13 +18,15 @@ namespace TodoAppAPI.Controllers
         private readonly IUserService _userService;
         private readonly ITwoFactorService _twoFactorService;
         private readonly ILogger<AuthController> _logger;
+        private readonly IConfiguration _configuration;
 
-        public AuthController(IAuthService authService, IUserService userService, ITwoFactorService twoFactorService, ILogger<AuthController> logger)
+        public AuthController(IAuthService authService, IUserService userService, ITwoFactorService twoFactorService, ILogger<AuthController> logger, IConfiguration configuration)
         {
             _authService = authService;
             _userService = userService;
             _twoFactorService = twoFactorService;
             _logger = logger;
+            _configuration = configuration;
         }
 
         //  AllowAnonymous cho register
@@ -49,35 +52,77 @@ namespace TodoAppAPI.Controllers
 
             return Ok(result);
         }
-
         //  AllowAnonymous cho Google login
         [AllowAnonymous]
-        [HttpPost("Google-login")]
+        [HttpPost("google-login")]
         public async Task<IActionResult> GoogleLogin([FromBody] GoogleLoginRequest request)
         {
-            if (string.IsNullOrEmpty(request.AccessToken))
-                return BadRequest("Thiếu access_token từ google");
+            try
+            {
+                if (string.IsNullOrWhiteSpace(request.IdToken) &&
+                    string.IsNullOrWhiteSpace(request.AccessToken))
+                {
+                    return BadRequest(new { message = "Thiếu thông tin đăng nhập Google." });
+                }
 
-            var httpClient = new HttpClient();
-            var googleResponse = await httpClient.GetAsync($"https://www.googleapis.com/oauth2/v2/userinfo?access_token={request.AccessToken}");
+                string email;
+                string name;
 
-            if (!googleResponse.IsSuccessStatusCode)
-                return BadRequest("Access token Google không hợp lệ.");
+                if (!string.IsNullOrWhiteSpace(request.IdToken))
+                {
+                    var clientId = _configuration["GoogleAuth:ClientId"];
+                    var settings = new GoogleJsonWebSignature.ValidationSettings();
 
-            var json = await googleResponse.Content.ReadAsStringAsync();
-            var googleUser = JsonConvert.DeserializeObject<GoogleUserInfo>(json);
+                    if (!string.IsNullOrWhiteSpace(clientId))
+                    {
+                        settings.Audience = new[] { clientId };
+                    }
 
-            if (googleUser == null || string.IsNullOrEmpty(googleUser.Email))
-                return BadRequest("Không thể lấy thông tin người dùng Google.");
+                    var payload = await GoogleJsonWebSignature.ValidateAsync(request.IdToken, settings);
+                    email = payload.Email;
+                    name = payload.Name;
+                }
+                else
+                {
+                    var googleUser = await GetGoogleUserInfoAsync(request.AccessToken!);
 
-            var user = await _authService.GoogleLoginAsync(googleUser.Email, googleUser.Name);
+                    if (googleUser == null || string.IsNullOrEmpty(googleUser.Email))
+                        return BadRequest(new { message = "Không thể lấy thông tin người dùng Google." });
 
-            if (!string.IsNullOrEmpty(user.Token))
-                await SetRefreshCookie(user.UserUId);
+                    email = googleUser.Email;
+                    name = googleUser.Name;
+                }
 
-            return Ok(user);
+                var result = await _authService.GoogleLoginAsync(email, name);
+
+                if (!string.IsNullOrEmpty(result.Token))
+                    await SetRefreshCookie(result.UserUId);
+
+                return Ok(result);
+            }
+            catch (InvalidJwtException)
+            {
+                return BadRequest(new { message = "Google idToken không hợp lệ." });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Google login failed");
+                return BadRequest(new { message = "Không thể đăng nhập bằng Google." });
+            }
         }
 
+        private static async Task<GoogleUserInfo?> GetGoogleUserInfoAsync(string accessToken)
+        {
+            using var httpClient = new HttpClient();
+            using var googleResponse = await httpClient.GetAsync(
+                $"https://www.googleapis.com/oauth2/v2/userinfo?access_token={Uri.EscapeDataString(accessToken)}");
+
+            if (!googleResponse.IsSuccessStatusCode)
+                return null;
+
+            var json = await googleResponse.Content.ReadAsStringAsync();
+            return JsonConvert.DeserializeObject<GoogleUserInfo>(json);
+        }
         // AllowAnonymous cho refresh-token
         [AllowAnonymous]
         [HttpPost("refresh-token")]
@@ -98,7 +143,7 @@ namespace TodoAppAPI.Controllers
             if (string.IsNullOrEmpty(refreshToken))
             {
                 _logger.LogWarning(" No refresh token in cookies or body");
-                return Unauthorized(new { message = "Không có refresh token." });
+                return Unauthorized(new { message = "KhÃ´ng cÃ³ refresh token." });
             }
 
             try
@@ -108,7 +153,7 @@ namespace TodoAppAPI.Controllers
                 if (accessToken == null)
                 {
                     _logger.LogWarning(" Refresh token invalid or expired");
-                    return Unauthorized(new { message = "Refresh token không hợp lệ hoặc đã hết hạn." });
+                    return Unauthorized(new { message = "Refresh token khÃ´ng há»£p lá»‡ hoáº·c Ä‘Ã£ háº¿t háº¡n." });
                 }
 
                 _logger.LogInformation(" New access token generated successfully");
@@ -129,7 +174,7 @@ namespace TodoAppAPI.Controllers
             }
         }
 
-        // QUAN TRỌNG: AllowAnonymous cho logout
+        // QUAN TRá»ŒNG: AllowAnonymous cho logout
         [AllowAnonymous]
         [HttpPost("logout")]
         public async Task<IActionResult> Logout([FromQuery] string userUId, [FromBody] RefreshTokenRequest? req = null)
@@ -146,8 +191,8 @@ namespace TodoAppAPI.Controllers
             if (string.IsNullOrEmpty(refreshToken))
             {
                 _logger.LogWarning(" No refresh token found, but continuing logout");
-                // Vẫn xóa localStorage ở frontend
-                return Ok(new { message = "Đã đăng xuất (không có refresh token)." });
+                // Váº«n xÃ³a localStorage á»Ÿ frontend
+                return Ok(new { message = "ÄÃ£ Ä‘Äƒng xuáº¥t (khÃ´ng cÃ³ refresh token)." });
             }
 
             try
@@ -157,12 +202,12 @@ namespace TodoAppAPI.Controllers
                 Response.Cookies.Delete("refreshToken");
 
                 _logger.LogInformation(" Logout successful");
-                return Ok(new { message = "Đã đăng xuất thành công." });
+                return Ok(new { message = "ÄÃ£ Ä‘Äƒng xuáº¥t thÃ nh cÃ´ng." });
             }
             catch (Exception ex)
             {
                 _logger.LogError($" Logout error: {ex.Message}");
-                return Ok(new { message = "Đã đăng xuất (có lỗi khi xóa session)." });
+                return Ok(new { message = "ÄÃ£ Ä‘Äƒng xuáº¥t (cÃ³ lá»—i khi xÃ³a session)." });
             }
         }
 
@@ -188,7 +233,7 @@ namespace TodoAppAPI.Controllers
                 {
                     HttpOnly = true,
                     Secure = false,                // false khi local HTTP
-                    SameSite = SameSiteMode.Lax,   // Lax cho môi trường local
+                    SameSite = SameSiteMode.Lax,   // Lax cho mÃ´i trÆ°á»ng local
                     Path = "/",
                     Expires = session.ExpiresAt
                 });
@@ -202,16 +247,16 @@ namespace TodoAppAPI.Controllers
         public async Task<IActionResult> Send2FAOtp([FromQuery] string email)
         {
             if (string.IsNullOrEmpty(email))
-                return BadRequest(new { message = "Email không hợp lệ" });
+                return BadRequest(new { message = "Email khÃ´ng há»£p lá»‡" });
 
             try
             {
                 var success = await _authService.SendTwoFactorOtpAsync(email);
 
                 if (!success)
-                    return NotFound(new { message = "Không tìm thấy tài khoản" });
+                    return NotFound(new { message = "KhÃ´ng tÃ¬m tháº¥y tÃ i khoáº£n" });
 
-                return Ok(new { message = "Mã OTP đã được gửi về email" });
+                return Ok(new { message = "MÃ£ OTP Ä‘Ã£ Ä‘Æ°á»£c gá»­i vá» email" });
             }
             catch (Exception ex)
             {
@@ -220,7 +265,7 @@ namespace TodoAppAPI.Controllers
             }
         }
 
-        //  Verify OTP khi BẬT 2FA lần đầu (setup)
+        //  Verify OTP khi Báº¬T 2FA láº§n Ä‘áº§u (setup)
         [AllowAnonymous]
         [HttpPost("verify-2fa-setup")]
         public async Task<IActionResult> Verify2FASetup([FromQuery] string email, [FromQuery] string otp)
@@ -229,7 +274,7 @@ namespace TodoAppAPI.Controllers
 
             if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(otp))
             {
-                return BadRequest(new { message = "Thiếu thông tin xác thực" });
+                return BadRequest(new { message = "Thiáº¿u thÃ´ng tin xÃ¡c thá»±c" });
             }
 
             try
@@ -254,16 +299,16 @@ namespace TodoAppAPI.Controllers
             }
         }
 
-        // ───────── 2FA TOTP Endpoints ─────────
+        // â”€â”€â”€â”€â”€â”€â”€â”€â”€ 2FA TOTP Endpoints â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
         /// <summary>
-        /// Bước 2: Sinh SecretKey + QR URI cho Google Authenticator.
+        /// BÆ°á»›c 2: Sinh SecretKey + QR URI cho Google Authenticator.
         /// </summary>
         [HttpGet("2fa/setup")]
         public async Task<IActionResult> Setup2FA([FromQuery] string userUId)
         {
             if (string.IsNullOrEmpty(userUId))
-                return BadRequest(new { message = "userUId không hợp lệ" });
+                return BadRequest(new { message = "userUId khÃ´ng há»£p lá»‡" });
 
             try
             {
@@ -281,18 +326,18 @@ namespace TodoAppAPI.Controllers
             catch (Exception ex)
             {
                 _logger.LogError($"[2FA Setup Error] {ex.Message}");
-                return StatusCode(500, new { message = "Đã xảy ra lỗi khi thiết lập 2FA." });
+                return StatusCode(500, new { message = "ÄÃ£ xáº£y ra lá»—i khi thiáº¿t láº­p 2FA." });
             }
         }
 
         /// <summary>
-        /// Bước 5: Xác thực mã TOTP 6 số và kích hoạt 2FA.
+        /// BÆ°á»›c 5: XÃ¡c thá»±c mÃ£ TOTP 6 sá»‘ vÃ  kÃ­ch hoáº¡t 2FA.
         /// </summary>
         [HttpPost("2fa/enable")]
         public async Task<IActionResult> Enable2FA([FromQuery] string userUId, [FromBody] Enable2FARequest request)
         {
             if (string.IsNullOrEmpty(userUId))
-                return BadRequest(new { message = "userUId không hợp lệ" });
+                return BadRequest(new { message = "userUId khÃ´ng há»£p lá»‡" });
 
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -317,7 +362,7 @@ namespace TodoAppAPI.Controllers
             catch (Exception ex)
             {
                 _logger.LogError($"[2FA Enable Error] {ex.Message}");
-                return StatusCode(500, new { message = "Đã xảy ra lỗi khi kích hoạt 2FA." });
+                return StatusCode(500, new { message = "ÄÃ£ xáº£y ra lá»—i khi kÃ­ch hoáº¡t 2FA." });
             }
         }
 
@@ -326,7 +371,7 @@ namespace TodoAppAPI.Controllers
         public async Task<IActionResult> CheckOtpStatus([FromQuery] string email)
         {
             if (string.IsNullOrEmpty(email))
-                return BadRequest(new { message = "Email không hợp lệ" });
+                return BadRequest(new { message = "Email khÃ´ng há»£p lá»‡" });
 
             try
             {
