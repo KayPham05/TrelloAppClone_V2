@@ -37,6 +37,7 @@ builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<ICardDueDateReminderService, CardDueDateReminderService>();
 builder.Services.AddScoped<ITwoFactorService, TwoFactorService>();
 builder.Services.AddScoped<ISearchService, SearchService>();
+builder.Services.AddScoped<IPlannerService, PlannerService>();
 builder.Services.AddHostedService<CardDueDateReminderHostedService>();
 
 // IMemoryCache for 2FA temp secrets
