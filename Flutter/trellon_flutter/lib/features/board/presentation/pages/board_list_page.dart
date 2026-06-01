@@ -10,6 +10,7 @@ import '../widgets/create_board_bottom_sheet.dart';
 import '../../../workspace/presentation/cubit/workspace_cubit.dart';
 import '../../../workspace/domain/entities/workspace_entity.dart';
 import '../../domain/entities/board_entity.dart';
+import '../../../search/presentation/delegates/global_search_delegate.dart';
 
 // Modular widgets
 import '../widgets/board_list/recent_boards_section.dart';
@@ -113,7 +114,15 @@ class _BoardListViewState extends State<_BoardListView> {
                   IconButton(
                     icon: Icon(Icons.search_rounded,
                         color: AppColors.onSurfaceVariant),
-                    onPressed: () {},
+                    onPressed: () async {
+                      final uid = await serviceLocator<UserLocalDataSource>().getUserId();
+                      print('Search tapped in BoardListPage. UID: $uid');
+                      if (uid != null && context.mounted) {
+                        showSearch(context: context, delegate: GlobalSearchDelegate(userUId: uid));
+                      } else if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Lỗi: Không tìm thấy User ID!')));
+                      }
+                    },
                   ),
                   Padding(
                     padding: const EdgeInsets.only(right: 12),

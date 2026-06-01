@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../../core/constants/app_colors.dart';
+import '../../../../../init_dependencies.dart';
+import '../../../../../core/data_sources/user_local_data_source.dart';
+import '../../../../search/presentation/delegates/global_search_delegate.dart';
 
 
 class BoardDetailTopBarWidget extends StatelessWidget {
@@ -41,7 +44,15 @@ class BoardDetailTopBarWidget extends StatelessWidget {
           ),
           IconButton(
             icon: const Icon(Icons.search_rounded, color: Color(0xFF64748B)),
-            onPressed: () {},
+            onPressed: () async {
+              final uid = await serviceLocator<UserLocalDataSource>().getUserId();
+              print('Search tapped in BoardDetailTopBar. UID: $uid');
+              if (uid != null) {
+                showSearch(context: context, delegate: GlobalSearchDelegate(userUId: uid));
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Lỗi: Không tìm thấy User ID!')));
+              }
+            },
           ),
           IconButton(
             icon: const Icon(Icons.more_horiz_rounded, color: Color(0xFF64748B)),
