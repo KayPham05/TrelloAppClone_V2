@@ -50,6 +50,11 @@ import 'features/workspace/domain/usecases/add_workspace_member_usecase.dart';
 import 'features/workspace/domain/usecases/get_workspace_boards_usecase.dart';
 import 'features/workspace/presentation/cubit/workspace_cubit.dart';
 import 'features/card/domain/usecases/update_list_uid_usecase.dart';
+import 'features/planner/data/datasources/planner_remote_data_source.dart';
+import 'features/planner/data/repositories/planner_repository_impl.dart';
+import 'features/planner/domain/repositories/planner_repository.dart';
+import 'features/planner/domain/usecases/get_planner_cards_usecase.dart';
+import 'features/planner/presentation/cubit/planner_cubit.dart';
 import 'features/activity/data/datasources/notification_remote_datasource.dart';
 import 'features/activity/data/repositories/notification_repository_impl.dart';
 import 'features/activity/data/services/notification_realtime_service.dart';
@@ -74,6 +79,7 @@ Future<void> initDependencies() async {
   _initCard();
   _initBoard();
   _initWorkspace();
+  _initPlanner();
   _initNotification();
 }
 
@@ -228,6 +234,26 @@ void _initInbox() {
       userLocalDataSource: serviceLocator(),
     ),
   );
+}
+
+void _initPlanner() {
+  // Data Source
+  serviceLocator.registerLazySingleton<PlannerRemoteDataSource>(
+    () => PlannerRemoteDataSourceImpl(dio: serviceLocator<Dio>()),
+  );
+
+  // Repository
+  serviceLocator.registerLazySingleton<PlannerRepository>(
+    () => PlannerRepositoryImpl(remoteDataSource: serviceLocator<PlannerRemoteDataSource>()),
+  );
+
+  // UseCases
+  serviceLocator.registerLazySingleton(() => GetPlannerCardsUseCase(serviceLocator()));
+
+  // Cubit
+  serviceLocator.registerFactory(() => PlannerCubit(
+    getPlannerCardsUseCase: serviceLocator(),
+  ));
 }
 
 void _initNotification() {
