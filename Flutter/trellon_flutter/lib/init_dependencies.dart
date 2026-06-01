@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:get_it/get_it.dart';
 import 'package:dio/dio.dart';
 import 'package:cookie_jar/cookie_jar.dart';
@@ -60,13 +61,8 @@ import 'features/activity/domain/usecases/mark_as_read_usecase.dart';
 import 'features/activity/presentation/cubit/notification_cubit.dart';
 
 final serviceLocator = GetIt.instance;
-
 Future<void> initDependencies() async {
-  // Core — khởi tạo PersistCookieJar để cookie refreshToken tồn tại qua restart
-  final appDir = await getApplicationDocumentsDirectory();
-  final cookieJar = PersistCookieJar(
-    storage: FileStorage('${appDir.path}/.cookies/'),
-  );
+  CookieJar cookieJar = CookieJar();
   serviceLocator.registerLazySingleton<CookieJar>(() => cookieJar);
   final dioClient = DioClient(persistentCookieJar: cookieJar);
 
