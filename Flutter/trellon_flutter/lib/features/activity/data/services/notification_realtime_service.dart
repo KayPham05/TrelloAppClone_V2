@@ -14,7 +14,9 @@ class NotificationRealtimeService {
 
   NotificationRealtimeService({
     required this.cubit,
-    this.secureStorage = const FlutterSecureStorage(),
+    this.secureStorage = const FlutterSecureStorage(
+      aOptions: AndroidOptions(encryptedSharedPreferences: true),
+    ),
   });
 
   Future<void> start() async {

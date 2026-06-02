@@ -25,6 +25,7 @@ class AuthRepositoryImpl implements AuthRepository {
       final response = await dio.post(
         ApiEndpoints.register,
         data: requestModel.toJson(),
+        options: Options(extra: {'skipAuthInterceptor': true}),
       );
       if (response.statusCode == 200 || response.statusCode == 201) {
         final data = response.data;
@@ -65,6 +66,7 @@ class AuthRepositoryImpl implements AuthRepository {
       final response = await dio.post(
         ApiEndpoints.login,
         data: requestModel.toJson(),
+        options: Options(extra: {'skipAuthInterceptor': true}),
       );
       if (response.statusCode == 200) {
         final data = response.data;
@@ -115,7 +117,10 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<void> logout({required String userUId}) async {
     try {
-      await dio.post('${ApiEndpoints.logout}?userUId=$userUId');
+      await dio.post(
+        '${ApiEndpoints.logout}?userUId=$userUId',
+        options: Options(extra: {'skipAuthInterceptor': true}),
+      );
     } on DioException {
       // Vẫn tiếp tục logout cục bộ dù API thất bại
     }
@@ -130,6 +135,7 @@ class AuthRepositoryImpl implements AuthRepository {
       final response = await dio.post(
         ApiEndpoints.verifyCode,
         data: {'email': email, 'code': code},
+        options: Options(extra: {'skipAuthInterceptor': true}),
       );
       if (response.statusCode == 200) {
         final data = response.data;

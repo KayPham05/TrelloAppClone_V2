@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../features/board/presentation/pages/board_list_page.dart';
 import '../../../features/inbox/presentation/pages/inbox_page.dart';
@@ -79,6 +80,19 @@ class _MainShellState extends State<MainShell>
   }
 
   Future<void> _loadWorkspaces() async {
+    // Kiểm tra token thực sự tồn tại trước khi gọi API
+    const secureStorage = FlutterSecureStorage(
+      aOptions: AndroidOptions(encryptedSharedPreferences: true),
+    );
+    final token = await secureStorage.read(key: 'access_token');
+    if (token == null || token.isEmpty) {
+      // Token không tồn tại → phiên đăng nhập không hợp lệ
+      if (mounted) {
+        Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+      }
+      return;
+    }
+
     final uid = await serviceLocator<UserLocalDataSource>().getUserId();
     if (uid != null && uid.isNotEmpty) {
       _workspaceCubit.loadWorkspaces();

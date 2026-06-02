@@ -23,8 +23,16 @@ class LoginCubit extends Cubit<LoginState> {
         return;
       }
 
+      // Yêu cầu 2FA
+      if (user.requires2FA) {
+        emit(LoginRequires2FA(user.userUId!, user.email));
+        return;
+      }
+
       // Lưu access_token và refresh_token vào FlutterSecureStorage
-      final secureStorage = const FlutterSecureStorage();
+      const secureStorage = FlutterSecureStorage(
+        aOptions: AndroidOptions(encryptedSharedPreferences: true),
+      );
       await secureStorage.write(key: 'access_token', value: user.token ?? '');
       await secureStorage.write(
         key: 'refresh_token',
