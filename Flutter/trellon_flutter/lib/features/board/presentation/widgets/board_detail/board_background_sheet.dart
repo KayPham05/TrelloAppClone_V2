@@ -163,7 +163,7 @@ class _BoardBackgroundSheetState extends State<BoardBackgroundSheet>
                       child: ListView.separated(
                         scrollDirection: Axis.horizontal,
                         padding: const EdgeInsets.symmetric(horizontal: 16),
-                        separatorBuilder: (_, __) => const SizedBox(width: 10),
+                        separatorBuilder: (_, _) => const SizedBox(width: 10),
                         itemCount: _kStockPhotos.length,
                         itemBuilder: (_, i) => GestureDetector(
                           onTap: () => _applyPhoto(_kStockPhotos[i]),

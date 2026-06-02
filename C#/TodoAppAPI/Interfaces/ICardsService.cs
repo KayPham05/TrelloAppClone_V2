@@ -17,5 +17,14 @@ namespace TodoAppAPI.Interfaces
         Task<bool> DeleteAttachmentAsync(string fileUId, string userUId);
         Task<bool> UpdateAttachmentDescriptionAsync(string fileUId, string userUId, string? description);
         Task<bool> UpdateDueDateAsync(string cardUId, DateTime? dueDate, string userUId);
+
+        // Archive
+        Task<bool> ArchiveCardAsync(string cardUId, string userUId);
+        Task<bool> UnarchiveCardAsync(string cardUId, string userUId);
+        Task<List<Card>> GetArchivedCardsByBoardAsync(string boardUId, string userUId);
+        Task<int> ArchiveAllCompletedCardsAsync(string boardUId, string userUId);
+
+        // Join card
+        Task<bool> JoinCardAsync(string cardUId, string userUId, string boardId);
     }
 }

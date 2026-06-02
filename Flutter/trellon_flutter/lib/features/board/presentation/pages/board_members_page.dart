@@ -103,7 +103,7 @@ class _BoardMembersView extends StatelessWidget {
             return ListView.separated(
               padding: const EdgeInsets.all(16),
               itemCount: state.members.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 8),
+              separatorBuilder: (_, _) => const SizedBox(height: 8),
               itemBuilder: (context, index) {
                 final member = state.members[index];
                 final canManageThisBoard =
@@ -149,7 +149,7 @@ class _BoardMembersView extends StatelessWidget {
             const SizedBox(height: 12),
             StatefulBuilder(
               builder: (ctx, setS) => DropdownButtonFormField<String>(
-                value: selectedRole,
+                initialValue: selectedRole,
                 items: MemberRoleHelper.rolesForScope(MemberScope.board)
                     .where((r) => r != 'Owner')
                     .map((r) => DropdownMenuItem(value: r, child: Text(r)))
@@ -192,7 +192,7 @@ class _BoardMembersView extends StatelessWidget {
         title: Text('Đổi quyền — ${member.userName}'),
         content: StatefulBuilder(
           builder: (ctx, setS) => DropdownButtonFormField<String>(
-            value: selectedRole,
+            initialValue: selectedRole,
             items: MemberRoleHelper.rolesForScope(MemberScope.board)
                 .where((r) => r != 'Owner')
                 .map((r) => DropdownMenuItem(value: r, child: Text(r)))

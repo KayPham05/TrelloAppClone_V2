@@ -339,5 +339,46 @@ namespace TodoAppAPI.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
+
+        [AllowAnonymous]
+        [HttpPost("forgot-password")]
+        public async Task<IActionResult> ForgotPassword([FromQuery] string email)
+        {
+            if (string.IsNullOrEmpty(email))
+                return BadRequest(new { message = "Email không hợp lệ" });
+
+            try
+            {
+                var success = await _authService.SendForgotPasswordOtpAsync(email);
+                if (!success)
+                    return BadRequest(new { message = "Không thể gửi OTP. Tài khoản không tồn tại hoặc sử dụng Google Login." });
+
+                return Ok(new { message = "Mã OTP khôi phục mật khẩu đã được gửi đến email của bạn." });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Forgot Password error: {ex.Message}");
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [AllowAnonymous]
+        [HttpPost("reset-password")]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
+        {
+            if (string.IsNullOrEmpty(request.Email) || string.IsNullOrEmpty(request.Otp) || string.IsNullOrEmpty(request.NewPassword))
+                return BadRequest(new { message = "Thông tin không hợp lệ" });
+
+            try
+            {
+                var result = await _authService.ResetPasswordAsync(request.Email, request.Otp, request.NewPassword);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Reset Password error: {ex.Message}");
+                return BadRequest(new { message = ex.Message });
+            }
+        }
     }
 }
