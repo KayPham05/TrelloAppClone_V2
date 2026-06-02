@@ -1,0 +1,178 @@
+/* Board List Container */
+.board-list {
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(12px);
+  border-radius: 12px;
+  padding: 12px;
+  width: 288px;
+  min-width: 288px;
+  /* height: 300px; */
+  max-height: 650px;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.2s ease;
+}
+
+.board-list.dragging-over {
+  background: rgba(99, 102, 241, 0.2);
+  border: 2px solid rgba(99, 102, 241, 0.5);
+}
+
+/* List Header */
+.list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding: 0 4px;
+}
+
+.list-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #ffffff;
+  margin: 0;
+}
+
+.list-delete-btn {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.list-delete-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+}
+
+/* List Cards Container */
+.list-cards {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+
+
+/* Add List Box */
+.add-list-box {
+  flex-shrink: 0;
+  width: 288px;
+  min-width: 288px;
+}
+
+.add-list-input {
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  border: none;
+  outline: none;
+  font-size: 14px;
+  margin-bottom: 8px;
+  background: rgba(255, 255, 255, 0.9);
+  color: #172b4d;
+}
+
+.add-list-input::placeholder {
+  color: #5e6c84;
+}
+
+.add-list-btn {
+  width: 100%;
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  border-radius: 8px;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.add-list-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Scrollbar cho list cards */
+.list-cards::-webkit-scrollbar {
+  width: 8px;
+}
+
+.list-cards::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+}
+
+.list-cards::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+
+.list-cards::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+/* Drag Portal Root */
+#drag-portal-root {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+}
+
+/* Thêm vào Board.css */
+
+/* Drag effect cho list */
+.board-list {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Khi đang kéo list */
+.opacity-50 {
+  opacity: 0.5;
+}
+
+.rotate-2 {
+  transform: rotate(2deg);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+/* List header với drag handle */
+.list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding: 4px;
+  border-radius: 8px;
+  transition: background-color 0.2s;
+}
+
+.list-header:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* Cursor styles */
+.cursor-grab {
+  cursor: grab;
+  user-select: none;
+}
+
+.cursor-grab:active {
+  cursor: grabbing;
+}

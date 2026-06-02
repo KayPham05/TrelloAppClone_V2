@@ -460,4 +460,36 @@ class CardRepositoryImpl implements ICardRepository {
       throw Exception('Lỗi kết nối server: $e');
     }
   }
+
+  @override
+  Future<void> archiveCard({required String cardId, required String userUId}) async {
+    try {
+      final response = await dio.patch('${ApiEndpoints.card}/$cardId/archive?userUId=$userUId');
+      if (response.statusCode != 200) throw Exception('Lỗi khi lưu trữ thẻ');
+    } catch (e) {
+      throw Exception('Lỗi kết nối server: $e');
+    }
+  }
+
+  @override
+  Future<void> unarchiveCard({required String cardId, required String userUId}) async {
+    try {
+      final response = await dio.patch('${ApiEndpoints.card}/$cardId/unarchive?userUId=$userUId');
+      if (response.statusCode != 200) throw Exception('Lỗi khi khôi phục thẻ');
+    } catch (e) {
+      throw Exception('Lỗi kết nối server: $e');
+    }
+  }
+
+  @override
+  Future<void> joinCard({required String cardId, required String userUId, required String boardId}) async {
+    try {
+      final response = await dio.post(
+        '${ApiEndpoints.card}/$cardId/join?userUId=$userUId&boardId=$boardId',
+      );
+      if (response.statusCode != 200) throw Exception('Lỗi khi tham gia thẻ');
+    } catch (e) {
+      throw Exception('Lỗi kết nối server: $e');
+    }
+  }
 }

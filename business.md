@@ -383,7 +383,7 @@ graph TB
 ```mermaid
 graph TB
     U((Người dùng))
-    SYS((Hệ thống\n[CardMember])]
+    SYS(Hệ thống\n[CardMember])
 
     P61[6.1\nThêm Card\nvào Inbox]
     P62[6.2\nXem danh sách\nInbox]
@@ -523,6 +523,319 @@ graph TB
     D --> UC8
 ```
 
+### 1.4.1 Đặc tả chi tiết các Use Case
+
+#### Nhóm 1: Xác thực và Tài khoản
+
+```mermaid
+graph TB
+    subgraph "Xác thực & Tài khoản"
+        UC1(UC1: Đăng ký)
+        UC2(UC2: Đăng nhập)
+        UC3(UC3: Xác thực 2FA)
+        UC4(UC4: Đặt lại mật khẩu)
+        UC5(UC5: Cập nhật hồ sơ)
+        UC1 -.->|include| UC1a(Xác minh Email)
+        UC2 -.->|extend| UC3
+    end
+    U((Người dùng))
+    E((Email Server))
+    C((Cloudinary))
+    
+    U --> UC1
+    U --> UC2
+    U --> UC4
+    U --> UC5
+    UC1a --- E
+    UC4 --- E
+    UC5 --- C
+```
+
+**UC1: Đăng ký tài khoản**
+- **Tác nhân:** Người dùng mới.
+- **Tiền điều kiện:** Người dùng chưa có tài khoản hoặc email chưa được đăng ký.
+- **Hậu điều kiện:** Tài khoản được tạo và ở trạng thái "Chờ xác minh" hoặc "Đã kích hoạt".
+- **Luồng sự kiện:**
+  1. Người dùng chọn chức năng Đăng ký.
+  2. Hệ thống hiển thị form nhập: Tên, Email, Mật khẩu.
+  3. Người dùng nhập thông tin và nhấn "Đăng ký".
+  4. Hệ thống kiểm tra hợp lệ: Email đúng định dạng, chưa tồn tại, mật khẩu đủ độ mạnh.
+  5. Hệ thống gửi mã OTP xác nhận về email của người dùng.
+  6. Người dùng nhập mã OTP vào ứng dụng.
+  7. Hệ thống xác thực mã và kích hoạt tài khoản.
+- **Ngoại lệ:** Email đã tồn tại -> Hệ thống yêu cầu đăng nhập hoặc dùng email khác.
+
+**UC2: Đăng nhập**
+- **Tác nhân:** Người dùng.
+- **Luồng sự kiện:**
+  1. Người dùng nhập Email và Mật khẩu.
+  2. Hệ thống kiểm tra thông tin đăng nhập trong DB.
+  3. Nếu chính xác, hệ thống kiểm tra cài đặt 2FA.
+  4. Nếu không bật 2FA, hệ thống tạo mã JWT (AccessToken & RefreshToken) và trả về cho App.
+  5. Nếu bật 2FA, chuyển sang UC3.
+- **Ngoại lệ:** Sai mật khẩu quá 5 lần -> Khóa tài khoản tạm thời.
+
+**UC3: Xác thực 2FA**
+- **Tác nhân:** Người dùng.
+- **Luồng sự kiện:**
+  1. Sau khi nhập đúng email/mật khẩu, hệ thống yêu cầu mã xác thực.
+  2. Người dùng mở app xác thực (Google Authenticator) hoặc kiểm tra email lấy mã.
+  3. Người dùng nhập mã vào hệ thống.
+  4. Hệ thống kiểm tra mã hợp lệ và cấp quyền truy cập.
+
+**UC4: Đặt lại mật khẩu**
+- **Tác nhân:** Người dùng.
+- **Luồng sự kiện:**
+  1. Người dùng chọn "Quên mật khẩu" tại màn hình đăng nhập.
+  2. Nhập email đăng ký.
+  3. Hệ thống kiểm tra sự tồn tại của email và gửi link/mã đặt lại mật khẩu.
+  4. Người dùng sử dụng link/mã để nhập mật khẩu mới.
+  5. Hệ thống cập nhật PasswordHash mới vào DB.
+
+**UC5: Cập nhật hồ sơ**
+- **Tác nhân:** Người dùng.
+- **Luồng sự kiện:**
+  1. Người dùng truy cập "Cài đặt tài khoản".
+  2. Thay đổi thông tin: Tên hiển thị, Bio, hoặc tải lên ảnh đại diện mới.
+  3. Hệ thống tải ảnh lên Cloudinary (nếu có) và lưu URL vào DB.
+  4. Phản hồi cập nhật thành công.
+
+#### Nhóm 2: Quản lý Không gian làm việc (Workspace)
+
+```mermaid
+graph TB
+    subgraph "Workspace"
+        UC6(UC6: Tạo Workspace)
+        UC7(UC7: Xem/Sửa Workspace)
+        UC8(UC8: Quản lý thành viên)
+    end
+    A((Admin WS))
+    O((Owner WS))
+    M((Thành viên))
+    
+    A --> UC6
+    A --> UC7
+    O --> UC8
+    UC8 -- "Mời/Xóa" --- M
+```
+
+**UC6: Tạo Workspace**
+- **Tác nhân:** Admin Workspace.
+- **Luồng sự kiện:**
+  1. Người dùng nhấn "Tạo Workspace mới".
+  2. Nhập tên Workspace, loại hình và mô tả.
+  3. Hệ thống tạo bản ghi Workspace và mặc định gán người tạo là "Owner".
+  4. Workspace hiển thị trên danh sách bên trái.
+
+**UC7: Xem/Sửa Workspace**
+- **Tác nhân:** Thành viên (Xem), Admin (Sửa).
+- **Luồng sự kiện:**
+  1. Người dùng chọn một Workspace từ danh sách.
+  2. Hệ thống hiển thị thông tin chung và danh sách các bảng bên trong.
+  3. Admin có thể sửa tên hoặc xóa Workspace (chỉ dành cho Owner).
+
+**UC8: Quản lý thành viên Workspace**
+- **Tác nhân:** Admin Workspace.
+- **Luồng sự kiện:**
+  1. Admin mở tab "Members" trong Workspace.
+  2. Nhấn "Invite" và nhập Email của thành viên muốn mời.
+  3. Hệ thống kiểm tra User hiện có và gửi thông báo mời.
+  4. Admin có thể thay đổi vai trò (Admin/Member) hoặc xóa thành viên khỏi WS.
+
+#### Nhóm 3: Quản lý Bảng (Board)
+
+```mermaid
+graph TB
+    subgraph "Board Management"
+        UC9(UC9: Tạo Board)
+        UC10(UC10: Danh sách Board)
+        UC11(UC11: Chỉnh sửa Board)
+        UC12(UC12: Visibility)
+        UC13(UC13: Chuyển Workspace)
+        UC14(UC14: Quản lý thành viên)
+    end
+    A((Admin Board))
+    O((Owner Board))
+    C((Cloudinary))
+    
+    A --> UC9
+    A --> UC10
+    A --> UC11
+    A --> UC12
+    A --> UC14
+    O --> UC13
+    UC9 --- C
+    UC11 --- C
+```
+
+**UC9: Tạo Board**
+- **Tác nhân:** Owner/Admin Board.
+- **Luồng sự kiện:**
+  1. Người dùng nhấn "Create Board".
+  2. Nhập tên Board, chọn Background (Màu hoặc Ảnh từ thư viện Cloudinary).
+  3. Chọn Workspace để chứa Board (hoặc chọn No Workspace cho Board cá nhân).
+  4. Chọn quyền hiển thị (Private, Workspace, Public).
+  5. Hệ thống khởi tạo Board và 3 List mặc định (To Do, Doing, Done).
+
+**UC10: Xem danh sách Board**
+- **Tác nhân:** Người dùng.
+- **Luồng sự kiện:**
+  1. Hệ thống tự động tải danh sách Board người dùng có quyền truy cập.
+  2. Phân loại theo: Board gần đây, Starred Boards, và Board theo từng Workspace.
+
+**UC11: Chỉnh sửa trang trí Board**
+- **Tác nhân:** Admin Board.
+- **Luồng sự kiện:**
+  1. Truy cập cài đặt Board.
+  2. Thay đổi tên Board hoặc chọn Background mới.
+  3. Hệ thống cập nhật giao diện ngay lập tức cho tất cả người dùng đang xem.
+
+**UC12: Thay đổi Visibility**
+- **Tác nhân:** Admin Board.
+- **Luồng sự kiện:**
+  1. Admin thay đổi trạng thái từ Private sang Workspace hoặc Public.
+  2. Hệ thống cập nhật quyền truy cập: Public cho phép mọi người xem, Workspace cho phép thành viên WS xem.
+
+**UC13: Chuyển Board sang Workspace khác**
+- **Tác nhân:** Owner Board.
+- **Luồng sự kiện:**
+  1. Chọn chức năng "Move Board".
+  2. Chọn Workspace đích.
+  3. Hệ thống cập nhật WorkspaceUId của Board và thông báo cho các thành viên liên quan.
+
+**UC14: Quản lý thành viên Board**
+- **Tác nhân:** Admin Board.
+- **Luồng sự kiện:**
+  1. Chọn "Members" trong Board.
+  2. Tìm kiếm thành viên theo tên hoặc email.
+  3. Thêm thành viên vào Board và gán vai trò.
+  4. Hệ thống tạo thông báo mời tham gia Board.
+
+#### Nhóm 4: Quản lý List & Card
+
+```mermaid
+graph TB
+    subgraph "List & Card"
+        UC15(UC15: Quản lý List)
+        UC16(UC16: Tạo/Xem Card)
+        UC17(UC17: Chỉnh sửa Card)
+        UC18(UC18: Di chuyển Card)
+        UC19(UC19: Phân công)
+        UC20(UC20: Gắn nhãn)
+        UC21(UC21: Checklist/Todo)
+        UC22(UC22: Bình luận)
+        UC23(UC23: Đính kèm)
+    end
+    M((Thành viên))
+    C((Cloudinary))
+    S((Server API))
+    
+    M --> UC15
+    M --> UC16
+    M --> UC17
+    M --> UC18
+    M --> UC19
+    M --> UC20
+    M --> UC21
+    M --> UC22
+    M --> UC23
+    UC18 --- S
+    UC23 --- C
+```
+
+**UC15: Tạo / Sắp xếp List**
+- **Tác nhân:** Thành viên Board.
+- **Luồng sự kiện:**
+  1. Nhấn "Add List" ở cuối danh sách các cột.
+  2. Nhập tên List và Enter.
+  3. Người dùng có thể kéo thả List để thay đổi thứ tự ưu tiên các cột.
+
+**UC16: Tạo / Xem Card**
+- **Tác nhân:** Thành viên Board.
+- **Luồng sự kiện:**
+  1. Nhấn "Add Card" trong một List cụ thể.
+  2. Nhập tiêu đề nhanh.
+  3. Nhấn vào Card đã tạo để mở màn hình "Card Detail" hiển thị đầy đủ thông tin.
+
+**UC17: Chỉnh sửa Card**
+- **Tác nhân:** Thành viên Board.
+- **Luồng sự kiện:**
+  1. Tại màn hình Card Detail, người dùng sửa tiêu đề hoặc thêm mô tả (Markdown support).
+  2. Chọn "Due Date" để đặt ngày hoàn thành công việc.
+  3. Hệ thống tự động lưu các thay đổi nhỏ.
+
+**UC18: Kéo-thả Card (Di chuyển)**
+- **Tác nhân:** Thành viên Board.
+- **Luồng sự kiện:**
+  1. Người dùng kéo Card từ List A sang List B.
+  2. Hoặc kéo Card lên/xuống trong cùng List A để đổi vị trí.
+  3. Hệ thống lưu position mới và cập nhật ListId tương ứng trong DB.
+
+**UC19: Phân công thành viên Card**
+- **Tác nhân:** Thành viên Board.
+- **Luồng sự kiện:**
+  1. Trong Card Detail, chọn mục "Members".
+  2. Tick chọn các thành viên trong Board tham gia thẻ này.
+  3. Hệ thống tạo bản ghi `CardMember` và gửi thông báo cho người được phân công.
+
+**UC20: Gắn nhãn Label**
+- **Tác nhân:** Thành viên Board.
+- **Luồng sự kiện:**
+  1. Chọn "Labels".
+  2. Chọn các nhãn màu có sẵn hoặc tạo nhãn mới với màu sắc tùy chỉnh.
+  3. Nhãn hiển thị ngay trên mặt trước của Card.
+
+**UC21: Thêm Checklist/Todo**
+- **Tác nhân:** Thành viên Board.
+- **Luồng sự kiện:**
+  1. Chọn "Checklist", nhập tên checklist.
+  2. Thêm các đầu việc (Todo items).
+  3. Khi người dùng tick hoàn thành, hệ thống cập nhật thanh tiến độ (%) của Card.
+
+**UC22: Bình luận (Comment)**
+- **Tác nhân:** Thành viên Board.
+- **Luồng sự kiện:**
+  1. Nhập nội dung vào ô Comment phía dưới Card Detail.
+  2. Hệ thống lưu bình luận kèm thời gian và thông tin người viết.
+  3. Các thành viên khác theo dõi thẻ này sẽ nhận được thông báo.
+
+**UC23: Đính kèm tệp**
+- **Tác nhân:** Thành viên Board.
+- **Luồng sự kiện:**
+  1. Chọn "Attachments" -> "Computer".
+  2. Chọn tệp tin.
+  3. Hệ thống upload lên Cloudinary, lưu URL và hiển thị danh sách tệp đính kèm trong Card.
+
+#### Nhóm 5: Thông báo & Hộp thư
+
+```mermaid
+graph TB
+    subgraph "Notification & Inbox"
+        UC24(UC24: Nhận thông báo)
+        UC25(UC25: Xem Inbox Card)
+    end
+    U((Người dùng))
+    S((Server API))
+    
+    S -- "Push" --> UC24
+    UC24 --- U
+    U --> UC25
+```
+
+**UC24: Nhận thông báo**
+- **Tác nhân:** Người dùng.
+- **Luồng sự kiện:**
+  1. Khi có sự kiện: Được mời vào Board/WS, được phân công Card, hoặc có comment mới.
+  2. Hệ thống tạo bản ghi Notification.
+  3. Người dùng thấy chấm đỏ tại Icon thông báo và có thể xem danh sách.
+
+**UC25: Xem Inbox Card**
+- **Tác nhân:** Người dùng.
+- **Luồng sự kiện:**
+  1. Người dùng truy cập tab "Inbox".
+  2. Hệ thống hiển thị tất cả các Card mà người dùng được phân công trên toàn bộ hệ thống.
+  3. Người dùng nhấn vào Card để nhảy trực tiếp đến Board chứa Card đó.
+
 ---
 
 ## 1.5 Activity Diagram – Quy trình tạo và xử lý thẻ công việc
@@ -556,6 +869,99 @@ flowchart TD
     MoveCard --> LogActivity[Ghi nhật ký\nhoạt động]
     UpdateStatus -- Xong --> LogActivity
     LogActivity --> End([Kết thúc])
+```
+
+---
+
+## 1.6 Sơ đồ Trạng thái (State Diagram)
+
+### 1.6.1 Trạng thái Tài khoản Người dùng
+Mô tả vòng đời của một tài khoản từ khi đăng ký đến khi hoạt động hoặc bị khóa.
+
+```mermaid
+stateDiagram-v2
+    [*] --> Unverified: Đăng ký thành công
+    Unverified --> Verified: Xác minh Email (OTP)
+    Unverified --> [*]: Quá hạn xác minh
+    Verified --> Active: Đăng nhập lần đầu
+    Active --> Locked: Nhập sai mật khẩu > 5 lần
+    Locked --> Active: Admin mở khóa hoặc Reset Pass
+    Active --> Deactivated: Người dùng tự đóng tài khoản
+    Deactivated --> [*]
+```
+
+### 1.6.2 Trạng thái Thẻ công việc (Card)
+Mô tả sự luân chuyển của một thẻ công việc thông qua các trạng thái xử lý.
+
+```mermaid
+stateDiagram-v2
+    direction LR
+    [*] --> Created: Tạo thẻ mới
+    Created --> ToDo: Thêm vào danh sách chờ
+    ToDo --> InProgress: Bắt đầu thực hiện
+    InProgress --> InReview: Gửi yêu cầu kiểm tra
+    InReview --> Done: Admin phê duyệt
+    InReview --> ToDo: Cần sửa đổi
+    Done --> Archived: Lưu trữ (sau khi hoàn thành)
+    Archived --> ToDo: Khôi phục
+    Archived --> [*]: Xóa vĩnh viễn
+```
+
+---
+
+## 1.7 Sơ đồ BPMN (Business Process Model and Notation)
+
+### 1.7.1 Quy trình xử lý và hoàn thành thẻ công việc
+Dưới đây là sơ đồ quy trình nghiệp vụ phối hợp giữa các vai trò trong một Board.
+
+```mermaid
+graph TB
+    subgraph Member["Thành viên thực hiện (Member)"]
+        direction TB
+        M_Start([Bắt đầu]) --> M_Create[Nhận việc / Tạo Card]
+        M_Create --> M_Work[Thực hiện công việc]
+        M_Work --> M_Update[Cập nhật Checklist/Tệp đính kèm]
+        M_Update --> M_Submit[Chuyển trạng thái sang Review]
+    end
+
+    subgraph Admin["Quản lý / Người duyệt (Admin/Owner)"]
+        direction TB
+        M_Submit --> A_Review{Kiểm tra kết quả}
+        A_Review -- "Không đạt" --> A_Comment[Viết bình luận phản hồi]
+        A_Comment --> M_Work
+        A_Review -- "Đạt" --> A_Close[Chuyển thẻ sang Done]
+    end
+
+    subgraph System["Hệ thống (TrellOn)"]
+        direction TB
+        A_Close --> S_Noti[Gửi thông báo hoàn thành]
+        S_Noti --> S_Log[Ghi nhật ký hoạt động Activity]
+        S_Log --> S_End([Kết thúc quy trình])
+    end
+```
+
+### 1.7.2 Quy trình mời và phân quyền thành viên
+Quy trình nghiệp vụ khi một Admin mời người dùng mới vào hệ thống làm việc.
+
+```mermaid
+graph LR
+    subgraph "Admin (Trình gửi)"
+        Start_I([Bắt đầu]) --> Invite[Gửi lời mời qua Email]
+    end
+
+    subgraph "System (Xử lý)"
+        Invite --> Check_U{User đã có<br/>tài khoản?}
+        Check_U -- "Chưa" --> Send_E[Gửi link đăng ký + mời]
+        Check_U -- "Rồi" --> Add_WS[Gán vào danh sách chờ]
+        Send_E --> Reg[Người dùng đăng ký]
+        Reg --> Add_WS
+    end
+
+    subgraph "Member (Trình nhận)"
+        Add_WS --> Accept[Chấp nhận lời mời]
+        Accept --> Access[Truy cập Workspace/Board]
+        Access --> End_I([Kết thúc])
+    end
 ```
 
 ---

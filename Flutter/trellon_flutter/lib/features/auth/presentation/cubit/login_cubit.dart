@@ -4,13 +4,18 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../../domain/entities/user_entity.dart';
 import '../../domain/usecases/login_usecase.dart';
+import '../../domain/usecases/sign_in_with_google_usecase.dart';
 
 part 'login_state.dart';
 
 class LoginCubit extends Cubit<LoginState> {
   final LoginUseCase loginUseCase;
+  final SignInWithGoogleUseCase signInWithGoogleUseCase;
 
-  LoginCubit({required this.loginUseCase}) : super(LoginInitial());
+  LoginCubit({
+    required this.loginUseCase,
+    required this.signInWithGoogleUseCase,
+  }) : super(LoginInitial());
 
   Future<void> login({required String email, required String password}) async {
     emit(LoginLoading());
@@ -56,6 +61,31 @@ class LoginCubit extends Cubit<LoginState> {
       } else {
         emit(LoginError(e.toString().replaceFirst('Exception: ', '')));
       }
+    }
+  }
+
+  Future<void> signInWithGoogle() async {
+    emit(LoginLoading());
+    try {
+      final user = await signInWithGoogleUseCase();
+
+      final secureStorage = const FlutterSecureStorage();
+      await secureStorage.write(key: 'access_token', value: user.token ?? '');
+      await secureStorage.write(
+        key: 'refresh_token',
+        value: user.refreshToken ?? '',
+      );
+
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('isLogged', true);
+      await prefs.setString('user_uid', user.userUId ?? '');
+      await prefs.setString('user_name', user.userName);
+      await prefs.setString('user_email', user.email);
+      await prefs.setBool('is_two_factor_enabled', false);
+
+      emit(LoginSuccess(user));
+    } catch (e) {
+      emit(LoginError(e.toString().replaceFirst('Exception: ', '')));
     }
   }
 }

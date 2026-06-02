@@ -49,4 +49,11 @@ abstract class ICardRepository {
     required String requesterUId,
     required String boardId,
   });
+
+  // Archive
+  Future<void> archiveCard({required String cardId, required String userUId});
+  Future<void> unarchiveCard({required String cardId, required String userUId});
+
+  // Join card
+  Future<void> joinCard({required String cardId, required String userUId, required String boardId});
 }

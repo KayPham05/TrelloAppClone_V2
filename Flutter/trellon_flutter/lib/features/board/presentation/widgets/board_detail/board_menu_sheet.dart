@@ -7,6 +7,7 @@ import '../../../../../core/data_sources/user_local_data_source.dart';
 import '../../../../../init_dependencies.dart';
 import '../../../data/datasources/board_remote_data_source.dart';
 import '../../cubit/board_detail_cubit.dart';
+import '../../cubit/board_detail_state.dart';
 import '../../cubit/board_member_cubit.dart';
 import 'board_members_sheet.dart';
 import 'board_settings_sheet.dart';
@@ -33,7 +34,7 @@ class BoardMenuSheet extends StatelessWidget {
   }
 }
 
-class _BoardMenuSheetView extends StatelessWidget {
+class _BoardMenuSheetView extends StatefulWidget {
   final String boardId;
   final String boardName;
 
@@ -41,6 +42,16 @@ class _BoardMenuSheetView extends StatelessWidget {
     required this.boardId,
     required this.boardName,
   });
+
+  @override
+  State<_BoardMenuSheetView> createState() => _BoardMenuSheetViewState();
+}
+
+class _BoardMenuSheetViewState extends State<_BoardMenuSheetView> {
+  bool _allowJoinCard = false;
+
+  String get boardId => widget.boardId;
+  String get boardName => widget.boardName;
 
   @override
   Widget build(BuildContext context) {
@@ -222,13 +233,78 @@ class _BoardMenuSheetView extends StatelessWidget {
                 _buildListTile(Icons.campaign_outlined, 'Gửi phản hồi...'),
                 const Divider(),
 
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: const Icon(Icons.checklist),
-                  title: const Text('Trạng thái hoàn tất ở mặt trước thẻ'),
-                  trailing: Switch(value: true, onChanged: (v) {}),
+                // canManage-gated: allow join card toggle
+                BlocBuilder<BoardDetailCubit, BoardDetailState>(
+                  builder: (context, boardState) {
+                    final role = boardState is BoardDetailLoaded ? (boardState.boardRole ?? '') : '';
+                    final canManage = role == 'Owner' || role == 'Admin';
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (canManage)
+                          ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            leading: const Icon(Icons.person_add_alt_1_rounded),
+                            title: const Text('Cho phép tham gia thẻ trực tiếp'),
+                            subtitle: const Text(
+                              'Thành viên có thể tự thêm mình vào thẻ',
+                              style: TextStyle(fontSize: 12, color: Colors.grey),
+                            ),
+                            trailing: Switch(
+                              value: _allowJoinCard,
+                              onChanged: (v) => setState(() => _allowJoinCard = v),
+                            ),
+                          ),
+                        ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          leading: const Icon(Icons.checklist),
+                          title: const Text('Trạng thái hoàn tất ở mặt trước thẻ'),
+                          trailing: Switch(value: true, onChanged: (v) {}),
+                        ),
+                        ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          leading: const Icon(Icons.archive_outlined),
+                          title: const Text('Lưu trữ các thẻ đã hoàn thành'),
+                          trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+                          onTap: () async {
+                            final confirmed = await showDialog<bool>(
+                              context: context,
+                              builder: (ctx) => AlertDialog(
+                                title: const Text('Lưu trữ thẻ đã hoàn thành'),
+                                content: const Text(
+                                  'Tất cả thẻ đang được đánh dấu là Hoàn thành trong bảng này sẽ được lưu trữ. Tiếp tục?',
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(ctx, false),
+                                    child: const Text('Hủy'),
+                                  ),
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(ctx, true),
+                                    child: const Text('Lưu trữ',
+                                        style: TextStyle(color: Colors.orange)),
+                                  ),
+                                ],
+                              ),
+                            );
+                            if (confirmed == true && context.mounted) {
+                              final count = await context
+                                  .read<BoardDetailCubit>()
+                                  .archiveAllCompletedCards();
+                              if (context.mounted) {
+                                Navigator.pop(context);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                      content: Text('Đã lưu trữ $count thẻ đã hoàn thành.')),
+                                );
+                              }
+                            }
+                          },
+                        ),
+                      ],
+                    );
+                  },
                 ),
-                _buildListTile(Icons.archive_outlined, 'Lưu trữ các thẻ được đánh dấu hoàn tất'),
                 const Divider(),
                 _buildListTile(Icons.power_outlined, 'Power-Ups', subtitle: 'Bình chọn, Thẻ bị "bỏ quên"...'),
                 Padding(

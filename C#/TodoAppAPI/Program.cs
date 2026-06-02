@@ -136,14 +136,8 @@ var app = builder.Build();
 
 
 // 3. Sử dụng CORS
-if (app.Environment.IsDevelopment())
-{
-    app.UseCors("AllowAllMobile");
-}
-else 
-{
-    app.UseCors("AllowFrontend");
-}
+app.UseCors("AllowFrontend");
+
 
 //app.UseHttpsRedirection();
 app.UseAuthentication();

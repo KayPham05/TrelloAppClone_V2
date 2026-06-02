@@ -160,5 +160,34 @@ namespace TodoAppAPI.Service
             await client.SendAsync(message);
             await client.DisconnectAsync(true);
         }
+
+        public async Task SendPasswordResetOtpEmailAsync(string toEmail, string code)
+        {
+            var senderEmail = _configuration["EmailSettings:SenderEmail"];
+            var senderPassword = _configuration["EmailSettings:SenderPassword"];
+            var smtpServer = _configuration["EmailSettings:SmtpServer"];
+            var smtpPort = int.Parse(_configuration["EmailSettings:Port"] ?? "587");
+
+            var message = new MimeMessage();
+            message.From.Add(new MailboxAddress("Trello Clone", senderEmail));
+            message.To.Add(MailboxAddress.Parse(toEmail));
+            message.Subject = "Mã OTP Khôi phục mật khẩu – Trello Clone";
+
+            message.Body = new TextPart("html")
+            {
+                Text = $@"
+            <h2>Khôi phục mật khẩu</h2>
+            <p>Mã OTP để khôi phục mật khẩu của bạn là:</p>
+            <h3 style='color:blue;font-size:22px;'>{code}</h3>
+            <p>Mã này có hiệu lực trong <b>5 phút</b>.</p>
+            <p>Nếu bạn không yêu cầu khôi phục mật khẩu, vui lòng bỏ qua email này.</p>"
+            };
+
+            using var client = new SmtpClient();
+            await client.ConnectAsync(smtpServer, smtpPort, SecureSocketOptions.StartTls);
+            await client.AuthenticateAsync(senderEmail, senderPassword);
+            await client.SendAsync(message);
+            await client.DisconnectAsync(true);
+        }
     }
 }

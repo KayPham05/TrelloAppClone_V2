@@ -12,8 +12,8 @@ using TodoAppAPI.Data;
 namespace TodoAppAPI.Migrations
 {
     [DbContext(typeof(TodoDbContext))]
-    [Migration("20260528013331_db")]
-    partial class db
+    [Migration("20260529043337_InitDb")]
+    partial class InitDb
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -806,6 +806,145 @@ namespace TodoAppAPI.Migrations
                     b.ToTable("UserSessions", (string)null);
                 });
 
+            modelBuilder.Entity("TodoAppAPI.Models.WorkflowDesign", b =>
+                {
+                    b.Property<string>("WorkflowDesignUId")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
+
+                    b.Property<string>("CreatedByUserUId")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
+
+                    b.Property<string>("WorkspaceUId")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.HasKey("WorkflowDesignUId");
+
+                    b.HasIndex("CreatedByUserUId");
+
+                    b.HasIndex("WorkspaceUId");
+
+                    b.ToTable("WorkflowDesigns", (string)null);
+                });
+
+            modelBuilder.Entity("TodoAppAPI.Models.WorkflowEdge", b =>
+                {
+                    b.Property<string>("WorkflowEdgeUId")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
+
+                    b.Property<string>("EdgeType")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)")
+                        .HasDefaultValue("dependency");
+
+                    b.Property<bool>("IsReversed")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<string>("Label")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("SourceNodeUId")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<string>("TargetNodeUId")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<string>("WorkflowDesignUId")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.HasKey("WorkflowEdgeUId");
+
+                    b.HasIndex("TargetNodeUId");
+
+                    b.HasIndex("WorkflowDesignUId");
+
+                    b.HasIndex("SourceNodeUId", "TargetNodeUId")
+                        .IsUnique();
+
+                    b.ToTable("WorkflowEdges", (string)null);
+                });
+
+            modelBuilder.Entity("TodoAppAPI.Models.WorkflowNode", b =>
+                {
+                    b.Property<string>("WorkflowNodeUId")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
+
+                    b.Property<string>("NodeType")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)")
+                        .HasDefaultValue("Board");
+
+                    b.Property<double>("PositionX")
+                        .HasColumnType("float");
+
+                    b.Property<double>("PositionY")
+                        .HasColumnType("float");
+
+                    b.Property<string>("ReferenceId")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<string>("WorkflowDesignUId")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.HasKey("WorkflowNodeUId");
+
+                    b.HasIndex("ReferenceId");
+
+                    b.HasIndex("WorkflowDesignUId");
+
+                    b.ToTable("WorkflowNodes", (string)null);
+                });
+
             modelBuilder.Entity("TodoAppAPI.Models.Workspace", b =>
                 {
                     b.Property<string>("WorkspaceUId")
@@ -1132,6 +1271,62 @@ namespace TodoAppAPI.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("TodoAppAPI.Models.WorkflowDesign", b =>
+                {
+                    b.HasOne("TodoAppAPI.Models.User", "CreatedBy")
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserUId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("TodoAppAPI.Models.Workspace", "Workspace")
+                        .WithMany()
+                        .HasForeignKey("WorkspaceUId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("CreatedBy");
+
+                    b.Navigation("Workspace");
+                });
+
+            modelBuilder.Entity("TodoAppAPI.Models.WorkflowEdge", b =>
+                {
+                    b.HasOne("TodoAppAPI.Models.WorkflowNode", "SourceNode")
+                        .WithMany("SourceEdges")
+                        .HasForeignKey("SourceNodeUId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("TodoAppAPI.Models.WorkflowNode", "TargetNode")
+                        .WithMany("TargetEdges")
+                        .HasForeignKey("TargetNodeUId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("TodoAppAPI.Models.WorkflowDesign", "WorkflowDesign")
+                        .WithMany("Edges")
+                        .HasForeignKey("WorkflowDesignUId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("SourceNode");
+
+                    b.Navigation("TargetNode");
+
+                    b.Navigation("WorkflowDesign");
+                });
+
+            modelBuilder.Entity("TodoAppAPI.Models.WorkflowNode", b =>
+                {
+                    b.HasOne("TodoAppAPI.Models.WorkflowDesign", "WorkflowDesign")
+                        .WithMany("Nodes")
+                        .HasForeignKey("WorkflowDesignUId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("WorkflowDesign");
+                });
+
             modelBuilder.Entity("TodoAppAPI.Models.Workspace", b =>
                 {
                     b.HasOne("TodoAppAPI.Models.User", "Owner")
@@ -1221,6 +1416,20 @@ namespace TodoAppAPI.Migrations
                     b.Navigation("UserOtp");
 
                     b.Navigation("WorkspaceMemberships");
+                });
+
+            modelBuilder.Entity("TodoAppAPI.Models.WorkflowDesign", b =>
+                {
+                    b.Navigation("Edges");
+
+                    b.Navigation("Nodes");
+                });
+
+            modelBuilder.Entity("TodoAppAPI.Models.WorkflowNode", b =>
+                {
+                    b.Navigation("SourceEdges");
+
+                    b.Navigation("TargetEdges");
                 });
 
             modelBuilder.Entity("TodoAppAPI.Models.Workspace", b =>

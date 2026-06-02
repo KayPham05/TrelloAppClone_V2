@@ -9,6 +9,7 @@ namespace TodoAppAPI.Models
         public string Visibility { get; set; } = "Private";
         public string Status { get; set; } = "Active";
         public string? BackgroundUrl { get; set; }
+        public bool AllowMemberJoinCard { get; set; } = false;
 
         // FK - Owner
         public string UserUId { get; set; } = string.Empty;
