@@ -8,7 +8,6 @@ import '../bloc/inbox_cubit.dart';
 import '../bloc/inbox_state.dart';
 import '../widgets/add_input_widget.dart';
 
-
 class InboxPage extends StatelessWidget {
   const InboxPage({super.key});
 
@@ -45,6 +44,10 @@ class _InboxViewState extends State<InboxView> {
     }
   }
 
+  Future<void> _refreshInboxCards() async {
+    await context.read<InboxCubit>().fetchInboxCards(showLoading: false);
+  }
+
   @override
   void dispose() {
     _addController.dispose();
@@ -64,13 +67,14 @@ class _InboxViewState extends State<InboxView> {
               padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
               child: Row(
                 children: [
-                   Expanded(
+                  Expanded(
                     child: Text(
                       'Hộp thư đến',
-                      style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                        color: AppColors.onSurface,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: Theme.of(context).textTheme.headlineLarge
+                          ?.copyWith(
+                            color: AppColors.onSurface,
+                            fontWeight: FontWeight.bold,
+                          ),
                     ),
                   ),
                   Container(
@@ -89,7 +93,7 @@ class _InboxViewState extends State<InboxView> {
                   ),
                   const SizedBox(width: 12),
                   Container(
-                     decoration: BoxDecoration(
+                    decoration: BoxDecoration(
                       border: Border.all(color: AppColors.surfaceVariant),
                       borderRadius: BorderRadius.circular(16),
                       color: Colors.white,
@@ -119,10 +123,7 @@ class _InboxViewState extends State<InboxView> {
                   decoration: InputDecoration(
                     hintText: 'Tìm kiếm',
                     hintStyle: TextStyle(color: AppColors.outline),
-                    prefixIcon: Icon(
-                      Icons.search,
-                      color: AppColors.outline,
-                    ),
+                    prefixIcon: Icon(Icons.search, color: AppColors.outline),
                     border: InputBorder.none,
                     enabledBorder: InputBorder.none,
                     focusedBorder: InputBorder.none,
@@ -136,93 +137,134 @@ class _InboxViewState extends State<InboxView> {
             const SizedBox(height: 24),
             // ── Items List ───────────────────────────────────────────────
             Expanded(
-              child: BlocBuilder<InboxCubit, InboxState>(
-                builder: (context, state) {
-                  if (state is InboxLoading || state is InboxInitial) {
-                    return const Center(child: CircularProgressIndicator());
-                  } else if (state is InboxError) {
-                    return Center(
-                      child: Text(
-                        state.message,
-                        style: const TextStyle(color: Colors.red),
-                      ),
-                    );
-                  } else if (state is InboxEmpty) {
-                    return const Center(
-                      child: Text(
-                        "Hộp thư của bạn đang trống",
-                        style: TextStyle(color: AppColors.textSecondary),
-                      ),
-                    );
-                  } else if (state is InboxLoaded) {
-                    final items = state.cards;
-                    return ReorderableListView.builder(
-                      scrollController: _inboxScrollController,
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      onReorder: (oldIndex, newIndex) {
-                        context.read<InboxCubit>().reorderCards(oldIndex, newIndex);
-                      },
-                      proxyDecorator: (child, index, animation) => Material(
-                        elevation: 6,
-                        borderRadius: BorderRadius.circular(16),
-                        child: child,
-                      ),
-                      itemCount: items.length,
-                      itemBuilder: (context, i) {
-                        return Padding(
-                          key: Key(items[i].id),
-                          padding: EdgeInsets.only(
-                            top: i == 0 ? 0 : 8,
-                            bottom: i == items.length - 1 ? 8 : 0,
-                          ),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: AppColors.surfaceVariant),
-                            ),
-                            child: Dismissible(
-                              key: Key('dismiss_${items[i].id}'),
-                              direction: DismissDirection.endToStart,
-                              background: Container(
-                                alignment: Alignment.centerRight,
-                                padding: const EdgeInsets.only(right: 20),
-                                decoration: BoxDecoration(
-                                  color: AppColors.error,
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                child: const Icon(Icons.delete_outline, color: Colors.white),
-                              ),
-                              onDismissed: (direction) {
-                                context.read<InboxCubit>().deleteCard(items[i].id);
-                              },
-                              child: RepaintBoundary(
-                                child: CardOverviewWidget(
-                                  card: items[i],
-                                  onTap: () async {
-                                    await Navigator.push<bool>(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => CardDetailPage(card: items[i], isInboxCard: true),
-                                      ),
-                                    );
-                                    if (context.mounted) {
-                                      context.read<InboxCubit>().fetchInboxCards();
-                                    }
-                                  },
-                                  onToggleComplete: (val) {
-                                    context.read<InboxCubit>().toggleCardStatus(items[i].id, val);
-                                  },
-                                ),
-                              ),
+              child: RefreshIndicator(
+                onRefresh: _refreshInboxCards,
+                child: BlocBuilder<InboxCubit, InboxState>(
+                  builder: (context, state) {
+                    if (state is InboxLoading || state is InboxInitial) {
+                      return ListView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        children: const [
+                          SizedBox(height: 180),
+                          Center(child: CircularProgressIndicator()),
+                        ],
+                      );
+                    } else if (state is InboxError) {
+                      return ListView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        children: [
+                          const SizedBox(height: 180),
+                          Center(
+                            child: Text(
+                              state.message,
+                              style: const TextStyle(color: Colors.red),
                             ),
                           ),
-                        );
-                      },
+                        ],
+                      );
+                    } else if (state is InboxEmpty) {
+                      return ListView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        children: const [
+                          SizedBox(height: 180),
+                          Center(
+                            child: Text(
+                              "Hộp thư của bạn đang trống",
+                              style: TextStyle(color: AppColors.textSecondary),
+                            ),
+                          ),
+                        ],
+                      );
+                    } else if (state is InboxLoaded) {
+                      final items = state.cards;
+                      return ReorderableListView.builder(
+                        scrollController: _inboxScrollController,
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        onReorder: (oldIndex, newIndex) {
+                          context.read<InboxCubit>().reorderCards(
+                            oldIndex,
+                            newIndex,
+                          );
+                        },
+                        proxyDecorator: (child, index, animation) => Material(
+                          elevation: 6,
+                          borderRadius: BorderRadius.circular(16),
+                          child: child,
+                        ),
+                        itemCount: items.length,
+                        itemBuilder: (context, i) {
+                          return Padding(
+                            key: Key(items[i].id),
+                            padding: EdgeInsets.only(
+                              top: i == 0 ? 0 : 8,
+                              bottom: i == items.length - 1 ? 8 : 0,
+                            ),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: AppColors.surfaceVariant,
+                                ),
+                              ),
+                              child: Dismissible(
+                                key: Key('dismiss_${items[i].id}'),
+                                direction: DismissDirection.endToStart,
+                                background: Container(
+                                  alignment: Alignment.centerRight,
+                                  padding: const EdgeInsets.only(right: 20),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.error,
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  child: const Icon(
+                                    Icons.delete_outline,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                onDismissed: (direction) {
+                                  context.read<InboxCubit>().deleteCard(
+                                    items[i].id,
+                                  );
+                                },
+                                child: RepaintBoundary(
+                                  child: CardOverviewWidget(
+                                    card: items[i],
+                                    onTap: () async {
+                                      await Navigator.push<bool>(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => CardDetailPage(
+                                            card: items[i],
+                                            isInboxCard: true,
+                                          ),
+                                        ),
+                                      );
+                                      if (context.mounted) {
+                                        context
+                                            .read<InboxCubit>()
+                                            .fetchInboxCards();
+                                      }
+                                    },
+                                    onToggleComplete: (val) {
+                                      context
+                                          .read<InboxCubit>()
+                                          .toggleCardStatus(items[i].id, val);
+                                    },
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      );
+                    }
+                    return ListView(
+                      physics: const AlwaysScrollableScrollPhysics(),
                     );
-                  }
-                  return const SizedBox.shrink();
-                },
+                  },
+                ),
               ),
             ),
             // ── Add Card Bottom Input ────────────────────────────────────
