@@ -46,4 +46,13 @@ class PlannerCubit extends Cubit<PlannerState> {
       emit(PlannerError(message: e.toString()));
     }
   }
+
+  void applyRealtimeCardDueDateUpdated() {
+    final currentState = state;
+    if (currentState is PlannerLoaded) {
+      if (currentState.days.isNotEmpty) {
+        loadMonth(currentState.days[0].date);
+      }
+    }
+  }
 }

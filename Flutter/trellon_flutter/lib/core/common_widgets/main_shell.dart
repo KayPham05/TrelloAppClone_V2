@@ -10,6 +10,8 @@ import '../../../features/workspace/presentation/cubit/workspace_cubit.dart';
 import '../../../features/activity/presentation/cubit/notification_cubit.dart';
 import '../../../features/activity/presentation/cubit/notification_state.dart';
 import '../../../features/activity/data/services/notification_realtime_service.dart';
+import '../../../features/board/data/services/board_realtime_service.dart';
+import '../../../routes.dart';
 import '../../../init_dependencies.dart';
 import '../../../core/data_sources/user_local_data_source.dart';
 import '../constants/app_colors.dart';
@@ -29,6 +31,8 @@ class _MainShellState extends State<MainShell>
       serviceLocator<NotificationCubit>();
   late final NotificationRealtimeService _notificationRealtimeService =
       serviceLocator<NotificationRealtimeService>();
+  late final BoardRealtimeService _boardRealtimeService =
+      serviceLocator<BoardRealtimeService>();
 
   // 5 tabs: Boards, Inbox, Planner, Notifications/Activity, Account
   final List<Widget> _pages = const [
@@ -80,12 +84,14 @@ class _MainShellState extends State<MainShell>
       _workspaceCubit.loadWorkspaces();
       _notificationCubit.fetchNotifications(refresh: true);
       await _notificationRealtimeService.start();
+      await _boardRealtimeService.start();
     }
   }
 
   @override
   void dispose() {
     _notificationRealtimeService.stop();
+    _boardRealtimeService.stop();
     super.dispose();
   }
 
@@ -111,10 +117,18 @@ class _MainShellState extends State<MainShell>
         BlocProvider<WorkspaceCubit>.value(value: _workspaceCubit),
         BlocProvider<NotificationCubit>.value(value: _notificationCubit),
       ],
-      child: Scaffold(
-        backgroundColor: AppColors.background,
-        body: IndexedStack(index: _currentIndex, children: _pages),
-        bottomNavigationBar: _buildBottomNavBar(),
+      child: BlocListener<NotificationCubit, NotificationState>(
+        listener: (context, state) {
+          if (state is NotificationLoaded && state.isLogoutRequested) {
+            Navigator.of(context, rootNavigator: true)
+                .pushNamedAndRemoveUntil(AppRoutes.login, (route) => false);
+          }
+        },
+        child: Scaffold(
+          backgroundColor: AppColors.background,
+          body: IndexedStack(index: _currentIndex, children: _pages),
+          bottomNavigationBar: _buildBottomNavBar(),
+        ),
       ),
     );
   }

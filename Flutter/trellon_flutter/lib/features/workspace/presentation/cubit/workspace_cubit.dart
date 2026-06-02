@@ -161,4 +161,40 @@ class WorkspaceCubit extends Cubit<WorkspaceState> {
   void reset() {
     emit(WorkspaceInitial());
   }
+
+  void applyRealtimeWorkspaceUpdated(Map<String, dynamic> payload) {
+    final currentState = state;
+    if (currentState is WorkspaceLoaded) {
+      final updatedPersonal = currentState.personal.map((w) {
+        if (w.id == payload['workspaceId']) {
+          return w.copyWith(
+            name: payload['name'],
+            description: payload['description'],
+          );
+        }
+        return w;
+      }).toList();
+
+      final updatedTeam = currentState.team.map((w) {
+        if (w.id == payload['workspaceId']) {
+          return w.copyWith(
+            name: payload['name'],
+            description: payload['description'],
+          );
+        }
+        return w;
+      }).toList();
+
+      emit(WorkspaceLoaded(personal: updatedPersonal, team: updatedTeam));
+    }
+  }
+
+  void applyRealtimeWorkspaceDeleted(String workspaceId) {
+    final currentState = state;
+    if (currentState is WorkspaceLoaded) {
+      final updatedPersonal = currentState.personal.where((w) => w.id != workspaceId).toList();
+      final updatedTeam = currentState.team.where((w) => w.id != workspaceId).toList();
+      emit(WorkspaceLoaded(personal: updatedPersonal, team: updatedTeam));
+    }
+  }
 }

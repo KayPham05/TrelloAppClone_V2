@@ -454,4 +454,176 @@ class BoardDetailCubit extends Cubit<BoardDetailState> {
       return 0;
     }
   }
+  // ─── Realtime Updates (SignalR) ──────────────────────────────────────────
+
+  void applyRealtimeBoardUpdated(Map<String, dynamic> payload) {
+    if (state is! BoardDetailLoaded) return;
+    final current = state as BoardDetailLoaded;
+    emit(current.copyWith(
+      boardName: payload['boardName'],
+      backgroundUrl: payload['backgroundUrl'],
+      boardVisibility: payload['visibility'],
+    ));
+  }
+
+  void applyRealtimeBoardBackgroundUpdated(String url) {
+    if (state is! BoardDetailLoaded) return;
+    final current = state as BoardDetailLoaded;
+    emit(current.copyWith(backgroundUrl: url));
+  }
+
+  void applyRealtimeListCreated(Map<String, dynamic> payload) {
+    if (state is! BoardDetailLoaded) return;
+    final current = state as BoardDetailLoaded;
+    
+    // Avoid duplicates
+    if (current.lists.any((l) => l.id == payload['listUId'])) return;
+
+    final newList = ListEntity(
+      id: payload['listUId'],
+      name: payload['listName'],
+      position: payload['position'],
+      status: payload['status'] ?? 'Active',
+      boardId: payload['boardUId'],
+      cards: const [],
+    );
+
+    final updatedLists = [...current.lists, newList]
+      ..sort((a, b) => a.position.compareTo(b.position));
+    
+    emit(current.copyWith(lists: updatedLists));
+  }
+
+  void applyRealtimeListStatusUpdated(String listUId, String status) {
+    if (state is! BoardDetailLoaded) return;
+    final current = state as BoardDetailLoaded;
+    
+    if (status == 'Archived' || status == 'Deleted') {
+      final updatedLists = current.lists.where((l) => l.id != listUId).toList();
+      emit(current.copyWith(lists: updatedLists));
+    } else {
+      final updatedLists = current.lists.map((l) {
+        return l.id == listUId ? l.copyWith(status: status) : l;
+      }).toList();
+      emit(current.copyWith(lists: updatedLists));
+    }
+  }
+
+  void applyRealtimeListReordered(List<dynamic> order) {
+    if (state is! BoardDetailLoaded) return;
+    final current = state as BoardDetailLoaded;
+    
+    final Map<String, int> positions = {};
+    for (var i = 0; i < order.length; i++) {
+        positions[order[i].toString()] = i;
+    }
+
+    final updatedLists = current.lists.map((l) {
+        final pos = positions[l.id];
+        return pos != null ? l.copyWith(position: pos) : l;
+    }).toList()..sort((a, b) => a.position.compareTo(b.position));
+
+    emit(current.copyWith(lists: updatedLists));
+  }
+
+  void applyRealtimeCardAdded(Map<String, dynamic> payload) {
+    if (state is! BoardDetailLoaded) return;
+    final current = state as BoardDetailLoaded;
+
+    final listId = payload['listUId'];
+    if (listId == null) return;
+
+    // Check if card exists in any list
+    for (final list in current.lists) {
+      if (list.cards.any((c) => c.id == payload['cardUId'])) return;
+    }
+
+    final newCard = CardModel.fromJson(payload).toEntity();
+    
+    final updatedLists = current.lists.map((l) {
+      if (l.id == listId) {
+        final updatedCards = [...l.cards, newCard]
+          ..sort((a, b) => a.position.compareTo(b.position));
+        return l.copyWith(cards: updatedCards);
+      }
+      return l;
+    }).toList();
+
+    emit(current.copyWith(lists: updatedLists));
+  }
+
+  void applyRealtimeCardUpdated(Map<String, dynamic> payload) {
+    if (state is! BoardDetailLoaded) return;
+    final current = state as BoardDetailLoaded;
+    final cardId = payload['cardUId'];
+
+    final updatedLists = current.lists.map((l) {
+      final cardIdx = l.cards.indexWhere((c) => c.id == cardId);
+      if (cardIdx != -1) {
+        final updatedCards = List<CardEntity>.from(l.cards);
+        updatedCards[cardIdx] = CardModel.fromJson(payload).toEntity();
+        return l.copyWith(cards: updatedCards);
+      }
+      return l;
+    }).toList();
+
+    emit(current.copyWith(lists: updatedLists));
+  }
+
+  void applyRealtimeCardDeleted(String cardUId) {
+    if (state is! BoardDetailLoaded) return;
+    final current = state as BoardDetailLoaded;
+
+    final updatedLists = current.lists.map((l) {
+      final updatedCards = l.cards.where((c) => c.id != cardUId).toList();
+      return l.copyWith(cards: updatedCards);
+    }).toList();
+
+    emit(current.copyWith(lists: updatedLists));
+  }
+
+  void applyRealtimeCardMoved(String cardUId, String newListUId, int position) {
+    if (state is! BoardDetailLoaded) return;
+    final current = state as BoardDetailLoaded;
+
+    CardEntity? movedCard;
+    final intermediateLists = current.lists.map((l) {
+      final cardIdx = l.cards.indexWhere((c) => c.id == cardUId);
+      if (cardIdx != -1) {
+        movedCard = l.cards[cardIdx];
+        final updatedCards = List<CardEntity>.from(l.cards)..removeAt(cardIdx);
+        return l.copyWith(cards: updatedCards);
+      }
+      return l;
+    }).toList();
+
+    if (movedCard == null) return;
+
+    final finalLists = intermediateLists.map((l) {
+      if (l.id == newListUId) {
+        final updatedCards = List<CardEntity>.from(l.cards);
+        final safePos = position.clamp(0, updatedCards.length);
+        updatedCards.insert(safePos, movedCard!.copyWith(listId: newListUId, position: position));
+        
+        // Re-sort just in case
+        for(int i=0; i<updatedCards.length; i++) {
+            updatedCards[i] = updatedCards[i].copyWith(position: i);
+        }
+        return l.copyWith(cards: updatedCards);
+      }
+      return l;
+    }).toList();
+
+    emit(current.copyWith(lists: finalLists));
+  }
+
+  void applyRealtimeCommentAdded(Map<String, dynamic> payload) {
+      // Typically comments are handled in a different Cubit or detail page.
+      // If BoardDetail contains comment counts, update them here.
+  }
+
+  void applyRealtimeCommentDeleted(String commentUId, String cardUId) {
+      // Same as above.
+  }
 }
+

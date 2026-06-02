@@ -42,6 +42,7 @@ import 'features/board/domain/usecases/get_personal_boards_usecase.dart';
 import 'features/board/domain/usecases/save_recent_board_usecase.dart';
 import 'features/board/presentation/cubit/board_cubit.dart';
 import 'features/board/presentation/cubit/board_detail_cubit.dart';
+import 'features/board/data/services/board_realtime_service.dart';
 import 'features/workspace/data/datasources/workspace_remote_data_source.dart';
 import 'features/workspace/data/repositories/workspace_repository_impl.dart';
 import 'features/workspace/domain/repositories/workspace_repository.dart';
@@ -156,6 +157,8 @@ void _initBoard() {
     updateCardStatusUseCase: serviceLocator<UpdateCardStatusUseCase>(),
     saveRecentBoardUseCase: serviceLocator<SaveRecentBoardUseCase>(),
   ));
+
+  serviceLocator.registerLazySingleton(() => BoardRealtimeService());
 }
 
 void _initCard() {
@@ -302,5 +305,7 @@ void _initNotification() {
 
   serviceLocator.registerLazySingleton(() => NotificationRealtimeService(
     cubit: serviceLocator<NotificationCubit>(),
+    workspaceCubit: serviceLocator<WorkspaceCubit>(),
+    plannerCubit: serviceLocator<PlannerCubit>(),
   ));
 }

@@ -1,4 +1,8 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:cookie_jar/cookie_jar.dart';
+import '../../../../init_dependencies.dart';
 import '../../domain/entities/notification_entity.dart';
 import '../../domain/usecases/delete_notification_usecase.dart';
 import '../../domain/usecases/get_notifications_usecase.dart';
@@ -33,7 +37,9 @@ class NotificationCubit extends Cubit<NotificationState> {
     final resetList = refresh || tabChanged;
     if (_isFetching && !resetList) return;
 
-    if (!resetList && state is NotificationLoaded && (state as NotificationLoaded).hasReachedMax) {
+    if (!resetList &&
+        state is NotificationLoaded &&
+        (state as NotificationLoaded).hasReachedMax) {
       return;
     }
 
@@ -63,12 +69,14 @@ class NotificationCubit extends Cubit<NotificationState> {
           ? _dedupeById([...currentState.notifications, ...page.items])
           : page.items;
 
-      emit(NotificationLoaded(
-        notifications: notifications,
-        hasReachedMax: !page.hasMore,
-        unreadCount: page.unreadCount,
-        tab: fetchTab,
-      ));
+      emit(
+        NotificationLoaded(
+          notifications: notifications,
+          hasReachedMax: !page.hasMore,
+          unreadCount: page.unreadCount,
+          tab: fetchTab,
+        ),
+      );
 
       if (page.items.isNotEmpty) {
         _currentPage = fetchPage + 1;
@@ -89,7 +97,9 @@ class NotificationCubit extends Cubit<NotificationState> {
     final currentState = state;
     if (currentState is! NotificationLoaded) return;
 
-    final notificationIndex = currentState.notifications.indexWhere((n) => n.id == notiId);
+    final notificationIndex = currentState.notifications.indexWhere(
+      (n) => n.id == notiId,
+    );
     if (notificationIndex == -1) return;
     final notification = currentState.notifications[notificationIndex];
     if (notification.isRead) return;
@@ -108,10 +118,12 @@ class NotificationCubit extends Cubit<NotificationState> {
           ? updatedNotifications.where((n) => n.id != notiId).toList()
           : updatedNotifications;
 
-      emit(currentState.copyWith(
-        notifications: visibleNotifications,
-        unreadCount: _decrementUnread(currentState.unreadCount),
-      ));
+      emit(
+        currentState.copyWith(
+          notifications: visibleNotifications,
+          unreadCount: _decrementUnread(currentState.unreadCount),
+        ),
+      );
     } catch (_) {
       // Keep current UI state when the server update fails.
     }
@@ -126,12 +138,14 @@ class NotificationCubit extends Cubit<NotificationState> {
       final updatedNotifications = currentState.tab == NotificationTab.sentToMe
           ? <NotificationEntity>[]
           : currentState.notifications
-              .map((n) => n.copyWith(isRead: true, readAt: DateTime.now()))
-              .toList();
-      emit(currentState.copyWith(
-        notifications: updatedNotifications,
-        unreadCount: 0,
-      ));
+                .map((n) => n.copyWith(isRead: true, readAt: DateTime.now()))
+                .toList();
+      emit(
+        currentState.copyWith(
+          notifications: updatedNotifications,
+          unreadCount: 0,
+        ),
+      );
       return true;
     } catch (_) {
       return false;
@@ -154,12 +168,11 @@ class NotificationCubit extends Cubit<NotificationState> {
     final unreadCount = notification.isRead ? s.unreadCount : s.unreadCount + 1;
     final shouldDisplay = _matchesTab(notification, s.tab);
     if (!shouldDisplay && unreadCount == s.unreadCount) return;
-    final notifications = shouldDisplay ? [notification, ...s.notifications] : s.notifications;
+    final notifications = shouldDisplay
+        ? [notification, ...s.notifications]
+        : s.notifications;
 
-    emit(s.copyWith(
-      notifications: notifications,
-      unreadCount: unreadCount,
-    ));
+    emit(s.copyWith(notifications: notifications, unreadCount: unreadCount));
   }
 
   void applyUnreadCount(int unreadCount) {
@@ -176,30 +189,37 @@ class NotificationCubit extends Cubit<NotificationState> {
     final existingIndex = s.notifications.indexWhere((n) => n.id == notiId);
     if (existingIndex == -1) return;
     final existing = s.notifications[existingIndex];
-    final unreadCount = existing.isRead ? s.unreadCount : _decrementUnread(s.unreadCount);
+    final unreadCount = existing.isRead
+        ? s.unreadCount
+        : _decrementUnread(s.unreadCount);
     if (s.tab == NotificationTab.sentToMe) {
-      emit(s.copyWith(
-        notifications: s.notifications.where((n) => n.id != notiId).toList(),
-        unreadCount: unreadCount,
-      ));
+      emit(
+        s.copyWith(
+          notifications: s.notifications.where((n) => n.id != notiId).toList(),
+          unreadCount: unreadCount,
+        ),
+      );
       return;
     }
 
     final notifications = s.notifications
-        .map((n) => n.id == notiId ? n.copyWith(isRead: true, readAt: DateTime.now()) : n)
+        .map(
+          (n) => n.id == notiId
+              ? n.copyWith(isRead: true, readAt: DateTime.now())
+              : n,
+        )
         .toList();
-    emit(s.copyWith(
-      notifications: notifications,
-      unreadCount: unreadCount,
-    ));
+    emit(s.copyWith(notifications: notifications, unreadCount: unreadCount));
   }
 
   void applyNotificationDeleted(String notiId) {
     final s = state;
     if (s is! NotificationLoaded) return;
-    emit(s.copyWith(
-      notifications: s.notifications.where((n) => n.id != notiId).toList(),
-    ));
+    emit(
+      s.copyWith(
+        notifications: s.notifications.where((n) => n.id != notiId).toList(),
+      ),
+    );
   }
 
   void applyNotificationReadAll() {
@@ -209,13 +229,10 @@ class NotificationCubit extends Cubit<NotificationState> {
     final notifications = s.tab == NotificationTab.sentToMe
         ? <NotificationEntity>[]
         : s.notifications
-            .map((n) => n.copyWith(isRead: true, readAt: DateTime.now()))
-            .toList();
+              .map((n) => n.copyWith(isRead: true, readAt: DateTime.now()))
+              .toList();
 
-    emit(s.copyWith(
-      notifications: notifications,
-      unreadCount: 0,
-    ));
+    emit(s.copyWith(notifications: notifications, unreadCount: 0));
   }
 
   void reset() {
@@ -226,17 +243,60 @@ class NotificationCubit extends Cubit<NotificationState> {
     emit(NotificationInitial());
   }
 
+  Future<void> applyRealtimeProfileUpdated(Map<String, dynamic> payload) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (payload['userName'] != null)
+      await prefs.setString('user_name', payload['userName']);
+    if (payload['avatarUrl'] != null)
+      await prefs.setString('user_avatar', payload['avatarUrl']);
+    // Bio is not typically in shared_prefs but could be added if needed
+
+    // We don't necessarily need to emit a new state for NotificationCubit
+    // unless we want to signal subscribers that profile changed.
+  }
+
+  Future<void> applyAccountLocked() async {
+    // 1. Clear SharedPreferences
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('user_uid');
+    await prefs.remove('user_name');
+    await prefs.remove('user_email');
+    await prefs.setBool('isLogged', false);
+
+    // 2. Clear SecureStorage
+    const secureStorage = FlutterSecureStorage();
+    await secureStorage.deleteAll();
+
+    // 3. Clear Cookies
+    if (serviceLocator.isRegistered<CookieJar>()) {
+      await serviceLocator<CookieJar>().deleteAll();
+    }
+
+    // 4. Signal Logout to UI
+    final s = state;
+    if (s is NotificationLoaded) {
+      emit(s.copyWith(isLogoutRequested: true));
+    } else {
+      emit(NotificationLoaded(notifications: [], isLogoutRequested: true));
+    }
+  }
+
   (NotificationEntity, int)? removeNotificationLocally(String notiId) {
     final s = state;
     if (s is! NotificationLoaded) return null;
     final idx = s.notifications.indexWhere((n) => n.id == notiId);
     if (idx == -1) return null;
     final entity = s.notifications[idx];
-    final newList = List<NotificationEntity>.from(s.notifications)..removeAt(idx);
-    emit(s.copyWith(
-      notifications: newList,
-      unreadCount: entity.isRead ? s.unreadCount : _decrementUnread(s.unreadCount),
-    ));
+    final newList = List<NotificationEntity>.from(s.notifications)
+      ..removeAt(idx);
+    emit(
+      s.copyWith(
+        notifications: newList,
+        unreadCount: entity.isRead
+            ? s.unreadCount
+            : _decrementUnread(s.unreadCount),
+      ),
+    );
     return (entity, idx);
   }
 
@@ -245,13 +305,19 @@ class NotificationCubit extends Cubit<NotificationState> {
     if (s is! NotificationLoaded) return;
     final newList = List<NotificationEntity>.from(s.notifications)
       ..insert(index.clamp(0, s.notifications.length), entity);
-    emit(s.copyWith(
-      notifications: newList,
-      unreadCount: entity.isRead ? s.unreadCount : s.unreadCount + 1,
-    ));
+    emit(
+      s.copyWith(
+        notifications: newList,
+        unreadCount: entity.isRead ? s.unreadCount : s.unreadCount + 1,
+      ),
+    );
   }
 
-  Future<bool> confirmDeleteNotification(String notiId, NotificationEntity entity, int index) async {
+  Future<bool> confirmDeleteNotification(
+    String notiId,
+    NotificationEntity entity,
+    int index,
+  ) async {
     try {
       final success = await deleteNotificationUseCase.call(notiId: notiId);
       if (!success) {
@@ -268,7 +334,8 @@ class NotificationCubit extends Cubit<NotificationState> {
     return switch (tab) {
       NotificationTab.all => true,
       NotificationTab.read => notification.isRead,
-      NotificationTab.sentToMe => !notification.isRead && _isSentToMe(notification.type),
+      NotificationTab.sentToMe =>
+        !notification.isRead && _isSentToMe(notification.type),
     };
   }
 

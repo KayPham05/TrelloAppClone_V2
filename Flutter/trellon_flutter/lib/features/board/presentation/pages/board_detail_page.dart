@@ -14,6 +14,7 @@ import '../widgets/board_detail/board_kanban_card_ui_widget.dart';
 import '../widgets/board_detail/board_kanban_card_wrapper.dart';
 import '../widgets/board_detail/board_kanban_column_widget.dart';
 import '../models/drag_data_models.dart';
+import '../../data/services/board_realtime_service.dart';
 
 class BoardDetailPage extends StatefulWidget {
   const BoardDetailPage({super.key});
@@ -41,11 +42,15 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
 
   bool _isDragging = false;
   final TextEditingController _addListController = TextEditingController();
+  String? _joinedBoardId;
 
   @override
   void dispose() {
     _addListController.dispose();
     _pageController?.dispose();
+    if (_joinedBoardId != null) {
+      serviceLocator<BoardRealtimeService>().leaveBoard(_joinedBoardId!);
+    }
     super.dispose();
   }
 
@@ -148,6 +153,9 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
             workspaceName: workspaceName,
             visibility: visibility,
         );
+        // Start Join Board Realtime
+        _joinedBoardId = boardId;
+        serviceLocator<BoardRealtimeService>().joinBoard(boardId);
         return _cubit!;
       },
       child: BlocConsumer<BoardDetailCubit, BoardDetailState>(
