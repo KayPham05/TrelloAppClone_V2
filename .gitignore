@@ -103,3 +103,11 @@ ephemeral/
 AGENT.md
 Docs/Plans/
 Docs/Reviews/
+
+# -----------------------------
+# Test Results & Coverage
+# -----------------------------
+[Tt]est[Rr]esult*/
+coverage.cobertura.xml
+coverage.opencover.xml
+coverage/
