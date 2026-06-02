@@ -1,0 +1,51 @@
+/* nền */
+body{
+  background:#fff;
+  background-image:url("../../assets/Artboard_2.png"); /* nếu ảnh ở public/img */
+  background-repeat:no-repeat;
+  background-size:cover;
+  background-position:center;
+}
+
+.logo-text {
+  font-size: 1.5rem !important;
+}
+
+.title-text {
+  font-size: 1.5rem !important;
+  font-weight: 700;
+}
+
+.subtitle-text {
+  font-size: 1rem !important;
+  font-weight: 500;
+}
+
+#username, #email, #password {
+  font-size: 0.875rem !important;
+}
+
+.social-btn span, .signin-btn {
+  font-size: 1rem !important;
+  font-weight: bold;
+}
+
+.order-text {
+  font-size: 1rem !important;
+}
+
+.footer-text, .footer-text a  {
+  font-size: 0.75rem;
+}
+
+.form-container {
+  box-shadow: 0 0px 20px rgba(0, 0, 0, 0.3);
+}
+
+.btn-primary:hover {
+  background-color: #0052cc;
+}
+
+.social-btn:hover {
+  background-color: #f8f9fa;
+}

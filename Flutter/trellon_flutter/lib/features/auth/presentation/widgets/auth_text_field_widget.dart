@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import '../../../../core/constants/app_colors.dart';
+import '../theme/azure_auth_theme.dart';
 
-/// Widget text field dùng chung cho các màn hình xác thực
+/// Widget text field dùng chung cho các màn hình xác thực (Giao diện Azure Workspace)
 class AuthTextField extends StatelessWidget {
   final TextEditingController controller;
+  final String? labelText; 
   final String hintText;
   final IconData? prefixIcon;
   final Widget? suffixIcon;
@@ -17,6 +17,7 @@ class AuthTextField extends StatelessWidget {
   const AuthTextField({
     super.key,
     required this.controller,
+    this.labelText,
     required this.hintText,
     this.prefixIcon,
     this.suffixIcon,
@@ -29,48 +30,57 @@ class AuthTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return TextFormField(
-      controller: controller,
-      keyboardType: keyboardType,
-      obscureText: obscureText,
-      textInputAction: textInputAction,
-      onFieldSubmitted: onFieldSubmitted,
-      style: GoogleFonts.inter(fontSize: 14, color: AppColors.onSurface),
-      decoration: InputDecoration(
-        hintText: hintText,
-        hintStyle: GoogleFonts.inter(
-          fontSize: 14,
-          color: AppColors.onSurfaceVariant,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (labelText != null) ...[
+          Text(
+            labelText!,
+            style: AzureAuthTheme.labelMd,
+          ),
+          const SizedBox(height: 8),
+        ],
+        TextFormField(
+          controller: controller,
+          keyboardType: keyboardType,
+          obscureText: obscureText,
+          textInputAction: textInputAction,
+          onFieldSubmitted: onFieldSubmitted,
+          style: AzureAuthTheme.bodyLg.copyWith(color: AzureAuthTheme.onSurface),
+          decoration: InputDecoration(
+            hintText: hintText,
+            hintStyle: AzureAuthTheme.bodyLg.copyWith(color: AzureAuthTheme.onSurfaceVariant),
+            prefixIcon: prefixIcon != null
+                ? Icon(prefixIcon, color: AzureAuthTheme.onSurfaceVariant, size: 20)
+                : null,
+            suffixIcon: suffixIcon,
+            filled: true,
+            fillColor: Colors.white,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(4), 
+              borderSide: const BorderSide(color: AzureAuthTheme.outlineVariant, width: 1),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(4),
+              borderSide: const BorderSide(color: AzureAuthTheme.outlineVariant, width: 1),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(4),
+              borderSide: const BorderSide(color: AzureAuthTheme.azureBlue, width: 1), 
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(4),
+              borderSide: const BorderSide(color: AzureAuthTheme.error, width: 1),
+            ),
+            focusedErrorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(4),
+              borderSide: const BorderSide(color: AzureAuthTheme.error, width: 1),
+            ),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          ),
+          validator: validator,
         ),
-        prefixIcon: prefixIcon != null
-            ? Icon(prefixIcon, color: AppColors.onSurfaceVariant, size: 18)
-            : null,
-        suffixIcon: suffixIcon,
-        filled: true,
-        fillColor: AppColors.surfaceContainerLow,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide.none,
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide.none,
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: AppColors.primaryContainer, width: 2),
-        ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: AppColors.error),
-        ),
-        focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: AppColors.error, width: 2),
-        ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      ),
-      validator: validator,
+      ],
     );
   }
 }

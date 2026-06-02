@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../../../core/constants/app_colors.dart';
 import '../../../domain/entities/card_entity.dart';
 
 class LabelPickerSheet extends StatelessWidget {
@@ -192,8 +193,8 @@ class _LabelPickerContentState extends State<_LabelPickerContent> {
     return Container(
       height: MediaQuery.of(context).size.height * 0.8,
       decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        color: AppColors.surfaceWhite,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
       ),
       child: isAddingLabel ? _buildAddLabelView() : _buildMainListView(),
     );
@@ -441,20 +442,26 @@ class _LabelPickerContentState extends State<_LabelPickerContent> {
     required Widget rightAction,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Stack(
+        alignment: Alignment.center,
         children: [
-          leftAction,
+          Align(
+             alignment: Alignment.centerLeft,
+             child: leftAction,
+          ),
           Text(
             title,
-            style: GoogleFonts.inter(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: Colors.black87,
+            style: const TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
             ),
           ),
-          rightAction,
+          Align(
+             alignment: Alignment.centerRight,
+             child: rightAction,
+          ),
         ],
       ),
     );

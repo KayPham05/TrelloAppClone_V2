@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import '../../domain/entities/user_entity.dart';
 import '../../domain/repositories/i_auth_repository.dart';
 import '../models/login_request.dart';
@@ -199,6 +200,104 @@ class AuthRepositoryImpl implements AuthRepository {
       return 0;
     } on DioException {
       return 0;
+    }
+  }
+
+  @override
+  Future<UserEntity> signInWithGoogle() async {
+    try {
+      final GoogleSignIn googleSignIn = GoogleSignIn(scopes: ['email', 'profile']);
+      final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+      if (googleUser == null) {
+        throw Exception("Đăng nhập Google bị hủy");
+      }
+      
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      final accessToken = googleAuth.accessToken;
+      
+      if (accessToken == null) {
+         throw Exception("Không thể lấy Google Access Token");
+      }
+
+      final response = await dio.post(
+        ApiEndpoints.googleLogin,
+        data: {'accessToken': accessToken},
+      );
+      
+      if (response.statusCode == 200) {
+        final data = response.data;
+        return UserEntity(
+          id: data['userUId'] ?? '',
+          userUId: data['userUId'] ?? '',
+          userName: data['userName'] ?? '',
+          email: data['email'] ?? '',
+          token: data['token'] ?? '',
+          refreshToken: data['refreshToken'] ?? '',
+        );
+      }
+      throw Exception("Đăng nhập Google không thành công");
+    } on DioException catch (e) {
+      final data = e.response?.data;
+      String errorMsg = "Lỗi kết nối Server";
+      if (data is Map) {
+        errorMsg = data['message'] ?? errorMsg;
+      } else if (data is String) {
+        errorMsg = data.trim();
+      }
+      throw Exception(errorMsg);
+    } catch (e) {
+      throw Exception(e.toString());
+    }
+  }
+
+  @override
+  Future<void> forgotPassword({required String email}) async {
+    try {
+      final response = await dio.post(
+        '${ApiEndpoints.forgotPassword}?email=${Uri.encodeComponent(email)}',
+      );
+      if (response.statusCode != 200) {
+          throw Exception("Không thể gửi yêu cầu quên mật khẩu");
+      }
+    } on DioException catch (e) {
+      final data = e.response?.data;
+      String errorMsg = "Lỗi kết nối Server";
+      if (data is Map) {
+        errorMsg = data['message'] ?? errorMsg;
+      } else if (data is String) {
+        errorMsg = data.trim();
+      }
+      throw Exception(errorMsg);
+    }
+  }
+
+  @override
+  Future<void> resetPassword({
+    required String email,
+    required String otp,
+    required String newPassword,
+  }) async {
+    try {
+      final response = await dio.post(
+        ApiEndpoints.resetPassword,
+        data: {
+          'email': email,
+          'otp': otp,
+          'newPassword': newPassword,
+        }
+      );
+      if (response.statusCode != 200) {
+          throw Exception("Không thể đặt lại mật khẩu");
+      }
+    } on DioException catch (e) {
+      final data = e.response?.data;
+      String errorMsg = "Lỗi kết nối Server";
+      if (data is Map) {
+        errorMsg = data['message'] ?? errorMsg;
+      } else if (data is String) {
+        errorMsg = data.trim();
+      }
+      throw Exception(errorMsg);
     }
   }
 }

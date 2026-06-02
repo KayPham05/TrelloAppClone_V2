@@ -1,0 +1,127 @@
+/* ===== Toàn trang ===== */
+.login-page {
+  background-color: #f4f5f7;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-family: "Segoe UI", Roboto, Arial, sans-serif;
+  color: #172b4d;
+}
+
+/* ===== Header ===== */
+.login-header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.trello-logo {
+  width: 80px;
+  margin-bottom: 10px;
+}
+
+.login-title {
+  font-size: 20px;
+  font-weight: 600;
+}
+
+/* ===== Form ===== */
+.login-form {
+  background: #fff;
+  padding: 30px;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 320px;
+}
+
+.login-form input {
+  width: 100%;
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  margin-bottom: 15px;
+  font-size: 14px;
+  outline: none;
+}
+
+.login-form input:focus {
+  border-color: #0052cc;
+  box-shadow: 0 0 0 2px rgba(0, 82, 204, 0.15);
+}
+
+.login-form button {
+  background-color: #0052cc;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  width: 100%;
+  padding: 10px;
+  font-size: 15px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.login-form button:hover {
+  background-color: #0747a6;
+}
+
+/* ===== Divider ===== */
+.login-or {
+  margin: 15px 0;
+  font-size: 13px;
+  color: #7a869a;
+}
+
+/* ===== Social login ===== */
+.social-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.social-btn {
+  border: 1px solid #ccc;
+  background: #fff;
+  border-radius: 6px;
+  padding: 8px;
+  width: 320px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+
+.social-btn:hover {
+  background: #f0f0f0;
+}
+
+/* Nút riêng từng nền */
+.google { color: #db4437; }
+.microsoft { color: #0078d4; }
+.apple { color: #000; }
+.slack { color: #611f69; }
+
+/* ===== Footer ===== */
+.login-footer {
+  font-size: 14px;
+  margin-top: 20px;
+}
+
+.login-footer a {
+  color: #0052cc;
+  text-decoration: none;
+}
+
+.login-footer a:hover {
+  text-decoration: underline;
+}
+
+/* ===== Bản quyền ===== */
+.atlassian {
+  font-size: 12px;
+  color: #7a869a;
+  margin-top: 15px;
+}

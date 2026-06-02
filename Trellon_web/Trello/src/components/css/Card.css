@@ -1,0 +1,140 @@
+/* ===== CARD TỔNG ===== */
+.card-item {
+  position: relative;
+  transition: all 0.2s ease;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  padding: 8px 10px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+/* ===== CARD ROW ===== */
+.card-row {
+  display: flex;
+  align-items: center;
+  position: relative;
+  min-height: 32px;
+}
+
+/* ===== NÚT HOÀN THÀNH (TRÁI) ===== */
+.card-button-complete {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.25s ease;
+  z-index: 10;
+}
+
+.card-item:hover .card-button-complete,
+.card-item.completed .card-button-complete {
+  opacity: 1;
+  visibility: visible;
+}
+
+.card-button-complete button {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  border-radius: 4px;
+}
+
+.card-button-complete i {
+  font-size: 18px;
+  transition: color 0.2s ease;
+}
+
+/* ===== NÚT EDIT (PHẢI) ===== */
+.card-button-edit {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.25s ease;
+  z-index: 10;
+}
+
+.card-item:hover .card-button-edit {
+  opacity: 1;
+  visibility: visible;
+}
+
+.card-button-edit button {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  border-radius: 4px;
+}
+
+.card-button-edit i {
+  font-size: 16px;
+}
+
+/* ===== TIÊU ĐỀ ===== */
+.card-row .content {
+  position: absolute;
+  left: 10px;
+  right: 40px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.25s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  color: #e5e7eb;
+}
+
+/* Khi hover hoặc completed => chừa chỗ cho icon */
+.card-item:hover .card-row .content,
+.card-item.completed .card-row .content {
+  left: 42px;
+}
+
+/* Khi hoàn thành => gạch ngang */
+.card-row .content.line-through {
+  text-decoration: line-through;
+  color: #a1a1a1;
+  transition: all 0.3s ease;
+}
+
+.completed-card {
+  background-color: #dcfce7; /* xanh lá nhạt */
+  border-left: 4px solid #22c55e;
+  color: #166534;
+  transition: all 0.3s ease;
+}
+
+.completed-card:hover {
+  background-color: #bbf7d0;
+}
+
+.completed-card .content {
+  text-decoration: line-through;
+  color: #166534;
+  opacity: 0.8;
+}
+
+.card-item:hover {
+  background: rgba(255, 255, 255, 0.25);
+  cursor: pointer;
+}

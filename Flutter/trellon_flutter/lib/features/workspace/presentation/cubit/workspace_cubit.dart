@@ -7,6 +7,7 @@ import '../../domain/usecases/delete_workspace_usecase.dart';
 import '../../domain/usecases/add_workspace_member_usecase.dart';
 import '../../../../core/data_sources/user_local_data_source.dart';
 import '../../../board/domain/usecases/create_board_usecase.dart';
+import '../../../../core/services/authorization_service.dart';
 
 abstract class WorkspaceState {}
 
@@ -47,8 +48,9 @@ class WorkspaceCubit extends Cubit<WorkspaceState> {
       final userUid = await userLocalDataSource.getUserId() ?? '';
       final workspaces = await getWorkspacesUseCase(userUid);
       
-      final personal = workspaces.where((w) => w.type == WorkspaceType.personal).toList();
-      final team = workspaces.where((w) => w.type == WorkspaceType.team).toList();
+      final activeWorkspaces = workspaces.where((w) => w.status != 'Deleted').toList();
+      final personal = activeWorkspaces.where((w) => w.type == WorkspaceType.personal).toList();
+      final team = activeWorkspaces.where((w) => w.type == WorkspaceType.team).toList();
       
       emit(WorkspaceLoaded(personal: personal, team: team));
     } catch (e) {
@@ -74,6 +76,21 @@ class WorkspaceCubit extends Cubit<WorkspaceState> {
   Future<void> updateWorkspace(String id, String name, String? description, WorkspaceType type) async {
     try {
       final userUid = await userLocalDataSource.getUserId() ?? '';
+      
+      // Permission check
+      final currentState = state;
+      if (currentState is WorkspaceLoaded) {
+        final workspaces = [...currentState.personal, ...currentState.team];
+        final workspace = workspaces.where((w) => w.id == id).firstOrNull;
+        if (workspace != null) {
+          final role = workspace.getUserRole(userUid);
+          if (!AuthorizationService().canManageWorkspace(role)) {
+            if (!isClosed) emit(WorkspaceError('Bạn không có quyền chỉnh sửa không gian này.'));
+            return;
+          }
+        }
+      }
+
       await updateWorkspaceUseCase(
         workspaceId: id,
         name: name,
@@ -81,19 +98,34 @@ class WorkspaceCubit extends Cubit<WorkspaceState> {
         type: type,
         userUId: userUid,
       );
-      await loadWorkspaces();
+      if (!isClosed) await loadWorkspaces();
     } catch (e) {
-      emit(WorkspaceError(e.toString()));
+      if (!isClosed) emit(WorkspaceError(e.toString()));
     }
   }
 
   Future<void> deleteWorkspace(String id) async {
     try {
       final userUid = await userLocalDataSource.getUserId() ?? '';
+
+      // Permission check
+      final currentState = state;
+      if (currentState is WorkspaceLoaded) {
+        final workspaces = [...currentState.personal, ...currentState.team];
+        final workspace = workspaces.where((w) => w.id == id).firstOrNull;
+        if (workspace != null) {
+          final role = workspace.getUserRole(userUid);
+          if (!AuthorizationService().canManageWorkspace(role)) {
+            if (!isClosed) emit(WorkspaceError('Bạn không có quyền xóa không gian này.'));
+            return;
+          }
+        }
+      }
+
       await deleteWorkspaceUseCase(workspaceId: id, userUId: userUid);
-      await loadWorkspaces();
+      if (!isClosed) await loadWorkspaces();
     } catch (e) {
-      emit(WorkspaceError(e.toString()));
+      if (!isClosed) emit(WorkspaceError(e.toString()));
     }
   }
 
@@ -124,5 +156,9 @@ class WorkspaceCubit extends Cubit<WorkspaceState> {
     } catch (e) {
       emit(WorkspaceError(e.toString()));
     }
+  }
+
+  void reset() {
+    emit(WorkspaceInitial());
   }
 }

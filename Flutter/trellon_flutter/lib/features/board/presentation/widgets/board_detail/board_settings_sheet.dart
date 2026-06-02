@@ -246,7 +246,7 @@ class _BoardSettingsSheetState extends State<BoardSettingsSheet> {
                       trailing: Switch(
                         value: true,
                         onChanged: canEdit ? (_) => _showComingSoon() : null,
-                        activeColor: AppColors.primaryContainer,
+                        activeThumbColor: AppColors.primaryContainer,
                       ),
                     ),
                     const Divider(),
@@ -267,7 +267,7 @@ class _BoardSettingsSheetState extends State<BoardSettingsSheet> {
                       trailing: Switch(
                         value: false,
                         onChanged: (_) => _showComingSoon(),
-                        activeColor: AppColors.primaryContainer,
+                        activeThumbColor: AppColors.primaryContainer,
                       ),
                     ),
                     const Divider(),

@@ -9,9 +9,13 @@ import 'features/auth/domain/repositories/i_auth_repository.dart';
 import 'features/auth/domain/usecases/login_usecase.dart';
 import 'features/auth/domain/usecases/register_usecase.dart';
 import 'features/auth/domain/usecases/verify_code_usecase.dart';
+import 'features/auth/domain/usecases/sign_in_with_google_usecase.dart';
+import 'features/auth/domain/usecases/forgot_password_usecase.dart';
+import 'features/auth/domain/usecases/reset_password_usecase.dart';
 import 'features/auth/presentation/cubit/login_cubit.dart';
 import 'features/auth/presentation/cubit/register_cubit.dart';
 import 'features/auth/presentation/cubit/verify_cubit.dart';
+import 'features/auth/presentation/cubit/forgot_password_cubit.dart';
 import 'features/inbox/data/repositories/inbox_repositories_impl.dart';
 import 'features/inbox/data/datasources/inbox_remote_data_source.dart';
 import 'features/inbox/domain/repositories/i_inbox_repositories.dart';
@@ -101,7 +105,7 @@ void _initWorkspace() {
   serviceLocator.registerLazySingleton(() => GetWorkspaceBoardsUseCase(serviceLocator()));
 
   // Cubit
-  serviceLocator.registerFactory(() => WorkspaceCubit(
+  serviceLocator.registerLazySingleton(() => WorkspaceCubit(
     getWorkspacesUseCase: serviceLocator(),
     createWorkspaceUseCase: serviceLocator(),
     updateWorkspaceUseCase: serviceLocator(),
@@ -190,10 +194,16 @@ void _initAuth() {
   serviceLocator.registerLazySingleton(() => VerifyCodeUseCase(serviceLocator()));
   serviceLocator.registerLazySingleton(() => ResendCodeUseCase(serviceLocator()));
   serviceLocator.registerLazySingleton(() => CheckOtpStatusUseCase(serviceLocator()));
+  serviceLocator.registerLazySingleton(() => SignInWithGoogleUseCase(serviceLocator()));
+  serviceLocator.registerLazySingleton(() => ForgotPasswordUseCase(serviceLocator()));
+  serviceLocator.registerLazySingleton(() => ResetPasswordUseCase(serviceLocator()));
 
   // Cubits
   serviceLocator.registerFactory(
-    () => LoginCubit(loginUseCase: serviceLocator()),
+    () => LoginCubit(
+      loginUseCase: serviceLocator(),
+      signInWithGoogleUseCase: serviceLocator(),
+    ),
   );
   serviceLocator.registerFactory(
     () => RegisterCubit(registerUseCase: serviceLocator()),
@@ -203,6 +213,12 @@ void _initAuth() {
       verifyCodeUseCase: serviceLocator(),
       resendCodeUseCase: serviceLocator(),
       checkOtpStatusUseCase: serviceLocator(),
+    ),
+  );
+  serviceLocator.registerFactory(
+    () => ForgotPasswordCubit(
+      forgotPasswordUseCase: serviceLocator(),
+      resetPasswordUseCase: serviceLocator(),
     ),
   );
 }

@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:google_fonts/google_fonts.dart';
-import '../../../../core/constants/app_colors.dart';
 import '../cubit/verify_cubit.dart';
+import '../theme/azure_auth_theme.dart';
 
 class OtpVerificationView extends StatefulWidget {
   final String title;
@@ -60,28 +59,41 @@ class _OtpVerificationViewState extends State<OtpVerificationView> {
           widget.onVerifySuccess();
         } else if (state is ResendSuccess) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Đã gửi lại mã xác minh thành công')),
+            const SnackBar(content: Text('Verification code sent successfully')),
           );
         } else if (state is VerifyError) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(state.message),
-              backgroundColor: AppColors.error,
+              backgroundColor: AzureAuthTheme.error,
             ),
           );
         }
       },
       child: Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: Colors.white,
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: AzureAuthTheme.azureBlue),
+            onPressed: () {
+              if (Navigator.canPop(context)) {
+                Navigator.pop(context);
+              } else {
+                Navigator.pushReplacementNamed(context, '/login');
+              }
+            },
+          ),
+          title: Text('Kabo', style: AzureAuthTheme.headlineLg.copyWith(color: AzureAuthTheme.azureBlue)),
+          centerTitle: true,
+        ),
         body: SafeArea(
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Column(
-                children: [
-                  const SizedBox(height: 60),
-                  _buildVerifyCard(),
-                ],
+          child: Center(
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                child: _buildVerifyCard(),
               ),
             ),
           ),
@@ -91,68 +103,75 @@ class _OtpVerificationViewState extends State<OtpVerificationView> {
   }
 
   Widget _buildVerifyCard() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 28),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceContainerLowest,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: AppColors.cardShadow,
-      ),
+    return Form(
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            widget.title,
-            style: GoogleFonts.inter(
-              fontSize: 18, 
-              fontWeight: FontWeight.bold,
-              color: widget.title == 'Tài khoản đã bị khóa' ? AppColors.error : AppColors.onSurface,
+          Align(
+            alignment: Alignment.center,
+            child: Container(
+              padding: const EdgeInsets.all(24),
+              decoration: const BoxDecoration(
+                color: AzureAuthTheme.azureTint,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.lock_outline, size: 40, color: AzureAuthTheme.azureBlue),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 32),
           Text(
-            'Mã OTP 6 số đã được gửi đến:',
+            widget.title,
             textAlign: TextAlign.center,
-            style: GoogleFonts.inter(color: AppColors.onSurfaceVariant),
+            style: AzureAuthTheme.headlineLg,
           ),
-          Text(
-            widget.email,
-            style: GoogleFonts.inter(fontWeight: FontWeight.bold),
+          const SizedBox(height: 16),
+          RichText(
+            textAlign: TextAlign.center,
+            text: TextSpan(
+              style: AzureAuthTheme.bodyLg,
+              children: [
+                const TextSpan(text: 'We have sent a verification code to your\nemail '),
+                TextSpan(
+                  text: widget.email,
+                  style: AzureAuthTheme.bodyLg.copyWith(fontWeight: FontWeight.bold, color: AzureAuthTheme.textDeepGray),
+                ),
+              ],
+            ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 48),
           _buildOtpRow(),
-          const SizedBox(height: 24),
+          const SizedBox(height: 48),
           BlocBuilder<VerifyCubit, VerifyState>(
             buildWhen: (previous, current) => 
                 current is VerifyLoading || current is VerifyError || current is VerifyInitial,
             builder: (context, state) {
               final isLoading = state is VerifyLoading;
               return SizedBox(
-                width: double.infinity,
-                height: 48,
+                height: 56,
                 child: ElevatedButton(
                   onPressed: isLoading ? null : _handleVerify,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primaryContainer,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
+                    backgroundColor: AzureAuthTheme.primaryContainer,
+                    foregroundColor: AzureAuthTheme.onPrimary,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    elevation: 0,
                   ),
                   child: isLoading
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2,
-                          ),
-                        )
-                      : Text(widget.buttonText),
+                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                      : Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(widget.buttonText, style: AzureAuthTheme.buttonText),
+                            const SizedBox(width: 8),
+                            const Icon(Icons.arrow_forward, color: Colors.white, size: 20),
+                          ],
+                        ),
                 ),
               );
             },
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 32),
           BlocBuilder<VerifyCubit, VerifyState>(
             buildWhen: (previous, current) => 
                 current is VerifyCountdown || current is VerifyCountdownDone || current is ResendLoading || current is ResendSuccess,
@@ -163,24 +182,27 @@ class _OtpVerificationViewState extends State<OtpVerificationView> {
               }
               final isResending = state is ResendLoading;
 
-              return Column(
+              return Row(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(
-                    'Mã hết hạn sau: ${seconds ~/ 60}:${(seconds % 60).toString().padLeft(2, '0')}',
-                    style: GoogleFonts.inter(color: AppColors.error, fontSize: 13),
-                  ),
-                  const SizedBox(height: 8),
-                  TextButton(
-                    onPressed: (isResending || seconds > 0) 
-                      ? null 
-                      : () => context.read<VerifyCubit>().resend(email: widget.email),
-                    child: Text(
-                      isResending ? 'Đang gửi...' : 'Gửi lại mã',
-                      style: TextStyle(
-                        color: (isResending || seconds > 0) ? AppColors.onSurfaceVariant : AppColors.primary,
+                  seconds > 0 ? Text(
+                    'Expires in: ${seconds ~/ 60}:${(seconds % 60).toString().padLeft(2, '0')}',
+                    style: AzureAuthTheme.bodyLg.copyWith(color: AzureAuthTheme.error),
+                  ) : Text('Didn\'t receive the code? ', style: AzureAuthTheme.bodyLg),
+                  if (seconds == 0)
+                    TextButton(
+                      onPressed: isResending ? null : () => context.read<VerifyCubit>().resend(email: widget.email),
+                      style: TextButton.styleFrom(
+                        foregroundColor: AzureAuthTheme.azureBlue,
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      child: Text(
+                        isResending ? 'Resending...' : 'Resend',
+                        style: AzureAuthTheme.labelMd.copyWith(color: AzureAuthTheme.azureBlue),
                       ),
                     ),
-                  ),
                 ],
               );
             },
@@ -192,11 +214,11 @@ class _OtpVerificationViewState extends State<OtpVerificationView> {
 
   Widget _buildOtpRow() {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: List.generate(6, (i) {
-        return Container(
-          margin: const EdgeInsets.symmetric(horizontal: 4),
-          width: 40,
+        return SizedBox(
+          width: 50,
+          height: 60,
           child: TextFormField(
             controller: _controllers[i],
             focusNode: _focusNodes[i],
@@ -204,26 +226,24 @@ class _OtpVerificationViewState extends State<OtpVerificationView> {
             textAlign: TextAlign.center,
             keyboardType: TextInputType.number,
             maxLength: 1,
-            style: GoogleFonts.inter(
-              fontSize: 20, 
-              fontWeight: FontWeight.bold,
-              color: AppColors.onSurface,
-            ),
-            inputFormatters: [
-              FilteringTextInputFormatter.digitsOnly,
-            ],
+            style: AzureAuthTheme.headlineMd,
+            inputFormatters: [ FilteringTextInputFormatter.digitsOnly ],
             decoration: InputDecoration(
               counterText: '',
               filled: true,
-              fillColor: AppColors.surfaceContainerLow,
+              fillColor: Colors.white,
               contentPadding: EdgeInsets.zero,
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8), 
-                borderSide: BorderSide.none,
+                borderRadius: BorderRadius.circular(100), 
+                borderSide: const BorderSide(color: AzureAuthTheme.outlineVariant, width: 1),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(100),
+                borderSide: const BorderSide(color: AzureAuthTheme.outlineVariant, width: 1),
               ),
               focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(color: AppColors.primaryContainer, width: 2),
+                borderRadius: BorderRadius.circular(100),
+                borderSide: const BorderSide(color: AzureAuthTheme.azureBlue, width: 1),
               ),
             ),
             onChanged: (v) {

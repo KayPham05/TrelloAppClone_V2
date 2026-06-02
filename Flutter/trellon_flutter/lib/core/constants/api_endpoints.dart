@@ -21,6 +21,11 @@ class ApiEndpoints {
   static const String workspaceMember = 'workspaceMember';
   static const String boardMember = 'boardMember';
   static const String notifications = 'notifications';
+  
+  static const String googleLogin = 'auth/Google-login';
+  static const String forgotPassword = 'auth/forgot-password';
+  static const String resetPassword = 'auth/reset-password';
+  
   // 2FA TOTP
   static const String twoFASetup = '/auth/2fa/setup';
   static const String twoFAEnable = '/auth/2fa/enable';
