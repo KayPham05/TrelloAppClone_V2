@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
+using TodoAppAPI.Hubs;
 using TodoAppAPI.Interfaces;
 using TodoAppAPI.Models;
 
@@ -14,13 +16,15 @@ namespace TodoAppAPI.Controllers
         private readonly IActivity _activity;
         private readonly ICloudinaryService _cloudinaryService;
         private readonly ICardsService _cardsService;
+        private readonly IHubContext<BoardHub> _boardHubContext;
 
-        public BoardController(IBoardService boardService, IActivity activity, ICloudinaryService cloudinaryService, ICardsService cardsService)
+        public BoardController(IBoardService boardService, IActivity activity, ICloudinaryService cloudinaryService, ICardsService cardsService, IHubContext<BoardHub> boardHubContext)
         {
             _boardService = boardService;
             _activity = activity;
             _cloudinaryService = cloudinaryService;
             _cardsService = cardsService;
+            _boardHubContext = boardHubContext;
         }
 
 
@@ -82,6 +86,9 @@ namespace TodoAppAPI.Controllers
             if (!success)
                 return NotFound(new { message = "Không tìm thấy board để cập nhật hoặc bạn không có quyền." });
             _ = _activity.AddActivity(userUId, $"updated board '{board.BoardName}'");
+
+            await _boardHubContext.Clients.Group(BoardHub.BoardGroup(uid)).SendAsync("BoardUpdated", board);
+
             return Ok(new { message = "Cập nhật thành công." });
         }
 
@@ -90,10 +97,12 @@ namespace TodoAppAPI.Controllers
         public async Task<IActionResult> DeleteBoard(string uid, [FromQuery] string userUId)
         {
             var success = await _boardService.DeleteBoardAsync(uid, userUId);
-            if (!success)
-                return NotFound(new { message = "Không tìm thấy board để xóa hoặc bạn không có quyền." });
-            _ = _activity.AddActivity(userUId, $"deleted board with UID '{uid}'");
-            return Ok(new { message = "Xóa thành công." });
+            if (success)
+            {
+                await _boardHubContext.Clients.Group(BoardHub.BoardGroup(uid)).SendAsync("BoardDeleted", new { boardUId = uid });
+                return Ok(new { message = "Xóa thành công." });
+            }
+            return NotFound(new { message = "Không tìm thấy board để xóa hoặc bạn không có quyền." });
         }
 
         [HttpPost("{uid}/upload-background")]
@@ -122,6 +131,10 @@ namespace TodoAppAPI.Controllers
                 return StatusCode(403, new { message = "Bạn không có quyền thay đổi ảnh nền board này." });
             
             _ = _activity.AddActivity(userUId, $"updated background of board '{board.BoardName}'");
+
+            await _boardHubContext.Clients.Group(BoardHub.BoardGroup(uid))
+                .SendAsync("BoardBackgroundUpdated", new { boardUId = uid, url = result.Value.Url });
+
             return Ok(new { url = result.Value.Url });
         }
 

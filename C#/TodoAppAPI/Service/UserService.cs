@@ -1,10 +1,12 @@
 using System.Net.WebSockets;
 using System.Text;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using OtpNet;
 using TodoAppAPI.Data;
 using TodoAppAPI.DTOs;
+using TodoAppAPI.Hubs;
 using TodoAppAPI.Interfaces;
 using TodoAppAPI.Models;
 
@@ -16,16 +18,17 @@ namespace TodoAppAPI.Service
         private readonly EmailService _emailService;
         private readonly IJwtService _jwtService;
         private readonly ILogger<UserService> _logger;
-
+        private readonly IHubContext<NotificationHub> _notificationHubContext;
         private readonly IMemoryCache _memoryCache;
 
-        public UserService(TodoDbContext context, EmailService emailService, IJwtService jwtService, ILogger<UserService> logger, IMemoryCache memoryCache)
+        public UserService(TodoDbContext context, EmailService emailService, IJwtService jwtService, ILogger<UserService> logger, IMemoryCache memoryCache, IHubContext<NotificationHub> notificationHubContext)
         {
             _context = context;
             _emailService = emailService;
             _jwtService = jwtService;
             _logger = logger;
             _memoryCache = memoryCache;
+            _notificationHubContext = notificationHubContext;
         }
 
         public async Task<IEnumerable<User>> GetAllAsync()
@@ -307,7 +310,11 @@ namespace TodoAppAPI.Service
             // 7. Email thông báo (Fire-and-forget – không block HTTP request)
             try
             {
-                await _emailService.SendChangePasswordNotificationEmailAsync(user.Email);
+                var lockToken = Guid.NewGuid().ToString("N");
+                var lockKey = $"LockAccount_{lockToken}";
+                _memoryCache.Set(lockKey, $"{user.UserUId}|{user.Email}", TimeSpan.FromDays(3));
+
+                await _emailService.SendChangePasswordNotificationEmailAsync(user.Email, lockToken);
                 _logger.LogInformation($"[ChangePassword] Notification email sent to: {user.Email}");
             }
             catch (Exception ex)
@@ -447,6 +454,10 @@ namespace TodoAppAPI.Service
                 _context.Users.Update(user);
                 await _context.SaveChangesAsync();
                 
+                // Thu hồi tất cả session hoàn tất, giờ gửi SignalR
+                await _notificationHubContext.Clients.Group(NotificationHub.UserGroup(userUId))
+                    .SendAsync("AccountLocked", new { message = "Tài khoản của bạn đã bị khóa để bảo mật." });
+
                 _memoryCache.Remove(lockKey);
                 return true;
             }

@@ -16,10 +16,12 @@ namespace TodoAppAPI.Controllers
     {
         private readonly IListService _listService;
         private readonly IActivity _activity;
-        public ListController(IListService listService, IActivity activity)
+        private readonly IHubContext<BoardHub> _boardHubContext;
+        public ListController(IListService listService, IActivity activity, IHubContext<BoardHub> boardHubContext)
         {
             _listService = listService;
             _activity = activity;
+            _boardHubContext = boardHubContext;
         }
         // GET: api/<ListController>
         [HttpGet]
@@ -55,6 +57,8 @@ namespace TodoAppAPI.Controllers
                 BoardUId = result.BoardUId
             };
             
+            await _boardHubContext.Clients.Group(BoardHub.BoardGroup(result.BoardUId)).SendAsync("ListCreated", listDto);
+            
             return Ok(listDto);
         }
 
@@ -81,6 +85,10 @@ namespace TodoAppAPI.Controllers
                 return BadRequest(new { message = "Không thể cập nhật status hoặc bạn không có quyền" });
 
             _ = _activity.AddActivity(userUId, $"updated list '{existingList.ListName}' status to '{newStatus}'");
+            
+            await _boardHubContext.Clients.Group(BoardHub.BoardGroup(existingList.BoardUId))
+                .SendAsync("ListStatusUpdated", new { listUId = listUId, newStatus = newStatus, boardUId = existingList.BoardUId });
+
             return Ok(new {message = "cập nhật trạng thái thành công"});
         }
 
@@ -91,7 +99,13 @@ namespace TodoAppAPI.Controllers
                 return BadRequest("Invalid order");
 
             var ok = await _listService.UpdateListPositionAsync(req.BoardUId, req.Order, userUId);
-            return ok ? Ok() : StatusCode(403, new { message = "Không thấy quyền hoặc lỗi server" });
+            if (ok)
+            {
+                await _boardHubContext.Clients.Group(BoardHub.BoardGroup(req.BoardUId))
+                    .SendAsync("ListReordered", new { boardUId = req.BoardUId, order = req.Order });
+                return Ok();
+            }
+            return StatusCode(403, new { message = "Không thấy quyền hoặc lỗi server" });
         }
 
 

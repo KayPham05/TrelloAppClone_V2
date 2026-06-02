@@ -18,13 +18,19 @@ namespace TodoAppAPI.Controllers
         private readonly IActivity _activity;
         private readonly ICloudinaryService _cloudinaryService;
         private readonly IUserInboxCard _userInboxCardService;
+        private readonly IHubContext<BoardHub> _boardHubContext;
+        private readonly IHubContext<NotificationHub> _notificationHubContext;
+        private readonly IListService _listService;
 
-        public TodosController(ICardsService todosService, IActivity activity, ICloudinaryService cloudinaryService, IUserInboxCard userInboxCardService)
+        public TodosController(ICardsService todosService, IActivity activity, ICloudinaryService cloudinaryService, IUserInboxCard userInboxCardService, IHubContext<BoardHub> boardHubContext, IHubContext<NotificationHub> notificationHubContext, IListService listService)
         {
             _cardService = todosService;
             _activity = activity;
             _cloudinaryService = cloudinaryService;
             _userInboxCardService = userInboxCardService;
+            _boardHubContext = boardHubContext;
+            _notificationHubContext = notificationHubContext;
+            _listService = listService;
         }
 
         // GET: api/<TodosController>
@@ -51,6 +57,14 @@ namespace TodoAppAPI.Controllers
             if (await _cardService.AddCard(card))
             {
                 _ = _activity.AddActivity(card.UserUId, $"added card '{card.Title}' to list '{card.ListUId}'");
+                if (!string.IsNullOrEmpty(card.ListUId))
+                {
+                    var list = await _listService.GetListByIdAsync(card.ListUId);
+                    if (list != null)
+                    {
+                        await _boardHubContext.Clients.Group(BoardHub.BoardGroup(list.BoardUId)).SendAsync("CardAdded", card);
+                    }
+                }
                 return Ok(card);
             }
                 
@@ -81,6 +95,15 @@ namespace TodoAppAPI.Controllers
             if (await _cardService.UpdateCard(card, userUId))
             {
                 _ = _activity.AddActivity(userUId, $"updated card '{card.Title}' in list '{card.ListUId}'");
+                var existingCard = _cardService.GetById(id);
+                if (existingCard != null && !string.IsNullOrEmpty(existingCard.ListUId))
+                {
+                    var list = await _listService.GetListByIdAsync(existingCard.ListUId);
+                    if (list != null)
+                    {
+                        await _boardHubContext.Clients.Group(BoardHub.BoardGroup(list.BoardUId)).SendAsync("CardUpdated", existingCard);
+                    }
+                }
                 return Ok("Cập nhật card thành công");
             }
                 
@@ -111,6 +134,14 @@ namespace TodoAppAPI.Controllers
             if (await _cardService.DeleteCard(id, userUId))
             {
                 _ = _activity.AddActivity(userUId, $"deleted a card with id '{cardName}'");
+                if (card != null && !string.IsNullOrEmpty(card.ListUId))
+                {
+                    var list = await _listService.GetListByIdAsync(card.ListUId);
+                    if (list != null)
+                    {
+                        await _boardHubContext.Clients.Group(BoardHub.BoardGroup(list.BoardUId)).SendAsync("CardDeleted", new { cardUId = id, boardUId = list.BoardUId });
+                    }
+                }
                 return Ok("Xóa card thành công");
             }
                 
@@ -143,6 +174,16 @@ namespace TodoAppAPI.Controllers
             _ = _activity.AddActivity(body.UserUId,
                 $"moved card '{card.Title}' to another list");
 
+            if (!string.IsNullOrEmpty(body.ListUId))
+            {
+                var list = await _listService.GetListByIdAsync(body.ListUId);
+                if (list != null)
+                {
+                    await _boardHubContext.Clients.Group(BoardHub.BoardGroup(list.BoardUId))
+                        .SendAsync("CardMoved", new { cardUId = CardUId, newListUId = body.ListUId, position = body.Position, boardUId = list.BoardUId });
+                }
+            }
+
             return Ok(new { message = "Cập nhật ListUId cho Card thành công." });
         }
 
@@ -158,6 +199,16 @@ namespace TodoAppAPI.Controllers
                 return BadRequest(new { message = "Không thể cập nhật status cho Card hoặc bạn không có quyền." });
             _ = _activity.AddActivity(userUId,
                 $"updated status of card '{card.Title}' to '{newStatus}'");
+
+            if (!string.IsNullOrEmpty(card.ListUId))
+            {
+                var list = await _listService.GetListByIdAsync(card.ListUId);
+                if (list != null)
+                {
+                    await _boardHubContext.Clients.Group(BoardHub.BoardGroup(list.BoardUId))
+                        .SendAsync("CardStatusUpdated", new { cardUId = CardUId, newStatus = newStatus, boardUId = list.BoardUId });
+                }
+            }
             return Ok(new { message = "Cập nhật status cho Card thành công." });
         }
 
@@ -174,6 +225,19 @@ namespace TodoAppAPI.Controllers
 
             string dateStr = request.DueDate?.ToString("yyyy-MM-dd") ?? "none";
             _ = _activity.AddActivity(request.UserUId, $"updated due date of card '{card.Title}' to '{dateStr}'");
+
+            if (!string.IsNullOrEmpty(card.ListUId))
+            {
+                var list = await _listService.GetListByIdAsync(card.ListUId);
+                if (list != null)
+                {
+                    await _boardHubContext.Clients.Group(BoardHub.BoardGroup(list.BoardUId))
+                        .SendAsync("CardDueDateUpdated", new { cardUId = cardUId, dueDate = request.DueDate, boardUId = list.BoardUId });
+                }
+            }
+
+            await _notificationHubContext.Clients.Group(NotificationHub.UserGroup(request.UserUId))
+                .SendAsync("CardDueDateUpdated", new { cardUId = cardUId, dueDate = request.DueDate });
 
             return Ok(new { message = "Cập nhật ngày đến hạn thành công." });
         }
@@ -280,6 +344,18 @@ namespace TodoAppAPI.Controllers
             var success = await _cardService.ArchiveCardAsync(id, userUId);
             if (!success) return StatusCode(403, new { message = "Không thể lưu trữ thẻ hoặc bạn không có quyền." });
             _ = _activity.AddActivity(userUId, $"archived card '{id}'");
+
+            var card = _cardService.GetById(id);
+            if (card != null && !string.IsNullOrEmpty(card.ListUId))
+            {
+                var list = await _listService.GetListByIdAsync(card.ListUId);
+                if (list != null)
+                {
+                    await _boardHubContext.Clients.Group(BoardHub.BoardGroup(list.BoardUId))
+                        .SendAsync("CardArchived", new { cardUId = id, boardUId = list.BoardUId });
+                }
+            }
+
             return Ok(new { message = "Thẻ đã được lưu trữ." });
         }
 

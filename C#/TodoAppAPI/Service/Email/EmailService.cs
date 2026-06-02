@@ -70,7 +70,7 @@ namespace TodoAppAPI.Service
             await client.DisconnectAsync(true);
         }
 
-        public async Task SendChangePasswordNotificationEmailAsync(string toEmail)
+        public async Task SendChangePasswordNotificationEmailAsync(string toEmail, string lockToken)
         {
             var senderEmail = _configuration["EmailSettings:SenderEmail"];
             var senderPassword = _configuration["EmailSettings:SenderPassword"];
@@ -82,12 +82,16 @@ namespace TodoAppAPI.Service
             message.To.Add(MailboxAddress.Parse(toEmail));
             message.Subject = "Thông báo thay đổi mật khẩu – Trellon";
 
+            var backendUrl = _configuration["BackendUrl"] ?? "http://localhost:5293";
+            var lockUrl = $"{backendUrl}/v1/api/users/lock-account?token={lockToken}";
+
             message.Body = new TextPart("html")
             {
                 Text = $@"
             <h2>Thông báo bảo mật</h2>
             <p>Tài khoản của bạn vừa được đổi mật khẩu thành công vào lúc <b>{DateTime.UtcNow:dd/MM/yyyy HH:mm} UTC</b>.</p>
-            <p>Nếu bạn không thực hiện hành động này, vui lòng liên hệ bộ phận hỗ trợ ngay lập tức.</p>"
+            <p>Nếu bạn không thực hiện hành động này, vui lòng bấm vào nút dưới đây để khóa tài khoản khẩn cấp (link có hiệu lực trong 3 ngày):</p>
+            <a href='{lockUrl}' style='display:inline-block;padding:10px 20px;background-color:red;color:white;text-decoration:none;border-radius:5px;'>Khóa tài khoản</a>"
             };
 
             using var client = new SmtpClient();
