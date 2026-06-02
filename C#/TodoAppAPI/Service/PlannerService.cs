@@ -16,11 +16,14 @@ namespace TodoAppAPI.Service
 
         public async Task<Dictionary<string, List<CardDTO>>> GetPlannerCardsAsync(string userUId, DateTime from, DateTime to)
         {
-            var cards = await _dbContext.CardMembers
-                .Where(cm => cm.UserUId == userUId && cm.Card.DueDate != null && cm.Card.DueDate >= from && cm.Card.DueDate <= to && cm.Card.Status != "Deleted")
-                .Include(cm => cm.Card)
-                .ThenInclude(c => c.CardLabels)
-                .Select(cm => cm.Card)
+            var cards = await _dbContext.Todos
+                .Where(c => c.DueDate != null && c.DueDate >= from && c.DueDate <= to && c.Status != "Deleted")
+                .Where(c => 
+                    c.UserUId == userUId || 
+                    _dbContext.CardMembers.Any(cm => cm.CardUId == c.CardUId && cm.UserUId == userUId) ||
+                    _dbContext.UserInboxCards.Any(uic => uic.CardUId == c.CardUId && uic.UserUId == userUId)
+                )
+                .Include(c => c.CardLabels)
                 .ToListAsync();
 
             var result = cards

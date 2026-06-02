@@ -1,22 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
-
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/data_sources/user_local_data_source.dart';
 import '../../../../init_dependencies.dart';
-import '../../../workspace/domain/entities/workspace_entity.dart';
-import '../../../workspace/presentation/cubit/workspace_cubit.dart';
-import '../../domain/entities/board_entity.dart';
 import '../cubit/board_cubit.dart';
-import '../widgets/board_list/board_list_hints.dart';
-import '../widgets/board_list/create_workspace_sheet.dart';
-import '../widgets/board_list/empty_team_workspace_hint.dart';
-import '../widgets/board_list/recent_boards_section.dart';
-import '../widgets/create_board_bottom_sheet.dart';
 import '../widgets/home_action_menu.dart';
-import '../widgets/home_overview/guest_workspace_tile_widget.dart';
+import '../widgets/create_board_bottom_sheet.dart';
+import '../../../workspace/presentation/cubit/workspace_cubit.dart';
+import '../../../workspace/domain/entities/workspace_entity.dart';
+import '../../domain/entities/board_entity.dart';
+import '../../../search/presentation/delegates/global_search_delegate.dart';
+
+// Modular widgets
+import '../widgets/board_list/recent_boards_section.dart';
+import '../widgets/board_list/board_list_hints.dart';
+import '../widgets/board_list/empty_team_workspace_hint.dart';
+import '../widgets/board_list/create_workspace_sheet.dart';
 import '../widgets/home_overview/personal_board_tile_widget.dart';
+import '../widgets/home_overview/guest_workspace_tile_widget.dart';
 
 class BoardListPage extends StatelessWidget {
   const BoardListPage({super.key});
@@ -35,7 +37,6 @@ class BoardListPage extends StatelessWidget {
 
   Future<void> _loadData(BoardCubit cubit) async {
     final uid = await serviceLocator<UserLocalDataSource>().getUserId();
-
     if (uid != null && uid.isNotEmpty) {
       cubit.fetchBoardData(uid, '');
     }
@@ -53,7 +54,10 @@ class _BoardListViewState extends State<_BoardListView> {
   final GlobalKey _fabKey = GlobalKey();
 
   Future<void> _refreshBoards() async {
-    await context.read<BoardCubit>().refreshBoardData();
+    final uid = await serviceLocator<UserLocalDataSource>().getUserId();
+    if (uid != null && uid.isNotEmpty && mounted) {
+      context.read<BoardCubit>().fetchBoardData(uid, '');
+    }
   }
 
   void _openCreateBoard() {
@@ -85,17 +89,13 @@ class _BoardListViewState extends State<_BoardListView> {
     return BlocListener<BoardCubit, BoardState>(
       listener: (ctx, state) {
         if (state is BoardCreated) {
-          ScaffoldMessenger.of(ctx).showSnackBar(
-            const SnackBar(content: Text('Tạo bảng thành công!')),
-          );
+          ScaffoldMessenger.of(
+            ctx,
+          ).showSnackBar(const SnackBar(content: Text('Tạo bảng thành công!')));
         }
-
         if (state is BoardError) {
           ScaffoldMessenger.of(ctx).showSnackBar(
-            SnackBar(
-              content: Text(state.message),
-              backgroundColor: Colors.red,
-            ),
+            SnackBar(content: Text(state.message), backgroundColor: Colors.red),
           );
         }
       },
@@ -127,7 +127,23 @@ class _BoardListViewState extends State<_BoardListView> {
                         Icons.search_rounded,
                         color: AppColors.onSurfaceVariant,
                       ),
-                      onPressed: () {},
+                      onPressed: () async {
+                        final uid = await serviceLocator<UserLocalDataSource>()
+                            .getUserId();
+                        print('Search tapped in BoardListPage. UID: $uid');
+                        if (uid != null && context.mounted) {
+                          showSearch(
+                            context: context,
+                            delegate: GlobalSearchDelegate(userUId: uid),
+                          );
+                        } else if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Lỗi: Không tìm thấy User ID!'),
+                            ),
+                          );
+                        }
+                      },
                     ),
                     Padding(
                       padding: const EdgeInsets.only(right: 12),
@@ -156,9 +172,9 @@ class _BoardListViewState extends State<_BoardListView> {
                     builder: (ctx, wsState) {
                       return BlocBuilder<BoardCubit, BoardState>(
                         builder: (ctx2, boardState) {
-                          final isLoading = boardState is BoardInitial ||
+                          final isLoading =
+                              boardState is BoardInitial ||
                               boardState is BoardLoading;
-
                           List<BoardEntity> recentBoards = [];
                           List<BoardEntity> personalBoards = [];
                           List<WorkspaceEntity> guestWs = [];
@@ -168,19 +184,14 @@ class _BoardListViewState extends State<_BoardListView> {
                             personalBoards = boardState.personalBoards;
                             guestWs = boardState.guestWorkspaces;
                           }
-
                           if (wsState is WorkspaceLoaded) {
-                            if (guestWs.isEmpty) {
-                              guestWs = wsState.team;
-                            }
+                            if (guestWs.isEmpty) guestWs = wsState.team;
                           }
 
                           if (isLoading) {
                             return const Padding(
                               padding: EdgeInsets.all(48),
-                              child: Center(
-                                child: CircularProgressIndicator(),
-                              ),
+                              child: Center(child: CircularProgressIndicator()),
                             );
                           }
 
@@ -192,7 +203,7 @@ class _BoardListViewState extends State<_BoardListView> {
                                 label: 'KHÔNG GIAN LÀM VIỆC CỦA BẠN',
                               ),
                               ...personalBoards.map(
-                                    (board) => Padding(
+                                (board) => Padding(
                                   padding: const EdgeInsets.symmetric(
                                     horizontal: 16,
                                     vertical: 5,
@@ -205,30 +216,29 @@ class _BoardListViewState extends State<_BoardListView> {
                                         '/board-detail',
                                         arguments: board,
                                       );
-
                                       final uid =
-                                      await serviceLocator<UserLocalDataSource>()
-                                          .getUserId();
-
+                                          await serviceLocator<
+                                                UserLocalDataSource
+                                              >()
+                                              .getUserId();
                                       if (uid != null && ctx.mounted) {
-                                        ctx
-                                            .read<BoardCubit>()
-                                            .fetchBoardData(uid, '');
+                                        ctx.read<BoardCubit>().fetchBoardData(
+                                          uid,
+                                          '',
+                                        );
                                       }
                                     },
                                   ),
                                 ),
                               ),
                               if (personalBoards.isEmpty)
-                                EmptyBoardHint(
-                                  onCreateBoard: _openCreateBoard,
-                                ),
+                                EmptyBoardHint(onCreateBoard: _openCreateBoard),
                               const SizedBox(height: 8),
                               const SectionLabel(
                                 label: 'KHÔNG GIAN LÀM VIỆC CỦA KHÁCH',
                               ),
                               ...guestWs.map(
-                                    (ws) => Padding(
+                                (ws) => Padding(
                                   padding: const EdgeInsets.symmetric(
                                     horizontal: 16,
                                     vertical: 5,
@@ -241,15 +251,16 @@ class _BoardListViewState extends State<_BoardListView> {
                                         '/workspace-detail',
                                         arguments: ws,
                                       );
-
                                       final uid =
-                                      await serviceLocator<UserLocalDataSource>()
-                                          .getUserId();
-
+                                          await serviceLocator<
+                                                UserLocalDataSource
+                                              >()
+                                              .getUserId();
                                       if (uid != null && ctx.mounted) {
-                                        ctx
-                                            .read<BoardCubit>()
-                                            .fetchBoardData(uid, '');
+                                        ctx.read<BoardCubit>().fetchBoardData(
+                                          uid,
+                                          '',
+                                        );
                                       }
                                     },
                                   ),
@@ -268,10 +279,10 @@ class _BoardListViewState extends State<_BoardListView> {
                   ),
                 ),
               ],
-            ),
-          ),
-        ),
-      ),
-    );
+            ), // CustomScrollView
+          ), // RefreshIndicator
+        ), // SafeArea
+      ), // Scaffold
+    ); // BlocListener
   }
 }
