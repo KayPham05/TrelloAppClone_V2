@@ -100,7 +100,7 @@ class _CardMemberPickerSheetState extends State<CardMemberPickerSheet> {
     return Container(
       decoration: const BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -116,25 +116,27 @@ class _CardMemberPickerSheetState extends State<CardMemberPickerSheet> {
                 Align(
                   alignment: Alignment.centerLeft,
                   child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.grey[100],
+                    width: 36,
+                    height: 36,
+                    decoration: const BoxDecoration(
+                      color: AppColors.background,
                       shape: BoxShape.circle,
                     ),
                     child: IconButton(
-                      icon: const Icon(Icons.close, color: Colors.black, size: 20),
+                      icon: const Icon(Icons.close, color: AppColors.textPrimary, size: 20),
                       onPressed: () => Navigator.pop(context),
-                      padding: const EdgeInsets.all(8),
+                      padding: EdgeInsets.zero, // reset padding to center icon
                       constraints: const BoxConstraints(),
                     ),
                   ),
                 ),
-                Text(
+                const Text(
                   'Thành viên',
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.inter(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.onSurface,
+                  style: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
                   ),
                 ),
               ],

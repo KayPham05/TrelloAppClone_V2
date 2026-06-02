@@ -68,6 +68,11 @@ class CardEntity {
   final List<CommentEntity> comments;
   final List<CardMemberEntity> members;
 
+  final String? boardId;
+  final String? boardName;
+  final String? listName;
+  final String? boardBackgroundUrl;
+
   const CardEntity({
     required this.id,
     required this.title,
@@ -77,6 +82,10 @@ class CardEntity {
     this.status = 'New',
     this.listId,
     this.backgroundUrl,
+    this.boardId,
+    this.boardName,
+    this.listName,
+    this.boardBackgroundUrl,
     this.todoItems = const [],
     this.fileUrls = const [],
     this.labels = const [],
@@ -98,6 +107,10 @@ class CardEntity {
     List<CardLabelEntity>? labels,
     List<CommentEntity>? comments,
     List<CardMemberEntity>? members,
+    String? boardId,
+    String? boardName,
+    String? listName,
+    String? boardBackgroundUrl,
   }) {
     return CardEntity(
       id: id ?? this.id,
@@ -108,6 +121,10 @@ class CardEntity {
       status: status ?? this.status,
       listId: listId ?? this.listId,
       backgroundUrl: backgroundUrl ?? this.backgroundUrl,
+      boardId: boardId ?? this.boardId,
+      boardName: boardName ?? this.boardName,
+      listName: listName ?? this.listName,
+      boardBackgroundUrl: boardBackgroundUrl ?? this.boardBackgroundUrl,
       todoItems: todoItems ?? this.todoItems,
       fileUrls: fileUrls ?? this.fileUrls,
       labels: labels ?? this.labels,

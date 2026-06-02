@@ -1,77 +1,96 @@
 import 'package:flutter/material.dart';
 
-// Material 3 Light Theme – khớp với Stitch HTML mockups (Tailwind color config)
+// Trello Design System Colors
 class AppColors {
-  // ── Backgrounds ──────────────────────────────────────────────────────────
-  static const Color background         = Color(0xFFF8F9FB);
-  static const Color surface            = Color(0xFFF8F9FB);
-  static const Color surfaceBright      = Color(0xFFF8F9FB);
-  static const Color surfaceVariant     = Color(0xFFE1E2E4);
+  // ── Brand & Background ───────────────────────────────────────────────────
+  static const Color primary            = Color(0xFF0052CC); // Primary Blue
+  static const Color blueLight          = Color(0xFF579DFF); // Badge, highlight
+  static const Color background         = Color(0xFFF4F5F7); // Screen background
+  static const Color surfaceWhite       = Color(0xFFFFFFFF); // Card, sheet, modal
 
-  // Surface containers (depth / elevation)
-  static const Color surfaceContainerLowest = Color(0xFFFFFFFF);
-  static const Color surfaceContainerLow    = Color(0xFFF3F4F6);
-  static const Color surfaceContainer       = Color(0xFFEDEEF0);
-  static const Color surfaceContainerHigh   = Color(0xFFE7E8EA);
-  static const Color surfaceContainerHighest= Color(0xFFE1E2E4);
-  static const Color surfaceDim             = Color(0xFFD9DADC);
+  // ── Priority Labels ──────────────────────────────────────────────────────
+  static const Color priorityP1         = Color(0xFFF87462); // High
+  static const Color priorityP2         = Color(0xFF388BFF); // Medium
+  static const Color priorityP3         = Color(0xFF4BCE97); // Low
 
-  // ── Primary ───────────────────────────────────────────────────────────────
-  static const Color primary            = Color(0xFF003D9B);
-  static const Color primaryContainer   = Color(0xFF0052CC); // Trello Blue
-  static const Color primaryFixed       = Color(0xFFDAE2FF);
-  static const Color primaryFixedDim    = Color(0xFFB2C5FF);
-  static const Color inversePrimary     = Color(0xFFB2C5FF);
+  // ── Type Tags ────────────────────────────────────────────────────────────
+  static const Color tagFrontend        = Color(0xFF579DFF);
+  static const Color tagFullStack       = Color(0xFFF5A623);
 
-  // ── Secondary ────────────────────────────────────────────────────────────
-  static const Color secondary          = Color(0xFF515F76);
-  static const Color secondaryContainer = Color(0xFFD2E0FC);
-  static const Color secondaryFixed     = Color(0xFFD5E3FF);
-  static const Color secondaryFixedDim  = Color(0xFFB9C7E2);
+  // ── Label Colors (6 standard colors) ─────────────────────────────────────
+  static const Color labelGreen         = Color(0xFF4BCE97);
+  static const Color labelYellow        = Color(0xFFCCA300);
+  static const Color labelOrange        = Color(0xFFF5A623);
+  static const Color labelRed           = Color(0xFFF87462);
+  static const Color labelPurple        = Color(0xFF9F8FEF);
+  static const Color labelBlue          = Color(0xFF579DFF);
 
-  // ── Tertiary ─────────────────────────────────────────────────────────────
-  static const Color tertiary           = Color(0xFF004B59);
-  static const Color tertiaryContainer  = Color(0xFF006477);
-  static const Color tertiaryFixed      = Color(0xFFAFECFF);
-  static const Color tertiaryFixedDim   = Color(0xFF48D7F9);
+  // ── Text Colors ──────────────────────────────────────────────────────────
+  static const Color textPrimary        = Color(0xFF172B4D); // Title, main content
+  static const Color textSecondary      = Color(0xFF6B778C); // Subtitle, metadata
+  static const Color textPlaceholder    = Color(0xFFA5ADBA); // Input placeholder
+  static const Color textLink           = Color(0xFF0052CC); // Link, action text
+  static const Color textDestructive    = Color(0xFFCA3521); // Delete, warning
+  static const Color textDisabled       = Color(0xFFC1C7D0); // Disabled state
 
-  // ── On-colors (text on top of color surfaces) ────────────────────────────
-  static const Color onPrimary          = Color(0xFFFFFFFF);
-  static const Color onPrimaryContainer = Color(0xFFC4D2FF);
-  static const Color onPrimaryFixed     = Color(0xFF001848);
-  static const Color onSecondary        = Color(0xFFFFFFFF);
-  static const Color onSecondaryContainer = Color(0xFF55637B);
-  static const Color onTertiary         = Color(0xFFFFFFFF);
-  static const Color onBackground       = Color(0xFF191C1E);
-  static const Color onSurface         = Color(0xFF191C1E);
-  static const Color onSurfaceVariant  = Color(0xFF434654);
-  static const Color inverseOnSurface  = Color(0xFFF0F1F3);
-  static const Color inverseSurface    = Color(0xFF2E3132);
+  // ── Status Colors ────────────────────────────────────────────────────────
+  static const Color success            = Color(0xFF22A06B);
+  static const Color warning            = Color(0xFFFF8B00);
+  static const Color error              = Color(0xFFDE350B);
+  static const Color info               = Color(0xFF0065FF);
+  static const Color unreadIndicator    = Color(0xFF0052CC);
 
-  // ── Error ────────────────────────────────────────────────────────────────
-  static const Color error             = Color(0xFFBA1A1A);
-  static const Color errorContainer   = Color(0xFFFFDAD6);
-  static const Color onError          = Color(0xFFFFFFFF);
+  // ── Component Specific Colors (Derived) ──────────────────────────────────
+  static const Color badgeP1Bg          = Color(0xFFFFEBE6);
+  static const Color badgeP2Bg          = Color(0xFFDEEBFF);
+  static const Color badgeP3Bg          = Color(0xFFE3FCEF);
+  static const Color badgeFullStackBg   = Color(0xFFFFF0B3);
+
+  static const Color navBackground      = Color(0xFFFFFFFF);
+  static const Color navSelected        = Color(0xFF0052CC);
+  static const Color navSelectedBg      = Color(0xFFEAF2FF);
+  static const Color navUnselected      = Color(0xFF6B778C);
+  
+  static const Color outline            = Color(0xFFE3E6EA); // default border
+
+  // ── Legacy Aliases (to prevent compilation errors during refactoring) ─────
+  static const Color primaryContainer   = primary;
+  static const Color onPrimary          = surfaceWhite;
+  static const Color onPrimaryContainer = textPrimary;
+  static const Color secondary          = textSecondary;
+  static const Color backgroundOld      = background;
+  static const Color surface            = background;
+  static const Color onSurface          = textPrimary;
+  static const Color onSurfaceVariant   = textSecondary;
+  static const Color outlineVariant     = outline;
+  static const Color surfaceContainerLow = Color(0xFFF3F4F6);
+  static const Color surfaceContainerHighest = Color(0xFFE1E2E4);
+  static const Color surfaceContainerLowest = surfaceWhite;
+  static const Color surfaceContainer = background;
+  static const Color surfaceContainerHigh = Color(0xFFE7E8EA);
+  static const Color surfaceVariant = Color(0xFFE2E2E9);
+  static const Color border = outline;
+  static const Color textWhite = surfaceWhite;
+  static const Color primaryFixed = Color(0xFFCCE5FF);
+  
+  static const Color inverseSurface = Color(0xFF2E3132);
+  static const Color inverseOnSurface = Color(0xFFF0F1F3);
+  static const Color inversePrimary = Color(0xFFB2C5FF);
+  static const Color surfaceTint = primary;
+  static const Color accent = primary;
+
+  static const Color errorContainer = Color(0xFFFFDAD6);
+  static const Color onError = surfaceWhite;
   static const Color onErrorContainer = Color(0xFF93000A);
-
-  // ── Outline / Divider ────────────────────────────────────────────────────
-  static const Color outline           = Color(0xFF737685);
-  static const Color outlineVariant    = Color(0xFFC3C6D6);
-
-  // ── Surface tint ─────────────────────────────────────────────────────────
-  static const Color surfaceTint       = Color(0xFF0C56D0);
-
-  // ── Status ───────────────────────────────────────────────────────────────
-  static const Color success           = Color(0xFF16A34A);
-  static const Color warning           = Color(0xFFD97706);
-
-  // ── Bottom Nav ───────────────────────────────────────────────────────────
-  static const Color navBackground     = Color(0xFFFFFFFF);
-  static const Color navSelected       = Color(0xFF1D4ED8); // blue-800
-  static const Color navSelectedBg     = Color(0xFFDBEAFE); // blue-100
-  static const Color navUnselected     = Color(0xFF64748B); // slate-500
-
-  // ── Board cover colors (kept for mock boards) ────────────────────────────
+  
+  static const List<BoxShadow> cardShadow = [
+    BoxShadow(
+      color: Color(0x0F191C1E),
+      blurRadius: 16,
+      offset: Offset(0, 4),
+    ),
+  ];
+  
   static const List<Color> boardColors = [
     Color(0xFF0079BF),
     Color(0xFFD29034),
@@ -83,24 +102,4 @@ class AppColors {
     Color(0xFF00AECC),
     Color(0xFF838C91),
   ];
-
-  // ── Card / Shadow ────────────────────────────────────────────────────────
-  /// Dùng cho BoxShadow thống nhất trên toàn app
-  static const List<BoxShadow> cardShadow = [
-    BoxShadow(
-      color: Color(0x0F191C1E),
-      blurRadius: 16,
-      offset: Offset(0, 4),
-    ),
-  ];
-
-  // ── Legacy aliases (backward compat – sẽ xóa khi rewrite từng screen) ──
-  static const Color textWhite     = Color(0xFFFFFFFF);
-  static const Color textPrimary   = onSurface;
-  static const Color textSecondary = onSurfaceVariant;
-  static const Color accent        = primaryContainer;
-  static const Color border        = outlineVariant;
-  static const Color darkBackground = Color(0xFF1D2125); // kept for old code
-  static const Color cardBackground = surfaceContainer;
-  static const Color iconColor      = onSurfaceVariant;
 }

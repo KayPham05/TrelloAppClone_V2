@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:google_fonts/google_fonts.dart';
-import '../../../../core/constants/app_colors.dart';
+
 import '../../../../init_dependencies.dart';
 import '../cubit/register_cubit.dart';
+import '../theme/azure_auth_theme.dart';
 import '../widgets/auth_text_field_widget.dart';
 
 class RegisterPage extends StatelessWidget {
@@ -63,76 +63,43 @@ class _RegisterViewState extends State<RegisterView> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(state.message),
-              backgroundColor: AppColors.error,
+              backgroundColor: AzureAuthTheme.error,
             ),
           );
         }
       },
       child: Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: AzureAuthTheme.background,
         body: SafeArea(
-          child: SingleChildScrollView(
-            child: ConstrainedBox(
-              constraints: BoxConstraints(
-                minHeight:
-                    MediaQuery.of(context).size.height -
-                    MediaQuery.of(context).padding.top -
-                    MediaQuery.of(context).padding.bottom,
-              ),
-              child: IntrinsicHeight(
-                child: Column(children: [_buildBody(), _buildFooter()]),
+          child: Center(
+            child: SingleChildScrollView(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 480), // Desktop/Tablet constraint
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _buildLogo(),
+                      const SizedBox(height: 48), 
+                      _buildRegisterCard(),
+                    ],
+                  ),
+                ),
               ),
             ),
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildBody() {
-    return Expanded(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const SizedBox(height: 40),
-            _buildLogo(),
-            const SizedBox(height: 32),
-            _buildRegisterCard(),
-          ],
         ),
       ),
     );
   }
 
   Widget _buildLogo() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Container(
-          width: 32,
-          height: 32,
-          decoration: BoxDecoration(
-            color: AppColors.primaryContainer,
-            borderRadius: BorderRadius.circular(6),
-          ),
-          child: const Icon(
-            Icons.view_kanban_rounded,
-            color: Colors.white,
-            size: 20,
-          ),
-        ),
-        const SizedBox(width: 8),
-        Text(
-          'Trello',
-          style: GoogleFonts.inter(
-            fontSize: 26,
-            fontWeight: FontWeight.w900,
-            color: AppColors.primary,
-          ),
-        ),
-      ],
+    return Text(
+      'Kabo',
+      style: AzureAuthTheme.headlineLg.copyWith(
+        color: AzureAuthTheme.azureBlue,
+      ),
     );
   }
 
@@ -141,11 +108,11 @@ class _RegisterViewState extends State<RegisterView> {
       builder: (context, state) {
         final isLoading = state is RegisterLoading;
         return Container(
-          padding: const EdgeInsets.all(28),
+          padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
           decoration: BoxDecoration(
-            color: AppColors.surfaceContainerLowest,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: AppColors.cardShadow,
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(40),
+            border: Border.all(color: AzureAuthTheme.outlineVariant, width: 1),
           ),
           child: Form(
             key: _formKey,
@@ -153,95 +120,126 @@ class _RegisterViewState extends State<RegisterView> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  'Đăng ký Trello',
+                  'Create an Account',
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.inter(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                  ),
+                  style: AzureAuthTheme.headlineLg,
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 8),
+                Text(
+                  'Join us to experience effortless productivity.',
+                  textAlign: TextAlign.center,
+                  style: AzureAuthTheme.bodyLg,
+                ),
+                const SizedBox(height: 32),
+                
                 AuthTextField(
                   controller: _usernameController,
-                  hintText: 'Tên người dùng',
-                  prefixIcon: Icons.person_outline,
-                  validator: (v) =>
-                      (v == null || v.isEmpty) ? 'Vui lòng nhập tên' : null,
+                  labelText: 'Full name',
+                  hintText: 'Enter your full name',
+                  validator: (v) => (v == null || v.isEmpty) ? 'Please enter your name' : null,
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 24),
+                
                 AuthTextField(
                   controller: _emailController,
-                  hintText: 'Email',
-                  prefixIcon: Icons.email_outlined,
-                  validator: (v) => (v == null || !v.contains('@'))
-                      ? 'Email không hợp lệ'
-                      : null,
+                  labelText: 'Email',
+                  hintText: 'Enter your email address',
                   keyboardType: TextInputType.emailAddress,
+                  validator: (v) => (v == null || !v.contains('@')) ? 'Invalid email' : null,
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 24),
+                
                 AuthTextField(
                   controller: _passwordController,
-                  hintText: 'Mật khẩu',
-                  prefixIcon: Icons.lock_outline,
+                  labelText: 'Password',
+                  hintText: 'Create a password',
                   obscureText: _obscurePassword,
                   suffixIcon: IconButton(
                     icon: Icon(
-                      _obscurePassword
-                          ? Icons.visibility_off_outlined
-                          : Icons.visibility_outlined,
+                      _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                      color: AzureAuthTheme.onSurfaceVariant,
                     ),
-                    onPressed: () =>
-                        setState(() => _obscurePassword = !_obscurePassword),
+                    onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                   ),
-                  validator: (v) => (v == null || v.length < 6)
-                      ? 'Mật khẩu tối thiểu 6 ký tự'
-                      : null,
+                  validator: (v) => (v == null || v.length < 6) ? 'Password must be at least 6 characters' : null,
                 ),
-                const SizedBox(height: 20),
+                
+                const SizedBox(height: 32),
+                
                 SizedBox(
-                  height: 48,
+                  height: 56, 
                   child: ElevatedButton(
                     onPressed: isLoading ? null : _handleRegister,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primaryContainer,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
+                      backgroundColor: AzureAuthTheme.primaryContainer,
+                      foregroundColor: AzureAuthTheme.onPrimary,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      elevation: 0,
                     ),
                     child: isLoading
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2,
-                            ),
-                          )
-                        : const Text('Đăng ký'),
+                        ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                        : Text('SIGN UP', style: AzureAuthTheme.buttonText),
                   ),
                 ),
-                const SizedBox(height: 20),
-                TextButton(
-                  onPressed: () =>
-                      Navigator.pushReplacementNamed(context, '/login'),
-                  child: const Text('Đã có tài khoản? Đăng nhập'),
+                const SizedBox(height: 32),
+                
+                Row(
+                  children: [
+                    Expanded(child: Divider(color: AzureAuthTheme.outlineVariant)),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Text('or', style: AzureAuthTheme.bodyMd),
+                    ),
+                    Expanded(child: Divider(color: AzureAuthTheme.outlineVariant)),
+                  ],
+                ),
+                
+                const SizedBox(height: 32),
+                
+                SizedBox(
+                  height: 56,
+                  child: ElevatedButton.icon(
+                    onPressed: isLoading ? null : () {
+                      // context.read<RegisterCubit>().signInWithGoogle() if available
+                    },
+                    icon: Image.asset('lib/core/asset/GoogleIcon.png', height: 24, width: 24),
+                    label: Text(
+                      'Sign up with Google',
+                      style: AzureAuthTheme.buttonText.copyWith(color: AzureAuthTheme.azureBlue),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AzureAuthTheme.azureTint,
+                      foregroundColor: AzureAuthTheme.azureBlue,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      alignment: Alignment.center,
+                    ),
+                  ),
+                ),
+                
+                const SizedBox(height: 48),
+                
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text('Already have an account?', style: AzureAuthTheme.bodyLg),
+                    TextButton(
+                      onPressed: () => Navigator.pushReplacementNamed(context, '/login'),
+                      style: TextButton.styleFrom(
+                        foregroundColor: AzureAuthTheme.azureBlue,
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                      ),
+                      child: Text('Sign in', style: AzureAuthTheme.labelMd.copyWith(color: AzureAuthTheme.azureBlue)),
+                    ),
+                  ],
                 ),
               ],
             ),
           ),
         );
       },
-    );
-  }
-
-  Widget _buildFooter() {
-    return const Padding(
-      padding: EdgeInsets.symmetric(vertical: 24),
-      child: Text(
-        '© 2024 Atlassian',
-        style: TextStyle(color: AppColors.onSurfaceVariant),
-      ),
     );
   }
 }

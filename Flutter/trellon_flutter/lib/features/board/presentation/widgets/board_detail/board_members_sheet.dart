@@ -249,7 +249,7 @@ class _BoardMembersManageSheetViewState extends State<_BoardMembersManageSheetVi
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
-              value: selectedRole,
+              initialValue: selectedRole,
               decoration: const InputDecoration(border: OutlineInputBorder()),
               items: MemberRoleHelper.rolesForScope(MemberScope.board)
                   .where((r) => r != 'Owner')
@@ -299,7 +299,7 @@ class _BoardMembersManageSheetViewState extends State<_BoardMembersManageSheetVi
             Text('Đổi quyền — ${member.userName}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
-              value: selectedRole,
+              initialValue: selectedRole,
               decoration: const InputDecoration(border: OutlineInputBorder()),
               items: MemberRoleHelper.rolesForScope(MemberScope.board)
                   .where((r) => r != 'Owner')

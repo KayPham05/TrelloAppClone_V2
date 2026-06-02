@@ -97,7 +97,7 @@ namespace TodoAppAPI.Service
                 .Include(c => c.FileUrls)
                 .Include(c => c.CardMembers)
                 .Include(c => c.CardLabels)
-                .Where(c => c.Status != "Deleted" && c.List.BoardUId == boardUId)
+                .Where(c => c.Status != "Deleted" && c.List.BoardUId == boardUId && !c.IsArchived)
                 .ToList();
         }
 
@@ -354,6 +354,129 @@ namespace TodoAppAPI.Service
             catch (Exception ex)
             {
                 Console.WriteLine($"Lỗi khi cập nhật ngày hết hạn: {ex.Message}");
+                return false;
+            }
+        }
+        public async Task<bool> ArchiveCardAsync(string cardUId, string userUId)
+        {
+            try
+            {
+                if (!await _authService.CanEditCardAsync(cardUId, userUId))
+                    return false;
+
+                var card = await _dbContext.Todos.FirstOrDefaultAsync(c => c.CardUId == cardUId);
+                if (card == null) return false;
+
+                card.IsArchived = true;
+                _dbContext.Todos.Update(card);
+                await _dbContext.SaveChangesAsync();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Lỗi khi lưu trữ Card: {ex.Message}");
+                return false;
+            }
+        }
+
+        public async Task<bool> UnarchiveCardAsync(string cardUId, string userUId)
+        {
+            try
+            {
+                if (!await _authService.CanEditCardAsync(cardUId, userUId))
+                    return false;
+
+                var card = await _dbContext.Todos.FirstOrDefaultAsync(c => c.CardUId == cardUId);
+                if (card == null) return false;
+
+                card.IsArchived = false;
+                _dbContext.Todos.Update(card);
+                await _dbContext.SaveChangesAsync();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Lỗi khi khôi phục Card: {ex.Message}");
+                return false;
+            }
+        }
+
+        public async Task<List<Card>> GetArchivedCardsByBoardAsync(string boardUId, string userUId)
+        {
+            return await _dbContext.Todos
+                .Where(c => c.IsArchived && c.List != null && c.List.BoardUId == boardUId)
+                .Include(c => c.List)
+                .Include(c => c.CardLabels)
+                .Include(c => c.CardMembers)
+                .OrderByDescending(c => c.CreatedAt)
+                .ToListAsync();
+        }
+
+        public async Task<int> ArchiveAllCompletedCardsAsync(string boardUId, string userUId)
+        {
+            try
+            {
+                // Allow only admin/owner of the board
+                var isBoardAdmin = await _dbContext.BoardMembers
+                    .AnyAsync(bm => bm.BoardUId == boardUId && bm.UserUId == userUId &&
+                              (bm.BoardRole == "Owner" || bm.BoardRole == "Admin"));
+                if (!isBoardAdmin) return 0;
+
+                var completedStatuses = new[] { "hoan_thanh", "hoàn thành", "completed" };
+                var cards = await _dbContext.Todos
+                    .Where(c => !c.IsArchived &&
+                                c.List != null &&
+                                c.List.BoardUId == boardUId &&
+                                completedStatuses.Contains(c.Status!.ToLower()))
+                    .ToListAsync();
+
+                foreach (var c in cards)
+                    c.IsArchived = true;
+
+                await _dbContext.SaveChangesAsync();
+                return cards.Count;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Lỗi khi lưu trữ hàng loạt: {ex.Message}");
+                return 0;
+            }
+        }
+
+        public async Task<bool> JoinCardAsync(string cardUId, string userUId, string boardId)
+        {
+            try
+            {
+                // Check board allows member join
+                var board = await _dbContext.Boards.FindAsync(boardId);
+                if (board == null || !board.AllowMemberJoinCard) return false;
+
+                // Check user is a board member
+                var isBoardMember = await _dbContext.BoardMembers
+                    .AnyAsync(bm => bm.BoardUId == boardId && bm.UserUId == userUId);
+                if (!isBoardMember) return false;
+
+                var card = await _dbContext.Todos.FindAsync(cardUId);
+                if (card == null) return false;
+
+                var alreadyMember = await _dbContext.CardMembers
+                    .AnyAsync(cm => cm.CardUId == cardUId && cm.UserUId == userUId);
+                if (alreadyMember) return true;
+
+                _dbContext.CardMembers.Add(new CardMember
+                {
+                    CardMemberUId = Guid.NewGuid().ToString(),
+                    CardUId = cardUId,
+                    UserUId = userUId,
+                    Role = "Assignee",
+                    AssignedAt = DateTime.UtcNow,
+                });
+                await _dbContext.SaveChangesAsync();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Lỗi khi tham gia Card: {ex.Message}");
                 return false;
             }
         }

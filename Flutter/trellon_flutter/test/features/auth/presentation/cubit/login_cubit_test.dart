@@ -1,17 +1,24 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:apptreolon/features/auth/domain/usecases/login_usecase.dart';
+import 'package:apptreolon/features/auth/domain/usecases/sign_in_with_google_usecase.dart';
 import 'package:apptreolon/features/auth/presentation/cubit/login_cubit.dart';
 
 class MockLoginUseCase extends Mock implements LoginUseCase {}
+class MockSignInWithGoogleUseCase extends Mock implements SignInWithGoogleUseCase {}
 
 void main() {
   late LoginCubit loginCubit;
   late MockLoginUseCase mockLoginUseCase;
+  late MockSignInWithGoogleUseCase mockSignInWithGoogleUseCase;
 
   setUp(() {
     mockLoginUseCase = MockLoginUseCase();
-    loginCubit = LoginCubit(loginUseCase: mockLoginUseCase);
+    mockSignInWithGoogleUseCase = MockSignInWithGoogleUseCase();
+    loginCubit = LoginCubit(
+      loginUseCase: mockLoginUseCase,
+      signInWithGoogleUseCase: mockSignInWithGoogleUseCase,
+    );
   });
 
   tearDown(() {

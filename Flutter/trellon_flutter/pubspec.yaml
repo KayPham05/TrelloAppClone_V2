@@ -55,6 +55,9 @@ dependencies:
   signalr_netcore: ^1.4.4
   image_cropper: ^12.2.1
   intl: ^0.20.2
+  firebase_core: ^4.10.0
+  firebase_auth: ^6.5.2
+  google_sign_in: ^6.2.1
 
 dev_dependencies:
   flutter_test:
@@ -82,6 +85,7 @@ flutter:
 
   assets:
     - .env
+    - lib/core/asset/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

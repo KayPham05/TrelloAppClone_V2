@@ -23,12 +23,19 @@ class BoardDetailCardItem extends StatelessWidget {
           width: 250,
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: AppColors.surfaceContainerLowest,
+            color: AppColors.surfaceWhite,
             borderRadius: BorderRadius.circular(8),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0x21091E42), // rgba(9,30,66,0.13)
+                blurRadius: 3,
+                offset: const Offset(0, 1),
+              )
+            ],
           ),
           child: Text(
             card.title,
-            style: const TextStyle(color: AppColors.onSurface, fontSize: 14, fontWeight: FontWeight.w500),
+            style: const TextStyle(color: AppColors.textPrimary, fontSize: 17, fontWeight: FontWeight.w600),
           ),
         ),
       ),
@@ -46,20 +53,44 @@ class BoardDetailCardItem extends StatelessWidget {
         final cubit = context.read<BoardDetailCubit>();
         final state = cubit.state;
         final boardId = state is BoardDetailLoaded ? state.boardId : null;
-        
+        final boardName = state is BoardDetailLoaded ? state.boardName : null;
+        final boardBackgroundUrl = state is BoardDetailLoaded ? state.backgroundUrl : null;
+        // Find the list name by card.listId
+        final listName = state is BoardDetailLoaded
+            ? state.lists
+                .where((l) => l.id == card.listId)
+                .map((l) => l.name)
+                .firstOrNull
+            : null;
+
         await Navigator.push(
           context,
-          MaterialPageRoute(builder: (_) => CardDetailPage(card: card, boardId: boardId)),
+          MaterialPageRoute(
+            builder: (_) => CardDetailPage(
+              card: card,
+              boardId: boardId,
+              boardName: boardName,
+              listName: listName,
+              boardBackgroundUrl: boardBackgroundUrl,
+            ),
+          ),
         );
-        
+
         if (state is BoardDetailLoaded) {
           cubit.loadBoard(state.boardId, state.boardName, backgroundUrl: state.backgroundUrl);
         }
       },
       child: Container(
         decoration: BoxDecoration(
-          color: AppColors.surfaceContainerLowest,
+          color: AppColors.surfaceWhite,
           borderRadius: BorderRadius.circular(8),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0x21091E42), // rgba(9,30,66,0.13)
+              blurRadius: 3,
+              offset: const Offset(0, 1),
+            )
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

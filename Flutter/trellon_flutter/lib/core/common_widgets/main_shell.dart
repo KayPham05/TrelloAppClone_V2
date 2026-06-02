@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../../features/board/presentation/pages/board_list_page.dart';
 import '../../../features/inbox/presentation/pages/inbox_page.dart';
 import '../../../features/planner/presentation/pages/planner_page.dart';
@@ -15,8 +14,6 @@ import '../../../init_dependencies.dart';
 import '../../../core/data_sources/user_local_data_source.dart';
 import '../constants/app_colors.dart';
 
-
-
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
 
@@ -27,8 +24,7 @@ class MainShell extends StatefulWidget {
 class _MainShellState extends State<MainShell>
     with SingleTickerProviderStateMixin {
   int _currentIndex = 0;
-  late final WorkspaceCubit _workspaceCubit =
-      serviceLocator<WorkspaceCubit>();
+  late final WorkspaceCubit _workspaceCubit = serviceLocator<WorkspaceCubit>();
   late final NotificationCubit _notificationCubit =
       serviceLocator<NotificationCubit>();
   late final NotificationRealtimeService _notificationRealtimeService =
@@ -36,17 +32,17 @@ class _MainShellState extends State<MainShell>
 
   // 5 tabs: Boards, Inbox, Planner, Notifications/Activity, Account
   final List<Widget> _pages = const [
-    BoardListPage(),     // Tab 0 – Boards
-    InboxPage(),         // Tab 1 – Inbox
-    PlannerPage(),       // Tab 2 – Planner
-    ActivityPage(),      // Tab 3 – Notifications
-    ProfilePage(),       // Tab 4 – Account
+    BoardListPage(), // Tab 0 – Boards
+    InboxPage(), // Tab 1 – Inbox
+    PlannerPage(), // Tab 2 – Planner
+    ActivityPage(), // Tab 3 – Notifications
+    ProfilePage(), // Tab 4 – Account
   ];
 
   static const List<_NavDestination> _destinations = [
     _NavDestination(
-      icon: Icons.dashboard_outlined,
-      activeIcon: Icons.dashboard_rounded,
+      icon: Icons.grid_view_outlined,
+      activeIcon: Icons.grid_view_rounded,
       label: 'Bảng',
     ),
     _NavDestination(
@@ -94,12 +90,14 @@ class _MainShellState extends State<MainShell>
   }
 
   void _setSystemUI() {
-    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.dark,
-      systemNavigationBarColor: AppColors.navBackground,
-      systemNavigationBarIconBrightness: Brightness.dark,
-    ));
+    SystemChrome.setSystemUIOverlayStyle(
+      const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.dark,
+        systemNavigationBarColor: AppColors.navBackground,
+        systemNavigationBarIconBrightness: Brightness.dark,
+      ),
+    );
   }
 
   void _onTap(int index) {
@@ -115,10 +113,7 @@ class _MainShellState extends State<MainShell>
       ],
       child: Scaffold(
         backgroundColor: AppColors.background,
-        body: IndexedStack(
-          index: _currentIndex,
-          children: _pages,
-        ),
+        body: IndexedStack(index: _currentIndex, children: _pages),
         bottomNavigationBar: _buildBottomNavBar(),
       ),
     );
@@ -126,20 +121,14 @@ class _MainShellState extends State<MainShell>
 
   Widget _buildBottomNavBar() {
     return Container(
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         color: AppColors.navBackground,
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF191C1E).withValues(alpha: 0.06),
-            blurRadius: 16,
-            offset: const Offset(0, -4),
-          ),
-        ],
+        border: Border(top: BorderSide(color: AppColors.outline, width: 0.5)),
       ),
       child: SafeArea(
         top: false,
         child: SizedBox(
-          height: 64,
+          height: 49, // iOS standard tab bar height before safe area
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: List.generate(
@@ -171,7 +160,7 @@ class _NavDestination {
   });
 }
 
-// ── Nav item với pill indicator theo mockup ──────────────────────────────────
+// ── iOS styled Nav Item ──────────────────────────────────────────────────────
 class _NavItem extends StatelessWidget {
   final _NavDestination destination;
   final int index;
@@ -188,6 +177,7 @@ class _NavItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool isSelected = index == currentIndex;
+    final color = isSelected ? AppColors.navSelected : AppColors.navUnselected;
 
     return Expanded(
       child: GestureDetector(
@@ -203,22 +193,31 @@ class _NavItem extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
               decoration: BoxDecoration(
                 color: isSelected
-                    ? AppColors.navSelectedBg // blue-100 = #DBEAFE
+                    ? AppColors
+                          .navSelectedBg // blue-100 = #DBEAFE
                     : Colors.transparent,
                 borderRadius: BorderRadius.circular(16),
               ),
               child: AnimatedSwitcher(
                 duration: const Duration(milliseconds: 150),
-                child: index == 3 // Activity tab
+                child:
+                    index ==
+                        3 // Activity tab
                     ? BlocBuilder<NotificationCubit, NotificationState>(
                         builder: (context, state) {
-                          final unreadCount = context.read<NotificationCubit>().unreadCount;
+                          final unreadCount = context
+                              .read<NotificationCubit>()
+                              .unreadCount;
                           return Badge(
                             isLabelVisible: unreadCount > 0,
-                            label: Text(unreadCount > 99 ? '99+' : unreadCount.toString()),
+                            label: Text(
+                              unreadCount > 99 ? '99+' : unreadCount.toString(),
+                            ),
                             backgroundColor: AppColors.error,
                             child: Icon(
-                              isSelected ? destination.activeIcon : destination.icon,
+                              isSelected
+                                  ? destination.activeIcon
+                                  : destination.icon,
                               key: ValueKey(isSelected),
                               color: isSelected
                                   ? AppColors.navSelected
@@ -239,13 +238,12 @@ class _NavItem extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 2),
-            // Label
             Text(
               destination.label,
-              style: GoogleFonts.inter(
+              style: TextStyle(
                 fontSize: 10,
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                color: isSelected ? AppColors.navSelected : AppColors.navUnselected,
+                color: color,
               ),
             ),
           ],

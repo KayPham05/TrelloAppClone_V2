@@ -426,4 +426,32 @@ class BoardDetailCubit extends Cubit<BoardDetailState> {
       emit(current.copyWith(transientError: 'Không thể cập nhật hiển thị.'));
     }
   }
+
+  // ─── Archive All Completed Cards ──────────────────────────────────────────
+
+  Future<int> archiveAllCompletedCards() async {
+    final current = state;
+    if (current is! BoardDetailLoaded) return 0;
+    final userUId = await userLocalDataSource.getUserId() ?? '';
+    try {
+      final count = await dataSource.archiveAllCompleted(
+        boardId: current.boardId,
+        userUId: userUId,
+      );
+      if (count > 0) {
+        // Reload board to reflect removed completed cards
+        await loadBoard(
+          current.boardId,
+          current.boardName,
+          backgroundUrl: current.backgroundUrl,
+          workspaceId: current.workspaceId,
+          workspaceName: current.workspaceName,
+          visibility: current.boardVisibility,
+        );
+      }
+      return count;
+    } catch (_) {
+      return 0;
+    }
+  }
 }
