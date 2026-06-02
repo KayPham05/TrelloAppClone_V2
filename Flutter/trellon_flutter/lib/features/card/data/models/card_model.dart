@@ -147,6 +147,11 @@ class CardModel {
   final List<CommentEntity> comments;
   final List<CardMemberEntity> members;
 
+  final String? boardId;
+  final String? boardName;
+  final String? listName;
+  final String? boardBackgroundUrl;
+
   CardModel({
     required this.id,
     required this.title,
@@ -156,6 +161,10 @@ class CardModel {
     this.status = 'New',
     this.listId,
     this.backgroundUrl,
+    this.boardId,
+    this.boardName,
+    this.listName,
+    this.boardBackgroundUrl,
     this.todoItems = const [],
     this.fileUrls = const [],
     this.labels = const [],
@@ -206,6 +215,10 @@ class CardModel {
       status: json['status'] ?? 'New',
       listId: json['listUId'] ?? json['listId'],
       backgroundUrl: json['backgroundUrl'],
+      boardId: json['boardUId'] ?? json['boardId'],
+      boardName: json['boardName'],
+      listName: json['listName'] ?? json['listTitle'],
+      boardBackgroundUrl: json['boardBackgroundUrl'] ?? json['boardUrl'],
       todoItems: todoList,
       fileUrls: fileList,
       comments: commentList,
@@ -227,6 +240,10 @@ class CardModel {
       status: status,
       listId: listId,
       backgroundUrl: backgroundUrl,
+      boardId: boardId,
+      boardName: boardName,
+      listName: listName,
+      boardBackgroundUrl: boardBackgroundUrl,
       todoItems: todoItems.map((e) => e.toEntity()).toList(),
       fileUrls: fileUrls.map((e) => e.toEntity()).toList(),
       labels: labels,

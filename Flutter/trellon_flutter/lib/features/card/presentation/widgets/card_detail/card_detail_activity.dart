@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../../../../core/constants/app_colors.dart';
 import '../../cubit/card_detail_cubit.dart';
-
 
 class CardActivityItemData {
   final String authorName;
@@ -19,6 +17,7 @@ class CardActivityItemData {
   });
 }
 
+/// Activity list with flat section header + activity items + sticky comment input at bottom
 class CardDetailActivityList extends StatelessWidget {
   final List<CardActivityItemData> activities;
 
@@ -26,109 +25,90 @@ class CardDetailActivityList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // ── Section header: 三 Hoạt động + gear icon ─────────────────
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+          child: Row(
             children: [
-              const Icon(Icons.chat_bubble_outline_rounded,
-                  size: 16, color: AppColors.onSurfaceVariant),
-              const SizedBox(width: 8),
-              Text(
-                'BÌNH LUẬN',
-                style: GoogleFonts.inter(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.onSurfaceVariant,
-                  letterSpacing: 0.5,
-                ),
+              Icon(Icons.format_list_bulleted_rounded,
+                  size: 20, color: Colors.grey.shade500),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text('Hoạt động',
+                    style: GoogleFonts.inter(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black87)),
               ),
+              Icon(Icons.settings_outlined,
+                  size: 20, color: Colors.grey.shade500),
             ],
           ),
-          const SizedBox(height: 20),
-          ...activities
-              .map((item) => Padding(
-                    padding: const EdgeInsets.only(bottom: 16),
-                    child: _buildCommentItem(item),
-                  )),
-          const SizedBox(height: 8),
-          const CardDetailCommentInput(),
-        ],
-      ),
+        ),
+        const SizedBox(height: 12),
+
+        // ── Activity items ────────────────────────────────────────────
+        ...activities.map((item) => _ActivityItem(item: item)),
+      ],
     );
   }
+}
 
-  Widget _buildCommentItem(CardActivityItemData item) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceContainerLowest,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.onSurface.withValues(alpha: 0.04),
-            blurRadius: 24,
-            offset: const Offset(0, 8),
-          )
-        ],
-      ),
+class _ActivityItem extends StatelessWidget {
+  final CardActivityItemData item;
+  const _ActivityItem({required this.item});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Author avatar circle
           Container(
-            width: 36,
-            height: 36,
+            width: 34,
+            height: 34,
             decoration: const BoxDecoration(
-              color: Color(0xFF0F172A),
+              color: Color(0xFF334155),
               shape: BoxShape.circle,
             ),
-            child: Center(
-              child: Text(
-                item.initial,
-                style: GoogleFonts.inter(
+            alignment: Alignment.center,
+            child: Text(
+              item.initial.toUpperCase(),
+              style: GoogleFonts.inter(
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
-                  color: Colors.white,
-                ),
-              ),
+                  color: Colors.white),
             ),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      item.authorName,
-                      style: GoogleFonts.inter(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: const Color(0xFF1D4ED8),
+                // Content text
+                RichText(
+                  text: TextSpan(
+                    style: GoogleFonts.inter(
+                        fontSize: 14, color: Colors.black87, height: 1.4),
+                    children: [
+                      TextSpan(
+                        text: '${item.authorName} ',
+                        style: const TextStyle(fontWeight: FontWeight.w600),
                       ),
-                    ),
-                    Text(
-                      item.time,
-                      style: GoogleFonts.inter(
-                        fontSize: 10,
-                        color: AppColors.onSurfaceVariant,
-                      ),
-                    )
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  item.content,
-                  style: GoogleFonts.inter(
-                    fontSize: 13,
-                    color: AppColors.onSurface,
-                    height: 1.5,
+                      TextSpan(text: item.content),
+                    ],
                   ),
-                )
+                ),
+                const SizedBox(height: 4),
+                // Timestamp
+                Text(item.time,
+                    style: GoogleFonts.inter(
+                        fontSize: 12, color: Colors.grey.shade500)),
               ],
             ),
           ),
@@ -138,14 +118,15 @@ class CardDetailActivityList extends StatelessWidget {
   }
 }
 
-class CardDetailCommentInput extends StatefulWidget {
-  const CardDetailCommentInput({super.key});
+// ── Sticky comment input bar ──────────────────────────────────────────────────
+class CardDetailCommentBar extends StatefulWidget {
+  const CardDetailCommentBar({super.key});
 
   @override
-  State<CardDetailCommentInput> createState() => _CardDetailCommentInputState();
+  State<CardDetailCommentBar> createState() => _CardDetailCommentBarState();
 }
 
-class _CardDetailCommentInputState extends State<CardDetailCommentInput> {
+class _CardDetailCommentBarState extends State<CardDetailCommentBar> {
   final TextEditingController _controller = TextEditingController();
 
   @override
@@ -154,7 +135,7 @@ class _CardDetailCommentInputState extends State<CardDetailCommentInput> {
     super.dispose();
   }
 
-  void _submitComment() {
+  void _submit() {
     final text = _controller.text.trim();
     if (text.isNotEmpty) {
       context.read<CardDetailCubit>().addComment(text);
@@ -166,89 +147,68 @@ class _CardDetailCommentInputState extends State<CardDetailCommentInput> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
       decoration: BoxDecoration(
-        color: AppColors.surfaceContainerLowest,
-        borderRadius: BorderRadius.circular(100),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.onSurface.withValues(alpha: 0.04),
-            blurRadius: 24,
-            offset: const Offset(0, 8),
-          )
-        ],
+        color: Colors.white,
+        border: Border(top: BorderSide(color: Colors.grey.shade200)),
       ),
       child: Row(
         children: [
+          // Current user avatar placeholder
           Container(
-            width: 36,
-            height: 36,
+            width: 34,
+            height: 34,
             decoration: const BoxDecoration(
-              color: Color(0xFF334155),
-              shape: BoxShape.circle,
-            ),
-            child: Center(
-              child: Text(
-                'A',
+                color: Color(0xFF334155), shape: BoxShape.circle),
+            alignment: Alignment.center,
+            child: Text('K',
                 style: GoogleFonts.inter(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white,
-                ),
-              ),
-            ),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white)),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 10),
+          // Text input
           Expanded(
-            child: TextField(
-              controller: _controller,
-              style: GoogleFonts.inter(
-                fontSize: 13,
-                color: AppColors.onSurface,
-              ),
-              decoration: InputDecoration(
-                hintText: 'Viết bình luận...',
-                hintStyle: GoogleFonts.inter(
-                  fontSize: 13,
-                  color: AppColors.onSurfaceVariant,
-                ),
-                border: InputBorder.none,
-                isDense: true,
-                contentPadding: EdgeInsets.zero,
-              ),
-              onSubmitted: (_) => _submitComment(),
-            ),
-          ),
-          IconButton(
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(),
-            icon: const Icon(Icons.attach_file_rounded,
-                size: 20, color: AppColors.onSurfaceVariant),
-            onPressed: () {},
-          ),
-          const SizedBox(width: 12),
-          IconButton(
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(),
-            icon: const Icon(Icons.emoji_emotions_outlined,
-                size: 20, color: AppColors.onSurfaceVariant),
-            onPressed: () {},
-          ),
-          const SizedBox(width: 12),
-          GestureDetector(
-            onTap: _submitComment,
             child: Container(
-              margin: const EdgeInsets.only(right: 4),
-              padding: const EdgeInsets.all(10),
-              decoration: const BoxDecoration(
-                color: Color(0xFF1D4ED8),
-                shape: BoxShape.circle,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade100,
+                borderRadius: BorderRadius.circular(20),
               ),
-              child: const Icon(Icons.send_rounded, size: 14, color: Colors.white),
+              child: TextField(
+                controller: _controller,
+                style: GoogleFonts.inter(fontSize: 14, color: Colors.black87),
+                decoration: InputDecoration(
+                  hintText: 'Bình luận...',
+                  hintStyle: GoogleFonts.inter(
+                      fontSize: 14, color: Colors.grey.shade500),
+                  border: InputBorder.none,
+                  isDense: true,
+                  contentPadding: EdgeInsets.zero,
+                ),
+                onSubmitted: (_) => _submit(),
+              ),
             ),
-          )
+          ),
+          const SizedBox(width: 8),
+          // Attachment icon
+          GestureDetector(
+            onTap: () {},
+            child: Icon(Icons.attach_file_outlined,
+                size: 22, color: Colors.grey.shade500),
+          ),
         ],
       ),
     );
   }
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Keep old CardDetailCommentInput as an alias (used nowhere now but avoids breakage)
+// ──────────────────────────────────────────────────────────────────────────────
+class CardDetailCommentInput extends StatelessWidget {
+  const CardDetailCommentInput({super.key});
+  @override
+  Widget build(BuildContext context) => const CardDetailCommentBar();
 }

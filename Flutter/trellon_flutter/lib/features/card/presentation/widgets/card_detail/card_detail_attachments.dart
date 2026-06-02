@@ -184,81 +184,67 @@ class CardDetailAttachments extends StatelessWidget {
       builder: (context, state) {
         if (state is! CardDetailLoaded) return const SizedBox.shrink();
         final fileUrls = state.card.fileUrls;
+        final images = fileUrls.where((f) => _isImage(f.url)).toList();
+        final files = fileUrls.where((f) => !_isImage(f.url)).toList();
 
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: AppColors.surfaceContainerLowest,
-              borderRadius: BorderRadius.circular(24),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.onSurface.withValues(alpha: 0.04),
-                  blurRadius: 24,
-                  offset: const Offset(0, 8),
-                )
-              ],
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── Các tập tin đính kèm ─────────────────────────────────
+            _SectionHeader(
+              icon: Icons.attach_file_rounded,
+              title: 'Các tập tin đính kèm',
+              trailing: state.isUploadingAttachment
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: Color(0xFF1D4ED8)),
+                    )
+                  : GestureDetector(
+                      onTap: () => _showAddAttachmentBottomSheet(context),
+                      child: const Icon(Icons.add_rounded,
+                          size: 22, color: Color(0xFF1D4ED8)),
+                    ),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    const Icon(Icons.attach_file_rounded,
-                        size: 16, color: AppColors.onSurfaceVariant),
-                    const SizedBox(width: 8),
-                    Text(
-                      'CÁC TẬP TIN ĐÍNH KÈM',
-                      style: GoogleFonts.inter(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.onSurfaceVariant,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                    const Spacer(),
-                    InkWell(
-                      onTap: state.isUploadingAttachment ? null : () => _showAddAttachmentBottomSheet(context),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          if (state.isUploadingAttachment) 
-                            const SizedBox(
-                              width: 14, height: 14,
-                              child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF1D4ED8)),
-                            )
-                          else
-                            const Icon(Icons.add_rounded, size: 16, color: Color(0xFF1D4ED8)),
-                          const SizedBox(width: 4),
-                          Text(
-                            state.isUploadingAttachment ? 'ĐANG TẢI...' : 'TẢI LÊN',
-                            style: GoogleFonts.inter(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w700,
-                              color: const Color(0xFF1D4ED8),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+
+            if (files.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                child: Column(
+                  children: files
+                      .map((f) => Padding(
+                            padding: const EdgeInsets.only(bottom: 10),
+                            child: _buildAttachmentItem(context, f),
+                          ))
+                      .toList(),
                 ),
-                const SizedBox(height: 20),
-                if (fileUrls.isEmpty)
-                  Text(
-                    'Chưa có tập tin đính kèm nào.',
-                    style: GoogleFonts.inter(fontSize: 12, color: AppColors.onSurfaceVariant),
-                  ),
-                ...fileUrls.map((file) {
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: _buildAttachmentItem(context, file),
-                  );
-                }),
-              ],
-            ),
-          ),
+              ),
+
+            // ── Các ảnh đính kèm ─────────────────────────────────────
+            if (images.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                child: Text('Các ảnh đính kèm',
+                    style: GoogleFonts.inter(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.black87)),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Column(
+                  children: images
+                      .map((f) => Padding(
+                            padding: const EdgeInsets.only(bottom: 10),
+                            child: _buildAttachmentItem(context, f),
+                          ))
+                      .toList(),
+                ),
+              ),
+            ],
+          ],
         );
       },
     );
@@ -397,6 +383,38 @@ class CardDetailAttachments extends StatelessWidget {
                 ),
               ],
             ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Reusable flat section-header row: icon + title + optional trailing widget
+class _SectionHeader extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final Widget? trailing;
+  const _SectionHeader({required this.icon, required this.title, this.trailing});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+      child: SizedBox(
+        height: 48,
+        child: Row(
+          children: [
+            Icon(icon, size: 20, color: Colors.grey.shade500),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                title,
+                style: const TextStyle(
+                    fontSize: 14, fontWeight: FontWeight.w500, color: Colors.black87),
+              ),
+            ),
+            if (trailing != null) trailing!,
           ],
         ),
       ),

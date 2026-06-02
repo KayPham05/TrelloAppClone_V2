@@ -712,6 +712,12 @@ class _ProfilePageState extends State<ProfilePage> {
                     await cookieJar.deleteAll();
                   }
                 } catch (_) {}
+                
+                // 4.5 Reset Cubits
+                try {
+                  serviceLocator<WorkspaceCubit>().reset();
+                  serviceLocator<NotificationCubit>().reset();
+                } catch (_) {}
 
                 // 5. Điều hướng về Login
                 if (context.mounted) {

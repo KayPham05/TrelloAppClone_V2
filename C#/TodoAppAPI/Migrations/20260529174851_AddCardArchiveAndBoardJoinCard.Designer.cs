@@ -12,13 +12,8 @@ using TodoAppAPI.Data;
 namespace TodoAppAPI.Migrations
 {
     [DbContext(typeof(TodoDbContext))]
-<<<<<<<< HEAD:C#/TodoAppAPI/Migrations/20260528150255_add-notification.Designer.cs
-    [Migration("20260528150255_add-notification")]
-    partial class addnotification
-========
-    [Migration("20260528013331_db")]
-    partial class db
->>>>>>>> 9324a2357062b2a3ac3a5324fd55b467ede0c1f5:C#/TodoAppAPI/Migrations/20260528013331_db.Designer.cs
+    [Migration("20260529174851_AddCardArchiveAndBoardJoinCard")]
+    partial class AddCardArchiveAndBoardJoinCard
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -65,6 +60,9 @@ namespace TodoAppAPI.Migrations
                     b.Property<string>("BoardUId")
                         .HasMaxLength(128)
                         .HasColumnType("nvarchar(128)");
+
+                    b.Property<bool>("AllowMemberJoinCard")
+                        .HasColumnType("bit");
 
                     b.Property<string>("BackgroundUrl")
                         .HasColumnType("nvarchar(max)");
@@ -169,6 +167,9 @@ namespace TodoAppAPI.Migrations
 
                     b.Property<DateTime?>("DueDate")
                         .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsArchived")
+                        .HasColumnType("bit");
 
                     b.Property<string>("ListUId")
                         .HasColumnType("nvarchar(128)");

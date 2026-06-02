@@ -13,11 +13,14 @@ namespace TodoAppAPI.Controllers
         private readonly IBoardService _boardService;
         private readonly IActivity _activity;
         private readonly ICloudinaryService _cloudinaryService;
-        public BoardController(IBoardService boardService, IActivity activity, ICloudinaryService cloudinaryService)
+        private readonly ICardsService _cardsService;
+
+        public BoardController(IBoardService boardService, IActivity activity, ICloudinaryService cloudinaryService, ICardsService cardsService)
         {
             _boardService = boardService;
             _activity = activity;
             _cloudinaryService = cloudinaryService;
+            _cardsService = cardsService;
         }
 
 
@@ -121,5 +124,18 @@ namespace TodoAppAPI.Controllers
             _ = _activity.AddActivity(userUId, $"updated background of board '{board.BoardName}'");
             return Ok(new { url = result.Value.Url });
         }
+
+        // POST v1/api/boards/{boardUId}/archive-completed
+        [HttpPost("{boardUId}/archive-completed")]
+        public async Task<IActionResult> ArchiveCompletedCards(string boardUId, [FromQuery] string userUId)
+        {
+            if (string.IsNullOrEmpty(userUId))
+                return BadRequest(new { message = "userUId là bắt buộc." });
+
+            var count = await _cardsService.ArchiveAllCompletedCardsAsync(boardUId, userUId);
+            _ = _activity.AddActivity(userUId, $"archived {count} completed card(s) from board '{boardUId}'");
+            return Ok(new { message = $"Đã lưu trữ {count} thẻ đã hoàn thành.", count });
+        }
     }
 }
+

@@ -12,13 +12,8 @@ using TodoAppAPI.Data;
 namespace TodoAppAPI.Migrations
 {
     [DbContext(typeof(TodoDbContext))]
-<<<<<<<< HEAD:C#/TodoAppAPI/Migrations/20260528150255_add-notification.Designer.cs
-    [Migration("20260528150255_add-notification")]
-    partial class addnotification
-========
-    [Migration("20260528013331_db")]
-    partial class db
->>>>>>>> 9324a2357062b2a3ac3a5324fd55b467ede0c1f5:C#/TodoAppAPI/Migrations/20260528013331_db.Designer.cs
+    [Migration("20260529043337_InitDb")]
+    partial class InitDb
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

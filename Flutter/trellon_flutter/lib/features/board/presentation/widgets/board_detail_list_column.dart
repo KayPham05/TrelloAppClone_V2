@@ -123,7 +123,7 @@ class _BoardDetailListColumnState extends State<BoardDetailListColumn> {
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
                   itemCount: widget.listData.cards.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 8),
+                  separatorBuilder: (_, _) => const SizedBox(height: 8),
                   itemBuilder: (ctx, i) =>
                       BoardDetailCardItem(card: widget.listData.cards[i]),
                 ),

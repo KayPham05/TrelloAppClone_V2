@@ -8,11 +8,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace TodoAppAPI.Migrations
 {
     /// <inheritdoc />
-<<<<<<<< HEAD:C#/TodoAppAPI/Migrations/20260528150255_add-notification.cs
-    public partial class addnotification : Migration
-========
-    public partial class db : Migration
->>>>>>>> 9324a2357062b2a3ac3a5324fd55b467ede0c1f5:C#/TodoAppAPI/Migrations/20260528013331_db.cs
+    public partial class InitDb : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

@@ -58,6 +58,9 @@ namespace TodoAppAPI.Migrations
                         .HasMaxLength(128)
                         .HasColumnType("nvarchar(128)");
 
+                    b.Property<bool>("AllowMemberJoinCard")
+                        .HasColumnType("bit");
+
                     b.Property<string>("BackgroundUrl")
                         .HasColumnType("nvarchar(max)");
 
@@ -161,6 +164,9 @@ namespace TodoAppAPI.Migrations
 
                     b.Property<DateTime?>("DueDate")
                         .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsArchived")
+                        .HasColumnType("bit");
 
                     b.Property<string>("ListUId")
                         .HasColumnType("nvarchar(128)");

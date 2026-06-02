@@ -53,12 +53,29 @@ class BoardDetailCardItem extends StatelessWidget {
         final cubit = context.read<BoardDetailCubit>();
         final state = cubit.state;
         final boardId = state is BoardDetailLoaded ? state.boardId : null;
-        
+        final boardName = state is BoardDetailLoaded ? state.boardName : null;
+        final boardBackgroundUrl = state is BoardDetailLoaded ? state.backgroundUrl : null;
+        // Find the list name by card.listId
+        final listName = state is BoardDetailLoaded
+            ? state.lists
+                .where((l) => l.id == card.listId)
+                .map((l) => l.name)
+                .firstOrNull
+            : null;
+
         await Navigator.push(
           context,
-          MaterialPageRoute(builder: (_) => CardDetailPage(card: card, boardId: boardId)),
+          MaterialPageRoute(
+            builder: (_) => CardDetailPage(
+              card: card,
+              boardId: boardId,
+              boardName: boardName,
+              listName: listName,
+              boardBackgroundUrl: boardBackgroundUrl,
+            ),
+          ),
         );
-        
+
         if (state is BoardDetailLoaded) {
           cubit.loadBoard(state.boardId, state.boardName, backgroundUrl: state.backgroundUrl);
         }
