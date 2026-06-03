@@ -132,54 +132,52 @@ class _ProfilePageState extends State<ProfilePage> {
     final croppedFile = await ImagePickerHelper.pickAndCropImage();
 
     if (croppedFile != null) {
-        setState(() {
-          _isUploadingAvatar = true;
+      setState(() {
+        _isUploadingAvatar = true;
+      });
+
+      try {
+        final dio = serviceLocator<Dio>();
+        String fileName = croppedFile.path.split('/').last;
+
+        FormData formData = FormData.fromMap({
+          'avatar': await MultipartFile.fromFile(
+            croppedFile.path,
+            filename: fileName,
+          ),
         });
 
-        try {
-          final dio = serviceLocator<Dio>();
-          String fileName = croppedFile.path.split('/').last;
+        final response = await dio.put(
+          ApiEndpoints.updateProfile,
+          data: formData,
+        );
 
-          FormData formData = FormData.fromMap({
-            'avatar': await MultipartFile.fromFile(
-              croppedFile.path,
-              filename: fileName,
-            ),
-          });
-
-          final response = await dio.put(
-            ApiEndpoints.updateProfile,
-            data: formData,
-          );
-
-          if (response.statusCode == 200) {
-            final data = response.data;
-            final prefs = await SharedPreferences.getInstance();
-            if (data['avatarUrl'] != null) {
-              await prefs.setString('user_avatar', data['avatarUrl']);
-            }
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Cập nhật ảnh đại diện thành công'),
-                ),
-              );
-            }
+        if (response.statusCode == 200) {
+          final data = response.data;
+          final prefs = await SharedPreferences.getInstance();
+          if (data['avatarUrl'] != null) {
+            await prefs.setString('user_avatar', data['avatarUrl']);
           }
-        } catch (e) {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Lỗi cập nhật ảnh: ${e.toString()}')),
+              const SnackBar(content: Text('Cập nhật ảnh đại diện thành công')),
             );
           }
-        } finally {
-          if (mounted) {
-            setState(() {
-              _isUploadingAvatar = false;
-            });
-          }
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Lỗi cập nhật ảnh: ${e.toString()}')),
+          );
+        }
+      } finally {
+        if (mounted) {
+          setState(() {
+            _isUploadingAvatar = false;
+          });
         }
       }
+    }
   }
 
   // BỎ ASYNC VÀ FUTURE Ở ĐÂY, TRUYỀN THAM SỐ VÀO
@@ -714,6 +712,12 @@ class _ProfilePageState extends State<ProfilePage> {
                     await cookieJar.deleteAll();
                   }
                 } catch (_) {}
+                
+                // 4.5 Reset Cubits
+                try {
+                  serviceLocator<WorkspaceCubit>().reset();
+                  serviceLocator<NotificationCubit>().reset();
+                } catch (_) {}
 
                 // 5. Điều hướng về Login
                 if (context.mounted) {
@@ -737,7 +741,4 @@ class _ProfilePageState extends State<ProfilePage> {
       },
     );
   }
-
-
-
 }

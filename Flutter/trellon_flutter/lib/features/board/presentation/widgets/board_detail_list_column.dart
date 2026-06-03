@@ -29,10 +29,7 @@ class _BoardDetailListColumnState extends State<BoardDetailListColumn> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
-        children: [
-          _buildListHeader(context),
-          _buildCardArea(context),
-        ],
+        children: [_buildListHeader(context), _buildCardArea(context)],
       ),
     );
   }
@@ -41,20 +38,20 @@ class _BoardDetailListColumnState extends State<BoardDetailListColumn> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: const BoxDecoration(
-        color: AppColors.surfaceContainer,
+        color: AppColors.background,
         borderRadius: BorderRadius.vertical(top: Radius.circular(10)),
       ),
       child: Row(
         children: [
           Expanded(
-              child: Text(
-                widget.listData.name,
-                style: const TextStyle(
-                  color: AppColors.onSurface,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 15,
-                ),
+            child: Text(
+              widget.listData.name,
+              style: const TextStyle(
+                color: AppColors.textPrimary,
+                fontWeight: FontWeight.w600,
+                fontSize: 17,
               ),
+            ),
           ),
           _buildListMenu(context),
         ],
@@ -77,7 +74,11 @@ class _BoardDetailListColumnState extends State<BoardDetailListColumn> {
           ),
         );
       },
-      child: const Icon(Icons.more_horiz, color: AppColors.textSecondary, size: 20),
+      child: const Icon(
+        Icons.more_horiz,
+        color: AppColors.textSecondary,
+        size: 20,
+      ),
     );
   }
 
@@ -104,7 +105,9 @@ class _BoardDetailListColumnState extends State<BoardDetailListColumn> {
             color: _isDragOver
                 ? AppColors.primary.withValues(alpha: 0.08)
                 : AppColors.surfaceContainer,
-            borderRadius: const BorderRadius.vertical(bottom: Radius.circular(10)),
+            borderRadius: const BorderRadius.vertical(
+              bottom: Radius.circular(10),
+            ),
             border: _isDragOver
                 ? Border.all(color: AppColors.primary, width: 2)
                 : null,
@@ -120,11 +123,10 @@ class _BoardDetailListColumnState extends State<BoardDetailListColumn> {
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
                   itemCount: widget.listData.cards.length,
-                  separatorBuilder: (_, _) =>
-                      Container(height: 0.5, color: AppColors.border),
-                   itemBuilder: (ctx, i) =>
-                       BoardDetailCardItem(card: widget.listData.cards[i]),
-                 ),
+                  separatorBuilder: (_, _) => const SizedBox(height: 8),
+                  itemBuilder: (ctx, i) =>
+                      BoardDetailCardItem(card: widget.listData.cards[i]),
+                ),
               if (_isAddingCard)
                 AddCardFormWidget(
                   listId: widget.listData.id,
@@ -184,11 +186,21 @@ class _ListMenuSheet extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          Text(listName, style: const TextStyle(color: AppColors.onSurface, fontSize: 16, fontWeight: FontWeight.bold)),
+          Text(
+            listName,
+            style: const TextStyle(
+              color: AppColors.onSurface,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
           const SizedBox(height: 16),
           ListTile(
             leading: const Icon(Icons.delete_outline, color: AppColors.error),
-            title: const Text('Xóa danh sách', style: TextStyle(color: AppColors.onSurface)),
+            title: const Text(
+              'Xóa danh sách',
+              style: TextStyle(color: AppColors.onSurface),
+            ),
             onTap: () {
               Navigator.pop(context);
               context.read<BoardDetailCubit>().deleteList(listId);
@@ -196,7 +208,10 @@ class _ListMenuSheet extends StatelessWidget {
           ),
           ListTile(
             leading: const Icon(Icons.close, color: AppColors.textSecondary),
-            title: const Text('Đóng', style: TextStyle(color: AppColors.textSecondary)),
+            title: const Text(
+              'Đóng',
+              style: TextStyle(color: AppColors.textSecondary),
+            ),
             onTap: () => Navigator.pop(context),
           ),
         ],

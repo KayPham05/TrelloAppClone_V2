@@ -83,6 +83,9 @@ namespace TodoAppAPI.Service
             if (!BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
                 return new AuthResponse { Message = "Incorrect password!" };
 
+            if (user.Provider == "Google")
+                return new AuthResponse { Message = "Tài khoản này được đăng nhập bằng Google. Vui lòng sử dụng nút 'Sign in with Google'" };
+
             // Check if account is locked
             if (user.StatusAccount == "Locked")
             {
@@ -458,6 +461,62 @@ namespace TodoAppAPI.Service
                 Email = email,
                 requiresVerification = true,
                 ExpiresInSeconds = remainingWait > 0 ? remainingWait : 0
+            };
+        }
+
+        public async Task<bool> SendForgotPasswordOtpAsync(string email)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+            if (user == null) return false;
+
+            if (user.Provider == "Google") return false; // Không cho phép đổi mật khẩu account Google bằng email/mật khẩu
+
+            string code = new Random().Next(100000, 999999).ToString();
+
+            var existingOtp = await _context.UserOtps.FindAsync(user.UserUId);
+            if (existingOtp != null) _context.UserOtps.Remove(existingOtp);
+
+            await _context.UserOtps.AddAsync(new UserOtp
+            {
+                UserUId = user.UserUId,
+                OtpCode = code,
+                ExpiresAt = DateTime.UtcNow.AddMinutes(5)
+            });
+
+            await _context.SaveChangesAsync();
+
+            try 
+            {
+                await _emailService.SendPasswordResetOtpEmailAsync(email, code);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ForgotPassword] Error sending email: {ex.Message}");
+            }
+
+            return true;
+        }
+
+        public async Task<AuthResponse> ResetPasswordAsync(string email, string otp, string newPassword)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+            if (user == null) return new AuthResponse { Message = "Account not found!" };
+
+            var otpRec = await _context.UserOtps.FindAsync(user.UserUId);
+            if (otpRec == null || otpRec.ExpiresAt < DateTime.UtcNow || otpRec.OtpCode != otp)
+                return new AuthResponse { Message = "Invalid or expired OTP!" };
+
+            _context.UserOtps.Remove(otpRec);
+
+            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(newPassword);
+
+            await _context.SaveChangesAsync();
+
+            return new AuthResponse 
+            { 
+                Message = "Thay đổi mật khẩu thành công!", 
+                UserUId = user.UserUId,
+                Email = user.Email
             };
         }
     }

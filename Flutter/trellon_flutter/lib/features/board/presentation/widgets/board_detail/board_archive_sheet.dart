@@ -184,7 +184,7 @@ class _BoardArchiveSheetState extends State<BoardArchiveSheet>
                     ? _buildEmpty()
                     : ListView.separated(
                         padding: const EdgeInsets.all(16),
-                        separatorBuilder: (_, __) => const Divider(height: 1),
+                        separatorBuilder: (_, _) => const Divider(height: 1),
                         itemCount: _filtered.length,
                         itemBuilder: (_, i) {
                           final c = _filtered[i];

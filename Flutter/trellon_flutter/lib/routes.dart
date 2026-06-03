@@ -11,6 +11,9 @@ import 'features/auth/presentation/pages/login_page.dart';
 import 'features/auth/presentation/pages/register_page.dart';
 import 'features/auth/presentation/pages/two_factor_auth_page.dart';
 import 'features/auth/presentation/pages/verify_page.dart';
+import 'features/auth/presentation/pages/forgot_password_page.dart';
+import 'features/auth/presentation/pages/reset_password_page.dart';
+import 'features/auth/presentation/pages/success_page.dart';
 import 'features/introduction/presentation/pages/introduction_page.dart';
 import 'features/profile/presentation/pages/information_page.dart';
 import 'features/profile/presentation/pages/change_email_page.dart';
@@ -42,11 +45,17 @@ class AppRoutes {
   static const String information = '/information';
   static const String changeEmail = '/change-email';
   static const String lockedAccount = '/locked-account';
+  static const String forgotPassword = '/forgot-password';
+  static const String resetPassword = '/reset-password';
+  static const String success = '/success';
 
   static Map<String, WidgetBuilder> routes = {
     login: (context) => const LoginPage(),
     register: (context) => const RegisterPage(),
     verify: (context) => const VerifyPage(),
+    forgotPassword: (context) => const ForgotPasswordPage(),
+    resetPassword: (context) => const ResetPasswordPage(),
+    success: (context) => const SuccessPage(),
     home: (context) => const MainShell(),
     userProfile: (context) => const ProfilePage(),
     securityPage: (context) => const SecurityPage(),
@@ -96,6 +105,16 @@ class AppRoutes {
     } else if (args is Map<String, dynamic>) {
       card = args['card'] as CardEntity?;
       boardId = args['boardId'] as String?;
+      final boardName = args['boardName'] as String?;
+      final listName = args['listName'] as String?;
+      final boardBackgroundUrl = args['boardBackgroundUrl'] as String?;
+      return CardDetailPage(
+        card: card!,
+        boardId: boardId,
+        boardName: boardName,
+        listName: listName,
+        boardBackgroundUrl: boardBackgroundUrl,
+      );
     }
 
     if (card == null) {

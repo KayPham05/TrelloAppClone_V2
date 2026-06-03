@@ -36,6 +36,8 @@ builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<ICardDueDateReminderService, CardDueDateReminderService>();
 builder.Services.AddScoped<ITwoFactorService, TwoFactorService>();
+builder.Services.AddScoped<ISearchService, SearchService>();
+builder.Services.AddScoped<IPlannerService, PlannerService>();
 builder.Services.AddHostedService<CardDueDateReminderHostedService>();
 
 // IMemoryCache for 2FA temp secrets
@@ -136,14 +138,8 @@ var app = builder.Build();
 
 
 // 3. Sử dụng CORS
-if (app.Environment.IsDevelopment())
-{
-    app.UseCors("AllowAllMobile");
-}
-else 
-{
-    app.UseCors("AllowFrontend");
-}
+app.UseCors("AllowFrontend");
+
 
 //app.UseHttpsRedirection();
 app.UseAuthentication();

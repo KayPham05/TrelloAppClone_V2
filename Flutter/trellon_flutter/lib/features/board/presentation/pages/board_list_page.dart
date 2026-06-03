@@ -10,6 +10,7 @@ import '../widgets/create_board_bottom_sheet.dart';
 import '../../../workspace/presentation/cubit/workspace_cubit.dart';
 import '../../../workspace/domain/entities/workspace_entity.dart';
 import '../../domain/entities/board_entity.dart';
+import '../../../search/presentation/delegates/global_search_delegate.dart';
 
 // Modular widgets
 import '../widgets/board_list/recent_boards_section.dart';
@@ -52,6 +53,13 @@ class _BoardListView extends StatefulWidget {
 class _BoardListViewState extends State<_BoardListView> {
   final GlobalKey _fabKey = GlobalKey();
 
+  Future<void> _refreshBoards() async {
+    final uid = await serviceLocator<UserLocalDataSource>().getUserId();
+    if (uid != null && uid.isNotEmpty && mounted) {
+      context.read<BoardCubit>().fetchBoardData(uid, '');
+    }
+  }
+
   void _openCreateBoard() {
     showCreateBoardBottomSheet(context);
   }
@@ -81,9 +89,9 @@ class _BoardListViewState extends State<_BoardListView> {
     return BlocListener<BoardCubit, BoardState>(
       listener: (ctx, state) {
         if (state is BoardCreated) {
-          ScaffoldMessenger.of(ctx).showSnackBar(
-            const SnackBar(content: Text('Tạo bảng thành công!')),
-          );
+          ScaffoldMessenger.of(
+            ctx,
+          ).showSnackBar(const SnackBar(content: Text('Tạo bảng thành công!')));
         }
         if (state is BoardError) {
           ScaffoldMessenger.of(ctx).showSnackBar(
@@ -94,80 +102,112 @@ class _BoardListViewState extends State<_BoardListView> {
       child: Scaffold(
         backgroundColor: AppColors.background,
         body: SafeArea(
-          child: CustomScrollView(
-            slivers: [
-              SliverAppBar(
-                backgroundColor: AppColors.background,
-                pinned: true,
-                elevation: 0,
-                titleSpacing: 16,
-                title: Text(
-                  'Workspace',
-                  style: GoogleFonts.inter(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.onSurface,
-                  ),
-                ),
-                actions: [
-                  IconButton(
-                    icon: Icon(Icons.search_rounded,
-                        color: AppColors.onSurfaceVariant),
-                    onPressed: () {},
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(right: 12),
-                    child: GestureDetector(
-                      key: _fabKey,
-                      onTap: _onFabTap,
-                      child: Container(
-                        width: 36,
-                        height: 36,
-                        decoration: const BoxDecoration(
-                          color: Color(0xFF2563EB),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(Icons.add_rounded,
-                            color: Colors.white, size: 22),
-                      ),
+          child: RefreshIndicator(
+            onRefresh: _refreshBoards,
+            color: AppColors.primaryContainer,
+            child: CustomScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              slivers: [
+                SliverAppBar(
+                  backgroundColor: AppColors.background,
+                  pinned: true,
+                  elevation: 0,
+                  titleSpacing: 16,
+                  title: Text(
+                    'Workspace',
+                    style: GoogleFonts.inter(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.onSurface,
                     ),
                   ),
-                ],
-              ),
-              SliverToBoxAdapter(
-                child: BlocBuilder<WorkspaceCubit, WorkspaceState>(
-                  builder: (ctx, wsState) {
-                    return BlocBuilder<BoardCubit, BoardState>(
-                      builder: (ctx2, boardState) {
-                        final isLoading = boardState is BoardInitial ||
-                            boardState is BoardLoading;
-                        List<BoardEntity> recentBoards = [];
-                        List<BoardEntity> personalBoards = [];
-                        List<WorkspaceEntity> guestWs = [];
-
-                        if (boardState is BoardLoaded) {
-                          recentBoards = boardState.recentBoards;
-                          personalBoards = boardState.personalBoards;
-                          guestWs = boardState.guestWorkspaces;
-                        }
-                        if (wsState is WorkspaceLoaded) {
-                          if (guestWs.isEmpty) guestWs = wsState.team;
-                        }
-
-                        if (isLoading) {
-                          return const Padding(
-                            padding: EdgeInsets.all(48),
-                            child: Center(child: CircularProgressIndicator()),
+                  actions: [
+                    IconButton(
+                      icon: Icon(
+                        Icons.search_rounded,
+                        color: AppColors.onSurfaceVariant,
+                      ),
+                      onPressed: () async {
+                        final uid = await serviceLocator<UserLocalDataSource>()
+                            .getUserId();
+                        print('Search tapped in BoardListPage. UID: $uid');
+                        if (uid != null && context.mounted) {
+                          showSearch(
+                            context: context,
+                            delegate: GlobalSearchDelegate(userUId: uid),
+                          );
+                        } else if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Lỗi: Không tìm thấy User ID!'),
+                            ),
                           );
                         }
+                      },
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(right: 12),
+                      child: GestureDetector(
+                        key: _fabKey,
+                        onTap: _onFabTap,
+                        child: Container(
+                          width: 36,
+                          height: 36,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFF2563EB),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.add_rounded,
+                            color: Colors.white,
+                            size: 22,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                SliverToBoxAdapter(
+                  child: BlocBuilder<WorkspaceCubit, WorkspaceState>(
+                    builder: (ctx, wsState) {
+                      return BlocBuilder<BoardCubit, BoardState>(
+                        builder: (ctx2, boardState) {
+                          final isLoading =
+                              boardState is BoardInitial ||
+                              boardState is BoardLoading;
+                          List<BoardEntity> recentBoards = [];
+                          List<BoardEntity> personalBoards = [];
+                          List<WorkspaceEntity> guestWs = [];
 
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            RecentBoardsSection(boards: recentBoards),
-                            const SectionLabel(label: 'KHÔNG GIAN LÀM VIỆC CỦA BẠN'),
-                            ...personalBoards.map((board) => Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
+                          if (boardState is BoardLoaded) {
+                            recentBoards = boardState.recentBoards;
+                            personalBoards = boardState.personalBoards;
+                            guestWs = boardState.guestWorkspaces;
+                          }
+                          if (wsState is WorkspaceLoaded) {
+                            if (guestWs.isEmpty) guestWs = wsState.team;
+                          }
+
+                          if (isLoading) {
+                            return const Padding(
+                              padding: EdgeInsets.all(48),
+                              child: Center(child: CircularProgressIndicator()),
+                            );
+                          }
+
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              RecentBoardsSection(boards: recentBoards),
+                              const SectionLabel(
+                                label: 'KHÔNG GIAN LÀM VIỆC CỦA BẠN',
+                              ),
+                              ...personalBoards.map(
+                                (board) => Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 5,
+                                  ),
                                   child: PersonalBoardTileWidget(
                                     board: board,
                                     onTap: () async {
@@ -176,19 +216,33 @@ class _BoardListViewState extends State<_BoardListView> {
                                         '/board-detail',
                                         arguments: board,
                                       );
-                                      final uid = await serviceLocator<UserLocalDataSource>().getUserId();
+                                      final uid =
+                                          await serviceLocator<
+                                                UserLocalDataSource
+                                              >()
+                                              .getUserId();
                                       if (uid != null && ctx.mounted) {
-                                        ctx.read<BoardCubit>().fetchBoardData(uid, '');
+                                        ctx.read<BoardCubit>().fetchBoardData(
+                                          uid,
+                                          '',
+                                        );
                                       }
                                     },
                                   ),
-                                )),
-                            if (personalBoards.isEmpty)
-                              EmptyBoardHint(onCreateBoard: _openCreateBoard),
-                            const SizedBox(height: 8),
-                            const SectionLabel(label: 'KHÔNG GIAN LÀM VIỆC CỦA KHÁCH'),
-                            ...guestWs.map((ws) => Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
+                                ),
+                              ),
+                              if (personalBoards.isEmpty)
+                                EmptyBoardHint(onCreateBoard: _openCreateBoard),
+                              const SizedBox(height: 8),
+                              const SectionLabel(
+                                label: 'KHÔNG GIAN LÀM VIỆC CỦA KHÁCH',
+                              ),
+                              ...guestWs.map(
+                                (ws) => Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 5,
+                                  ),
                                   child: GuestWorkspaceTileWidget(
                                     workspace: ws,
                                     onTap: () async {
@@ -197,28 +251,38 @@ class _BoardListViewState extends State<_BoardListView> {
                                         '/workspace-detail',
                                         arguments: ws,
                                       );
-                                      final uid = await serviceLocator<UserLocalDataSource>().getUserId();
+                                      final uid =
+                                          await serviceLocator<
+                                                UserLocalDataSource
+                                              >()
+                                              .getUserId();
                                       if (uid != null && ctx.mounted) {
-                                        ctx.read<BoardCubit>().fetchBoardData(uid, '');
+                                        ctx.read<BoardCubit>().fetchBoardData(
+                                          uid,
+                                          '',
+                                        );
                                       }
                                     },
                                   ),
-                                )),
-                            if (guestWs.isEmpty)
-                              EmptyTeamWorkspaceHint(
-                                  onCreate: _showCreateWorkspaceSheet),
-                            const SizedBox(height: 100),
-                          ],
-                        );
-                      },
-                    );
-                  },
+                                ),
+                              ),
+                              if (guestWs.isEmpty)
+                                EmptyTeamWorkspaceHint(
+                                  onCreate: _showCreateWorkspaceSheet,
+                                ),
+                              const SizedBox(height: 100),
+                            ],
+                          );
+                        },
+                      );
+                    },
+                  ),
                 ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
+              ],
+            ), // CustomScrollView
+          ), // RefreshIndicator
+        ), // SafeArea
+      ), // Scaffold
+    ); // BlocListener
   }
 }

@@ -11,6 +11,7 @@ namespace TodoAppAPI.Models
         public string? Status { get; set; }
         public string? BackgroundUrl { get; set; }
         public string UserUId { get; set; } = string.Empty;
+        public bool IsArchived { get; set; } = false;
 
         // FK - List (nullable for inbox cards)
         public string? ListUId { get; set; } // ← Changed to nullable, removed default value

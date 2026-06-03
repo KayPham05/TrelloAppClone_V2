@@ -532,4 +532,48 @@ class CardDetailCubit extends Cubit<CardDetailState> {
   Future<List<dynamic>> getListsForBoard(String boardId) async {
     return [];
   }
+
+  // ─── Archive / Delete ─────────────────────────────────────────────────────
+
+  Future<void> archiveCard() async {
+    final currentState = state;
+    if (currentState is! CardDetailLoaded) return;
+    try {
+      final userUId = await UserLocalDataSource().getUserId() ?? '';
+      await repository.archiveCard(cardId: currentState.card.id, userUId: userUId);
+      emit(CardDetailArchived());
+    } catch (e) {
+      emit(CardDetailError('Không thể lưu trữ thẻ: ${e.toString()}'));
+      emit(currentState);
+    }
+  }
+
+  Future<void> deleteCard() async {
+    final currentState = state;
+    if (currentState is! CardDetailLoaded) return;
+    try {
+      final userUId = await UserLocalDataSource().getUserId() ?? '';
+      await repository.deleteCard(cardId: currentState.card.id, userUId: userUId);
+      emit(CardDetailDeleted());
+    } catch (e) {
+      emit(CardDetailError('Không thể xóa thẻ: ${e.toString()}'));
+      emit(currentState);
+    }
+  }
+
+  Future<void> joinCard(String boardId) async {
+    final currentState = state;
+    if (currentState is! CardDetailLoaded) return;
+    try {
+      final userUId = await UserLocalDataSource().getUserId() ?? '';
+      await repository.joinCard(
+        cardId: currentState.card.id,
+        userUId: userUId,
+        boardId: boardId,
+      );
+      // Refresh members
+      final members = await repository.getCardMembers(cardId: currentState.card.id);
+      emit(currentState.copyWith(members: members));
+    } catch (_) {}
+  }
 }

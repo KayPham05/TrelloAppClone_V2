@@ -1,0 +1,197 @@
+
+/* --- Cột trái: Inbox --- */
+.left {
+  background: #f9fafb;
+  border-right: 1px solid #dfe1e6;
+  border-top-right-radius: 12px;
+  border-bottom-right-radius: 12px;
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.05);
+  padding: 16px;
+  height: 100%;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #c3c4c7 transparent;
+  transition: all 0.3s ease-in-out;
+  box-sizing: border-box;
+}
+
+.left:hover {
+  background: #ffffff;
+}
+
+/* Khi ẩn Inbox (thêm class hidden vào phần .left) */
+.left.hidden {
+  width: 0 !important;
+  opacity: 0;
+  padding: 0;
+  overflow: hidden;
+  border: none;
+  transition: all 0.3s ease-in-out;
+}
+
+/* --- Cột phải: Board nội dung --- */
+.right {
+  background: #ffffff;
+  border-top-left-radius: 12px;
+  border-bottom-left-radius: 12px;
+  height: 100%;
+  padding: 0;
+  overflow: hidden;
+  box-sizing: border-box;
+  transition: background 0.3s ease;
+}
+
+.right h1 {
+  font-size: 24px;
+  color: #172b4d;
+  font-weight: 600;
+  margin: 0;
+}
+
+/* --- Gutter giữa 2 cột (SplitJS) --- */
+.gutter {
+  background-color: #ffffff;
+  cursor: col-resize;
+  background-repeat: no-repeat;
+  background-position: 50%;
+  flex-shrink: 0;
+  transition: background-color 0.2s ease;
+}
+
+.gutter:hover {
+  background-color: #a0a1a4;
+}
+
+.gutter:active {
+  background-color: #a9a9a9; 
+}
+
+.dark .gutter {
+  background-color: #1E1F22;       
+}
+
+.dark .gutter:hover {
+  background-color: #dfe1e6;      
+}
+
+.dark .gutter:active {
+  background-color: #b5b8bd;        
+}
+
+
+/* --- Scrollbar đẹp hơn --- */
+.left::-webkit-scrollbar,
+.right::-webkit-scrollbar {
+  width: 8px;
+}
+
+.left::-webkit-scrollbar-thumb,
+.right::-webkit-scrollbar-thumb {
+  background-color: #c3c4c7;
+  border-radius: 4px;
+}
+
+.left::-webkit-scrollbar-thumb:hover,
+.right::-webkit-scrollbar-thumb:hover {
+  background-color: #a0a1a4;
+}
+
+/* --- Thanh công cụ dưới cùng --- */
+.bottom-toolbar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: #0d1b2a;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 0;
+  z-index: 20;
+  backdrop-filter: blur(10px);
+}
+
+.bottom-toolbar button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  background: transparent;
+  color: #d0d6e0;
+  font-size: 14px;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.bottom-toolbar button:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+}
+
+.bottom-toolbar button.active {
+  background: #5a6ff0;
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(90, 111, 240, 0.4);
+}
+
+.bottom-toolbar svg {
+  width: 16px;
+  height: 16px;
+}
+@keyframes slideInLeft {
+  from {
+    transform: translateX(-30px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOutLeft {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(-40px);
+    opacity: 0;
+  }
+}
+
+/* Hiệu ứng mở board full khi Inbox biến mất */
+@keyframes slideInBoard {
+  from {
+    transform: scale(0.98);
+    opacity: 0.8;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-slideInLeft {
+  animation: slideInLeft 0.35s ease forwards;
+}
+
+.animate-slideOutLeft {
+  animation: slideOutLeft 0.35s ease forwards;
+}
+
+.animate-slideInBoard {
+  animation: slideInBoard 0.3s ease forwards;
+}
+
+#drag-portal-root {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none; /* Để không cản chuột */
+}

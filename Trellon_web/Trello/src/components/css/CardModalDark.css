@@ -1,0 +1,197 @@
+/* ===== DARK MODE FOR CARD MODAL ===== */
+
+.dark .modal-overlay-new {
+  background: rgba(0, 0, 0, 0.7);
+}
+
+.dark .cardmodal-wrapper {
+  background-color: #1E1F22;
+  color: #E8EAED;
+  border-color: #3F4147;
+}
+
+/* HEADER */
+.dark .cardmodal-header {
+background-color: #1E1F22;
+  border-bottom: 1px solid #3F4147;
+}
+
+.dark .header-icon {
+  color: #9AA0A6;
+}
+
+.dark .header-title {
+  color: #FFFFFF;
+}
+
+.dark .header-subtitle {
+  color: #9AA0A6;
+}
+
+.dark .header-subtitle span {
+  color: #58A6FF;
+}
+
+.dark .close-btn {
+  color: #AAA;
+}
+.dark .close-btn:hover {
+  color: #FFF;
+}
+
+/* DUE DATE */
+.dark .due-section {
+  background-color: #2B2D31;
+  border-bottom: 1px solid #3F4147;
+}
+
+.dark .due-label {
+  color: #9AA0A6;
+}
+
+.dark .due-input {
+  background-color: #333;
+  color: #FFF;
+  border: 1px solid #555;
+}
+
+.dark .due-status.overdue {
+  background-color: #B04632;
+  color: #FFF;
+}
+
+.dark .due-status.soon {
+  background-color: #D6B91E;
+  color: #222;
+}
+
+.dark .due-status.normal {
+  background-color: #61BD4F;
+  color: #FFF;
+}
+
+/* BODY */
+.dark .cardmodal-body {
+  background: #1E1F22;
+}
+
+/* LEFT */
+.dark .cardmodal-left {
+  background-color: #2B2D31;
+  border-left: 1px solid #3F4147;
+}
+
+/* RIGHT */
+.dark .cardmodal-right {
+    background-color: #2B2D31;
+  border-left: 1px solid #3F4147;
+}
+
+/* SECTION HEADERS */
+.dark .section-header {
+  color: #CCCCCC;
+}
+
+/* DESCRIPTION */
+.dark .description-display {
+  background-color: #1E1F22;
+  color: #CCC;
+}
+.dark .description-display:hover {
+  background-color: #3B3B3B;
+}
+
+.dark .description-edit textarea {
+  background-color: #2B2D31;
+  color: #EEE;
+}
+
+.dark .btn-primary {
+  background-color: #1C62A8;
+  color: #FFF;
+}
+.dark .btn-primary:hover {
+  background-color: #155A97;
+}
+
+.dark .btn-secondary {
+  color: #B6C2CF;
+}
+.dark .btn-secondary:hover {
+  color: #FFF;
+}
+
+/* CHECKLIST */
+.dark .progress-bar {
+  background: #3A3A3A;
+}
+.dark .progress-fill {
+  background: #579DFF;
+}
+
+.dark .todo-input {
+  background: #1E1F22;
+  border-color: #3F4147;
+  color: #E8EAED;
+}
+
+.dark .todo-input:focus {
+  border-color: #579DFF;
+}
+
+.dark .todo-text {
+  color: #E8EAED;
+}
+
+.dark .todo-delete {
+  color: #9FADBC;
+}
+.dark .todo-delete:hover {
+  color: #CA3521;
+}
+
+/* COMMENTS */
+.dark .comment-avatar {
+  background: #1C62A8;
+}
+
+.dark .comment-textarea {
+  background: #2B2D31;
+  color: #FFF;
+}
+
+.dark .comment-content {
+  background-color: #2F3136;
+  color: #E8EAED;
+}
+
+.dark .comment-header {
+  color: #9AA0A6;
+}
+
+.dark .comment-delete {
+  color: #AAA;
+}
+.dark .comment-delete:hover {
+  color: #E74C3C;
+}
+
+/* SAVE BUTTON */
+.dark .btn-save {
+  background-color: #1C62A8;
+  color: #FFF;
+}
+.dark .btn-save:hover {
+  background-color: #155A97;
+}
+
+/* SCROLLBAR */
+.dark .cardmodal-left::-webkit-scrollbar-thumb,
+.dark .comment-list::-webkit-scrollbar-thumb {
+  background: #3F4147;
+}
+
+.dark .cardmodal-left::-webkit-scrollbar-thumb:hover,
+.dark .comment-list::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}

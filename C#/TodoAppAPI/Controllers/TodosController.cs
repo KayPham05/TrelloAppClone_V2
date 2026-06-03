@@ -272,5 +272,46 @@ namespace TodoAppAPI.Controllers
             
             return StatusCode(403, new { message = "Bạn không có quyền thay đổi ảnh nền card này." });
         }
+
+        // PATCH v1/api/cards/{id}/archive
+        [HttpPatch("{id}/archive")]
+        public async Task<IActionResult> ArchiveCard(string id, [FromQuery] string userUId)
+        {
+            var success = await _cardService.ArchiveCardAsync(id, userUId);
+            if (!success) return StatusCode(403, new { message = "Không thể lưu trữ thẻ hoặc bạn không có quyền." });
+            _ = _activity.AddActivity(userUId, $"archived card '{id}'");
+            return Ok(new { message = "Thẻ đã được lưu trữ." });
+        }
+
+        // PATCH v1/api/cards/{id}/unarchive
+        [HttpPatch("{id}/unarchive")]
+        public async Task<IActionResult> UnarchiveCard(string id, [FromQuery] string userUId)
+        {
+            var success = await _cardService.UnarchiveCardAsync(id, userUId);
+            if (!success) return StatusCode(403, new { message = "Không thể khôi phục thẻ hoặc bạn không có quyền." });
+            _ = _activity.AddActivity(userUId, $"unarchived card '{id}'");
+            return Ok(new { message = "Thẻ đã được khôi phục." });
+        }
+
+        // GET v1/api/cards/archived?boardUId=&userUId=
+        [HttpGet("archived")]
+        public async Task<IActionResult> GetArchivedCards([FromQuery] string boardUId, [FromQuery] string userUId)
+        {
+            if (string.IsNullOrEmpty(boardUId)) return BadRequest("boardUId is required");
+            var cards = await _cardService.GetArchivedCardsByBoardAsync(boardUId, userUId);
+            return Ok(cards);
+        }
+
+        // POST v1/api/cards/{id}/join
+        [HttpPost("{id}/join")]
+        public async Task<IActionResult> JoinCard(string id, [FromQuery] string userUId, [FromQuery] string boardId)
+        {
+            if (string.IsNullOrEmpty(userUId) || string.IsNullOrEmpty(boardId))
+                return BadRequest("userUId and boardId are required");
+            var success = await _cardService.JoinCardAsync(id, userUId, boardId);
+            if (!success) return StatusCode(403, new { message = "Không thể tham gia thẻ. Kiểm tra quyền hoặc cài đặt bảng." });
+            _ = _activity.AddActivity(userUId, $"joined card '{id}'");
+            return Ok(new { message = "Đã tham gia thẻ thành công." });
+        }
     }
 }

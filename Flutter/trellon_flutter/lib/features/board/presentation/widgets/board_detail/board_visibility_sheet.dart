@@ -92,7 +92,7 @@ class _BoardVisibilitySheetState extends State<BoardVisibilitySheet> {
           Flexible(
             child: ListView.separated(
               padding: const EdgeInsets.symmetric(vertical: 8),
-              separatorBuilder: (_, __) => const SizedBox.shrink(),
+              separatorBuilder: (_, _) => const SizedBox.shrink(),
               itemCount: _options.length,
               itemBuilder: (_, i) {
                 final opt = _options[i];

@@ -1,0 +1,252 @@
+/* Card Menu Floating */
+.card-menu-floating {
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.05);
+  width: 240px;
+  z-index: 10000;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  animation: menuSlideIn 0.15s ease;
+}
+
+@keyframes menuSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.card-menu-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 12px 8px 12px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.card-menu-header span {
+  font-size: 12px;
+  font-weight: 600;
+  color: #5e6c84;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.menu-close-btn {
+  background: transparent;
+  border: none;
+  color: #5e6c84;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+}
+
+.menu-close-btn:hover {
+  background: #091e4214;
+  color: #172b4d;
+}
+
+.card-menu-section {
+  padding: 8px 0;
+}
+
+.card-menu-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  color: #172b4d;
+  text-align: left;
+  transition: background 0.15s ease;
+}
+
+.card-menu-item:hover {
+  background: #091e4214;
+}
+
+.card-menu-item svg {
+  flex-shrink: 0;
+  color: #5e6c84;
+}
+
+.card-menu-item:hover svg {
+  color: #172b4d;
+}
+
+.card-menu-item.danger {
+  color: #b04632;
+}
+
+.card-menu-item.danger svg {
+  color: #b04632;
+}
+
+.card-menu-item.danger:hover {
+  background: #ffebe6;
+}
+
+.card-menu-divider {
+  height: 1px;
+  background: #e5e7eb;
+  margin: 4px 0;
+}
+
+/* ===========================
+   DARK MODE – CARD MENU
+   =========================== */
+.dark .card-menu-floating {
+  background: #2B2D31; /* nền popup Discord */
+  border: 1px solid #3F4147;
+  box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+}
+
+.dark .card-menu-header {
+  border-bottom: 1px solid #3F4147;
+}
+
+.dark .card-menu-header span {
+  color: #D1D2D3; /* text phụ sáng vừa */
+}
+
+.dark .menu-close-btn {
+  color: #AEB1B7;
+}
+
+.dark .menu-close-btn:hover {
+  background: #4A4D54;
+  color: #FFFFFF;
+}
+
+/* Items */
+.dark .card-menu-item {
+  color: #E4E5E7; /* text chính */
+}
+
+.dark .card-menu-item svg {
+  color: #AEB1B7;
+}
+
+.dark .card-menu-item:hover {
+  background: #3F4147; /* hover nhẹ như Discord */
+}
+
+.dark .card-menu-item:hover svg {
+  color: #FFFFFF;
+}
+
+/* Danger */
+.dark .card-menu-item.danger {
+  color: #ff6b6b;
+}
+
+.dark .card-menu-item.danger svg {
+  color: #ff6b6b;
+}
+
+.dark .card-menu-item.danger:hover {
+  background: rgba(255, 107, 107, 0.15);
+}
+
+/* Divider */
+.dark .card-menu-divider {
+  background: #3F4147;
+}
+
+/* ===========================
+   MOVE PICKER SUB-PANEL
+   =========================== */
+.card-move-picker {
+  position: absolute;
+  left: 100%;
+  top: 0;
+  width: 200px;
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 8px 16px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.05);
+  z-index: 10001;
+  padding: 8px 0;
+  animation: menuSlideIn 0.15s ease;
+}
+
+.card-move-picker-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: #5e6c84;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 4px 12px 8px;
+  border-bottom: 1px solid #e5e7eb;
+  margin-bottom: 4px;
+}
+
+.card-move-picker-empty {
+  font-size: 13px;
+  color: #9ca3af;
+  padding: 6px 12px;
+}
+
+.card-move-picker-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  padding: 7px 12px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  color: #172b4d;
+  text-align: left;
+  transition: background 0.12s ease;
+}
+
+.card-move-picker-item:hover {
+  background: #091e4214;
+}
+
+.card-move-picker-advanced {
+  border-top: 1px solid #e5e7eb;
+  margin-top: 4px;
+  color: #5e6c84;
+  font-style: italic;
+  font-size: 12px;
+}
+
+.dark .card-move-picker {
+  background: #2B2D31;
+  border: 1px solid #3F4147;
+  box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+}
+
+.dark .card-move-picker-title {
+  color: #AEB1B7;
+  border-bottom: 1px solid #3F4147;
+}
+
+.dark .card-move-picker-item {
+  color: #E4E5E7;
+}
+
+.dark .card-move-picker-item:hover {
+  background: #3F4147;
+}
+
+.dark .card-move-picker-advanced {
+  border-top: 1px solid #3F4147;
+  color: #AEB1B7;
+}
