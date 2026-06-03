@@ -58,6 +58,13 @@ import 'features/activity/domain/usecases/get_notifications_usecase.dart';
 import 'features/activity/domain/usecases/mark_all_read_usecase.dart';
 import 'features/activity/domain/usecases/mark_as_read_usecase.dart';
 import 'features/activity/presentation/cubit/notification_cubit.dart';
+import 'features/ai_analysis/data/datasources/ai_analysis_remote_data_source.dart';
+import 'features/ai_analysis/data/repositories/ai_analysis_repository_impl.dart';
+import 'features/ai_analysis/domain/repositories/i_ai_analysis_repository.dart';
+import 'features/ai_analysis/domain/usecases/analyze_board_usecase.dart';
+import 'features/ai_analysis/domain/usecases/analyze_card_usecase.dart';
+import 'features/ai_analysis/domain/usecases/analyze_workspace_usecase.dart';
+import 'features/ai_analysis/presentation/cubit/ai_analysis_cubit.dart';
 
 final serviceLocator = GetIt.instance;
 
@@ -71,7 +78,9 @@ Future<void> initDependencies() async {
   final dioClient = DioClient(persistentCookieJar: cookieJar);
 
   serviceLocator.registerLazySingleton<Dio>(() => dioClient.instance);
-  serviceLocator.registerLazySingleton<UserLocalDataSource>(() => UserLocalDataSource());
+  serviceLocator.registerLazySingleton<UserLocalDataSource>(
+    () => UserLocalDataSource(),
+  );
 
   _initAuth();
   _initInbox();
@@ -79,6 +88,7 @@ Future<void> initDependencies() async {
   _initBoard();
   _initWorkspace();
   _initNotification();
+  _initAiAnalysis();
 }
 
 void _initWorkspace() {
@@ -89,27 +99,43 @@ void _initWorkspace() {
 
   // Repository
   serviceLocator.registerLazySingleton<WorkspaceRepository>(
-    () => WorkspaceRepositoryImpl(remoteDataSource: serviceLocator<WorkspaceRemoteDataSource>()),
+    () => WorkspaceRepositoryImpl(
+      remoteDataSource: serviceLocator<WorkspaceRemoteDataSource>(),
+    ),
   );
 
   // UseCases
-  serviceLocator.registerLazySingleton(() => GetWorkspacesUseCase(serviceLocator()));
-  serviceLocator.registerLazySingleton(() => CreateWorkspaceUseCase(serviceLocator()));
-  serviceLocator.registerLazySingleton(() => UpdateWorkspaceUseCase(serviceLocator()));
-  serviceLocator.registerLazySingleton(() => DeleteWorkspaceUseCase(serviceLocator()));
-  serviceLocator.registerLazySingleton(() => AddWorkspaceMemberUseCase(serviceLocator()));
-  serviceLocator.registerLazySingleton(() => GetWorkspaceBoardsUseCase(serviceLocator()));
+  serviceLocator.registerLazySingleton(
+    () => GetWorkspacesUseCase(serviceLocator()),
+  );
+  serviceLocator.registerLazySingleton(
+    () => CreateWorkspaceUseCase(serviceLocator()),
+  );
+  serviceLocator.registerLazySingleton(
+    () => UpdateWorkspaceUseCase(serviceLocator()),
+  );
+  serviceLocator.registerLazySingleton(
+    () => DeleteWorkspaceUseCase(serviceLocator()),
+  );
+  serviceLocator.registerLazySingleton(
+    () => AddWorkspaceMemberUseCase(serviceLocator()),
+  );
+  serviceLocator.registerLazySingleton(
+    () => GetWorkspaceBoardsUseCase(serviceLocator()),
+  );
 
   // Cubit
-  serviceLocator.registerFactory(() => WorkspaceCubit(
-    getWorkspacesUseCase: serviceLocator(),
-    createWorkspaceUseCase: serviceLocator(),
-    updateWorkspaceUseCase: serviceLocator(),
-    deleteWorkspaceUseCase: serviceLocator(),
-    addWorkspaceMemberUseCase: serviceLocator(),
-    createBoardUseCase: serviceLocator(),
-    userLocalDataSource: serviceLocator(),
-  ));
+  serviceLocator.registerFactory(
+    () => WorkspaceCubit(
+      getWorkspacesUseCase: serviceLocator(),
+      createWorkspaceUseCase: serviceLocator(),
+      updateWorkspaceUseCase: serviceLocator(),
+      deleteWorkspaceUseCase: serviceLocator(),
+      addWorkspaceMemberUseCase: serviceLocator(),
+      createBoardUseCase: serviceLocator(),
+      userLocalDataSource: serviceLocator(),
+    ),
+  );
 }
 
 void _initBoard() {
@@ -120,32 +146,46 @@ void _initBoard() {
 
   // Repository
   serviceLocator.registerLazySingleton<BoardRepository>(
-    () => BoardRepositoryImpl(remoteDataSource: serviceLocator<BoardRemoteDataSource>()),
+    () => BoardRepositoryImpl(
+      remoteDataSource: serviceLocator<BoardRemoteDataSource>(),
+    ),
   );
 
   // UseCases
-  serviceLocator.registerLazySingleton(() => GetRecentBoardsUseCase(serviceLocator()));
-  serviceLocator.registerLazySingleton(() => CreateBoardUseCase(serviceLocator()));
-  serviceLocator.registerLazySingleton(() => GetPersonalBoardsUseCase(serviceLocator()));
-  serviceLocator.registerLazySingleton(() => SaveRecentBoardUseCase(serviceLocator()));
+  serviceLocator.registerLazySingleton(
+    () => GetRecentBoardsUseCase(serviceLocator()),
+  );
+  serviceLocator.registerLazySingleton(
+    () => CreateBoardUseCase(serviceLocator()),
+  );
+  serviceLocator.registerLazySingleton(
+    () => GetPersonalBoardsUseCase(serviceLocator()),
+  );
+  serviceLocator.registerLazySingleton(
+    () => SaveRecentBoardUseCase(serviceLocator()),
+  );
 
   // BoardCubit
-  serviceLocator.registerFactory(() => BoardCubit(
-    getPersonalBoardsUseCase: serviceLocator(),
-    getWorkspacesUseCase: serviceLocator(),
-    getRecentBoardsUseCase: serviceLocator(),
-    createBoardUseCase: serviceLocator(),
-    userLocalDataSource: serviceLocator(),
-  ));
+  serviceLocator.registerFactory(
+    () => BoardCubit(
+      getPersonalBoardsUseCase: serviceLocator(),
+      getWorkspacesUseCase: serviceLocator(),
+      getRecentBoardsUseCase: serviceLocator(),
+      createBoardUseCase: serviceLocator(),
+      userLocalDataSource: serviceLocator(),
+    ),
+  );
 
   // BoardDetailCubit — uses data source, userLocalDataSource, and updateListUIdUseCase
-  serviceLocator.registerFactory(() => BoardDetailCubit(
-    dataSource: serviceLocator<BoardRemoteDataSource>(),
-    userLocalDataSource: serviceLocator<UserLocalDataSource>(),
-    updateListUIdUseCase: serviceLocator<UpdateListUIdUseCase>(),
-    updateCardStatusUseCase: serviceLocator<UpdateCardStatusUseCase>(),
-    saveRecentBoardUseCase: serviceLocator<SaveRecentBoardUseCase>(),
-  ));
+  serviceLocator.registerFactory(
+    () => BoardDetailCubit(
+      dataSource: serviceLocator<BoardRemoteDataSource>(),
+      userLocalDataSource: serviceLocator<UserLocalDataSource>(),
+      updateListUIdUseCase: serviceLocator<UpdateListUIdUseCase>(),
+      updateCardStatusUseCase: serviceLocator<UpdateCardStatusUseCase>(),
+      saveRecentBoardUseCase: serviceLocator<SaveRecentBoardUseCase>(),
+    ),
+  );
 }
 
 void _initCard() {
@@ -155,27 +195,47 @@ void _initCard() {
   );
 
   // UseCases
-  serviceLocator.registerLazySingleton(() => DeleteCardUseCase(serviceLocator()));
-  serviceLocator.registerLazySingleton(() => UpdateCardStatusUseCase(serviceLocator()));
-  serviceLocator.registerLazySingleton(() => AddCardCommentUseCase(serviceLocator()));
-  serviceLocator.registerLazySingleton(() => UploadAttachmentUseCase(serviceLocator()));
-  serviceLocator.registerLazySingleton(() => GetAttachmentsUseCase(serviceLocator()));
-  serviceLocator.registerLazySingleton(() => DeleteAttachmentUseCase(serviceLocator()));
-  serviceLocator.registerLazySingleton(() => UpdateAttachmentDescriptionUseCase(serviceLocator()));
-  serviceLocator.registerLazySingleton(() => UploadCardCoverUseCase(serviceLocator()));
-  serviceLocator.registerLazySingleton(() => UpdateListUIdUseCase(serviceLocator()));
+  serviceLocator.registerLazySingleton(
+    () => DeleteCardUseCase(serviceLocator()),
+  );
+  serviceLocator.registerLazySingleton(
+    () => UpdateCardStatusUseCase(serviceLocator()),
+  );
+  serviceLocator.registerLazySingleton(
+    () => AddCardCommentUseCase(serviceLocator()),
+  );
+  serviceLocator.registerLazySingleton(
+    () => UploadAttachmentUseCase(serviceLocator()),
+  );
+  serviceLocator.registerLazySingleton(
+    () => GetAttachmentsUseCase(serviceLocator()),
+  );
+  serviceLocator.registerLazySingleton(
+    () => DeleteAttachmentUseCase(serviceLocator()),
+  );
+  serviceLocator.registerLazySingleton(
+    () => UpdateAttachmentDescriptionUseCase(serviceLocator()),
+  );
+  serviceLocator.registerLazySingleton(
+    () => UploadCardCoverUseCase(serviceLocator()),
+  );
+  serviceLocator.registerLazySingleton(
+    () => UpdateListUIdUseCase(serviceLocator()),
+  );
 
   // Cubit
-  serviceLocator.registerFactory(() => CardDetailCubit(
-    serviceLocator(),
-    serviceLocator(),
-    serviceLocator(),
-    serviceLocator(),
-    serviceLocator(),
-    serviceLocator(),
-    serviceLocator(),
-    serviceLocator(),
-  ));
+  serviceLocator.registerFactory(
+    () => CardDetailCubit(
+      serviceLocator(),
+      serviceLocator(),
+      serviceLocator(),
+      serviceLocator(),
+      serviceLocator(),
+      serviceLocator(),
+      serviceLocator(),
+      serviceLocator(),
+    ),
+  );
 }
 
 void _initAuth() {
@@ -187,9 +247,15 @@ void _initAuth() {
   // UseCases
   serviceLocator.registerLazySingleton(() => LoginUseCase(serviceLocator()));
   serviceLocator.registerLazySingleton(() => RegisterUseCase(serviceLocator()));
-  serviceLocator.registerLazySingleton(() => VerifyCodeUseCase(serviceLocator()));
-  serviceLocator.registerLazySingleton(() => ResendCodeUseCase(serviceLocator()));
-  serviceLocator.registerLazySingleton(() => CheckOtpStatusUseCase(serviceLocator()));
+  serviceLocator.registerLazySingleton(
+    () => VerifyCodeUseCase(serviceLocator()),
+  );
+  serviceLocator.registerLazySingleton(
+    () => ResendCodeUseCase(serviceLocator()),
+  );
+  serviceLocator.registerLazySingleton(
+    () => CheckOtpStatusUseCase(serviceLocator()),
+  );
 
   // Cubits
   serviceLocator.registerFactory(
@@ -215,12 +281,18 @@ void _initInbox() {
 
   // Repository
   serviceLocator.registerLazySingleton<InboxRepositories>(
-    () => InboxRepositoriesImpl(remoteDataSource: serviceLocator<InboxRemoteDataSource>()),
+    () => InboxRepositoriesImpl(
+      remoteDataSource: serviceLocator<InboxRemoteDataSource>(),
+    ),
   );
 
   // UseCases
-  serviceLocator.registerLazySingleton(() => GetInboxCardUseCase(serviceLocator()));
-  serviceLocator.registerLazySingleton(() => AddInboxCardUseCase(serviceLocator()));
+  serviceLocator.registerLazySingleton(
+    () => GetInboxCardUseCase(serviceLocator()),
+  );
+  serviceLocator.registerLazySingleton(
+    () => AddInboxCardUseCase(serviceLocator()),
+  );
 
   // Cubit
   serviceLocator.registerFactory(
@@ -242,23 +314,66 @@ void _initNotification() {
 
   // Repository
   serviceLocator.registerLazySingleton<INotificationRepository>(
-    () => NotificationRepositoryImpl(remoteDataSource: serviceLocator<NotificationRemoteDataSource>()),
+    () => NotificationRepositoryImpl(
+      remoteDataSource: serviceLocator<NotificationRemoteDataSource>(),
+    ),
   );
 
   // UseCases
-  serviceLocator.registerLazySingleton(() => GetNotificationsUseCase(serviceLocator()));
-  serviceLocator.registerLazySingleton(() => MarkAsReadUseCase(serviceLocator()));
-  serviceLocator.registerLazySingleton(() => MarkAllReadUseCase(serviceLocator()));
-  serviceLocator.registerLazySingleton(() => DeleteNotificationUseCase(serviceLocator()));
+  serviceLocator.registerLazySingleton(
+    () => GetNotificationsUseCase(serviceLocator()),
+  );
+  serviceLocator.registerLazySingleton(
+    () => MarkAsReadUseCase(serviceLocator()),
+  );
+  serviceLocator.registerLazySingleton(
+    () => MarkAllReadUseCase(serviceLocator()),
+  );
+  serviceLocator.registerLazySingleton(
+    () => DeleteNotificationUseCase(serviceLocator()),
+  );
 
-  serviceLocator.registerLazySingleton(() => NotificationCubit(
-    getNotificationsUseCase: serviceLocator(),
-    markAsReadUseCase: serviceLocator(),
-    markAllReadUseCase: serviceLocator(),
-    deleteNotificationUseCase: serviceLocator(),
-  ));
+  serviceLocator.registerLazySingleton(
+    () => NotificationCubit(
+      getNotificationsUseCase: serviceLocator(),
+      markAsReadUseCase: serviceLocator(),
+      markAllReadUseCase: serviceLocator(),
+      deleteNotificationUseCase: serviceLocator(),
+    ),
+  );
 
-  serviceLocator.registerLazySingleton(() => NotificationRealtimeService(
-    cubit: serviceLocator<NotificationCubit>(),
-  ));
+  serviceLocator.registerLazySingleton(
+    () =>
+        NotificationRealtimeService(cubit: serviceLocator<NotificationCubit>()),
+  );
+}
+
+void _initAiAnalysis() {
+  serviceLocator.registerLazySingleton<AiAnalysisRemoteDataSource>(
+    () => AiAnalysisRemoteDataSourceImpl(client: serviceLocator<Dio>()),
+  );
+
+  serviceLocator.registerLazySingleton<IAiAnalysisRepository>(
+    () => AiAnalysisRepositoryImpl(
+      remoteDataSource: serviceLocator<AiAnalysisRemoteDataSource>(),
+    ),
+  );
+
+  serviceLocator.registerLazySingleton(
+    () => AnalyzeWorkspaceUseCase(serviceLocator()),
+  );
+  serviceLocator.registerLazySingleton(
+    () => AnalyzeBoardUseCase(serviceLocator()),
+  );
+  serviceLocator.registerLazySingleton(
+    () => AnalyzeCardUseCase(serviceLocator()),
+  );
+
+  serviceLocator.registerFactory(
+    () => AiAnalysisCubit(
+      analyzeWorkspaceUseCase: serviceLocator(),
+      analyzeBoardUseCase: serviceLocator(),
+      analyzeCardUseCase: serviceLocator(),
+    ),
+  );
 }

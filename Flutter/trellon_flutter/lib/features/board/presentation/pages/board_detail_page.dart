@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../init_dependencies.dart';
+import '../../../ai_analysis/presentation/pages/ai_analysis_page.dart';
 import '../../domain/entities/list_entity.dart';
 import '../../domain/entities/board_entity.dart';
 import '../cubit/board_detail_cubit.dart';
@@ -115,6 +116,26 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
     });
   }
 
+  bool _canOpenAiAnalysis(String? role) {
+    final normalizedRole = role?.toLowerCase() ?? '';
+    return normalizedRole == 'owner' ||
+        normalizedRole == 'admin' ||
+        normalizedRole == 'editor';
+  }
+
+  void _openAiAnalysis(BoardDetailLoaded state) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => AiAnalysisPage(
+          scopeType: 'board',
+          scopeUId: state.boardId,
+          title: state.boardName,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final arguments = ModalRoute.of(context)?.settings.arguments;
@@ -144,13 +165,13 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
       create: (ctx) {
         _cubit = serviceLocator<BoardDetailCubit>()
           ..loadBoard(
-            boardId, 
-            boardName, 
+            boardId,
+            boardName,
             backgroundUrl: backgroundUrl,
             workspaceId: workspaceId,
             workspaceName: workspaceName,
             visibility: visibility,
-        );
+          );
         return _cubit!;
       },
       child: BlocConsumer<BoardDetailCubit, BoardDetailState>(
@@ -288,6 +309,20 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
                                 },
                               ),
                               const SizedBox(width: 8),
+                              if (loadedState != null &&
+                                  _canOpenAiAnalysis(
+                                    loadedState.boardRole,
+                                  )) ...[
+                                IconButton(
+                                  tooltip: 'Báo cáo AI',
+                                  icon: const Icon(
+                                    Icons.auto_awesome,
+                                    color: Colors.white,
+                                  ),
+                                  onPressed: () => _openAiAnalysis(loadedState),
+                                ),
+                                const SizedBox(width: 8),
+                              ],
                               IconButton(
                                 icon: const Icon(
                                   Icons.settings,
@@ -430,7 +465,11 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
                                             scale: 1.0,
                                             onTap: () {},
                                             onToggleComplete: (val) {
-                                              _cubit?.toggleCardStatus(list.id, list.cards[i ~/ 2].id, val);
+                                              _cubit?.toggleCardStatus(
+                                                list.id,
+                                                list.cards[i ~/ 2].id,
+                                                val,
+                                              );
                                             },
                                           ),
                                     onAddCard: () {},
@@ -488,7 +527,11 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
                                             elevated: true,
                                             onTap: () {},
                                             onToggleComplete: (val) {
-                                              _cubit?.toggleCardStatus(list.id, card.id, val);
+                                              _cubit?.toggleCardStatus(
+                                                list.id,
+                                                card.id,
+                                                val,
+                                              );
                                             },
                                           ),
                                         ),
@@ -518,7 +561,11 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
                                       );
                                     },
                                     onToggleComplete: (val) {
-                                      _cubit?.toggleCardStatus(list.id, card.id, val);
+                                      _cubit?.toggleCardStatus(
+                                        list.id,
+                                        card.id,
+                                        val,
+                                      );
                                     },
                                   ),
                                 );
@@ -609,7 +656,11 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
                                 elevated: true,
                                 onTap: () {},
                                 onToggleComplete: (val) {
-                                  _cubit?.toggleCardStatus(list.id, card.id, val);
+                                  _cubit?.toggleCardStatus(
+                                    list.id,
+                                    card.id,
+                                    val,
+                                  );
                                 },
                               ),
                             ),

@@ -8,6 +8,7 @@ using TodoAppAPI.Models;
 using TodoAppAPI.Service;
 using TodoAppAPI.Service.JWT;
 using TodoAppAPI.Service.Cloudinary;
+using TodoAppAPI.Service.Gemini;
 using TodoAppAPI.Services;
 using TodoAppAPI.Hubs;
 
@@ -36,6 +37,12 @@ builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<ICardDueDateReminderService, CardDueDateReminderService>();
 builder.Services.AddScoped<ITwoFactorService, TwoFactorService>();
+builder.Services.AddScoped<IGeminiAnalysisService, GeminiAnalysisService>();
+builder.Services.AddHttpClient<IGeminiClient, GeminiClient>((serviceProvider, client) =>
+{
+    var settings = serviceProvider.GetRequiredService<Microsoft.Extensions.Options.IOptions<GeminiSettings>>().Value;
+    client.Timeout = TimeSpan.FromSeconds(Math.Max(1, settings.TimeoutSeconds));
+});
 builder.Services.AddHostedService<CardDueDateReminderHostedService>();
 
 // IMemoryCache for 2FA temp secrets
@@ -45,6 +52,9 @@ builder.Services.AddScoped<IAuthorizationService, AuthorizationService>();
 // Cloudinary
 builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection("CloudinarySettings"));
 builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
+
+// Gemini project analysis
+builder.Services.Configure<GeminiSettings>(builder.Configuration.GetSection("GeminiSettings"));
 
 // 1. JWT Security Validation
 var jwtKey = builder.Configuration["Jwt:Key"];
