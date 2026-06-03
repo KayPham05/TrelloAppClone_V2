@@ -71,13 +71,19 @@ class _BoardArchiveSheetState extends State<BoardArchiveSheet>
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('✅ Đã khôi phục thẻ "${card.title}"'), behavior: SnackBarBehavior.floating),
+          SnackBar(
+            content: Text(' Đã khôi phục thẻ "${card.title}"'),
+            behavior: SnackBarBehavior.floating,
+          ),
         );
       }
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('❌ Khôi phục thất bại'), behavior: SnackBarBehavior.floating),
+          const SnackBar(
+            content: Text('❌ Khôi phục thất bại'),
+            behavior: SnackBarBehavior.floating,
+          ),
         );
       }
     }
@@ -98,15 +104,32 @@ class _BoardArchiveSheetState extends State<BoardArchiveSheet>
       child: Column(
         children: [
           const SizedBox(height: 12),
-          Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey.withOpacity(0.5), borderRadius: BorderRadius.circular(2))),
+          Container(
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: Colors.grey.withOpacity(0.5),
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
           const SizedBox(height: 12),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
               children: [
-                IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => Navigator.pop(context)),
+                IconButton(
+                  icon: const Icon(Icons.arrow_back),
+                  onPressed: () => Navigator.pop(context),
+                ),
                 Expanded(
-                  child: Text('Lưu trữ', textAlign: TextAlign.center, style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600)),
+                  child: Text(
+                    'Lưu trữ',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.inter(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ),
                 const SizedBox(width: 48),
               ],
@@ -119,11 +142,21 @@ class _BoardArchiveSheetState extends State<BoardArchiveSheet>
               controller: _searchCtrl,
               decoration: InputDecoration(
                 hintText: 'Lọc thẻ theo tên...',
-                hintStyle: GoogleFonts.inter(fontSize: 13, color: AppColors.onSurfaceVariant),
-                prefixIcon: const Icon(Icons.search, color: AppColors.onSurfaceVariant, size: 20),
+                hintStyle: GoogleFonts.inter(
+                  fontSize: 13,
+                  color: AppColors.onSurfaceVariant,
+                ),
+                prefixIcon: const Icon(
+                  Icons.search,
+                  color: AppColors.onSurfaceVariant,
+                  size: 20,
+                ),
                 filled: true,
                 fillColor: AppColors.surfaceContainerLow,
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide.none,
+                ),
                 isDense: true,
                 contentPadding: const EdgeInsets.symmetric(vertical: 10),
               ),
@@ -135,7 +168,10 @@ class _BoardArchiveSheetState extends State<BoardArchiveSheet>
             labelColor: AppColors.primaryContainer,
             unselectedLabelColor: AppColors.onSurfaceVariant,
             indicatorColor: AppColors.primaryContainer,
-            tabs: const [Tab(text: 'Thẻ'), Tab(text: 'Danh sách')],
+            tabs: const [
+              Tab(text: 'Thẻ'),
+              Tab(text: 'Danh sách'),
+            ],
           ),
           Expanded(
             child: TabBarView(
@@ -145,30 +181,48 @@ class _BoardArchiveSheetState extends State<BoardArchiveSheet>
                 _loading
                     ? const Center(child: CircularProgressIndicator())
                     : _filtered.isEmpty
-                        ? _buildEmpty()
-                        : ListView.separated(
-                            padding: const EdgeInsets.all(16),
-                            separatorBuilder: (_, __) => const Divider(height: 1),
-                            itemCount: _filtered.length,
-                            itemBuilder: (_, i) {
-                              final c = _filtered[i];
-                              return ListTile(
-                                title: Text(c.title, style: GoogleFonts.inter(fontSize: 14)),
-                                trailing: TextButton(
-                                  onPressed: () => _restore(c),
-                                  child: const Text('Khôi phục', style: TextStyle(color: AppColors.primaryContainer)),
+                    ? _buildEmpty()
+                    : ListView.separated(
+                        padding: const EdgeInsets.all(16),
+                        separatorBuilder: (_, _) => const Divider(height: 1),
+                        itemCount: _filtered.length,
+                        itemBuilder: (_, i) {
+                          final c = _filtered[i];
+                          return ListTile(
+                            title: Text(
+                              c.title,
+                              style: GoogleFonts.inter(fontSize: 14),
+                            ),
+                            trailing: TextButton(
+                              onPressed: () => _restore(c),
+                              child: const Text(
+                                'Khôi phục',
+                                style: TextStyle(
+                                  color: AppColors.primaryContainer,
                                 ),
-                              );
-                            },
-                          ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
                 // Danh sách – Coming soon
                 Center(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.list_alt, size: 48, color: AppColors.outlineVariant),
+                      const Icon(
+                        Icons.list_alt,
+                        size: 48,
+                        color: AppColors.outlineVariant,
+                      ),
                       const SizedBox(height: 12),
-                      Text('Tính năng đang phát triển', style: GoogleFonts.inter(fontSize: 14, color: AppColors.onSurfaceVariant)),
+                      Text(
+                        'Tính năng đang phát triển',
+                        style: GoogleFonts.inter(
+                          fontSize: 14,
+                          color: AppColors.onSurfaceVariant,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -186,11 +240,19 @@ class _BoardArchiveSheetState extends State<BoardArchiveSheet>
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.archive_outlined, size: 64, color: AppColors.outlineVariant),
+          const Icon(
+            Icons.archive_outlined,
+            size: 64,
+            color: AppColors.outlineVariant,
+          ),
           const SizedBox(height: 16),
           Text(
             'Không có thẻ lưu trữ nào',
-            style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.onSurfaceVariant),
+            style: GoogleFonts.inter(
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: AppColors.onSurfaceVariant,
+            ),
           ),
         ],
       ),

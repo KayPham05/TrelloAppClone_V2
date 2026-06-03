@@ -8,7 +8,7 @@ class CardDetailDescription extends StatelessWidget {
   final ValueChanged<String>? onSave;
 
   const CardDetailDescription({
-    super.key, 
+    super.key,
     required this.description,
     this.onSave,
   });
@@ -29,49 +29,36 @@ class CardDetailDescription extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: GestureDetector(
-        onTap: () => _openEditor(context),
-        child: Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: AppColors.surfaceContainerLowest,
-            borderRadius: BorderRadius.circular(24),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.onSurface.withValues(alpha: 0.04),
-                blurRadius: 24,
-                offset: const Offset(0, 8),
-              )
-            ],
-          ),
-          child: Column(
+    final isEmpty = description.isEmpty;
+    return GestureDetector(
+      onTap: () => _openEditor(context),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 48),
+          child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  const Icon(Icons.description_rounded,
-                      size: 16, color: AppColors.onSurfaceVariant),
-                  const SizedBox(width: 8),
-                  Text(
-                    'MÔ TẢ',
-                    style: GoogleFonts.inter(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.onSurfaceVariant,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                ],
+              Padding(
+                padding: const EdgeInsets.only(top: 14),
+                child: Icon(Icons.menu_rounded,
+                    size: 20, color: Colors.grey.shade500),
               ),
-              const SizedBox(height: 16),
-              Text(
-                description.isNotEmpty ? description : 'Chưa có mô tả chi tiết. Nhấn để thêm...',
-                style: GoogleFonts.inter(
-                  fontSize: 13,
-                  height: 1.6,
-                  color: description.isNotEmpty ? AppColors.onSurface : AppColors.onSurfaceVariant,
+              const SizedBox(width: 12),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  child: Text(
+                    isEmpty ? 'Thêm mô tả' : description,
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      height: 1.5,
+                      color: isEmpty
+                          ? AppColors.onSurfaceVariant
+                          : AppColors.onSurface,
+                    ),
+                    maxLines: isEmpty ? 1 : null,
+                  ),
                 ),
               ),
             ],

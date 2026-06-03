@@ -61,3 +61,7 @@ class CardDetailError extends CardDetailState {
 }
 
 class CardDetailMoved extends CardDetailState {}
+
+class CardDetailArchived extends CardDetailState {}
+
+class CardDetailDeleted extends CardDetailState {}

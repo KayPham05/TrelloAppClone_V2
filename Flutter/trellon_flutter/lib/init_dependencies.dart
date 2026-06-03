@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:get_it/get_it.dart';
 import 'package:dio/dio.dart';
 import 'package:cookie_jar/cookie_jar.dart';
@@ -9,9 +10,13 @@ import 'features/auth/domain/repositories/i_auth_repository.dart';
 import 'features/auth/domain/usecases/login_usecase.dart';
 import 'features/auth/domain/usecases/register_usecase.dart';
 import 'features/auth/domain/usecases/verify_code_usecase.dart';
+import 'features/auth/domain/usecases/sign_in_with_google_usecase.dart';
+import 'features/auth/domain/usecases/forgot_password_usecase.dart';
+import 'features/auth/domain/usecases/reset_password_usecase.dart';
 import 'features/auth/presentation/cubit/login_cubit.dart';
 import 'features/auth/presentation/cubit/register_cubit.dart';
 import 'features/auth/presentation/cubit/verify_cubit.dart';
+import 'features/auth/presentation/cubit/forgot_password_cubit.dart';
 import 'features/inbox/data/repositories/inbox_repositories_impl.dart';
 import 'features/inbox/data/datasources/inbox_remote_data_source.dart';
 import 'features/inbox/domain/repositories/i_inbox_repositories.dart';
@@ -49,6 +54,11 @@ import 'features/workspace/domain/usecases/add_workspace_member_usecase.dart';
 import 'features/workspace/domain/usecases/get_workspace_boards_usecase.dart';
 import 'features/workspace/presentation/cubit/workspace_cubit.dart';
 import 'features/card/domain/usecases/update_list_uid_usecase.dart';
+import 'features/planner/data/datasources/planner_remote_data_source.dart';
+import 'features/planner/data/repositories/planner_repository_impl.dart';
+import 'features/planner/domain/repositories/planner_repository.dart';
+import 'features/planner/domain/usecases/get_planner_cards_usecase.dart';
+import 'features/planner/presentation/cubit/planner_cubit.dart';
 import 'features/activity/data/datasources/notification_remote_datasource.dart';
 import 'features/activity/data/repositories/notification_repository_impl.dart';
 import 'features/activity/data/services/notification_realtime_service.dart';
@@ -67,13 +77,8 @@ import 'features/ai_analysis/domain/usecases/analyze_workspace_usecase.dart';
 import 'features/ai_analysis/presentation/cubit/ai_analysis_cubit.dart';
 
 final serviceLocator = GetIt.instance;
-
 Future<void> initDependencies() async {
-  // Core — khởi tạo PersistCookieJar để cookie refreshToken tồn tại qua restart
-  final appDir = await getApplicationDocumentsDirectory();
-  final cookieJar = PersistCookieJar(
-    storage: FileStorage('${appDir.path}/.cookies/'),
-  );
+  CookieJar cookieJar = CookieJar();
   serviceLocator.registerLazySingleton<CookieJar>(() => cookieJar);
   final dioClient = DioClient(persistentCookieJar: cookieJar);
 
@@ -87,6 +92,7 @@ Future<void> initDependencies() async {
   _initCard();
   _initBoard();
   _initWorkspace();
+  _initPlanner();
   _initNotification();
   _initAiAnalysis();
 }
@@ -125,17 +131,15 @@ void _initWorkspace() {
   );
 
   // Cubit
-  serviceLocator.registerFactory(
-    () => WorkspaceCubit(
-      getWorkspacesUseCase: serviceLocator(),
-      createWorkspaceUseCase: serviceLocator(),
-      updateWorkspaceUseCase: serviceLocator(),
-      deleteWorkspaceUseCase: serviceLocator(),
-      addWorkspaceMemberUseCase: serviceLocator(),
-      createBoardUseCase: serviceLocator(),
-      userLocalDataSource: serviceLocator(),
-    ),
-  );
+  serviceLocator.registerLazySingleton(() => WorkspaceCubit(
+    getWorkspacesUseCase: serviceLocator(),
+    createWorkspaceUseCase: serviceLocator(),
+    updateWorkspaceUseCase: serviceLocator(),
+    deleteWorkspaceUseCase: serviceLocator(),
+    addWorkspaceMemberUseCase: serviceLocator(),
+    createBoardUseCase: serviceLocator(),
+    userLocalDataSource: serviceLocator(),
+  ));
 }
 
 void _initBoard() {
@@ -247,19 +251,19 @@ void _initAuth() {
   // UseCases
   serviceLocator.registerLazySingleton(() => LoginUseCase(serviceLocator()));
   serviceLocator.registerLazySingleton(() => RegisterUseCase(serviceLocator()));
-  serviceLocator.registerLazySingleton(
-    () => VerifyCodeUseCase(serviceLocator()),
-  );
-  serviceLocator.registerLazySingleton(
-    () => ResendCodeUseCase(serviceLocator()),
-  );
-  serviceLocator.registerLazySingleton(
-    () => CheckOtpStatusUseCase(serviceLocator()),
-  );
+  serviceLocator.registerLazySingleton(() => VerifyCodeUseCase(serviceLocator()));
+  serviceLocator.registerLazySingleton(() => ResendCodeUseCase(serviceLocator()));
+  serviceLocator.registerLazySingleton(() => CheckOtpStatusUseCase(serviceLocator()));
+  serviceLocator.registerLazySingleton(() => SignInWithGoogleUseCase(serviceLocator()));
+  serviceLocator.registerLazySingleton(() => ForgotPasswordUseCase(serviceLocator()));
+  serviceLocator.registerLazySingleton(() => ResetPasswordUseCase(serviceLocator()));
 
   // Cubits
   serviceLocator.registerFactory(
-    () => LoginCubit(loginUseCase: serviceLocator()),
+    () => LoginCubit(
+      loginUseCase: serviceLocator(),
+      signInWithGoogleUseCase: serviceLocator(),
+    ),
   );
   serviceLocator.registerFactory(
     () => RegisterCubit(registerUseCase: serviceLocator()),
@@ -269,6 +273,12 @@ void _initAuth() {
       verifyCodeUseCase: serviceLocator(),
       resendCodeUseCase: serviceLocator(),
       checkOtpStatusUseCase: serviceLocator(),
+    ),
+  );
+  serviceLocator.registerFactory(
+    () => ForgotPasswordCubit(
+      forgotPasswordUseCase: serviceLocator(),
+      resetPasswordUseCase: serviceLocator(),
     ),
   );
 }
@@ -304,6 +314,26 @@ void _initInbox() {
       userLocalDataSource: serviceLocator(),
     ),
   );
+}
+
+void _initPlanner() {
+  // Data Source
+  serviceLocator.registerLazySingleton<PlannerRemoteDataSource>(
+    () => PlannerRemoteDataSourceImpl(dio: serviceLocator<Dio>()),
+  );
+
+  // Repository
+  serviceLocator.registerLazySingleton<PlannerRepository>(
+    () => PlannerRepositoryImpl(remoteDataSource: serviceLocator<PlannerRemoteDataSource>()),
+  );
+
+  // UseCases
+  serviceLocator.registerLazySingleton(() => GetPlannerCardsUseCase(serviceLocator()));
+
+  // Cubit
+  serviceLocator.registerFactory(() => PlannerCubit(
+    getPlannerCardsUseCase: serviceLocator(),
+  ));
 }
 
 void _initNotification() {

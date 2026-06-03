@@ -46,6 +46,17 @@ class AuthInterceptor extends Interceptor {
       DioException err,
       ErrorInterceptorHandler handler,
       ) async {
+    final isLocked = err.response?.statusCode == 403 &&
+        err.response?.data != null &&
+        err.response?.data is Map &&
+        err.response?.data['message'] == 'ACCOUNT_LOCKED';
+
+    if (isLocked) {
+      final email = err.response?.data['email'] ?? '';
+      await _clearSessionAndLogout(isLocked: true, email: email);
+      return handler.next(err);
+    }
+
     final isUnauthorized = err.response?.statusCode == 401;
     final isRefreshRequest =
     err.requestOptions.path.contains(ApiEndpoints.refreshToken);
@@ -97,8 +108,15 @@ class AuthInterceptor extends Interceptor {
         _pendingRequests.clear();
 
         return handler.next(err);
-      } catch (_) {
-        await _clearSessionAndLogout();
+      } catch (e) {
+        bool isLocked = false;
+        String lockedEmail = '';
+        if (e.toString().contains('ACCOUNT_LOCKED|')) {
+          isLocked = true;
+          lockedEmail = e.toString().split('|').last;
+        }
+
+        await _clearSessionAndLogout(isLocked: isLocked, email: lockedEmail);
 
         for (final request in _pendingRequests) {
           request.complete(null);
@@ -130,7 +148,12 @@ class AuthInterceptor extends Interceptor {
       if (response.statusCode == 200) {
         return response.data['accessToken'] as String?;
       }
-    } on DioException {
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 403 && e.response?.data != null) {
+        if (e.response?.data['message'] == 'ACCOUNT_LOCKED') {
+          throw Exception('ACCOUNT_LOCKED|${e.response?.data['email']}');
+        }
+      }
       return null;
     }
 
@@ -145,7 +168,7 @@ class AuthInterceptor extends Interceptor {
     return dio.fetch(options);
   }
 
-  Future<void> _clearSessionAndLogout() async {
+  Future<void> _clearSessionAndLogout({bool isLocked = false, String email = ''}) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('user_uid');
     await prefs.setBool('isLogged', false);
@@ -157,9 +180,17 @@ class AuthInterceptor extends Interceptor {
 
     serviceLocator<NotificationCubit>().reset();
 
-    navigatorKey.currentState?.pushNamedAndRemoveUntil(
-      '/login',
-      (route) => false,
-    );
+    if (isLocked) {
+      navigatorKey.currentState?.pushNamedAndRemoveUntil(
+        '/locked-account',
+        (route) => false,
+        arguments: email,
+      );
+    } else {
+      navigatorKey.currentState?.pushNamedAndRemoveUntil(
+        '/login',
+        (route) => false,
+      );
+    }
   }
 }

@@ -22,4 +22,14 @@ abstract class AuthRepository {
   Future<void> resendCode({required String email});
 
   Future<int> checkOtpStatus({required String email});
+
+  Future<UserEntity> signInWithGoogle();
+  
+  Future<void> forgotPassword({required String email});
+  
+  Future<void> resetPassword({
+    required String email,
+    required String otp,
+    required String newPassword,
+  });
 }

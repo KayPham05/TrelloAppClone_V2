@@ -11,7 +11,7 @@ namespace TodoAppAPI.Service
         private readonly IServiceScopeFactory _scopeFactory;
         private readonly int MaxActionLength = 500;
 
-        // ✅ Inject IServiceScopeFactory thay vì TodoDbContext
+        //  Inject IServiceScopeFactory thay vì TodoDbContext
         public ActivityService(IServiceScopeFactory scopeFactory)
         {
             _scopeFactory = scopeFactory;
@@ -21,7 +21,7 @@ namespace TodoAppAPI.Service
         {
             try
             {
-                // ✅ Tạo scope mới với DbContext riêng
+                //  Tạo scope mới với DbContext riêng
                 using (var scope = _scopeFactory.CreateScope())
                 {
                     var context = scope.ServiceProvider.GetRequiredService<TodoDbContext>();
@@ -46,7 +46,7 @@ namespace TodoAppAPI.Service
                     context.Activities.Add(activity);
                     await context.SaveChangesAsync();
 
-                    Console.WriteLine($"✅ Activity logged: {action}");
+                    Console.WriteLine($" Activity logged: {action}");
                     return true;
                 }
             }
@@ -59,7 +59,7 @@ namespace TodoAppAPI.Service
 
         public async Task<List<ActivityDto>> GetActivities(int limit = 10, int offset = 0)
         {
-            // ✅ Tạo scope mới cho mỗi query
+            //  Tạo scope mới cho mỗi query
             using (var scope = _scopeFactory.CreateScope())
             {
                 var context = scope.ServiceProvider.GetRequiredService<TodoDbContext>();

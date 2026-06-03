@@ -49,6 +49,7 @@ abstract class BoardRemoteDataSource {
   Future<List<CardModel>> getCardsByBoard(String boardId);
   Future<List<CardModel>> getArchivedCards(String boardId);
   Future<void> restoreCard({required String cardId, required String userUId});
+  Future<int> archiveAllCompleted({required String boardId, required String userUId});
   Future<ListModel> createList({
     required String boardId,
     required String name,
@@ -313,13 +314,13 @@ class BoardRemoteDataSourceImpl implements BoardRemoteDataSource {
   @override
   Future<List<CardModel>> getArchivedCards(String boardId) async {
     try {
-      final response = await client.get('${ApiEndpoints.card}/by-board/$boardId');
+      final response = await client.get(
+        '${ApiEndpoints.card}/archived',
+        queryParameters: {'boardUId': boardId},
+      );
       if (response.statusCode == 200) {
         final List data = response.data;
-        return data
-            .map((json) => CardModel.fromJson(json))
-            .where((c) => c.status == 'Archived' || c.status == 'Closed')
-            .toList();
+        return data.map((json) => CardModel.fromJson(json)).toList();
       }
       return [];
     } catch (_) {
@@ -329,10 +330,26 @@ class BoardRemoteDataSourceImpl implements BoardRemoteDataSource {
 
   @override
   Future<void> restoreCard({required String cardId, required String userUId}) async {
-    await client.put(
-      '${ApiEndpoints.card}/$cardId',
-      data: {'status': 'Active', 'userUId': userUId},
+    await client.patch(
+      '${ApiEndpoints.card}/$cardId/unarchive',
+      queryParameters: {'userUId': userUId},
     );
+  }
+
+  @override
+  Future<int> archiveAllCompleted({required String boardId, required String userUId}) async {
+    try {
+      final response = await client.post(
+        '${ApiEndpoints.boards}/$boardId/archive-completed',
+        queryParameters: {'userUId': userUId},
+      );
+      if (response.statusCode == 200) {
+        return (response.data['count'] as int?) ?? 0;
+      }
+      return 0;
+    } catch (_) {
+      return 0;
+    }
   }
 
   @override

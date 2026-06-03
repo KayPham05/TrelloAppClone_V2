@@ -1,11 +1,12 @@
 import 'package:apptreolon/routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:google_fonts/google_fonts.dart';
-import '../../../../core/constants/app_colors.dart';
+
 import '../../../../core/data_sources/user_local_data_source.dart';
 import '../../../../init_dependencies.dart';
 import '../cubit/login_cubit.dart';
+import '../theme/azure_auth_theme.dart';
+import '../widgets/auth_text_field_widget.dart';
 
 class LoginPage extends StatelessWidget {
   const LoginPage({super.key});
@@ -70,34 +71,53 @@ class _LoginViewState extends State<LoginView> {
           }
         } else if (state is LoginRequiresVerification) {
           Navigator.pushReplacementNamed(context, '/verify', arguments: state.email);
+        } else if (state is LoginAccountLocked) {
+          Navigator.pushReplacementNamed(context, '/locked-account', arguments: state.email);
         } else if (state is LoginRequires2FA) {
           Navigator.pushReplacementNamed(
             context, 
-            AppRoutes.twoFactorAuthPage, // Make sure this route exists
+            AppRoutes.twoFactorAuthPage, 
             arguments: {'userUId': state.userUId, 'email': state.email},
           );
         } else if (state is LoginError) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.message), backgroundColor: AppColors.error),
-          );
+          if (state.message.contains("đăng nhập bằng Google")) {
+            showDialog(
+              context: context,
+              builder: (context) => AlertDialog(
+                title: const Text('Thông báo'),
+                content: const Text('Tài khoản này được đăng nhập bằng Google. Vui lòng sử dụng nút "Sign in with Google"'),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('Đóng'),
+                  ),
+                ],
+              ),
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(state.message), backgroundColor: AzureAuthTheme.error),
+            );
+          }
         }
       },
       child: Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: Colors.white,
         body: SafeArea(
-          child: SingleChildScrollView(
-            child: ConstrainedBox(
-              constraints: BoxConstraints(
-                minHeight: MediaQuery.of(context).size.height -
-                    MediaQuery.of(context).padding.top -
-                    MediaQuery.of(context).padding.bottom,
-              ),
-              child: IntrinsicHeight(
-                child: Column(
-                  children: [
-                    _buildBody(),
-                    _buildFooter(),
-                  ],
+          child: Center(
+            child: SingleChildScrollView(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 480), // Desktop/Tablet constraint
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _buildLogo(),
+                      const SizedBox(height: 48), 
+                      _buildLoginCard(),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -107,47 +127,12 @@ class _LoginViewState extends State<LoginView> {
     );
   }
 
-  Widget _buildBody() {
-    return Expanded(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const SizedBox(height: 40),
-            _buildLogo(),
-            const SizedBox(height: 32),
-            _buildLoginCard(),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildLogo() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Container(
-          width: 36,
-          height: 36,
-          decoration: BoxDecoration(
-            color: AppColors.primaryContainer,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: const Icon(Icons.view_kanban_rounded, color: Colors.white, size: 22),
-        ),
-        const SizedBox(width: 8),
-        Text(
-          'Trello',
-          style: GoogleFonts.inter(
-            fontSize: 26,
-            fontWeight: FontWeight.w900,
-            color: AppColors.primary,
-            letterSpacing: -0.5,
-          ),
-        ),
-      ],
+    return Text(
+      'Kabo',
+      style: AzureAuthTheme.headlineLg.copyWith(
+        color: AzureAuthTheme.azureBlue,
+      ),
     );
   }
 
@@ -157,11 +142,9 @@ class _LoginViewState extends State<LoginView> {
         final isLoading = state is LoginLoading;
         return Container(
           width: double.infinity,
-          padding: const EdgeInsets.all(28),
-          decoration: BoxDecoration(
-            color: AppColors.surfaceContainerLowest,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: AppColors.cardShadow,
+          padding: const EdgeInsets.symmetric(vertical: 32),
+          decoration: const BoxDecoration(
+            color: Colors.white,
           ),
           child: Form(
             key: _formKey,
@@ -169,87 +152,149 @@ class _LoginViewState extends State<LoginView> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  'Đăng nhập vào Trello',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.inter(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.onSurface,
-                  ),
+                  'Welcome Back',
+                  textAlign: TextAlign.left,
+                  style: AzureAuthTheme.headlineLg,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Please enter your details to sign in to your workspace.',
+                  textAlign: TextAlign.left,
+                  style: AzureAuthTheme.bodyLg,
+                ),
+                const SizedBox(height: 32),
+                
+                AuthTextField(
+                  controller: _emailController,
+                  labelText: 'Email',
+                  hintText: 'Enter your email',
+                  keyboardType: TextInputType.emailAddress,
+                  validator: (v) => (v == null || !v.contains('@')) ? 'Invalid email' : null,
                 ),
                 const SizedBox(height: 24),
-                _buildTextField(
-                  controller: _emailController,
-                  hint: 'Nhập địa chỉ email',
-                  keyboardType: TextInputType.emailAddress,
-                  validator: (v) => (v == null || !v.contains('@')) ? 'Email không hợp lệ' : null,
-                ),
-                const SizedBox(height: 12),
-                _buildTextField(
+                
+                AuthTextField(
                   controller: _passwordController,
-                  hint: 'Nhập mật khẩu',
+                  labelText: 'Password',
+                  hintText: '••••••••',
                   obscureText: _obscurePassword,
                   suffixIcon: IconButton(
-                    icon: Icon(_obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined),
+                    icon: Icon(
+                      _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                      color: AzureAuthTheme.onSurfaceVariant,
+                    ),
                     onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                   ),
-                  validator: (v) => (v == null || v.isEmpty) ? 'Vui lòng nhập mật khẩu' : null,
+                  validator: (v) => (v == null || v.isEmpty) ? 'Please enter password' : null,
                 ),
-                const SizedBox(height: 20),
+                
+                const SizedBox(height: 24),
+                
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: Checkbox(
+                            value: false, // TBD state
+                            onChanged: (v) {},
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text('Remember for 30 days', style: AzureAuthTheme.bodyLg),
+                      ],
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.pushNamed(context, '/forgot-password'),
+                      style: TextButton.styleFrom(
+                        foregroundColor: AzureAuthTheme.azureBlue,
+                        padding: EdgeInsets.zero,
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      child: Text('Forgot Password?', style: AzureAuthTheme.labelMd.copyWith(color: AzureAuthTheme.azureBlue)),
+                    ),
+                  ],
+                ),
+                
+                const SizedBox(height: 32),
+                
                 SizedBox(
-                  height: 48,
+                  height: 56, // Tall button for modern feel
                   child: ElevatedButton(
                     onPressed: isLoading ? null : _handleLogin,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primaryContainer,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      backgroundColor: AzureAuthTheme.primaryContainer,
+                      foregroundColor: AzureAuthTheme.onPrimary,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      elevation: 0,
                     ),
                     child: isLoading
                         ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                        : const Text('Đăng nhập'),
+                        : Text('LOGIN', style: AzureAuthTheme.buttonText),
                   ),
                 ),
-                const SizedBox(height: 24),
-                TextButton(
-                  onPressed: () => Navigator.pushReplacementNamed(context, '/register'),
-                  child: const Text('Chưa có tài khoản? Đăng ký'),
+                const SizedBox(height: 32),
+                
+                Row(
+                  children: [
+                    Expanded(child: Divider(color: AzureAuthTheme.outlineVariant)),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Text('or', style: AzureAuthTheme.bodyMd),
+                    ),
+                    Expanded(child: Divider(color: AzureAuthTheme.outlineVariant)),
+                  ],
+                ),
+                
+                const SizedBox(height: 32),
+                
+                SizedBox(
+                  height: 56,
+                  child: ElevatedButton.icon(
+                    onPressed: isLoading ? null : () => context.read<LoginCubit>().signInWithGoogle(),
+                    icon: Image.asset('lib/core/asset/GoogleIcon.png', height: 24, width: 24),
+                    label: Text(
+                      'Sign in with Google',
+                      style: AzureAuthTheme.buttonText.copyWith(color: AzureAuthTheme.azureBlue),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AzureAuthTheme.azureTint,
+                      foregroundColor: AzureAuthTheme.azureBlue,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      alignment: Alignment.center,
+                    ),
+                  ),
+                ),
+                
+                const SizedBox(height: 48),
+                
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text('Don\'t have an account?', style: AzureAuthTheme.bodyLg),
+                    TextButton(
+                      onPressed: () => Navigator.pushReplacementNamed(context, '/register'),
+                      style: TextButton.styleFrom(
+                        foregroundColor: AzureAuthTheme.azureBlue,
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                      ),
+                      child: Text('Sign up', style: AzureAuthTheme.labelMd.copyWith(color: AzureAuthTheme.azureBlue)),
+                    ),
+                  ],
                 ),
               ],
             ),
           ),
         );
       },
-    );
-  }
-
-  Widget _buildTextField({
-    required TextEditingController controller,
-    required String hint,
-    bool obscureText = false,
-    Widget? suffixIcon,
-    TextInputType keyboardType = TextInputType.text,
-    String? Function(String?)? validator,
-  }) {
-    return TextFormField(
-      controller: controller,
-      obscureText: obscureText,
-      keyboardType: keyboardType,
-      decoration: InputDecoration(
-        hintText: hint,
-        filled: true,
-        fillColor: AppColors.surfaceContainerLow,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
-        suffixIcon: suffixIcon,
-      ),
-      validator: validator,
-    );
-  }
-
-  Widget _buildFooter() {
-    return const Padding(
-      padding: EdgeInsets.symmetric(vertical: 24),
-      child: Text('© 2024 Atlassian', style: TextStyle(color: AppColors.onSurfaceVariant)),
     );
   }
 }

@@ -84,13 +84,12 @@ class WorkspaceRemoteDataSource {
     required String userUId,
   }) async {
     final response = await client.put(
-      '${ApiEndpoints.workspace}/$workspaceId',
+      '${ApiEndpoints.workspace}/update',
       data: {
-        'workspaceUId': workspaceId,
+        'workspaceId': workspaceId,
         'name': name,
         'description': description,
-        'type': type,
-        'userUId': userUId,
+        'requesterUId': userUId,
       },
     );
     if (response.statusCode != 200) {
@@ -102,11 +101,16 @@ class WorkspaceRemoteDataSource {
     required String workspaceId,
     required String userUId,
   }) async {
-    final response = await client.put(
-      '${ApiEndpoints.workspace}/$workspaceId',
-      queryParameters: {'newStatus': 'Deleted', 'userUId': userUId},
+    final response = await client.delete(
+      '${ApiEndpoints.workspace}/delete',
+      queryParameters: {'workspaceId': workspaceId, 'requestUserId': userUId},
     );
-    if (response.statusCode != 200) {
+    if (response.statusCode == 200) {
+      if (response.data is Map && response.data['message'] == 'Không có quyền') {
+        throw Exception('Bạn không có quyền xóa không gian này');
+      }
+    }
+    if (response.statusCode != 200 && response.statusCode != 204) {
       throw Exception('Failed to delete workspace');
     }
   }

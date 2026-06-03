@@ -81,6 +81,12 @@ dist/
 [Oo]bj/
 
 # -----------------------------
+# Entity Framework Migrations
+# -----------------------------
+**/Migrations/*
+!**/Migrations/.gitkeep
+
+# -----------------------------
 # Flutter / Dart Build Artifacts
 # -----------------------------
 .dart_tool/
@@ -98,3 +104,11 @@ ephemeral/
 AGENT.md
 Docs/Plans/
 Docs/Reviews/
+
+# -----------------------------
+# Test Results & Coverage
+# -----------------------------
+[Tt]est[Rr]esult*/
+coverage.cobertura.xml
+coverage.opencover.xml
+coverage/
