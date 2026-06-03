@@ -30,7 +30,7 @@ $RECYCLE.BIN/
 *.suo
 *.userosscache
 *.sln.docstates
-# .vscode/
+.vscode/
 
 # -----------------------------
 # Environment / secrets
@@ -79,12 +79,6 @@ dist/
 # -----------------------------
 [Bb]in/
 [Oo]bj/
-
-# -----------------------------
-# Entity Framework Migrations
-# -----------------------------
-**/Migrations/*
-!**/Migrations/.gitkeep
 
 # -----------------------------
 # Flutter / Dart Build Artifacts

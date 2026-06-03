@@ -88,5 +88,51 @@
       <li>Có cần lưu lịch sử báo cáo phía client/server để so sánh tiến độ theo thời gian không?</li>
     </ul>
   </div>
+
+  <div class="entry">
+    <div class="timestamp">2026-06-03 11:00 Asia/Bangkok - Resolve Flutter Static Analysis Issues</div>
+    <h2>Design decisions</h2>
+    <ul>
+      <li>Thay thế <code>withOpacity(opacity)</code> đã lỗi thời bằng <code>withValues(alpha: alpha)</code> theo khuyến nghị của Flutter mới nhất.</li>
+      <li>Sử dụng cú pháp null-aware element marker <code>?trailing</code> thay vì kiểm tra null bằng <code>if</code> hoặc dùng bang operator <code>trailing!</code> để tuân thủ luật phân tích tĩnh <code>use_null_aware_elements</code> và tránh syntax error.</li>
+      <li>Thay thế <code>Color.value</code> đã deprecated bằng <code>toARGB32()</code> để giữ nguyên biểu diễn màu số nguyên 32-bit.</li>
+      <li>Chuyển đổi <code>onReorder</code> cũ sang <code>onReorderItem</code> trong <code>ReorderableListView</code>, đồng thời điều chỉnh index phù hợp trước khi gọi cubit.</li>
+      <li>Loại bỏ bóng (shadow shadowing) của biến <code>isStarred</code> tại <code>workspace_board_item_widget.dart</code> để kích hoạt lại sử dụng trường chính xác của widget.</li>
+    </ul>
+    <h2>Deviations</h2>
+    <ul>
+      <li>Không có.</li>
+    </ul>
+    <h2>Tradeoffs</h2>
+    <ul>
+      <li>Không có.</li>
+    </ul>
+    <h2>Open questions</h2>
+    <ul>
+      <li>Không có.</li>
+    </ul>
+  </div>
+
+  <div class="entry">
+    <div class="timestamp">2026-06-03 11:06 Asia/Bangkok - gitignore Cleanup & .vscode untracking</div>
+    <h2>Design decisions</h2>
+    <ul>
+      <li>Bỏ qua (uncomment) thư mục <code>.vscode/</code> trong root <code>.gitignore</code> và thực hiện untrack các file Peacock settings của VS Code để tránh commit các cấu hình mang tính cá nhân của lập trình viên.</li>
+      <li>Loại bỏ luật ignore Migrations (<code>**/Migrations/*</code>) ra khỏi root <code>.gitignore</code> vì các file Migrations của Entity Framework Core cần được đưa lên git để đồng bộ cơ sở dữ liệu giữa các máy phát triển và môi trường production.</li>
+      <li>Loại bỏ <code>appsettings.json</code> khỏi danh sách ignore của <code>C#/TodoAppAPI/.gitignore</code> vì file cấu hình cơ sở này cần được theo dõi (track) với các giá trị placeholder, còn các thông tin nhạy cảm của máy cá nhân được chuyển sang file <code>appsettings.Development.json</code> đã được ignore sẵn.</li>
+    </ul>
+    <h2>Deviations</h2>
+    <ul>
+      <li>Không có.</li>
+    </ul>
+    <h2>Tradeoffs</h2>
+    <ul>
+      <li>Không có.</li>
+    </ul>
+    <h2>Open questions</h2>
+    <ul>
+      <li>Không có.</li>
+    </ul>
+  </div>
 </body>
 </html>
