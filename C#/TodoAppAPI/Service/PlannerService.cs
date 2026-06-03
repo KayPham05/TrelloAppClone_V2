@@ -24,6 +24,8 @@ namespace TodoAppAPI.Service
                     _dbContext.UserInboxCards.Any(uic => uic.CardUId == c.CardUId && uic.UserUId == userUId)
                 )
                 .Include(c => c.CardLabels)
+                .Include(c => c.CardMembers!)
+                    .ThenInclude(cm => cm.User)
                 .ToListAsync();
 
             var result = cards
@@ -47,7 +49,21 @@ namespace TodoAppAPI.Service
                             CardLabelUId = cl.CardLabelUId,
                             Title = cl.Title,
                             ColorCode = cl.ColorCode
-                        }).ToList() : new List<CardLabelDto>()
+                        }).ToList() : new List<CardLabelDto>(),
+                        Members = c.CardMembers != null ? c.CardMembers.Select(cm => new CardMemberDto
+                        {
+                            CardMemberUId = cm.CardMemberUId,
+                            CardUId = cm.CardUId,
+                            UserUId = cm.UserUId,
+                            Role = cm.Role,
+                            AssignedAt = cm.AssignedAt,
+                            User = cm.User != null ? new UserDto
+                            {
+                                UserUId = cm.User.UserUId,
+                                Name = cm.User.UserName,
+                                Email = cm.User.Email
+                            } : null
+                        }).ToList() : new List<CardMemberDto>()
                     }).ToList()
                 );
 
