@@ -102,10 +102,10 @@ class PlannerDayRowWidget extends StatelessWidget {
                             decoration: BoxDecoration(
                               color: _getCardColor(card.id),
                               borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: Colors.black.withOpacity(0.05)),
+                              border: Border.all(color: Colors.black.withValues(alpha: 0.05)),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.02),
+                                  color: Colors.black.withValues(alpha: 0.02),
                                   blurRadius: 4,
                                   offset: const Offset(0, 2),
                                 )
@@ -128,7 +128,7 @@ class PlannerDayRowWidget extends StatelessWidget {
                         child: Text(
                           'Chưa lên kế hoạch nào',
                           style: TextStyle(
-                            color: const Color(0xFF6B6D76).withOpacity(0.6), // Slate
+                            color: const Color(0xFF6B6D76).withValues(alpha: 0.6), // Slate
                             fontSize: 14,
                           ),
                         ),

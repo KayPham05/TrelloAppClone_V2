@@ -2,7 +2,6 @@ import 'package:apptreolon/features/activity/data/datasources/notification_remot
 import 'package:apptreolon/features/activity/data/models/notification_model.dart';
 import 'package:apptreolon/features/activity/data/repositories/notification_repository_impl.dart';
 import 'package:apptreolon/features/activity/domain/entities/notification_entity.dart';
-import 'package:apptreolon/features/activity/domain/repositories/i_notification_repository.dart';
 import 'package:apptreolon/features/activity/domain/usecases/delete_notification_usecase.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';

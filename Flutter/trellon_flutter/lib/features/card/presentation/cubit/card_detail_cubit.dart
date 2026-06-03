@@ -506,7 +506,7 @@ class CardDetailCubit extends Cubit<CardDetailState> {
       emit(CardDetailMoved());
     } catch (e) {
       emit(CardDetailError('Không thể di chuyển card: ${e.toString()}'));
-      if (currentState is CardDetailLoaded) emit(currentState);
+      emit(currentState);
     }
   }
 
@@ -524,7 +524,7 @@ class CardDetailCubit extends Cubit<CardDetailState> {
       emit(CardDetailMoved());
     } catch (e) {
       emit(CardDetailError('Không thể di chuyển card: ${e.toString()}'));
-      if (currentState is CardDetailLoaded) emit(currentState);
+      emit(currentState);
     }
   }
 

@@ -423,7 +423,7 @@ class _WorkspaceMenuPageState extends State<WorkspaceMenuPage> {
       controller: _searchController,
       readOnly: true,
       onTap: () {
-        print('Search tapped in WorkspaceMenuPage. UID: $_currentUserUId');
+        debugPrint('Search tapped in WorkspaceMenuPage. UID: $_currentUserUId');
         if (_currentUserUId != null) {
           showSearch(context: context, delegate: GlobalSearchDelegate(userUId: _currentUserUId!));
         } else {

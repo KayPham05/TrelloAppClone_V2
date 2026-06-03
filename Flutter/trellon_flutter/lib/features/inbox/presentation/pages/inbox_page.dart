@@ -181,10 +181,10 @@ class _InboxViewState extends State<InboxView> {
                         scrollController: _inboxScrollController,
                         physics: const AlwaysScrollableScrollPhysics(),
                         padding: const EdgeInsets.symmetric(horizontal: 20),
-                        onReorder: (oldIndex, newIndex) {
+                        onReorderItem: (oldIndex, newIndex) {
                           context.read<InboxCubit>().reorderCards(
                             oldIndex,
-                            newIndex,
+                            newIndex > oldIndex ? newIndex + 1 : newIndex,
                           );
                         },
                         proxyDecorator: (child, index, animation) => Material(

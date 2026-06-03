@@ -11,13 +11,10 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../init_dependencies.dart';
 import '../../../../core/constants/api_endpoints.dart';
 import '../../../activity/presentation/cubit/notification_cubit.dart';
-import '../../../../core/data_sources/user_local_data_source.dart';
-import '../../../../features/auth/domain/repositories/i_auth_repository.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../workspace/presentation/cubit/workspace_cubit.dart';
 import '../../../workspace/domain/entities/workspace_entity.dart';
 import '../../../board/presentation/widgets/board_list/create_workspace_sheet.dart';
-import 'dart:io';
 import '../../../../core/utils/image_picker_helper.dart';
 
 class ProfilePage extends StatefulWidget {

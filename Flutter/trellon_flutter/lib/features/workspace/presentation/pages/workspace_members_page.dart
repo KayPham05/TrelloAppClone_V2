@@ -121,7 +121,7 @@ class _WorkspaceMembersView extends StatelessWidget {
             return ListView.separated(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),
               itemCount: state.members.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 8),
+              separatorBuilder: (_, _) => const SizedBox(height: 8),
               itemBuilder: (context, index) {
                 final member = state.members[index];
                 final canManage =
@@ -178,7 +178,7 @@ class _WorkspaceMembersView extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
-                value: selectedRole,
+                initialValue: selectedRole,
                 decoration: InputDecoration(
                   labelText: 'Role',
                   border: OutlineInputBorder(
@@ -249,7 +249,7 @@ class _WorkspaceMembersView extends StatelessWidget {
             style: GoogleFonts.inter(fontWeight: FontWeight.w700),
           ),
           content: DropdownButtonFormField<String>(
-            value: selectedRole,
+            initialValue: selectedRole,
             decoration: InputDecoration(
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
             ),
@@ -370,7 +370,7 @@ class _MemberCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
               decoration: BoxDecoration(
-                color: roleColor.withOpacity(0.12),
+                color: roleColor.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Row(

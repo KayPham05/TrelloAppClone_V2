@@ -130,7 +130,7 @@ class _BoardListViewState extends State<_BoardListView> {
                       onPressed: () async {
                         final uid = await serviceLocator<UserLocalDataSource>()
                             .getUserId();
-                        print('Search tapped in BoardListPage. UID: $uid');
+                        debugPrint('Search tapped in BoardListPage. UID: $uid');
                         if (uid != null && context.mounted) {
                           showSearch(
                             context: context,

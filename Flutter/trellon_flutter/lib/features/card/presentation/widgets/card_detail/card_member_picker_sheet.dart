@@ -179,7 +179,7 @@ class _CardMemberPickerSheetState extends State<CardMemberPickerSheet> {
               padding: const EdgeInsets.only(bottom: 24, top: 8),
               shrinkWrap: true,
               itemCount: _filteredMembers.length,
-              separatorBuilder: (_, __) => const Divider(height: 1, indent: 72, endIndent: 16, color: AppColors.surfaceVariant),
+              separatorBuilder: (_, _) => const Divider(height: 1, indent: 72, endIndent: 16, color: AppColors.surfaceVariant),
               itemBuilder: (context, index) {
                 final member = _filteredMembers[index];
                 final isAssigned = _isMember(member.userUId);

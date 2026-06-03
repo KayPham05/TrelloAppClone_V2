@@ -414,7 +414,7 @@ class _SectionHeader extends StatelessWidget {
                     fontSize: 14, fontWeight: FontWeight.w500, color: Colors.black87),
               ),
             ),
-            if (trailing != null) trailing!,
+            ?trailing,
           ],
         ),
       ),

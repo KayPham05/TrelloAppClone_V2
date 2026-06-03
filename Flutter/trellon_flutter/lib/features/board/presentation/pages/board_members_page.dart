@@ -265,7 +265,7 @@ class _MemberListItem extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surfaceContainerLowest,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.outlineVariant.withOpacity(0.5)),
+        border: Border.all(color: AppColors.outlineVariant.withValues(alpha: 0.5)),
       ),
       child: ListTile(
         leading: CircleAvatar(
@@ -279,7 +279,7 @@ class _MemberListItem extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: roleColor.withOpacity(0.1),
+                color: roleColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(

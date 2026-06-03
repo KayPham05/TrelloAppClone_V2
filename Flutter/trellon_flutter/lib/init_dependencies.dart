@@ -1,8 +1,6 @@
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:get_it/get_it.dart';
 import 'package:dio/dio.dart';
 import 'package:cookie_jar/cookie_jar.dart';
-import 'package:path_provider/path_provider.dart';
 import 'core/network/dio_client.dart';
 import 'core/data_sources/user_local_data_source.dart';
 import 'features/auth/data/repositories/auth_repository_impl.dart';
@@ -131,15 +129,17 @@ void _initWorkspace() {
   );
 
   // Cubit
-  serviceLocator.registerLazySingleton(() => WorkspaceCubit(
-    getWorkspacesUseCase: serviceLocator(),
-    createWorkspaceUseCase: serviceLocator(),
-    updateWorkspaceUseCase: serviceLocator(),
-    deleteWorkspaceUseCase: serviceLocator(),
-    addWorkspaceMemberUseCase: serviceLocator(),
-    createBoardUseCase: serviceLocator(),
-    userLocalDataSource: serviceLocator(),
-  ));
+  serviceLocator.registerLazySingleton(
+    () => WorkspaceCubit(
+      getWorkspacesUseCase: serviceLocator(),
+      createWorkspaceUseCase: serviceLocator(),
+      updateWorkspaceUseCase: serviceLocator(),
+      deleteWorkspaceUseCase: serviceLocator(),
+      addWorkspaceMemberUseCase: serviceLocator(),
+      createBoardUseCase: serviceLocator(),
+      userLocalDataSource: serviceLocator(),
+    ),
+  );
 }
 
 void _initBoard() {
@@ -251,12 +251,24 @@ void _initAuth() {
   // UseCases
   serviceLocator.registerLazySingleton(() => LoginUseCase(serviceLocator()));
   serviceLocator.registerLazySingleton(() => RegisterUseCase(serviceLocator()));
-  serviceLocator.registerLazySingleton(() => VerifyCodeUseCase(serviceLocator()));
-  serviceLocator.registerLazySingleton(() => ResendCodeUseCase(serviceLocator()));
-  serviceLocator.registerLazySingleton(() => CheckOtpStatusUseCase(serviceLocator()));
-  serviceLocator.registerLazySingleton(() => SignInWithGoogleUseCase(serviceLocator()));
-  serviceLocator.registerLazySingleton(() => ForgotPasswordUseCase(serviceLocator()));
-  serviceLocator.registerLazySingleton(() => ResetPasswordUseCase(serviceLocator()));
+  serviceLocator.registerLazySingleton(
+    () => VerifyCodeUseCase(serviceLocator()),
+  );
+  serviceLocator.registerLazySingleton(
+    () => ResendCodeUseCase(serviceLocator()),
+  );
+  serviceLocator.registerLazySingleton(
+    () => CheckOtpStatusUseCase(serviceLocator()),
+  );
+  serviceLocator.registerLazySingleton(
+    () => SignInWithGoogleUseCase(serviceLocator()),
+  );
+  serviceLocator.registerLazySingleton(
+    () => ForgotPasswordUseCase(serviceLocator()),
+  );
+  serviceLocator.registerLazySingleton(
+    () => ResetPasswordUseCase(serviceLocator()),
+  );
 
   // Cubits
   serviceLocator.registerFactory(
@@ -324,16 +336,20 @@ void _initPlanner() {
 
   // Repository
   serviceLocator.registerLazySingleton<PlannerRepository>(
-    () => PlannerRepositoryImpl(remoteDataSource: serviceLocator<PlannerRemoteDataSource>()),
+    () => PlannerRepositoryImpl(
+      remoteDataSource: serviceLocator<PlannerRemoteDataSource>(),
+    ),
   );
 
   // UseCases
-  serviceLocator.registerLazySingleton(() => GetPlannerCardsUseCase(serviceLocator()));
+  serviceLocator.registerLazySingleton(
+    () => GetPlannerCardsUseCase(serviceLocator()),
+  );
 
   // Cubit
-  serviceLocator.registerFactory(() => PlannerCubit(
-    getPlannerCardsUseCase: serviceLocator(),
-  ));
+  serviceLocator.registerFactory(
+    () => PlannerCubit(getPlannerCardsUseCase: serviceLocator()),
+  );
 }
 
 void _initNotification() {

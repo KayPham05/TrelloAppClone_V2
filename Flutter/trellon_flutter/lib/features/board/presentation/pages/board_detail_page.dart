@@ -217,7 +217,7 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
                         children: [
                           Container(
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.3),
+                              color: Colors.white.withValues(alpha: 0.3),
                               shape: BoxShape.circle,
                             ),
                             child: IconButton(
@@ -269,7 +269,7 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
                             borderRadius: BorderRadius.circular(30),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.3),
+                                color: Colors.black.withValues(alpha: 0.3),
                                 blurRadius: 10,
                                 offset: const Offset(0, 4),
                               ),
@@ -716,9 +716,8 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
           },
         ),
       ),
-      onReorder: (oldIndex, newIndex) {
-        int targetIdx = newIndex;
-        if (oldIndex < newIndex) targetIdx--;
+      onReorderItem: (oldIndex, newIndex) {
+        final targetIdx = newIndex;
         final list = listsToRender[oldIndex];
 
         setState(() {
