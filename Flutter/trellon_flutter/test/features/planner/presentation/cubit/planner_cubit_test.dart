@@ -5,16 +5,28 @@ import 'package:apptreolon/features/planner/presentation/cubit/planner_cubit.dar
 import 'package:apptreolon/features/planner/presentation/cubit/planner_state.dart';
 import 'package:apptreolon/features/planner/domain/usecases/get_planner_cards_usecase.dart';
 import 'package:apptreolon/features/card/domain/entities/card_entity.dart';
+import 'package:apptreolon/features/card/domain/usecases/update_card_due_date_usecase.dart';
+import 'package:apptreolon/core/data_sources/user_local_data_source.dart';
 
 class MockGetPlannerCardsUseCase extends Mock implements GetPlannerCardsUseCase {}
+class MockUpdateCardDueDateUseCase extends Mock implements UpdateCardDueDateUseCase {}
+class MockUserLocalDataSource extends Mock implements UserLocalDataSource {}
 
 void main() {
   late PlannerCubit cubit;
   late MockGetPlannerCardsUseCase mockUseCase;
+  late MockUpdateCardDueDateUseCase mockUpdateUseCase;
+  late MockUserLocalDataSource mockDataSource;
 
   setUp(() {
     mockUseCase = MockGetPlannerCardsUseCase();
-    cubit = PlannerCubit(getPlannerCardsUseCase: mockUseCase);
+    mockUpdateUseCase = MockUpdateCardDueDateUseCase();
+    mockDataSource = MockUserLocalDataSource();
+    cubit = PlannerCubit(
+      getPlannerCardsUseCase: mockUseCase,
+      updateCardDueDateUseCase: mockUpdateUseCase,
+      userLocalDataSource: mockDataSource,
+    );
   });
 
   tearDown(() {
