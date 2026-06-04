@@ -40,7 +40,9 @@ class AzureAuthTheme {
   ];
 
   // ── Typography ────────────────────────────────────────────────────
-  static TextStyle headlineLg = GoogleFonts.manrope(
+  // `static final` (not a getter) — Dart lazily initializes static fields,
+  // so GoogleFonts.manrope() is called only once per field, never on every rebuild.
+  static final TextStyle headlineLg = GoogleFonts.manrope(
     fontSize: 30,
     fontWeight: FontWeight.w700,
     height: 38 / 30,
@@ -48,7 +50,7 @@ class AzureAuthTheme {
     color: textDeepGray,
   );
 
-  static TextStyle headlineLgMobile = GoogleFonts.manrope(
+  static final TextStyle headlineLgMobile = GoogleFonts.manrope(
     fontSize: 26,
     fontWeight: FontWeight.w700,
     height: 34 / 26,
@@ -56,35 +58,35 @@ class AzureAuthTheme {
     color: textDeepGray,
   );
 
-  static TextStyle headlineMd = GoogleFonts.manrope(
+  static final TextStyle headlineMd = GoogleFonts.manrope(
     fontSize: 24,
     fontWeight: FontWeight.w600,
     height: 32 / 24,
     color: textDeepGray,
   );
 
-  static TextStyle bodyLg = GoogleFonts.manrope(
+  static final TextStyle bodyLg = GoogleFonts.manrope(
     fontSize: 16,
     fontWeight: FontWeight.w400,
     height: 24 / 16,
     color: textMidGray,
   );
 
-  static TextStyle bodyMd = GoogleFonts.manrope(
+  static final TextStyle bodyMd = GoogleFonts.manrope(
     fontSize: 14,
     fontWeight: FontWeight.w400,
     height: 20 / 14,
     color: textMidGray,
   );
 
-  static TextStyle labelMd = GoogleFonts.manrope(
+  static final TextStyle labelMd = GoogleFonts.manrope(
     fontSize: 14,
     fontWeight: FontWeight.w600,
     height: 20 / 14,
     color: textDeepGray,
   );
 
-  static TextStyle buttonText = GoogleFonts.manrope(
+  static final TextStyle buttonText = GoogleFonts.manrope(
     fontSize: 16,
     fontWeight: FontWeight.w600,
     height: 24 / 16,
@@ -92,3 +94,4 @@ class AzureAuthTheme {
     color: onPrimary,
   );
 }
+
