@@ -5,7 +5,9 @@ import '../../../inbox/presentation/bloc/inbox_state.dart';
 import '../../../../init_dependencies.dart';
 
 class AddPlannerTaskBottomSheet extends StatefulWidget {
-  const AddPlannerTaskBottomSheet({super.key});
+  final DateTime? selectedDate;
+  
+  const AddPlannerTaskBottomSheet({super.key, this.selectedDate});
 
   @override
   State<AddPlannerTaskBottomSheet> createState() => _AddPlannerTaskBottomSheetState();
@@ -33,7 +35,7 @@ class _AddPlannerTaskBottomSheetState extends State<AddPlannerTaskBottomSheet> {
   void _submit(BuildContext context) {
     final text = _controller.text.trim();
     if (text.isNotEmpty) {
-      context.read<InboxCubit>().addCardToInbox(text);
+      context.read<InboxCubit>().addCardToInbox(text, dueDate: widget.selectedDate);
     }
   }
 
@@ -46,16 +48,16 @@ class _AddPlannerTaskBottomSheetState extends State<AddPlannerTaskBottomSheet> {
           if (state is InboxLoaded) {
             Navigator.pop(context, true);
           } else if (state is InboxError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.message), backgroundColor: Colors.red),
-            );
-          }
-        },
-        builder: (context, state) {
-          final isLoading = state is InboxLoading;
-          
-          return Padding(
-            padding: EdgeInsets.only(
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(state.message), backgroundColor: Colors.red),
+          );
+        }
+      },
+      builder: (context, state) {
+        final isLoading = state is InboxLoading;
+        
+        return Padding(
+          padding: EdgeInsets.only(
               bottom: MediaQuery.of(context).viewInsets.bottom,
               left: 16,
               right: 16,
@@ -73,6 +75,23 @@ class _AddPlannerTaskBottomSheetState extends State<AddPlannerTaskBottomSheet> {
                     color: Color(0xFF050505),
                   ),
                 ),
+                if (widget.selectedDate != null) ...[
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      const Icon(Icons.calendar_today, size: 14, color: Color(0xFF6B6D76)),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Ngày thực hiện: ${widget.selectedDate!.day}/${widget.selectedDate!.month}/${widget.selectedDate!.year}',
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: Color(0xFF6B6D76),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
                 const SizedBox(height: 16),
                 TextField(
                   controller: _controller,

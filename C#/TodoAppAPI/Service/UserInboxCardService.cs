@@ -46,6 +46,8 @@ namespace TodoAppAPI.Service
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
+                var user = await _context.Users.FirstOrDefaultAsync(u => u.UserUId == userUId);
+                
                 card.CardUId = Guid.NewGuid().ToString();
                 card.UserUId = userUId;
                 
@@ -71,6 +73,7 @@ namespace TodoAppAPI.Service
                 
                 _context.UserInboxCards.Add(userInboxCard);
                 
+
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
                 
@@ -83,7 +86,8 @@ namespace TodoAppAPI.Service
                     CreatedAt = card.CreatedAt,
                     Status = card.Status,
                     ListUId = card.ListUId,
-                    BackgroundUrl = card.BackgroundUrl
+                    BackgroundUrl = card.BackgroundUrl,
+                    Members = new List<CardMemberDto>()
                 };
             }
             catch (Exception ex)

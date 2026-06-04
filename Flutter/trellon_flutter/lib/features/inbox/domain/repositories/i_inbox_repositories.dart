@@ -2,7 +2,7 @@ import 'package:apptreolon/features/card/domain/entities/card_entity.dart';
 
 abstract class InboxRepositories {
   Future<List<CardEntity>> getInboxCard({required String userUId});
-  Future<CardEntity> addInboxCard({required String userUId, required String cardTitle});
+  Future<CardEntity> addInboxCard({required String userUId, required String cardTitle, DateTime? dueDate});
   Future<CardEntity> updateInboxCard({required String cardId, required String userUId, String? title, String? description, DateTime? dueDate, String? backgroundUrl, String? status});
   Future<void> deleteInboxCard({required String cardId, required String userUId});
   
