@@ -23,8 +23,8 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.x'
-          channel: 'stable'
+          flutter-version: "3.x"
+          channel: "stable"
 
       - name: Get Flutter dependencies
         working-directory: Flutter/trellon_flutter
@@ -60,7 +60,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '9.x'
+          dotnet-version: '9.0.x'
 
       - name: Restore .NET dependencies
         working-directory: C#/TodoAppAPI
@@ -74,10 +74,7 @@ jobs:
 
       - name: Run .NET tests with coverage
         working-directory: C#/TodoAppAPI
-        run: |
-          dotnet test TodoAppAPI.sln --no-build --collect:"XPlat Code Coverage" \
-            --results-directory ../../coverage/dotnet \
-            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
+        run: dotnet test TodoAppAPI.sln --no-build --collect:"XPlat Code Coverage" --results-directory ../../coverage/dotnet -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
         continue-on-error: false
 
       # ===== SONARCLOUD SCAN =====
