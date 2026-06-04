@@ -89,6 +89,86 @@ public class GeminiAnalysisControllerTests
     }
 
     [Fact]
+    public async Task AnalyzeWorkspace_returns_unauthorized_when_jwt_user_id_is_missing()
+    {
+        var service = new Mock<IGeminiAnalysisService>();
+        var controller = new GeminiAnalysisController(service.Object);
+
+        var result = await controller.AnalyzeWorkspace("workspace-1", false, CancellationToken.None);
+
+        Assert.IsType<UnauthorizedObjectResult>(result);
+    }
+
+    [Fact]
+    public async Task AnalyzeWorkspace_returns_forbidden_for_unauthorized_user()
+    {
+        var service = new Mock<IGeminiAnalysisService>();
+        service.Setup(s => s.AnalyzeWorkspaceAsync("workspace-1", "viewer", false, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(AnalysisResult.Forbidden("forbidden"));
+        var controller = CreateController(service.Object, "viewer");
+
+        var result = await controller.AnalyzeWorkspace("workspace-1", false, CancellationToken.None);
+
+        var objectResult = Assert.IsType<ObjectResult>(result);
+        Assert.Equal(403, objectResult.StatusCode);
+    }
+
+    [Fact]
+    public async Task AnalyzeWorkspace_returns_ok_for_successful_report()
+    {
+        var report = new ProjectAnalysisDto { ScopeType = "workspace" };
+        var service = new Mock<IGeminiAnalysisService>();
+        service.Setup(s => s.AnalyzeWorkspaceAsync("workspace-1", "admin", true, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(AnalysisResult.Success(report));
+        var controller = CreateController(service.Object, "admin");
+
+        var result = await controller.AnalyzeWorkspace("workspace-1", true, CancellationToken.None);
+
+        var ok = Assert.IsType<OkObjectResult>(result);
+        Assert.Same(report, ok.Value);
+    }
+
+    [Fact]
+    public async Task AnalyzeCard_returns_unauthorized_when_jwt_user_id_is_missing()
+    {
+        var service = new Mock<IGeminiAnalysisService>();
+        var controller = new GeminiAnalysisController(service.Object);
+
+        var result = await controller.AnalyzeCard("card-1", false, CancellationToken.None);
+
+        Assert.IsType<UnauthorizedObjectResult>(result);
+    }
+
+    [Fact]
+    public async Task AnalyzeCard_returns_forbidden_for_unauthorized_user()
+    {
+        var service = new Mock<IGeminiAnalysisService>();
+        service.Setup(s => s.AnalyzeCardAsync("card-1", "viewer", false, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(AnalysisResult.Forbidden("forbidden"));
+        var controller = CreateController(service.Object, "viewer");
+
+        var result = await controller.AnalyzeCard("card-1", false, CancellationToken.None);
+
+        var objectResult = Assert.IsType<ObjectResult>(result);
+        Assert.Equal(403, objectResult.StatusCode);
+    }
+
+    [Fact]
+    public async Task AnalyzeCard_returns_ok_for_successful_report()
+    {
+        var report = new ProjectAnalysisDto { ScopeType = "card" };
+        var service = new Mock<IGeminiAnalysisService>();
+        service.Setup(s => s.AnalyzeCardAsync("card-1", "admin", true, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(AnalysisResult.Success(report));
+        var controller = CreateController(service.Object, "admin");
+
+        var result = await controller.AnalyzeCard("card-1", true, CancellationToken.None);
+
+        var ok = Assert.IsType<OkObjectResult>(result);
+        Assert.Same(report, ok.Value);
+    }
+
+    [Fact]
     public async Task GetReportHistory_returns_unauthorized_when_jwt_user_id_missing()
     {
         var service = new Mock<IGeminiAnalysisService>();
