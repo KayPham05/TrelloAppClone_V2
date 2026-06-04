@@ -118,9 +118,9 @@ builder.Services.AddDbContext<TodoDbContext>(option =>
 // ================== CORS ==================
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowFrontend", policy =>
+    options.AddPolicy("AllowAllWeb", policy =>
     {
-        policy.WithOrigins("http://localhost:5173")
+        policy.SetIsOriginAllowed(origin => true)
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();
@@ -148,7 +148,7 @@ var app = builder.Build();
 
 
 // 3. Sử dụng CORS
-app.UseCors("AllowFrontend");
+app.UseCors("AllowAllWeb");
 
 
 //app.UseHttpsRedirection();
