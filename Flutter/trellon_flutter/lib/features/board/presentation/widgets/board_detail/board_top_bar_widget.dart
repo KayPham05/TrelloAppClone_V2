@@ -29,7 +29,7 @@ class BoardTopBarWidget extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           Text(
-            'Workspace',
+            'Không gian làm việc',
             style: GoogleFonts.inter(
               fontSize: 18,
               fontWeight: FontWeight.w700,

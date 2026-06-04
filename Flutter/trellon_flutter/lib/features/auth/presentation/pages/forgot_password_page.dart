@@ -96,13 +96,13 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
               Image.asset('lib/core/asset/Background dùng cho forgot password.png', height: 200, fit: BoxFit.contain),
               const SizedBox(height: 32),
               Text(
-                'Forgot Password?',
+                'Quên mật khẩu?',
                 textAlign: TextAlign.center,
                 style: AzureAuthTheme.headlineLg,
               ),
               const SizedBox(height: 16),
               Text(
-                'No worries. Enter your email address below and we\'ll send you instructions to reset your password.',
+                'Đừng lo lắng. Hãy nhập địa chỉ email bên dưới và chúng tôi sẽ gửi hướng dẫn đặt lại mật khẩu.',
                 textAlign: TextAlign.center,
                 style: AzureAuthTheme.bodyLg,
               ),
@@ -110,7 +110,7 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
               
               AuthTextField(
                 controller: _emailController,
-                labelText: 'Email Address',
+                labelText: 'Địa chỉ Email',
                 hintText: 'name@company.com',
                 keyboardType: TextInputType.emailAddress,
                 validator: (v) => (v == null || !v.contains('@')) ? 'Vui lòng nhập email hợp lệ' : null,
@@ -131,7 +131,7 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
                   ),
                   child: isLoading
                       ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                      : Text('RESET PASSWORD', style: AzureAuthTheme.buttonText),
+                      : Text('ĐẶT LẠI MẬT KHẨU', style: AzureAuthTheme.buttonText),
                 ),
               ),
               
@@ -140,7 +140,7 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
               TextButton(
                 onPressed: () => Navigator.pushReplacementNamed(context, '/login'),
                 style: TextButton.styleFrom(foregroundColor: AzureAuthTheme.azureBlue),
-                child: Text('BACK TO LOGIN', style: AzureAuthTheme.buttonText.copyWith(color: AzureAuthTheme.azureBlue)),
+                child: Text('QUAY LẠI ĐĂNG NHẬP', style: AzureAuthTheme.buttonText.copyWith(color: AzureAuthTheme.azureBlue)),
               ),
             ],
           ),

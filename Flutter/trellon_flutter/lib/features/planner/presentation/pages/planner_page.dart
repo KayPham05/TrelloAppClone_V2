@@ -6,7 +6,7 @@ class PlannerPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const Scaffold(
-      body: Center(child: Text('Planner WIP')),
+      body: Center(child: Text('Kế hoạch (Đang phát triển)')),
     );
   }
 }

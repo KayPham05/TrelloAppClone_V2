@@ -242,7 +242,7 @@ class _BoardTransferWorkspaceSheetState
                         ...List.generate(_workspaces.length, (i) {
                           final ws = _workspaces[i];
                           final id = ws['workspaceUId'] ?? ws['id'] ?? '';
-                          final name = ws['name'] ?? 'Workspace';
+                          final name = ws['name'] ?? 'Không gian làm việc';
                           return Column(
                             children: [
                               _buildTile(

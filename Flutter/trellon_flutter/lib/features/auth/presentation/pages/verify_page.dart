@@ -14,9 +14,9 @@ class VerifyPage extends StatelessWidget {
     return BlocProvider(
       create: (context) => serviceLocator<VerifyCubit>()..checkOtpStatus(email),
       child: OtpVerificationView(
-        title: 'Verify OTP',
+        title: 'Xác thực OTP',
         email: email,
-        buttonText: 'VERIFY',
+        buttonText: 'XÁC THỰC',
         onVerifySuccess: () {
           Navigator.pushReplacementNamed(context, '/introduction');
         },

@@ -180,14 +180,14 @@ class _WorkspaceMembersView extends StatelessWidget {
               DropdownButtonFormField<String>(
                 initialValue: selectedRole,
                 decoration: InputDecoration(
-                  labelText: 'Role',
+                  labelText: 'Vai trò',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
                 items: MemberRoleHelper.rolesForScope(MemberScope.workspace)
                     .where((r) => r != 'Owner')
-                    .map((r) => DropdownMenuItem(value: r, child: Text(r)))
+                    .map((r) => DropdownMenuItem(value: r, child: Text(MemberRoleHelper.translateRole(r))))
                     .toList(),
                 onChanged: (v) => setDState(() => selectedRole = v ?? selectedRole),
               ),
@@ -245,7 +245,7 @@ class _WorkspaceMembersView extends StatelessWidget {
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDState) => AlertDialog(
           title: Text(
-            'Đổi role — ${member.userName}',
+            'Đổi vai trò — ${member.userName}',
             style: GoogleFonts.inter(fontWeight: FontWeight.w700),
           ),
           content: DropdownButtonFormField<String>(
@@ -255,7 +255,7 @@ class _WorkspaceMembersView extends StatelessWidget {
             ),
             items: MemberRoleHelper.rolesForScope(MemberScope.workspace)
                 .where((r) => r != 'Owner')
-                .map((r) => DropdownMenuItem(value: r, child: Text(r)))
+                .map((r) => DropdownMenuItem(value: r, child: Text(MemberRoleHelper.translateRole(r))))
                 .toList(),
             onChanged: (v) => setDState(() => selectedRole = v ?? selectedRole),
           ),
@@ -275,7 +275,7 @@ class _WorkspaceMembersView extends StatelessWidget {
                 );
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                    content: Text(ok ? 'Đã cập nhật role' : 'Không thể cập nhật role'),
+                    content: Text(ok ? 'Đã cập nhật vai trò' : 'Không thể cập nhật vai trò'),
                   ));
                 }
               },
@@ -379,7 +379,7 @@ class _MemberCard extends StatelessWidget {
                   Icon(roleIcon, size: 11, color: roleColor),
                   const SizedBox(width: 4),
                   Text(
-                    member.role,
+                    MemberRoleHelper.translateRole(member.role),
                     style: GoogleFonts.inter(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
@@ -403,7 +403,7 @@ class _MemberCard extends StatelessWidget {
                       child: ListTile(
                         dense: true,
                         leading: Icon(Icons.swap_horiz_rounded, size: 16),
-                        title: Text('Đổi role'),
+                        title: Text('Đổi vai trò'),
                         contentPadding: EdgeInsets.zero,
                       ),
                     ),

@@ -49,7 +49,7 @@ class StepWelcome extends StatelessWidget {
                   ),
                   const SizedBox(height: 40),
                   Text(
-                    'Welcome to\nyour\nnew sanctuary',
+                    'Chào mừng bạn\nđến với\nnơi làm việc mới',
                     textAlign: TextAlign.center,
                     style: GoogleFonts.manrope(
                       fontSize: 42,
@@ -61,7 +61,7 @@ class StepWelcome extends StatelessWidget {
                   ),
                   const SizedBox(height: 20),
                   Text(
-                    'Organize your work, simplify your life. Experience a workspace designed for focus and editorial clarity.',
+                    'Sắp xếp công việc, đơn giản hóa cuộc sống. Trải nghiệm không gian làm việc được thiết kế để tập trung và tinh tế.',
                     textAlign: TextAlign.center,
                     style: GoogleFonts.inter(
                       fontSize: 16,
@@ -75,7 +75,7 @@ class StepWelcome extends StatelessWidget {
           ),
           Padding(
             padding: const EdgeInsets.all(24),
-            child: IntroductionPrimaryButton(text: 'Get Started', onPressed: onNext),
+            child: IntroductionPrimaryButton(text: 'Bắt đầu ngay', onPressed: onNext),
           ),
         ],
       ),

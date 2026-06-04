@@ -59,7 +59,7 @@ class _OtpVerificationViewState extends State<OtpVerificationView> {
           widget.onVerifySuccess();
         } else if (state is ResendSuccess) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Verification code sent successfully')),
+            const SnackBar(content: Text('Gửi mã xác nhận thành công')),
           );
         } else if (state is VerifyError) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -130,7 +130,7 @@ class _OtpVerificationViewState extends State<OtpVerificationView> {
             text: TextSpan(
               style: AzureAuthTheme.bodyLg,
               children: [
-                const TextSpan(text: 'We have sent a verification code to your\nemail '),
+                const TextSpan(text: 'Chúng tôi đã gửi mã xác nhận đến\nemail của bạn '),
                 TextSpan(
                   text: widget.email,
                   style: AzureAuthTheme.bodyLg.copyWith(fontWeight: FontWeight.bold, color: AzureAuthTheme.textDeepGray),
@@ -186,9 +186,9 @@ class _OtpVerificationViewState extends State<OtpVerificationView> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   seconds > 0 ? Text(
-                    'Expires in: ${seconds ~/ 60}:${(seconds % 60).toString().padLeft(2, '0')}',
+                    'Hết hạn sau: ${seconds ~/ 60}:${(seconds % 60).toString().padLeft(2, '0')}',
                     style: AzureAuthTheme.bodyLg.copyWith(color: AzureAuthTheme.error),
-                  ) : Text('Didn\'t receive the code? ', style: AzureAuthTheme.bodyLg),
+                  ) : Text('Không nhận được mã? ', style: AzureAuthTheme.bodyLg),
                   if (seconds == 0)
                     TextButton(
                       onPressed: isResending ? null : () => context.read<VerifyCubit>().resend(email: widget.email),
@@ -199,7 +199,7 @@ class _OtpVerificationViewState extends State<OtpVerificationView> {
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
                       child: Text(
-                        isResending ? 'Resending...' : 'Resend',
+                        isResending ? 'Đang gửi lại...' : 'Gửi lại',
                         style: AzureAuthTheme.labelMd.copyWith(color: AzureAuthTheme.azureBlue),
                       ),
                     ),

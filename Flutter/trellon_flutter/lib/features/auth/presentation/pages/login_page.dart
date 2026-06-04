@@ -96,7 +96,7 @@ class _LoginViewState extends State<LoginView> {
               context: context,
               builder: (context) => AlertDialog(
                 title: const Text('Thông báo'),
-                content: const Text('Tài khoản này được đăng nhập bằng Google. Vui lòng sử dụng nút "Sign in with Google"'),
+                content: const Text('Tài khoản này được đăng nhập bằng Google. Vui lòng sử dụng nút "Đăng nhập bằng Google"'),
                 actions: [
                   TextButton(
                     onPressed: () => Navigator.pop(context),
@@ -162,10 +162,10 @@ class _LoginViewState extends State<LoginView> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text('Welcome Back', textAlign: TextAlign.left, style: AzureAuthTheme.headlineLg),
+            Text('Chào mừng trở lại', textAlign: TextAlign.left, style: AzureAuthTheme.headlineLg),
             const SizedBox(height: 8),
             Text(
-              'Please enter your details to sign in to your workspace.',
+              'Vui lòng điền thông tin để đăng nhập vào không gian làm việc.',
               textAlign: TextAlign.left,
               style: AzureAuthTheme.bodyLg,
             ),
@@ -174,9 +174,9 @@ class _LoginViewState extends State<LoginView> {
             AuthTextField(
               controller: _emailController,
               labelText: 'Email',
-              hintText: 'Enter your email',
+              hintText: 'Nhập email của bạn',
               keyboardType: TextInputType.emailAddress,
-              validator: (v) => (v == null || !v.contains('@')) ? 'Invalid email' : null,
+              validator: (v) => (v == null || !v.contains('@')) ? 'Email không hợp lệ' : null,
             ),
             const SizedBox(height: 24),
             
@@ -186,7 +186,7 @@ class _LoginViewState extends State<LoginView> {
               builder: (context, setFieldState) {
                 return AuthTextField(
                   controller: _passwordController,
-                  labelText: 'Password',
+                  labelText: 'Mật khẩu',
                   hintText: '••••••••',
                   obscureText: _obscurePassword,
                   suffixIcon: IconButton(
@@ -198,7 +198,7 @@ class _LoginViewState extends State<LoginView> {
                       setFieldState(() => _obscurePassword = !_obscurePassword);
                     },
                   ),
-                  validator: (v) => (v == null || v.isEmpty) ? 'Please enter password' : null,
+                  validator: (v) => (v == null || v.isEmpty) ? 'Vui lòng nhập mật khẩu' : null,
                 );
               },
             ),
@@ -220,7 +220,7 @@ class _LoginViewState extends State<LoginView> {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    Text('Remember for 30 days', style: AzureAuthTheme.bodyLg),
+                    Text('Ghi nhớ đăng nhập trong 30 ngày', style: AzureAuthTheme.bodyLg),
                   ],
                 ),
                 TextButton(
@@ -231,7 +231,7 @@ class _LoginViewState extends State<LoginView> {
                     minimumSize: Size.zero,
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
-                  child: Text('Forgot Password?', style: AzureAuthTheme.labelMd.copyWith(color: AzureAuthTheme.azureBlue)),
+                  child: Text('Quên mật khẩu?', style: AzureAuthTheme.labelMd.copyWith(color: AzureAuthTheme.azureBlue)),
                 ),
               ],
             ),
@@ -260,7 +260,7 @@ class _LoginViewState extends State<LoginView> {
                         ),
                         child: isLoading
                             ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                            : Text('LOGIN', style: AzureAuthTheme.buttonText),
+                            : Text('ĐĂNG NHẬP', style: AzureAuthTheme.buttonText),
                       ),
                     ),
                     const SizedBox(height: 32),
@@ -269,7 +269,7 @@ class _LoginViewState extends State<LoginView> {
                         Expanded(child: Divider(color: AzureAuthTheme.outlineVariant)),
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: Text('or', style: AzureAuthTheme.bodyMd),
+                          child: Text('hoặc', style: AzureAuthTheme.bodyMd),
                         ),
                         Expanded(child: Divider(color: AzureAuthTheme.outlineVariant)),
                       ],
@@ -281,7 +281,7 @@ class _LoginViewState extends State<LoginView> {
                         onPressed: isLoading ? null : () => context.read<LoginCubit>().signInWithGoogle(),
                         icon: Image.asset('lib/core/asset/GoogleIcon.png', height: 24, width: 24),
                         label: Text(
-                          'Sign in with Google',
+                          'Đăng nhập bằng Google',
                           style: AzureAuthTheme.buttonText.copyWith(color: AzureAuthTheme.azureBlue),
                         ),
                         style: ElevatedButton.styleFrom(
@@ -304,14 +304,14 @@ class _LoginViewState extends State<LoginView> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text('Don\'t have an account?', style: AzureAuthTheme.bodyLg),
+                Text('Chưa có tài khoản?', style: AzureAuthTheme.bodyLg),
                 TextButton(
                   onPressed: () => Navigator.pushReplacementNamed(context, '/register'),
                   style: TextButton.styleFrom(
                     foregroundColor: AzureAuthTheme.azureBlue,
                     padding: const EdgeInsets.symmetric(horizontal: 8),
                   ),
-                  child: Text('Sign up', style: AzureAuthTheme.labelMd.copyWith(color: AzureAuthTheme.azureBlue)),
+                  child: Text('Đăng ký', style: AzureAuthTheme.labelMd.copyWith(color: AzureAuthTheme.azureBlue)),
                 ),
               ],
             ),

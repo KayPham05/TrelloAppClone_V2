@@ -114,7 +114,7 @@ class _BoardListViewState extends State<_BoardListView> {
                   elevation: 0,
                   titleSpacing: 16,
                   title: Text(
-                    'Workspace',
+                    'Không gian làm việc',
                     style: GoogleFonts.inter(
                       fontSize: 22,
                       fontWeight: FontWeight.w800,
