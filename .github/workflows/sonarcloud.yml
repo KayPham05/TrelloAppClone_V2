@@ -19,6 +19,33 @@ jobs:
         with:
           fetch-depth: 0
 
+      # ===== SETUP SONARSCANNER FOR .NET =====
+      - name: Setup Java 17 (Required by SonarScanner)
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "17"
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "9.0.x"
+
+      - name: Install SonarScanner for .NET
+        run: |
+          dotnet tool install --global dotnet-sonarscanner
+          echo "$HOME/.dotnet/tools" >> "$GITHUB_PATH"
+
+      - name: Begin SonarScanner
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: >
+          dotnet sonarscanner begin
+          /k:"KayPham05_TrelloAppClone_V2"
+          /o:"kaypham05"
+          /s:"$GITHUB_WORKSPACE/SonarQube.Analysis.xml"
+          /d:sonar.token="$SONAR_TOKEN"
+
       # ===== FLUTTER SETUP & TEST =====
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -56,12 +83,7 @@ jobs:
           fi
         continue-on-error: false
 
-      # ===== .NET SETUP & TEST =====
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: "9.0.x"
-
+      # ===== .NET BUILD & TEST =====
       - name: Restore .NET dependencies
         working-directory: C#/TodoAppAPI
         run: dotnet restore TodoAppAPI.sln
@@ -69,7 +91,7 @@ jobs:
 
       - name: Build .NET project
         working-directory: C#/TodoAppAPI
-        run: dotnet build TodoAppAPI.sln --no-restore
+        run: dotnet build TodoAppAPI.sln --no-restore --no-incremental
         continue-on-error: false
 
       - name: Run .NET tests with coverage
@@ -77,9 +99,13 @@ jobs:
         run: dotnet test TodoAppAPI.sln --no-build --collect:"XPlat Code Coverage" --results-directory ../../coverage/dotnet -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
         continue-on-error: false
 
-      # ===== SONARCLOUD SCAN =====
-      - name: SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@v3.1.0
+      - name: Verify coverage reports
+        run: |
+          test -f coverage/lcov.info
+          find coverage/dotnet -name coverage.opencover.xml -print -quit | grep -q .
+
+      # ===== SONARCLOUD SCAN END =====
+      - name: End SonarScanner
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: dotnet sonarscanner end /d:sonar.token="$SONAR_TOKEN"
