@@ -15,6 +15,7 @@ class ProjectAnalysisModel extends ProjectAnalysisEntity {
     super.generatedAt,
     required super.model,
     super.cached,
+    super.isGeminiSuccess,
   });
 
   factory ProjectAnalysisModel.fromJson(Map<String, dynamic> json) {
@@ -40,6 +41,7 @@ class ProjectAnalysisModel extends ProjectAnalysisEntity {
       generatedAt: _date(json['generatedAt']),
       model: _string(json['model']),
       cached: json['cached'] == true,
+      isGeminiSuccess: json['isGeminiSuccess'] != false,
     );
   }
 

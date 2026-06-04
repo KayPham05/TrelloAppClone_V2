@@ -1,4 +1,5 @@
 import 'package:apptreolon/features/ai_analysis/data/models/project_analysis_model.dart';
+import 'package:apptreolon/features/ai_analysis/data/models/report_history_item_model.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -78,6 +79,46 @@ void main() {
       expect(model.breakdown, isEmpty);
       expect(model.inferredMilestones, isEmpty);
       expect(model.metrics.totalCards, 0);
+    });
+  });
+
+  group('ReportHistoryPageModel.fromJson', () {
+    test('parses history page payload', () {
+      final model = ReportHistoryPageModel.fromJson({
+        'items': [
+          {
+            'reportUId': 'report-1',
+            'scopeType': 'board',
+            'scopeUId': 'board-1',
+            'title': 'Sprint Board',
+            'overallProgress': 64,
+            'model': 'gemini-test',
+            'generatedAt': '2026-06-02T00:00:00Z',
+          },
+        ],
+        'totalCount': 6,
+        'page': 1,
+        'pageSize': 5,
+        'hasMore': true,
+      });
+
+      expect(model.items.single.reportUId, 'report-1');
+      expect(model.items.single.scopeType, 'board');
+      expect(model.items.single.overallProgress, 64);
+      expect(model.totalCount, 6);
+      expect(model.hasMore, true);
+    });
+
+    test('maps missing items to empty list', () {
+      final model = ReportHistoryPageModel.fromJson({
+        'totalCount': 0,
+        'page': 1,
+        'pageSize': 5,
+        'hasMore': false,
+      });
+
+      expect(model.items, isEmpty);
+      expect(model.hasMore, false);
     });
   });
 }

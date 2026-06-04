@@ -3,11 +3,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../core/constants/app_colors.dart';
-import '../../../../core/data_sources/user_local_data_source.dart';
 import '../../../../init_dependencies.dart';
 import '../../domain/entities/project_analysis_entity.dart';
+import '../../domain/usecases/save_current_report_usecase.dart';
 import '../cubit/ai_analysis_cubit.dart';
 import '../cubit/ai_analysis_state.dart';
+import 'report_history_page.dart';
 import '../widgets/analysis_metric_grid.dart';
 import '../widgets/analysis_risk_list.dart';
 import '../widgets/analysis_status_chart.dart';
@@ -18,12 +19,16 @@ class AiAnalysisPage extends StatefulWidget {
   final String scopeType;
   final String scopeUId;
   final String title;
+  final ProjectAnalysisEntity? initialAnalysis;
+  final bool readOnly;
 
   const AiAnalysisPage({
     super.key,
     required this.scopeType,
     required this.scopeUId,
     required this.title,
+    this.initialAnalysis,
+    this.readOnly = false,
   });
 
   @override
@@ -32,12 +37,18 @@ class AiAnalysisPage extends StatefulWidget {
 
 class _AiAnalysisPageState extends State<AiAnalysisPage> {
   late final AiAnalysisCubit _cubit;
+  bool _savingReport = false;
 
   @override
   void initState() {
     super.initState();
     _cubit = serviceLocator<AiAnalysisCubit>();
-    _loadAnalysis();
+    final initialAnalysis = widget.initialAnalysis;
+    if (initialAnalysis != null) {
+      _cubit.showLoaded(initialAnalysis);
+    } else {
+      _loadAnalysis();
+    }
   }
 
   @override
@@ -47,17 +58,55 @@ class _AiAnalysisPageState extends State<AiAnalysisPage> {
   }
 
   Future<void> _loadAnalysis({bool forceRefresh = false}) async {
-    final userUId = await serviceLocator<UserLocalDataSource>().getUserId();
-    if (userUId == null || userUId.isEmpty) {
-      _cubit.showError('Không tìm thấy người dùng hiện tại.');
+    if (widget.readOnly) {
       return;
     }
     await _cubit.analyze(
       scopeType: widget.scopeType,
       scopeUId: widget.scopeUId,
-      userUId: userUId,
       forceRefresh: forceRefresh,
     );
+  }
+
+  void _openHistory() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ReportHistoryPage(
+          scopeType: widget.scopeType,
+          scopeUId: widget.scopeUId,
+          title: widget.title,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _saveCurrentReport(ProjectAnalysisEntity analysis) async {
+    if (_savingReport || widget.readOnly) {
+      return;
+    }
+    setState(() => _savingReport = true);
+    try {
+      await serviceLocator<SaveCurrentReportUseCase>()(
+        scopeType: widget.scopeType,
+        scopeUId: widget.scopeUId,
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Đã lưu báo cáo vào lịch sử.')),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      final raw = error.toString();
+      final message = raw.startsWith('Exception: ') ? raw.substring(11) : raw;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
+    } finally {
+      if (mounted) {
+        setState(() => _savingReport = false);
+      }
+    }
   }
 
   @override
@@ -73,15 +122,49 @@ class _AiAnalysisPageState extends State<AiAnalysisPage> {
             'Báo cáo AI',
             style: GoogleFonts.inter(fontWeight: FontWeight.w800),
           ),
-          actions: [
-            IconButton(
-              tooltip: 'Tải lại báo cáo',
-              icon: const Icon(Icons.refresh),
-              onPressed: () {
-                _loadAnalysis(forceRefresh: true);
-              },
-            ),
-          ],
+          actions: widget.readOnly
+              ? const []
+              : [
+                  BlocBuilder<AiAnalysisCubit, AiAnalysisState>(
+                    builder: (context, state) {
+                      final analysis = state is AiAnalysisLoaded ? state.analysis : null;
+                      final isGemini = analysis?.isGeminiSuccess ?? false;
+                      final canSave = !_savingReport && isGemini;
+                      return IconButton(
+                        tooltip: isGemini
+                            ? 'Lưu báo cáo'
+                            : 'Không thể lưu: báo cáo dùng dữ liệu dự phòng (Gemini không khả dụng)',
+                        icon: _savingReport
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              )
+                            : Icon(
+                                isGemini
+                                    ? Icons.save_outlined
+                                    : Icons.cloud_off_outlined,
+                                color: isGemini ? null : Colors.grey,
+                              ),
+                        onPressed: canSave
+                            ? () => _saveCurrentReport(analysis!)
+                            : null,
+                      );
+                    },
+                  ),
+                  IconButton(
+                    tooltip: 'Lịch sử báo cáo',
+                    icon: const Icon(Icons.history),
+                    onPressed: _openHistory,
+                  ),
+                  IconButton(
+                    tooltip: 'Kiểm tra dữ liệu mới',
+                    icon: const Icon(Icons.refresh),
+                    onPressed: () {
+                      _loadAnalysis(forceRefresh: true);
+                    },
+                  ),
+                ],
         ),
         body: BlocBuilder<AiAnalysisCubit, AiAnalysisState>(
           builder: (context, state) {
@@ -97,7 +180,11 @@ class _AiAnalysisPageState extends State<AiAnalysisPage> {
               );
             }
             if (state is AiAnalysisLoaded) {
-              return _LoadedAnalysisView(state: state);
+              return _LoadedAnalysisView(
+                state: state,
+                readOnly: widget.readOnly,
+                onRefresh: () => _loadAnalysis(forceRefresh: true),
+              );
             }
             return const SizedBox.shrink();
           },
@@ -109,60 +196,135 @@ class _AiAnalysisPageState extends State<AiAnalysisPage> {
 
 class _LoadedAnalysisView extends StatelessWidget {
   final AiAnalysisLoaded state;
+  final bool readOnly;
+  final Future<void> Function() onRefresh;
 
-  const _LoadedAnalysisView({required this.state});
+  const _LoadedAnalysisView({
+    required this.state,
+    required this.readOnly,
+    required this.onRefresh,
+  });
 
   @override
   Widget build(BuildContext context) {
     final analysis = state.analysis;
 
-    return RefreshIndicator(
-      onRefresh: () async {
-        final cubit = context.read<AiAnalysisCubit>();
-        final userUId = await serviceLocator<UserLocalDataSource>().getUserId();
-        if (userUId == null || userUId.isEmpty) {
-          cubit.showError('Không tìm thấy người dùng hiện tại.');
-          return;
-        }
-        await cubit.analyze(
-          scopeType: analysis.scopeType,
-          scopeUId: analysis.scopeUId,
-          userUId: userUId,
-          forceRefresh: true,
-        );
-      },
-      child: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
+    final content = ListView(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
+      children: [
+        if (readOnly) ...[
+          _HistoryBanner(generatedAt: analysis.generatedAt),
+          const SizedBox(height: 12),
+        ],
+        if (!readOnly && !analysis.isGeminiSuccess) ...[
+          _FallbackBanner(),
+          const SizedBox(height: 12),
+        ],
+        AnalysisSummaryCard(analysis: analysis),
+        const SizedBox(height: 18),
+        _SectionTitle('Chỉ số chính'),
+        const SizedBox(height: 10),
+        AnalysisMetricGrid(metrics: analysis.metrics),
+        const SizedBox(height: 18),
+        _SectionTitle('Trạng thái thẻ'),
+        const SizedBox(height: 10),
+        AnalysisStatusChart(metrics: analysis.metrics),
+        const SizedBox(height: 18),
+        _SectionTitle('Rủi ro'),
+        const SizedBox(height: 10),
+        AnalysisRiskList(risks: analysis.risks),
+        const SizedBox(height: 18),
+        _SectionTitle('Đề xuất hành động'),
+        const SizedBox(height: 10),
+        AnalysisSuggestionList(suggestions: analysis.suggestions),
+        if (analysis.breakdown.isNotEmpty) ...[
+          const SizedBox(height: 18),
+          _SectionTitle('Tiến độ theo nhóm'),
+          const SizedBox(height: 10),
+          ...analysis.breakdown.map((item) => _BreakdownTile(item)),
+        ],
+        if (analysis.inferredMilestones.isNotEmpty) ...[
+          const SizedBox(height: 18),
+          _SectionTitle('Mốc suy luận'),
+          const SizedBox(height: 10),
+          ...analysis.inferredMilestones.map((item) => _MilestoneTile(item)),
+        ],
+      ],
+    );
+
+    if (readOnly) {
+      return content;
+    }
+
+    return RefreshIndicator(onRefresh: onRefresh, child: content);
+  }
+}
+
+class _HistoryBanner extends StatelessWidget {
+  final DateTime? generatedAt;
+
+  const _HistoryBanner({required this.generatedAt});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.amber.shade50,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.amber.shade200),
+      ),
+      child: Row(
         children: [
-          AnalysisSummaryCard(analysis: analysis),
-          const SizedBox(height: 18),
-          _SectionTitle('Chỉ số chính'),
-          const SizedBox(height: 10),
-          AnalysisMetricGrid(metrics: analysis.metrics),
-          const SizedBox(height: 18),
-          _SectionTitle('Trạng thái thẻ'),
-          const SizedBox(height: 10),
-          AnalysisStatusChart(metrics: analysis.metrics),
-          const SizedBox(height: 18),
-          _SectionTitle('Rủi ro'),
-          const SizedBox(height: 10),
-          AnalysisRiskList(risks: analysis.risks),
-          const SizedBox(height: 18),
-          _SectionTitle('Đề xuất hành động'),
-          const SizedBox(height: 10),
-          AnalysisSuggestionList(suggestions: analysis.suggestions),
-          if (analysis.breakdown.isNotEmpty) ...[
-            const SizedBox(height: 18),
-            _SectionTitle('Tiến độ theo nhóm'),
-            const SizedBox(height: 10),
-            ...analysis.breakdown.map((item) => _BreakdownTile(item)),
-          ],
-          if (analysis.inferredMilestones.isNotEmpty) ...[
-            const SizedBox(height: 18),
-            _SectionTitle('Mốc suy luận'),
-            const SizedBox(height: 10),
-            ...analysis.inferredMilestones.map((item) => _MilestoneTile(item)),
-          ],
+          Icon(Icons.history, color: Colors.amber.shade800, size: 20),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'Đang xem báo cáo ngày ${_formatDate(generatedAt)}',
+              style: GoogleFonts.inter(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: Colors.amber.shade900,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+String _formatDate(DateTime? value) {
+  if (value == null) return 'không xác định';
+  final local = value.toLocal();
+  String two(int input) => input.toString().padLeft(2, '0');
+  return '${two(local.day)}/${two(local.month)}/${local.year} ${two(local.hour)}:${two(local.minute)}';
+}
+
+class _FallbackBanner extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.blue.shade50,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.blue.shade200),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.info_outline, color: Colors.blue.shade700, size: 20),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'Gemini không khả dụng — báo cáo này dùng dữ liệu dự phòng và không thể lưu vào lịch sử.',
+              style: GoogleFonts.inter(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: Colors.blue.shade800,
+              ),
+            ),
+          ),
         ],
       ),
     );

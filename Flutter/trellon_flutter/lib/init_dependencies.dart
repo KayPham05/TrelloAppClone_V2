@@ -72,6 +72,9 @@ import 'features/ai_analysis/domain/repositories/i_ai_analysis_repository.dart';
 import 'features/ai_analysis/domain/usecases/analyze_board_usecase.dart';
 import 'features/ai_analysis/domain/usecases/analyze_card_usecase.dart';
 import 'features/ai_analysis/domain/usecases/analyze_workspace_usecase.dart';
+import 'features/ai_analysis/domain/usecases/get_report_by_id_usecase.dart';
+import 'features/ai_analysis/domain/usecases/get_report_history_usecase.dart';
+import 'features/ai_analysis/domain/usecases/save_current_report_usecase.dart';
 import 'features/ai_analysis/presentation/cubit/ai_analysis_cubit.dart';
 
 final serviceLocator = GetIt.instance;
@@ -414,12 +417,24 @@ void _initAiAnalysis() {
   serviceLocator.registerLazySingleton(
     () => AnalyzeCardUseCase(serviceLocator()),
   );
+  serviceLocator.registerLazySingleton(
+    () => GetReportHistoryUseCase(serviceLocator()),
+  );
+  serviceLocator.registerLazySingleton(
+    () => GetReportByIdUseCase(serviceLocator()),
+  );
+  serviceLocator.registerLazySingleton(
+    () => SaveCurrentReportUseCase(serviceLocator()),
+  );
 
   serviceLocator.registerFactory(
     () => AiAnalysisCubit(
       analyzeWorkspaceUseCase: serviceLocator(),
       analyzeBoardUseCase: serviceLocator(),
       analyzeCardUseCase: serviceLocator(),
+      getReportHistoryUseCase: serviceLocator(),
+      getReportByIdUseCase: serviceLocator(),
+      saveCurrentReportUseCase: serviceLocator(),
     ),
   );
 }

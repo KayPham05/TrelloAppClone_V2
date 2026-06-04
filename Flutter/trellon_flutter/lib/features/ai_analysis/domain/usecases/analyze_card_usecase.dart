@@ -8,13 +8,8 @@ class AnalyzeCardUseCase {
 
   Future<ProjectAnalysisEntity> call({
     required String cardUId,
-    required String userUId,
     bool forceRefresh = false,
   }) {
-    return repository.analyzeCard(
-      cardUId: cardUId,
-      userUId: userUId,
-      forceRefresh: forceRefresh,
-    );
+    return repository.analyzeCard(cardUId: cardUId, forceRefresh: forceRefresh);
   }
 }

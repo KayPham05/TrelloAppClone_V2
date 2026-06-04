@@ -8,12 +8,10 @@ class AnalyzeBoardUseCase {
 
   Future<ProjectAnalysisEntity> call({
     required String boardUId,
-    required String userUId,
     bool forceRefresh = false,
   }) {
     return repository.analyzeBoard(
       boardUId: boardUId,
-      userUId: userUId,
       forceRefresh: forceRefresh,
     );
   }

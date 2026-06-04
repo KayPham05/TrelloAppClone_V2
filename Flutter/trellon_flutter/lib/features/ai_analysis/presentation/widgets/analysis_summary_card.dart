@@ -16,8 +16,6 @@ class AnalysisSummaryCard extends StatelessWidget {
     final generatedAtText = generatedAt == null
         ? 'Chưa rõ thời điểm'
         : DateFormat('dd/MM/yyyy HH:mm').format(generatedAt);
-    final totalCards = analysis.metrics.totalCards;
-    final doneCards = analysis.metrics.doneCards;
 
     return Container(
       width: double.infinity,
@@ -32,74 +30,18 @@ class AnalysisSummaryCard extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              SizedBox(
-                width: 76,
-                height: 76,
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    CircularProgressIndicator(
-                      value: analysis.overallProgress / 100,
-                      strokeWidth: 8,
-                      backgroundColor: AppColors.surfaceContainerLow,
-                      color: AppColors.primary,
-                    ),
-                    Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          '${analysis.overallProgress}%',
-                          style: GoogleFonts.inter(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                        Text(
-                          'thẻ',
-                          style: GoogleFonts.inter(
-                            fontSize: 10,
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 16),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      analysis.title,
-                      style: GoogleFonts.inter(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      'Tiến độ theo thẻ',
-                      style: GoogleFonts.inter(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.primary,
-                      ),
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      '$doneCards/$totalCards thẻ hoàn tất',
-                      style: GoogleFonts.inter(
-                        fontSize: 12,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                  ],
+                child: Text(
+                  analysis.title,
+                  style: GoogleFonts.inter(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.textPrimary,
+                  ),
                 ),
               ),
+              const SizedBox(width: 12),
+              _buildHealthBadge(analysis),
             ],
           ),
           const SizedBox(height: 18),
@@ -121,7 +63,58 @@ class AnalysisSummaryCard extends StatelessWidget {
       ),
     );
   }
+
+  Widget _buildHealthBadge(ProjectAnalysisEntity analysis) {
+    final overdue = analysis.metrics.overdueCards;
+    final dueSoon = analysis.metrics.dueSoonCards;
+    
+    Color bgColor;
+    Color textColor;
+    String label;
+    IconData icon;
+
+    if (overdue > 0) {
+      bgColor = Colors.red.withAlpha(26); // ~0.1 opacity
+      textColor = Colors.red.shade700;
+      label = 'Rủi ro ($overdue)';
+      icon = Icons.warning_amber_rounded;
+    } else if (dueSoon > 0) {
+      bgColor = Colors.orange.withAlpha(26);
+      textColor = Colors.orange.shade800;
+      label = 'Lưu ý ($dueSoon)';
+      icon = Icons.info_outline_rounded;
+    } else {
+      bgColor = Colors.green.withAlpha(26);
+      textColor = Colors.green.shade700;
+      label = 'Tốt';
+      icon = Icons.check_circle_outline_rounded;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: textColor),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: GoogleFonts.inter(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: textColor,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
+
 
 class _ReportMetaRow extends StatelessWidget {
   final String generatedAtText;

@@ -14,6 +14,7 @@ class ProjectAnalysisEntity extends Equatable {
   final DateTime? generatedAt;
   final String model;
   final bool cached;
+  final bool isGeminiSuccess;
 
   const ProjectAnalysisEntity({
     required this.scopeType,
@@ -29,6 +30,7 @@ class ProjectAnalysisEntity extends Equatable {
     this.generatedAt,
     required this.model,
     this.cached = false,
+    this.isGeminiSuccess = true,
   });
 
   @override
@@ -46,6 +48,7 @@ class ProjectAnalysisEntity extends Equatable {
     generatedAt,
     model,
     cached,
+    isGeminiSuccess,
   ];
 }
 
