@@ -93,7 +93,11 @@ class _IntroductionPageState extends State<IntroductionPage> {
                   StepInbox(onNext: _nextPage, onBack: _previousPage, onSkip: () {}),
                   StepVisualize(onNext: _nextPage, onBack: _previousPage, onSkip: () {}),
                   StepPrivacy(onNext: _nextPage, onBack: _previousPage),
-                  StepWorkspace(onBack: _previousPage, onFinish: _onCreateBoard),
+                  StepWorkspace(
+                    onBack: _previousPage,
+                    onFinish: _onCreateBoard,
+                    onSkip: _onIntroEnd,
+                  ),
                 ],
               ),
             ),
