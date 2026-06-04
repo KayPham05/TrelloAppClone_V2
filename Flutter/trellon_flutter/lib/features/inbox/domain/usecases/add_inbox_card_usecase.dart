@@ -6,7 +6,7 @@ class AddInboxCardUseCase {
 
   AddInboxCardUseCase(this.repo);
 
-  Future<CardEntity> call({required String userUId, required String cardTitle}) async {
-    return await repo.addInboxCard(userUId: userUId, cardTitle: cardTitle);
+  Future<CardEntity> call({required String userUId, required String cardTitle, DateTime? dueDate}) async {
+    return await repo.addInboxCard(userUId: userUId, cardTitle: cardTitle, dueDate: dueDate);
   }
 }

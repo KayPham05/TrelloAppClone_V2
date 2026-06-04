@@ -46,6 +46,7 @@ builder.Services.AddHttpClient<IGeminiClient, GeminiClient>((serviceProvider, cl
     client.Timeout = TimeSpan.FromSeconds(Math.Max(1, settings.TimeoutSeconds));
 });
 builder.Services.AddHostedService<CardDueDateReminderHostedService>();
+builder.Services.AddScoped<IPlannerService, PlannerService>();
 
 // IMemoryCache for 2FA temp secrets
 builder.Services.AddMemoryCache();
@@ -99,7 +100,33 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddAuthorization();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+        Description = "Nhập token của bạn vào đây (không cần gõ chữ Bearer)"
+    });
+
+    c.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
+    {
+        {
+            new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+            {
+                Reference = new Microsoft.OpenApi.Models.OpenApiReference
+                {
+                    Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            new string[] {}
+        }
+    });
+});
 
 builder.Services.AddDbContext<TodoDbContext>(option =>
 {

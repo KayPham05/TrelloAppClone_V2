@@ -31,6 +31,7 @@ import 'features/card/domain/usecases/get_attachments_usecase.dart';
 import 'features/card/domain/usecases/delete_attachment_usecase.dart';
 import 'features/card/domain/usecases/update_attachment_description_usecase.dart';
 import 'features/card/domain/usecases/upload_card_cover_usecase.dart';
+import 'features/card/domain/usecases/update_card_due_date_usecase.dart';
 import 'features/card/presentation/cubit/card_detail_cubit.dart';
 import 'features/board/data/datasources/board_remote_data_source.dart';
 import 'features/board/data/repositories/board_repository_impl.dart';
@@ -79,7 +80,16 @@ import 'features/ai_analysis/presentation/cubit/ai_analysis_cubit.dart';
 
 final serviceLocator = GetIt.instance;
 Future<void> initDependencies() async {
-  CookieJar cookieJar = CookieJar();
+  // Core — khởi tạo PersistCookieJar để cookie refreshToken tồn tại qua restart
+  final CookieJar cookieJar;
+  if (kIsWeb) {
+    cookieJar = CookieJar();
+  } else {
+    final appDir = await getApplicationDocumentsDirectory();
+    cookieJar = PersistCookieJar(
+      storage: FileStorage('${appDir.path}/.cookies/'),
+    );
+  }
   serviceLocator.registerLazySingleton<CookieJar>(() => cookieJar);
   final dioClient = DioClient(persistentCookieJar: cookieJar);
 
@@ -202,33 +212,16 @@ void _initCard() {
   );
 
   // UseCases
-  serviceLocator.registerLazySingleton(
-    () => DeleteCardUseCase(serviceLocator()),
-  );
-  serviceLocator.registerLazySingleton(
-    () => UpdateCardStatusUseCase(serviceLocator()),
-  );
-  serviceLocator.registerLazySingleton(
-    () => AddCardCommentUseCase(serviceLocator()),
-  );
-  serviceLocator.registerLazySingleton(
-    () => UploadAttachmentUseCase(serviceLocator()),
-  );
-  serviceLocator.registerLazySingleton(
-    () => GetAttachmentsUseCase(serviceLocator()),
-  );
-  serviceLocator.registerLazySingleton(
-    () => DeleteAttachmentUseCase(serviceLocator()),
-  );
-  serviceLocator.registerLazySingleton(
-    () => UpdateAttachmentDescriptionUseCase(serviceLocator()),
-  );
-  serviceLocator.registerLazySingleton(
-    () => UploadCardCoverUseCase(serviceLocator()),
-  );
-  serviceLocator.registerLazySingleton(
-    () => UpdateListUIdUseCase(serviceLocator()),
-  );
+  serviceLocator.registerLazySingleton(() => DeleteCardUseCase(serviceLocator()));
+  serviceLocator.registerLazySingleton(() => UpdateCardStatusUseCase(serviceLocator()));
+  serviceLocator.registerLazySingleton(() => AddCardCommentUseCase(serviceLocator()));
+  serviceLocator.registerLazySingleton(() => UploadAttachmentUseCase(serviceLocator()));
+  serviceLocator.registerLazySingleton(() => GetAttachmentsUseCase(serviceLocator()));
+  serviceLocator.registerLazySingleton(() => DeleteAttachmentUseCase(serviceLocator()));
+  serviceLocator.registerLazySingleton(() => UpdateAttachmentDescriptionUseCase(serviceLocator()));
+  serviceLocator.registerLazySingleton(() => UploadCardCoverUseCase(serviceLocator()));
+  serviceLocator.registerLazySingleton(() => UpdateCardDueDateUseCase(serviceLocator()));
+  serviceLocator.registerLazySingleton(() => UpdateListUIdUseCase(serviceLocator()));
 
   // Cubit
   serviceLocator.registerFactory(
@@ -350,9 +343,11 @@ void _initPlanner() {
   );
 
   // Cubit
-  serviceLocator.registerFactory(
-    () => PlannerCubit(getPlannerCardsUseCase: serviceLocator()),
-  );
+  serviceLocator.registerFactory(() => PlannerCubit(
+    getPlannerCardsUseCase: serviceLocator(),
+    updateCardDueDateUseCase: serviceLocator(),
+    userLocalDataSource: serviceLocator(),
+  ));
 }
 
 void _initNotification() {

@@ -5,7 +5,7 @@ import 'package:apptreolon/features/card/domain/entities/card_entity.dart';
 
 abstract class InboxRemoteDataSource {
   Future<List<CardEntity>> getInboxCards(String userUId);
-  Future<CardEntity> addInboxCard(String userUId, String title);
+  Future<CardEntity> addInboxCard(String userUId, String title, {DateTime? dueDate});
   Future<CardEntity> updateInboxCard(String cardId, String userUId, {String? title, String? description, DateTime? dueDate, String? backgroundUrl, String? status});
   Future<void> deleteInboxCard(String cardId, String userUId);
   
@@ -39,10 +39,13 @@ class InboxRemoteDataSourceImpl implements InboxRemoteDataSource {
   }
 
   @override
-  Future<CardEntity> addInboxCard(String userUId, String title) async {
+  Future<CardEntity> addInboxCard(String userUId, String title, {DateTime? dueDate}) async {
     final response = await dio.post(
       '${ApiEndpoints.card}/$userUId/inbox',
-      data: {'title': title},
+      data: {
+        'title': title,
+        if (dueDate != null) 'dueDate': dueDate.toIso8601String(),
+      },
     );
     if (response.statusCode == 200 || response.statusCode == 201) {
       return CardModel.fromJson(response.data).toEntity();
