@@ -60,28 +60,24 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '8.x'
+          dotnet-version: '9.x'
 
       - name: Restore .NET dependencies
         working-directory: C#/TodoAppAPI
-        run: dotnet restore
+        run: dotnet restore TodoAppAPI.sln
         continue-on-error: false
 
       - name: Build .NET project
         working-directory: C#/TodoAppAPI
-        run: dotnet build --no-restore
+        run: dotnet build TodoAppAPI.sln --no-restore
         continue-on-error: false
 
       - name: Run .NET tests with coverage
         working-directory: C#/TodoAppAPI
         run: |
-          if ls *.csproj 1> /dev/null 2>&1 || ls **/*.csproj 1> /dev/null 2>&1; then
-            dotnet test --no-build --collect:"XPlat Code Coverage" \
-              --results-directory ../../coverage/dotnet \
-              -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
-          else
-            echo "No .NET test projects found, skipping..."
-          fi
+          dotnet test TodoAppAPI.sln --no-build --collect:"XPlat Code Coverage" \
+            --results-directory ../../coverage/dotnet \
+            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
         continue-on-error: false
 
       # ===== SONARCLOUD SCAN =====
