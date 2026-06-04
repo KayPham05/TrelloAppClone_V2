@@ -43,8 +43,8 @@ jobs:
           dotnet sonarscanner begin
           /k:"KayPham05_TrelloAppClone_V2"
           /o:"kaypham05"
-          /s:"$GITHUB_WORKSPACE/SonarQube.Analysis.xml"
           /d:sonar.token="$SONAR_TOKEN"
+          /d:sonar.host.url="https://sonarcloud.io"
 
       # ===== FLUTTER SETUP & TEST =====
       - name: Setup Flutter
