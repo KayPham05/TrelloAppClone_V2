@@ -248,7 +248,16 @@ namespace TodoAppAPI.Service.Gemini
             if (!await CanViewAnalysisScopeAsync(row.ScopeType, row.ScopeUId, userUId))
                 return AnalysisResult.Forbidden("Bạn không có quyền xem báo cáo này.");
 
-            var report = JsonSerializer.Deserialize<ProjectAnalysisDto>(row.ReportData, ReportJsonOptions);
+            ProjectAnalysisDto? report;
+            try
+            {
+                report = JsonSerializer.Deserialize<ProjectAnalysisDto>(row.ReportData, ReportJsonOptions);
+            }
+            catch (JsonException)
+            {
+                return AnalysisResult.NotFound("Không đọc được dữ liệu báo cáo.");
+            }
+
             if (report == null)
                 return AnalysisResult.NotFound("Không đọc được dữ liệu báo cáo.");
 

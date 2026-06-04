@@ -264,6 +264,171 @@ public class GeminiAnalysisServiceTests
         Assert.Null(result.Analysis);
     }
 
+    [Fact]
+    public async Task AnalyzeWorkspaceAsync_returns_success_for_authorized_user()
+    {
+        await using var context = CreateContext();
+        SeedWorkspaceWithCards(context, requesterRole: RoleConstants.WorkspaceAdmin);
+        var service = CreateService(context, new FakeGeminiClient("{}"));
+
+        var result = await service.AnalyzeWorkspaceAsync("workspace-1", "requester", false, CancellationToken.None);
+
+        Assert.Equal(AnalysisResultStatus.Success, result.Status);
+        Assert.NotNull(result.Analysis);
+        Assert.Equal("workspace", result.Analysis.ScopeType);
+        Assert.Equal("workspace-1", result.Analysis.ScopeUId);
+    }
+
+    [Fact]
+    public async Task AnalyzeWorkspaceAsync_returns_forbidden_for_unauthorized_user()
+    {
+        await using var context = CreateContext();
+        SeedWorkspaceWithCards(context, requesterRole: RoleConstants.WorkspaceViewer);
+        var service = CreateService(context, new FakeGeminiClient("{}"));
+
+        var result = await service.AnalyzeWorkspaceAsync("workspace-1", "requester", false, CancellationToken.None);
+
+        Assert.Equal(AnalysisResultStatus.Forbidden, result.Status);
+    }
+
+    [Fact]
+    public async Task AnalyzeWorkspaceAsync_returns_not_found_for_unknown_workspace()
+    {
+        await using var context = CreateContext();
+        var service = CreateService(context, new FakeGeminiClient("{}"));
+
+        var result = await service.AnalyzeWorkspaceAsync("missing", "requester", false, CancellationToken.None);
+
+        Assert.Equal(AnalysisResultStatus.NotFound, result.Status);
+    }
+
+    [Fact]
+    public async Task AnalyzeCardAsync_returns_success_for_authorized_user()
+    {
+        await using var context = CreateContext();
+        SeedBoardWithCards(context, requesterRole: RoleConstants.BoardAdmin);
+        var service = CreateService(context, new FakeGeminiClient("{}"));
+
+        var result = await service.AnalyzeCardAsync("card-active", "requester", false, CancellationToken.None);
+
+        Assert.Equal(AnalysisResultStatus.Success, result.Status);
+        Assert.NotNull(result.Analysis);
+        Assert.Equal("card", result.Analysis.ScopeType);
+        Assert.Equal("card-active", result.Analysis.ScopeUId);
+    }
+
+    [Fact]
+    public async Task AnalyzeCardAsync_returns_forbidden_for_unauthorized_user()
+    {
+        await using var context = CreateContext();
+        SeedBoardWithCards(context, requesterRole: RoleConstants.BoardViewer);
+        var service = CreateService(context, new FakeGeminiClient("{}"));
+
+        var result = await service.AnalyzeCardAsync("card-active", "requester", false, CancellationToken.None);
+
+        Assert.Equal(AnalysisResultStatus.Forbidden, result.Status);
+    }
+
+    [Fact]
+    public async Task AnalyzeCardAsync_returns_not_found_for_unknown_card()
+    {
+        await using var context = CreateContext();
+        var service = CreateService(context, new FakeGeminiClient("{}"));
+
+        var result = await service.AnalyzeCardAsync("missing", "requester", false, CancellationToken.None);
+
+        Assert.Equal(AnalysisResultStatus.NotFound, result.Status);
+    }
+
+    [Fact]
+    public async Task SaveLatestReportAsync_returns_forbidden_if_unauthorized()
+    {
+        await using var context = CreateContext();
+        SeedBoardWithCards(context, requesterRole: RoleConstants.BoardViewer);
+        var service = CreateService(context, new FakeGeminiClient(ValidGeminiJson("test")));
+
+        var result = await service.SaveLatestReportAsync("board", "board-1", "requester", CancellationToken.None);
+
+        Assert.Equal(AnalysisResultStatus.Forbidden, result.Status);
+    }
+
+    [Fact]
+    public async Task SaveLatestReportAsync_returns_not_found_if_no_cache()
+    {
+        await using var context = CreateContext();
+        SeedBoardWithCards(context, requesterRole: RoleConstants.BoardAdmin);
+        var service = CreateService(context, new FakeGeminiClient(ValidGeminiJson("test")));
+
+        var result = await service.SaveLatestReportAsync("board", "board-1", "requester", CancellationToken.None);
+
+        Assert.Equal(AnalysisResultStatus.NotFound, result.Status);
+    }
+
+    [Fact]
+    public async Task GetReportHistoryAsync_returns_forbidden_if_unauthorized()
+    {
+        await using var context = CreateContext();
+        SeedBoardWithCards(context, requesterRole: RoleConstants.BoardViewer);
+        var service = CreateService(context, new FakeGeminiClient("{}"));
+
+        var result = await service.GetReportHistoryAsync("board", "board-1", "requester", 1, 10, CancellationToken.None);
+
+        Assert.Equal(AnalysisResultStatus.Forbidden, result.Status);
+    }
+
+    [Fact]
+    public async Task GetReportHistoryAsync_returns_empty_when_no_reports()
+    {
+        await using var context = CreateContext();
+        SeedBoardWithCards(context, requesterRole: RoleConstants.BoardAdmin);
+        var service = CreateService(context, new FakeGeminiClient("{}"));
+
+        var result = await service.GetReportHistoryAsync("board", "board-1", "requester", 1, 10, CancellationToken.None);
+
+        Assert.Equal(AnalysisResultStatus.Success, result.Status);
+        Assert.Empty(result.Page.Items);
+    }
+
+    [Fact]
+    public async Task GetReportByIdAsync_returns_not_found_if_missing()
+    {
+        await using var context = CreateContext();
+        var service = CreateService(context, new FakeGeminiClient("{}"));
+
+        var result = await service.GetReportByIdAsync("missing", "requester", CancellationToken.None);
+
+        Assert.Equal(AnalysisResultStatus.NotFound, result.Status);
+    }
+
+    [Fact]
+    public async Task GetReportByIdAsync_returns_not_found_when_json_is_invalid()
+    {
+        await using var context = CreateContext();
+        SeedBoardWithCards(context, requesterRole: RoleConstants.BoardAdmin);
+        var row = SavedReport("report-1");
+        row.ReportData = "invalid-json";
+        context.AnalysisReports.Add(row);
+        context.SaveChanges();
+        var service = CreateService(context, new FakeGeminiClient("{}"));
+
+        var result = await service.GetReportByIdAsync("report-1", "requester", CancellationToken.None);
+
+        Assert.Equal(AnalysisResultStatus.NotFound, result.Status);
+    }
+
+    [Fact]
+    public async Task AnalyzeBoardAsync_handles_gemini_exception()
+    {
+        await using var context = CreateContext();
+        SeedBoardWithCards(context, requesterRole: RoleConstants.BoardAdmin);
+        var service = CreateService(context, new ExceptionGeminiClient());
+
+        var result = await service.AnalyzeBoardAsync("board-1", "requester", false, CancellationToken.None);
+
+        Assert.Equal(AnalysisResultStatus.Success, result.Status);
+        Assert.False(result.Analysis.IsGeminiSuccess);
+    }
+
     private static TodoDbContext CreateContext()
     {
         var options = new DbContextOptionsBuilder<TodoDbContext>()
@@ -337,6 +502,22 @@ public class GeminiAnalysisServiceTests
         context.SaveChanges();
     }
 
+    private static void SeedWorkspaceWithCards(TodoDbContext context, string requesterRole)
+    {
+        context.Users.AddRange(
+            new User { UserUId = "owner", UserName = "owner", Email = "owner@example.com", PasswordHash = "hash", StatusAccount = "Active" },
+            new User { UserUId = "requester", UserName = "requester", Email = "requester@example.com", PasswordHash = "hash", StatusAccount = "Active" });
+        context.Workspaces.Add(new Workspace { WorkspaceUId = "workspace-1", Name = "Workspace", Description = "Test" });
+        context.WorkspaceMembers.Add(new WorkspaceMembers
+        {
+            WorkspaceMemberUId = "wm-requester",
+            WorkspaceUId = "workspace-1",
+            UserUId = "requester",
+            Role = requesterRole
+        });
+        context.SaveChanges();
+    }
+
     private static AnalysisReport SavedReport(
         string reportUId,
         DateTime? generatedAt = null,
@@ -396,6 +577,14 @@ public class GeminiAnalysisServiceTests
         {
             Calls++;
             return Task.FromResult(_response);
+        }
+    }
+
+    private sealed class ExceptionGeminiClient : IGeminiClient
+    {
+        public Task<string> GenerateJsonAsync(string prompt, object responseSchema, CancellationToken cancellationToken)
+        {
+            throw new Exception("Simulated Gemini error");
         }
     }
 }
