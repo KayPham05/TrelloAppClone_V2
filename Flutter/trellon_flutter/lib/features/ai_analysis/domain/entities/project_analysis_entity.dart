@@ -85,29 +85,44 @@ class ProjectAnalysisSuggestionEntity extends Equatable {
 
 class ProjectAnalysisMetricsEntity extends Equatable {
   final int totalCards;
+  final int todoCards;
+  final int inProgressCards;
   final int doneCards;
   final int overdueCards;
+  final int dueSoonCards;
   final int blockedCards;
+  final int otherCards;
   final int todoItems;
   final int doneTodoItems;
+  final Map<String, int> statusDistribution;
 
   const ProjectAnalysisMetricsEntity({
     this.totalCards = 0,
+    this.todoCards = 0,
+    this.inProgressCards = 0,
     this.doneCards = 0,
     this.overdueCards = 0,
+    this.dueSoonCards = 0,
     this.blockedCards = 0,
+    this.otherCards = 0,
     this.todoItems = 0,
     this.doneTodoItems = 0,
+    this.statusDistribution = const {},
   });
 
   @override
   List<Object?> get props => [
     totalCards,
+    todoCards,
+    inProgressCards,
     doneCards,
     overdueCards,
+    dueSoonCards,
     blockedCards,
+    otherCards,
     todoItems,
     doneTodoItems,
+    statusDistribution,
   ];
 }
 

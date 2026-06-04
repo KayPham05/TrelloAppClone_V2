@@ -64,6 +64,36 @@ void main() {
       expect(result.overallProgress, 50);
     });
 
+    test('analyzeBoard sends force refresh when requested', () async {
+      final dio = MockDio(
+        onGet: (path, {data, options, queryParameters}) async {
+          expect(path, 'analysis/board/board-1');
+          expect(queryParameters, {'userUId': 'user-1', 'forceRefresh': true});
+          return Response(
+            requestOptions: RequestOptions(path: path),
+            statusCode: 200,
+            data: {
+              'scopeType': 'board',
+              'scopeUId': 'board-1',
+              'title': 'Board',
+              'overallProgress': 50,
+              'summary': 'Ok',
+              'metrics': {},
+            },
+          );
+        },
+      );
+      final dataSource = AiAnalysisRemoteDataSourceImpl(client: dio);
+
+      final result = await dataSource.analyzeBoard(
+        boardUId: 'board-1',
+        userUId: 'user-1',
+        forceRefresh: true,
+      );
+
+      expect(result.scopeUId, 'board-1');
+    });
+
     test('throws readable error for forbidden response', () async {
       final dio = MockDio(
         onGet: (path, {data, options, queryParameters}) async {

@@ -12,8 +12,8 @@ using TodoAppAPI.Data;
 namespace TodoAppAPI.Migrations
 {
     [DbContext(typeof(TodoDbContext))]
-    [Migration("20260529043337_InitDb")]
-    partial class InitDb
+    [Migration("20260604083109_ai_init")]
+    partial class ai_init
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -60,6 +60,9 @@ namespace TodoAppAPI.Migrations
                     b.Property<string>("BoardUId")
                         .HasMaxLength(128)
                         .HasColumnType("nvarchar(128)");
+
+                    b.Property<bool>("AllowMemberJoinCard")
+                        .HasColumnType("bit");
 
                     b.Property<string>("BackgroundUrl")
                         .HasColumnType("nvarchar(max)");
@@ -164,6 +167,9 @@ namespace TodoAppAPI.Migrations
 
                     b.Property<DateTime?>("DueDate")
                         .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsArchived")
+                        .HasColumnType("bit");
 
                     b.Property<string>("ListUId")
                         .HasColumnType("nvarchar(128)");

@@ -87,21 +87,31 @@ class ProjectAnalysisSuggestionModel extends ProjectAnalysisSuggestionEntity {
 class ProjectAnalysisMetricsModel extends ProjectAnalysisMetricsEntity {
   const ProjectAnalysisMetricsModel({
     super.totalCards,
+    super.todoCards,
+    super.inProgressCards,
     super.doneCards,
     super.overdueCards,
+    super.dueSoonCards,
     super.blockedCards,
+    super.otherCards,
     super.todoItems,
     super.doneTodoItems,
+    super.statusDistribution,
   });
 
   factory ProjectAnalysisMetricsModel.fromJson(Map<String, dynamic> json) {
     return ProjectAnalysisMetricsModel(
       totalCards: _int(json['totalCards']),
+      todoCards: _int(json['todoCards']),
+      inProgressCards: _int(json['inProgressCards']),
       doneCards: _firstInt(json, ['doneCards', 'completedCards']),
       overdueCards: _int(json['overdueCards']),
+      dueSoonCards: _int(json['dueSoonCards']),
       blockedCards: _int(json['blockedCards']),
+      otherCards: _int(json['otherCards']),
       todoItems: _firstInt(json, ['todoItems', 'totalTodoItems']),
       doneTodoItems: _firstInt(json, ['doneTodoItems', 'completedTodoItems']),
+      statusDistribution: _intMap(json['statusDistribution']),
     );
   }
 }
@@ -170,6 +180,15 @@ List<String> _stringList(Object? value) {
       .map((item) => item.toString())
       .where((item) => item.isNotEmpty)
       .toList();
+}
+
+Map<String, int> _intMap(Object? value) {
+  if (value is! Map) return const {};
+  return Map<String, int>.fromEntries(
+    value.entries.map(
+      (entry) => MapEntry(entry.key.toString(), _int(entry.value)),
+    ),
+  );
 }
 
 String _string(Object? value) => value?.toString() ?? '';

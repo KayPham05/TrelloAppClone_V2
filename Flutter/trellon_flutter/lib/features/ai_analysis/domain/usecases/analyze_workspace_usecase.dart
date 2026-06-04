@@ -9,10 +9,12 @@ class AnalyzeWorkspaceUseCase {
   Future<ProjectAnalysisEntity> call({
     required String workspaceUId,
     required String userUId,
+    bool forceRefresh = false,
   }) {
     return repository.analyzeWorkspace(
       workspaceUId: workspaceUId,
       userUId: userUId,
+      forceRefresh: forceRefresh,
     );
   }
 }

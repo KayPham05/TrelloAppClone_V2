@@ -42,7 +42,7 @@ public class GeminiAnalysisServiceTests
         """);
         var service = CreateService(context, gemini);
 
-        var result = await service.AnalyzeBoardAsync("board-1", "requester", CancellationToken.None);
+        var result = await service.AnalyzeBoardAsync("board-1", "requester", false, CancellationToken.None);
 
         Assert.Equal(AnalysisResultStatus.Success, result.Status);
         Assert.NotNull(result.Analysis);
@@ -50,6 +50,7 @@ public class GeminiAnalysisServiceTests
         Assert.Equal("board-1", result.Analysis.ScopeUId);
         Assert.Equal(2, result.Analysis.Metrics.TotalCards);
         Assert.Equal(1, result.Analysis.Metrics.CompletedCards);
+        Assert.Equal(1, result.Analysis.Metrics.InProgressCards);
         Assert.Equal(1, result.Analysis.Metrics.OverdueCards);
         var risk = Assert.Single(result.Analysis.Risks);
         Assert.Equal(new[] { "card-active" }, risk.RelatedCardUIds);
@@ -65,7 +66,7 @@ public class GeminiAnalysisServiceTests
         SeedBoardWithCards(context, requesterRole: RoleConstants.BoardViewer);
         var service = CreateService(context, new FakeGeminiClient("{}"));
 
-        var result = await service.AnalyzeBoardAsync("board-1", "requester", CancellationToken.None);
+        var result = await service.AnalyzeBoardAsync("board-1", "requester", false, CancellationToken.None);
 
         Assert.Equal(AnalysisResultStatus.Forbidden, result.Status);
         Assert.Null(result.Analysis);
@@ -78,14 +79,29 @@ public class GeminiAnalysisServiceTests
         SeedBoardWithCards(context, requesterRole: RoleConstants.BoardAdmin);
         var service = CreateService(context, new FakeGeminiClient("not-json"));
 
-        var result = await service.AnalyzeBoardAsync("board-1", "requester", CancellationToken.None);
+        var result = await service.AnalyzeBoardAsync("board-1", "requester", false, CancellationToken.None);
 
         Assert.Equal(AnalysisResultStatus.Success, result.Status);
         Assert.NotNull(result.Analysis);
-        Assert.Contains("AI summary is temporarily unavailable", result.Analysis.Summary);
+        Assert.Contains("hoàn thành", result.Analysis.Summary);
         Assert.Equal(2, result.Analysis.Metrics.TotalCards);
-        Assert.Empty(result.Analysis.Risks);
-        Assert.Empty(result.Analysis.Suggestions);
+        Assert.NotEmpty(result.Analysis.Risks);
+        Assert.NotEmpty(result.Analysis.Suggestions);
+    }
+
+    [Fact]
+    public async Task AnalyzeBoardAsync_force_refresh_bypasses_cache()
+    {
+        await using var context = CreateContext();
+        SeedBoardWithCards(context, requesterRole: RoleConstants.BoardAdmin);
+        var gemini = new FakeGeminiClient("""{"summary":"cached test","risks":[],"suggestions":[],"inferredMilestones":[]}""");
+        var service = CreateService(context, gemini);
+
+        await service.AnalyzeBoardAsync("board-1", "requester", false, CancellationToken.None);
+        await service.AnalyzeBoardAsync("board-1", "requester", false, CancellationToken.None);
+        await service.AnalyzeBoardAsync("board-1", "requester", true, CancellationToken.None);
+
+        Assert.Equal(2, gemini.Calls);
     }
 
     [Fact]
@@ -94,7 +110,7 @@ public class GeminiAnalysisServiceTests
         await using var context = CreateContext();
         var service = CreateService(context, new FakeGeminiClient("{}"));
 
-        var result = await service.AnalyzeBoardAsync("missing-board", "requester", CancellationToken.None);
+        var result = await service.AnalyzeBoardAsync("missing-board", "requester", false, CancellationToken.None);
 
         Assert.Equal(AnalysisResultStatus.NotFound, result.Status);
         Assert.Null(result.Analysis);
@@ -182,8 +198,11 @@ public class GeminiAnalysisServiceTests
             _response = response;
         }
 
+        public int Calls { get; private set; }
+
         public Task<string> GenerateJsonAsync(string prompt, object responseSchema, CancellationToken cancellationToken)
         {
+            Calls++;
             return Task.FromResult(_response);
         }
     }

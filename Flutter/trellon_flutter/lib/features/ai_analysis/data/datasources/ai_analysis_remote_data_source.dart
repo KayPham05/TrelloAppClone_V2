@@ -7,16 +7,19 @@ abstract class AiAnalysisRemoteDataSource {
   Future<ProjectAnalysisModel> analyzeWorkspace({
     required String workspaceUId,
     required String userUId,
+    bool forceRefresh = false,
   });
 
   Future<ProjectAnalysisModel> analyzeBoard({
     required String boardUId,
     required String userUId,
+    bool forceRefresh = false,
   });
 
   Future<ProjectAnalysisModel> analyzeCard({
     required String cardUId,
     required String userUId,
+    bool forceRefresh = false,
   });
 }
 
@@ -29,31 +32,53 @@ class AiAnalysisRemoteDataSourceImpl implements AiAnalysisRemoteDataSource {
   Future<ProjectAnalysisModel> analyzeWorkspace({
     required String workspaceUId,
     required String userUId,
+    bool forceRefresh = false,
   }) {
-    return _get('${ApiEndpoints.analysis}/workspace/$workspaceUId', userUId);
+    return _get(
+      '${ApiEndpoints.analysis}/workspace/$workspaceUId',
+      userUId,
+      forceRefresh: forceRefresh,
+    );
   }
 
   @override
   Future<ProjectAnalysisModel> analyzeBoard({
     required String boardUId,
     required String userUId,
+    bool forceRefresh = false,
   }) {
-    return _get('${ApiEndpoints.analysis}/board/$boardUId', userUId);
+    return _get(
+      '${ApiEndpoints.analysis}/board/$boardUId',
+      userUId,
+      forceRefresh: forceRefresh,
+    );
   }
 
   @override
   Future<ProjectAnalysisModel> analyzeCard({
     required String cardUId,
     required String userUId,
+    bool forceRefresh = false,
   }) {
-    return _get('${ApiEndpoints.analysis}/card/$cardUId', userUId);
+    return _get(
+      '${ApiEndpoints.analysis}/card/$cardUId',
+      userUId,
+      forceRefresh: forceRefresh,
+    );
   }
 
-  Future<ProjectAnalysisModel> _get(String path, String userUId) async {
+  Future<ProjectAnalysisModel> _get(
+    String path,
+    String userUId, {
+    bool forceRefresh = false,
+  }) async {
     try {
       final response = await client.get(
         path,
-        queryParameters: {'userUId': userUId},
+        queryParameters: {
+          'userUId': userUId,
+          if (forceRefresh) 'forceRefresh': true,
+        },
       );
       final data = response.data;
       if (data is Map) {

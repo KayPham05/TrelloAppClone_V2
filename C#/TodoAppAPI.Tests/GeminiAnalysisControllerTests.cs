@@ -15,11 +15,11 @@ public class GeminiAnalysisControllerTests
         var service = new Mock<IGeminiAnalysisService>();
         var controller = new GeminiAnalysisController(service.Object);
 
-        var result = await controller.AnalyzeBoard("board-1", "", CancellationToken.None);
+        var result = await controller.AnalyzeBoard("board-1", "", false, CancellationToken.None);
 
         Assert.IsType<BadRequestObjectResult>(result);
         service.Verify(
-            s => s.AnalyzeBoardAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            s => s.AnalyzeBoardAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
@@ -27,11 +27,11 @@ public class GeminiAnalysisControllerTests
     public async Task AnalyzeBoard_returns_forbidden_for_viewer_or_unauthorized_user()
     {
         var service = new Mock<IGeminiAnalysisService>();
-        service.Setup(s => s.AnalyzeBoardAsync("board-1", "viewer", It.IsAny<CancellationToken>()))
+        service.Setup(s => s.AnalyzeBoardAsync("board-1", "viewer", false, It.IsAny<CancellationToken>()))
             .ReturnsAsync(AnalysisResult.Forbidden("Bạn không có quyền phân tích board này."));
         var controller = new GeminiAnalysisController(service.Object);
 
-        var result = await controller.AnalyzeBoard("board-1", "viewer", CancellationToken.None);
+        var result = await controller.AnalyzeBoard("board-1", "viewer", false, CancellationToken.None);
 
         Assert.IsType<ObjectResult>(result);
         Assert.Equal(403, ((ObjectResult)result).StatusCode);
@@ -41,11 +41,11 @@ public class GeminiAnalysisControllerTests
     public async Task AnalyzeBoard_returns_not_found_for_missing_board()
     {
         var service = new Mock<IGeminiAnalysisService>();
-        service.Setup(s => s.AnalyzeBoardAsync("missing", "admin", It.IsAny<CancellationToken>()))
+        service.Setup(s => s.AnalyzeBoardAsync("missing", "admin", false, It.IsAny<CancellationToken>()))
             .ReturnsAsync(AnalysisResult.NotFound("Không tìm thấy board."));
         var controller = new GeminiAnalysisController(service.Object);
 
-        var result = await controller.AnalyzeBoard("missing", "admin", CancellationToken.None);
+        var result = await controller.AnalyzeBoard("missing", "admin", false, CancellationToken.None);
 
         Assert.IsType<NotFoundObjectResult>(result);
     }
@@ -61,11 +61,11 @@ public class GeminiAnalysisControllerTests
             Summary = "Report ready"
         };
         var service = new Mock<IGeminiAnalysisService>();
-        service.Setup(s => s.AnalyzeBoardAsync("board-1", "admin", It.IsAny<CancellationToken>()))
+        service.Setup(s => s.AnalyzeBoardAsync("board-1", "admin", true, It.IsAny<CancellationToken>()))
             .ReturnsAsync(AnalysisResult.Success(report));
         var controller = new GeminiAnalysisController(service.Object);
 
-        var result = await controller.AnalyzeBoard("board-1", "admin", CancellationToken.None);
+        var result = await controller.AnalyzeBoard("board-1", "admin", true, CancellationToken.None);
 
         var ok = Assert.IsType<OkObjectResult>(result);
         Assert.Same(report, ok.Value);

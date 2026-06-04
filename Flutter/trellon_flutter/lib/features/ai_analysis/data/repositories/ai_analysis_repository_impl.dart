@@ -11,10 +11,12 @@ class AiAnalysisRepositoryImpl implements IAiAnalysisRepository {
   Future<ProjectAnalysisEntity> analyzeWorkspace({
     required String workspaceUId,
     required String userUId,
+    bool forceRefresh = false,
   }) async {
     final result = await remoteDataSource.analyzeWorkspace(
       workspaceUId: workspaceUId,
       userUId: userUId,
+      forceRefresh: forceRefresh,
     );
     return result.toEntity();
   }
@@ -23,10 +25,12 @@ class AiAnalysisRepositoryImpl implements IAiAnalysisRepository {
   Future<ProjectAnalysisEntity> analyzeBoard({
     required String boardUId,
     required String userUId,
+    bool forceRefresh = false,
   }) async {
     final result = await remoteDataSource.analyzeBoard(
       boardUId: boardUId,
       userUId: userUId,
+      forceRefresh: forceRefresh,
     );
     return result.toEntity();
   }
@@ -35,10 +39,12 @@ class AiAnalysisRepositoryImpl implements IAiAnalysisRepository {
   Future<ProjectAnalysisEntity> analyzeCard({
     required String cardUId,
     required String userUId,
+    bool forceRefresh = false,
   }) async {
     final result = await remoteDataSource.analyzeCard(
       cardUId: cardUId,
       userUId: userUId,
+      forceRefresh: forceRefresh,
     );
     return result.toEntity();
   }

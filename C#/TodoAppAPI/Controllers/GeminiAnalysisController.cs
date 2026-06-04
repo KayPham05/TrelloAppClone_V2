@@ -18,30 +18,42 @@ namespace TodoAppAPI.Controllers
         }
 
         [HttpGet("workspace/{workspaceUId}")]
-        public async Task<IActionResult> AnalyzeWorkspace(string workspaceUId, [FromQuery] string userUId, CancellationToken cancellationToken)
+        public async Task<IActionResult> AnalyzeWorkspace(
+            string workspaceUId,
+            [FromQuery] string userUId,
+            [FromQuery] bool forceRefresh = false,
+            CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(userUId))
                 return BadRequest(new { message = "userUId is required" });
 
-            return ToActionResult(await _analysisService.AnalyzeWorkspaceAsync(workspaceUId, userUId, cancellationToken));
+            return ToActionResult(await _analysisService.AnalyzeWorkspaceAsync(workspaceUId, userUId, forceRefresh, cancellationToken));
         }
 
         [HttpGet("board/{boardUId}")]
-        public async Task<IActionResult> AnalyzeBoard(string boardUId, [FromQuery] string userUId, CancellationToken cancellationToken)
+        public async Task<IActionResult> AnalyzeBoard(
+            string boardUId,
+            [FromQuery] string userUId,
+            [FromQuery] bool forceRefresh = false,
+            CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(userUId))
                 return BadRequest(new { message = "userUId is required" });
 
-            return ToActionResult(await _analysisService.AnalyzeBoardAsync(boardUId, userUId, cancellationToken));
+            return ToActionResult(await _analysisService.AnalyzeBoardAsync(boardUId, userUId, forceRefresh, cancellationToken));
         }
 
         [HttpGet("card/{cardUId}")]
-        public async Task<IActionResult> AnalyzeCard(string cardUId, [FromQuery] string userUId, CancellationToken cancellationToken)
+        public async Task<IActionResult> AnalyzeCard(
+            string cardUId,
+            [FromQuery] string userUId,
+            [FromQuery] bool forceRefresh = false,
+            CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(userUId))
                 return BadRequest(new { message = "userUId is required" });
 
-            return ToActionResult(await _analysisService.AnalyzeCardAsync(cardUId, userUId, cancellationToken));
+            return ToActionResult(await _analysisService.AnalyzeCardAsync(cardUId, userUId, forceRefresh, cancellationToken));
         }
 
         private IActionResult ToActionResult(AnalysisResult result)

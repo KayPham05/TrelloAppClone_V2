@@ -17,10 +17,15 @@ namespace TodoAppAPI.Service.Gemini
             {
                 overallProgress,
                 metrics.TotalCards,
+                metrics.TodoCards,
+                metrics.InProgressCards,
                 metrics.CompletedCards,
+                metrics.OtherCards,
                 metrics.OverdueCards,
+                metrics.DueSoonCards,
                 metrics.TotalTodoItems,
-                metrics.CompletedTodoItems
+                metrics.CompletedTodoItems,
+                metrics.StatusDistribution
             }, JsonOptions);
 
             return $"""
@@ -37,6 +42,7 @@ namespace TodoAppAPI.Service.Gemini
 
             === INSTRUCTIONS ===
             Return a JSON object matching the schema provided by the API request.
+            Base progress and status observations on the card Status field and pre-calculated metrics.
             Do not include any text outside the JSON object.
             Limit risks to at most 5 items.
             Limit suggestions to at most 5 items.

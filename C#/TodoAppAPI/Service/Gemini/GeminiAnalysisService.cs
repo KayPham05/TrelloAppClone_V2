@@ -12,7 +12,10 @@ namespace TodoAppAPI.Service.Gemini
 {
     public class GeminiAnalysisService : IGeminiAnalysisService
     {
-        private const string AiUnavailableSummary = "AI summary is temporarily unavailable. Showing metric data only.";
+        private const string TodoStatusKey = "todo";
+        private const string InProgressStatusKey = "inProgress";
+        private const string CompletedStatusKey = "completed";
+        private const string OtherStatusKey = "other";
         private readonly TodoDbContext _context;
         private readonly IAuthorizationService _authorizationService;
         private readonly IGeminiClient _geminiClient;
@@ -37,7 +40,7 @@ namespace TodoAppAPI.Service.Gemini
             _logger = logger;
         }
 
-        public async Task<AnalysisResult> AnalyzeWorkspaceAsync(string workspaceUId, string userUId, CancellationToken cancellationToken)
+        public async Task<AnalysisResult> AnalyzeWorkspaceAsync(string workspaceUId, string userUId, bool forceRefresh, CancellationToken cancellationToken)
         {
             var workspace = await _context.Workspaces
                 .AsNoTracking()
@@ -69,10 +72,10 @@ namespace TodoAppAPI.Service.Gemini
                 .ToListAsync(cancellationToken);
 
             var snapshot = BuildSnapshot("workspace", workspace.WorkspaceUId, workspace.Name, lists, cards);
-            return await AnalyzeSnapshotAsync(snapshot, userUId, cancellationToken);
+            return await AnalyzeSnapshotAsync(snapshot, userUId, forceRefresh, cancellationToken);
         }
 
-        public async Task<AnalysisResult> AnalyzeBoardAsync(string boardUId, string userUId, CancellationToken cancellationToken)
+        public async Task<AnalysisResult> AnalyzeBoardAsync(string boardUId, string userUId, bool forceRefresh, CancellationToken cancellationToken)
         {
             var board = await _context.Boards
                 .AsNoTracking()
@@ -99,10 +102,10 @@ namespace TodoAppAPI.Service.Gemini
                 .ToListAsync(cancellationToken);
 
             var snapshot = BuildSnapshot("board", board.BoardUId, board.BoardName ?? board.BoardUId, lists, cards);
-            return await AnalyzeSnapshotAsync(snapshot, userUId, cancellationToken);
+            return await AnalyzeSnapshotAsync(snapshot, userUId, forceRefresh, cancellationToken);
         }
 
-        public async Task<AnalysisResult> AnalyzeCardAsync(string cardUId, string userUId, CancellationToken cancellationToken)
+        public async Task<AnalysisResult> AnalyzeCardAsync(string cardUId, string userUId, bool forceRefresh, CancellationToken cancellationToken)
         {
             var card = await _context.Todos
                 .AsNoTracking()
@@ -118,16 +121,17 @@ namespace TodoAppAPI.Service.Gemini
 
             var lists = card.List == null ? [] : new List<ModelList> { card.List };
             var snapshot = BuildSnapshot("card", card.CardUId, card.Title ?? card.CardUId, lists, [card]);
-            return await AnalyzeSnapshotAsync(snapshot, userUId, cancellationToken);
+            return await AnalyzeSnapshotAsync(snapshot, userUId, forceRefresh, cancellationToken);
         }
 
         private async Task<AnalysisResult> AnalyzeSnapshotAsync(
             ProjectAnalysisSnapshotDto snapshot,
             string userUId,
+            bool forceRefresh,
             CancellationToken cancellationToken)
         {
             var cacheKey = $"analysis:{snapshot.ScopeType}:{snapshot.ScopeUId}:{userUId}:{_settings.Model}";
-            if (_cache.TryGetValue<ProjectAnalysisDto>(cacheKey, out var cached) && cached != null)
+            if (!forceRefresh && _cache.TryGetValue<ProjectAnalysisDto>(cacheKey, out var cached) && cached != null)
             {
                 cached.Cached = true;
                 return AnalysisResult.Success(cached);
@@ -143,7 +147,6 @@ namespace TodoAppAPI.Service.Gemini
             catch (Exception ex)
             {
                 _logger.LogWarning(ex, "Gemini analysis fallback used for {ScopeType} {ScopeUId}", snapshot.ScopeType, snapshot.ScopeUId);
-                ApplyFallback(report);
             }
 
             _cache.Set(cacheKey, report, TimeSpan.FromMinutes(Math.Max(1, _settings.CacheMinutes)));
@@ -160,7 +163,9 @@ namespace TodoAppAPI.Service.Gemini
                 Title = snapshot.Title,
                 Metrics = metrics,
                 OverallProgress = CalculateProgress(metrics),
-                Summary = AiUnavailableSummary,
+                Summary = BuildMetricSummary(snapshot, metrics),
+                Risks = BuildDeterministicRisks(snapshot, metrics),
+                Suggestions = BuildDeterministicSuggestions(metrics),
                 Breakdown = BuildBreakdown(snapshot),
                 GeneratedAt = DateTime.UtcNow,
                 Model = string.IsNullOrWhiteSpace(_settings.Model) ? "gemini-3.5-flash" : _settings.Model,
@@ -205,30 +210,48 @@ namespace TodoAppAPI.Service.Gemini
         private static ProjectAnalysisMetricDto BuildMetrics(ProjectAnalysisSnapshotDto snapshot)
         {
             var completedCards = snapshot.Cards.Count(IsCompletedCard);
+            var today = DateTime.UtcNow.Date;
+            var dueSoonLimit = today.AddDays(3);
+            var statusDistribution = snapshot.Cards
+                .GroupBy(GetStatusCategory)
+                .ToDictionary(g => g.Key, g => g.Count());
+
             return new ProjectAnalysisMetricDto
             {
                 TotalCards = snapshot.Cards.Count,
+                TodoCards = statusDistribution.GetValueOrDefault(TodoStatusKey),
+                InProgressCards = statusDistribution.GetValueOrDefault(InProgressStatusKey),
                 CompletedCards = completedCards,
-                OverdueCards = snapshot.Cards.Count(c => c.DueDate.HasValue && c.DueDate.Value.Date < DateTime.UtcNow.Date && !IsCompletedCard(c)),
+                OtherCards = statusDistribution.GetValueOrDefault(OtherStatusKey),
+                OverdueCards = snapshot.Cards.Count(c => c.DueDate.HasValue && c.DueDate.Value.Date < today && !IsCompletedCard(c)),
+                DueSoonCards = snapshot.Cards.Count(c =>
+                    c.DueDate.HasValue &&
+                    c.DueDate.Value.Date >= today &&
+                    c.DueDate.Value.Date <= dueSoonLimit &&
+                    !IsCompletedCard(c)),
                 TotalTodoItems = snapshot.Cards.Sum(c => c.TotalTodoItems),
-                CompletedTodoItems = snapshot.Cards.Sum(c => c.CompletedTodoItems)
+                CompletedTodoItems = snapshot.Cards.Sum(c => c.CompletedTodoItems),
+                StatusDistribution = new Dictionary<string, int>
+                {
+                    [TodoStatusKey] = statusDistribution.GetValueOrDefault(TodoStatusKey),
+                    [InProgressStatusKey] = statusDistribution.GetValueOrDefault(InProgressStatusKey),
+                    [CompletedStatusKey] = statusDistribution.GetValueOrDefault(CompletedStatusKey),
+                    [OtherStatusKey] = statusDistribution.GetValueOrDefault(OtherStatusKey)
+                }
             };
         }
 
         private static int CalculateProgress(ProjectAnalysisMetricDto metrics)
         {
-            var ratios = new List<double>();
-            if (metrics.TotalTodoItems > 0)
-                ratios.Add((double)metrics.CompletedTodoItems / metrics.TotalTodoItems);
-            if (metrics.TotalCards > 0)
-                ratios.Add((double)metrics.CompletedCards / metrics.TotalCards);
-            if (ratios.Count == 0)
+            if (metrics.TotalCards == 0)
                 return 0;
-            return Math.Clamp((int)Math.Round(ratios.Average() * 100), 0, 100);
+
+            return Math.Clamp((int)Math.Round((double)metrics.CompletedCards / metrics.TotalCards * 100), 0, 100);
         }
 
         private static List<ProjectAnalysisBreakdownDto> BuildBreakdown(ProjectAnalysisSnapshotDto snapshot)
         {
+            var today = DateTime.UtcNow.Date;
             return snapshot.Lists.Select(list =>
             {
                 var cards = snapshot.Cards.Where(c => c.ListUId == list.ListUId).ToList();
@@ -237,7 +260,7 @@ namespace TodoAppAPI.Service.Gemini
                     Name = list.Name,
                     TotalCards = cards.Count,
                     CompletedCards = cards.Count(IsCompletedCard),
-                    OverdueCards = cards.Count(c => c.DueDate.HasValue && c.DueDate.Value.Date < DateTime.UtcNow.Date && !IsCompletedCard(c))
+                    OverdueCards = cards.Count(c => c.DueDate.HasValue && c.DueDate.Value.Date < today && !IsCompletedCard(c))
                 };
             }).ToList();
         }
@@ -252,8 +275,10 @@ namespace TodoAppAPI.Service.Gemini
                 throw new JsonException("Gemini JSON did not match expected shape.");
 
             var validCardIds = snapshot.Cards.Select(c => c.CardUId).ToHashSet(StringComparer.OrdinalIgnoreCase);
-            report.Summary = Truncate(string.IsNullOrWhiteSpace(content.Summary) ? AiUnavailableSummary : content.Summary, 800);
-            report.Risks = content.Risks
+            if (!string.IsNullOrWhiteSpace(content.Summary))
+                report.Summary = Truncate(content.Summary, 800);
+
+            var geminiRisks = content.Risks
                 .Take(Math.Max(0, _settings.MaxRisks))
                 .Select(r => new ProjectAnalysisRiskDto
                 {
@@ -267,7 +292,10 @@ namespace TodoAppAPI.Service.Gemini
                 })
                 .Where(r => !string.IsNullOrWhiteSpace(r.Title))
                 .ToList();
-            report.Suggestions = content.Suggestions
+            if (geminiRisks.Count > 0)
+                report.Risks = geminiRisks;
+
+            var geminiSuggestions = content.Suggestions
                 .Take(Math.Max(0, _settings.MaxSuggestions))
                 .Select(s => new ProjectAnalysisSuggestionDto
                 {
@@ -277,7 +305,10 @@ namespace TodoAppAPI.Service.Gemini
                 })
                 .Where(s => !string.IsNullOrWhiteSpace(s.Title))
                 .ToList();
-            report.InferredMilestones = content.InferredMilestones
+            if (geminiSuggestions.Count > 0)
+                report.Suggestions = geminiSuggestions;
+
+            var geminiMilestones = content.InferredMilestones
                 .Take(5)
                 .Select(m => new ProjectAnalysisMilestoneDto
                 {
@@ -287,22 +318,154 @@ namespace TodoAppAPI.Service.Gemini
                 })
                 .Where(m => !string.IsNullOrWhiteSpace(m.Name))
                 .ToList();
+            if (geminiMilestones.Count > 0)
+                report.InferredMilestones = geminiMilestones;
         }
 
-        private static void ApplyFallback(ProjectAnalysisDto report)
+        private static string BuildMetricSummary(ProjectAnalysisSnapshotDto snapshot, ProjectAnalysisMetricDto metrics)
         {
-            report.Summary = AiUnavailableSummary;
-            report.Risks = [];
-            report.Suggestions = [];
-            report.InferredMilestones = [];
+            if (metrics.TotalCards == 0)
+                return "Bảng chưa có thẻ để phân tích. Hãy thêm một vài thẻ, trạng thái và hạn xử lý để báo cáo có ngữ cảnh hơn.";
+
+            var summary = $"Dự án hoàn thành {CalculateProgress(metrics)}% ({metrics.CompletedCards}/{metrics.TotalCards} thẻ).";
+            var signals = new List<string>();
+
+            if (metrics.OverdueCards > 0)
+                signals.Add($"Có {metrics.OverdueCards} thẻ quá hạn cần xử lý ưu tiên");
+            if (metrics.DueSoonCards > 0)
+                signals.Add($"{metrics.DueSoonCards} thẻ sắp đến hạn trong 3 ngày tới");
+            if (metrics.TotalCards < 3)
+                signals.Add("Dữ liệu còn ít nên nhận định chỉ mang tính định hướng");
+            if (snapshot.Cards.Count > 0 && metrics.TotalTodoItems == 0)
+                signals.Add("Chưa có checklist để đo mức hoàn thành chi tiết");
+
+            return signals.Count == 0 ? summary : $"{summary} {string.Join(". ", signals)}.";
+        }
+
+        private static List<ProjectAnalysisRiskDto> BuildDeterministicRisks(ProjectAnalysisSnapshotDto snapshot, ProjectAnalysisMetricDto metrics)
+        {
+            var risks = new List<ProjectAnalysisRiskDto>();
+            var today = DateTime.UtcNow.Date;
+            var dueSoonLimit = today.AddDays(3);
+
+            var overdueCardIds = snapshot.Cards
+                .Where(c => c.DueDate.HasValue && c.DueDate.Value.Date < today && !IsCompletedCard(c))
+                .Select(c => c.CardUId)
+                .Take(5)
+                .ToList();
+            if (overdueCardIds.Count > 0)
+            {
+                risks.Add(new ProjectAnalysisRiskDto
+                {
+                    Severity = "high",
+                    Title = "Thẻ quá hạn",
+                    Description = $"{metrics.OverdueCards} thẻ chưa hoàn tất đã quá hạn, có thể làm chậm tiến độ bảng.",
+                    RelatedCardUIds = overdueCardIds
+                });
+            }
+
+            var dueSoonCardIds = snapshot.Cards
+                .Where(c => c.DueDate.HasValue && c.DueDate.Value.Date >= today && c.DueDate.Value.Date <= dueSoonLimit && !IsCompletedCard(c))
+                .Select(c => c.CardUId)
+                .Take(5)
+                .ToList();
+            if (dueSoonCardIds.Count > 0)
+            {
+                risks.Add(new ProjectAnalysisRiskDto
+                {
+                    Severity = "medium",
+                    Title = "Sắp đến hạn",
+                    Description = $"{metrics.DueSoonCards} thẻ sẽ đến hạn trong 3 ngày tới.",
+                    RelatedCardUIds = dueSoonCardIds
+                });
+            }
+
+            if (metrics.TotalCards >= 3 && CalculateProgress(metrics) < 25)
+            {
+                risks.Add(new ProjectAnalysisRiskDto
+                {
+                    Severity = "medium",
+                    Title = "Tiến độ thấp",
+                    Description = "Tỷ lệ thẻ hoàn tất còn thấp so với tổng số thẻ hiện có."
+                });
+            }
+
+            return risks;
+        }
+
+        private static List<ProjectAnalysisSuggestionDto> BuildDeterministicSuggestions(ProjectAnalysisMetricDto metrics)
+        {
+            var suggestions = new List<ProjectAnalysisSuggestionDto>();
+
+            if (metrics.OverdueCards > 0)
+            {
+                suggestions.Add(new ProjectAnalysisSuggestionDto
+                {
+                    Priority = "high",
+                    Title = "Ưu tiên thẻ quá hạn",
+                    Description = "Rà soát và xử lý các thẻ quá hạn trước khi thêm công việc mới."
+                });
+            }
+
+            if (metrics.DueSoonCards > 0)
+            {
+                suggestions.Add(new ProjectAnalysisSuggestionDto
+                {
+                    Priority = "medium",
+                    Title = "Chốt kế hoạch thẻ sắp đến hạn",
+                    Description = "Cập nhật owner, checklist hoặc trạng thái cho các thẻ sắp đến hạn."
+                });
+            }
+
+            if (metrics.TotalCards > 0 && metrics.CompletedCards == 0)
+            {
+                suggestions.Add(new ProjectAnalysisSuggestionDto
+                {
+                    Priority = "medium",
+                    Title = "Tạo một mốc hoàn tất nhỏ",
+                    Description = "Chọn 1-2 thẻ có phạm vi nhỏ để hoàn tất sớm và tạo tín hiệu tiến độ."
+                });
+            }
+
+            if (metrics.TotalCards > 0 && metrics.TotalTodoItems == 0)
+            {
+                suggestions.Add(new ProjectAnalysisSuggestionDto
+                {
+                    Priority = "low",
+                    Title = "Bổ sung checklist",
+                    Description = "Thêm checklist cho các thẻ quan trọng để theo dõi tiến độ chi tiết hơn."
+                });
+            }
+
+            if (suggestions.Count == 0)
+            {
+                suggestions.Add(new ProjectAnalysisSuggestionDto
+                {
+                    Priority = "low",
+                    Title = "Duy trì cập nhật trạng thái",
+                    Description = "Tiếp tục cập nhật trạng thái thẻ sau mỗi thay đổi để báo cáo phản ánh dữ liệu mới nhất."
+                });
+            }
+
+            return suggestions.Take(5).ToList();
         }
 
         private static bool IsCompletedCard(ProjectAnalysisSnapshotCardDto card)
         {
             var status = card.Status ?? string.Empty;
-            var listName = card.ListName ?? string.Empty;
-            return ContainsAny(status, "completed", "done", "hoan_thanh", "hoàn thành", "xong") ||
-                   ContainsAny(listName, "completed", "done", "hoan_thanh", "hoàn thành", "xong");
+            return ContainsAny(status, "completed", "done", "hoan_thanh", "xong");
+        }
+
+        private static string GetStatusCategory(ProjectAnalysisSnapshotCardDto card)
+        {
+            var status = card.Status ?? string.Empty;
+            if (IsCompletedCard(card))
+                return CompletedStatusKey;
+            if (ContainsAny(status, "to do", "todo", "chua lam", "new", "open"))
+                return TodoStatusKey;
+            if (ContainsAny(status, "in progress", "doing", "dang lam", "active"))
+                return InProgressStatusKey;
+            return OtherStatusKey;
         }
 
         private static bool ContainsAny(string value, params string[] needles)

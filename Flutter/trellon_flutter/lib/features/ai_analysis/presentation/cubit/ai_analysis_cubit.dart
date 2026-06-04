@@ -21,6 +21,7 @@ class AiAnalysisCubit extends Cubit<AiAnalysisState> {
     required String scopeType,
     required String scopeUId,
     required String userUId,
+    bool forceRefresh = false,
   }) async {
     emit(const AiAnalysisLoading());
     try {
@@ -28,6 +29,7 @@ class AiAnalysisCubit extends Cubit<AiAnalysisState> {
         scopeType: scopeType,
         scopeUId: scopeUId,
         userUId: userUId,
+        forceRefresh: forceRefresh,
       );
       emit(AiAnalysisLoaded(analysis));
     } catch (error) {
@@ -43,18 +45,28 @@ class AiAnalysisCubit extends Cubit<AiAnalysisState> {
     required String scopeType,
     required String scopeUId,
     required String userUId,
+    bool forceRefresh = false,
   }) {
     switch (scopeType.toLowerCase()) {
       case 'workspace':
         return analyzeWorkspaceUseCase(
           workspaceUId: scopeUId,
           userUId: userUId,
+          forceRefresh: forceRefresh,
         );
       case 'card':
-        return analyzeCardUseCase(cardUId: scopeUId, userUId: userUId);
+        return analyzeCardUseCase(
+          cardUId: scopeUId,
+          userUId: userUId,
+          forceRefresh: forceRefresh,
+        );
       case 'board':
       default:
-        return analyzeBoardUseCase(boardUId: scopeUId, userUId: userUId);
+        return analyzeBoardUseCase(
+          boardUId: scopeUId,
+          userUId: userUId,
+          forceRefresh: forceRefresh,
+        );
     }
   }
 

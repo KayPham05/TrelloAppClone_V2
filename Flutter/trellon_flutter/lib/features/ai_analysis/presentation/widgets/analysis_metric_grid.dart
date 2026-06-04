@@ -15,6 +15,7 @@ class AnalysisMetricGrid extends StatelessWidget {
       _MetricItem('Thẻ', metrics.totalCards, Icons.dashboard_outlined),
       _MetricItem('Hoàn tất', metrics.doneCards, Icons.check_circle_outline),
       _MetricItem('Quá hạn', metrics.overdueCards, Icons.schedule_outlined),
+      _MetricItem('Sắp hạn', metrics.dueSoonCards, Icons.event_available),
       _MetricItem('Checklist', metrics.doneTodoItems, Icons.task_alt),
     ];
 

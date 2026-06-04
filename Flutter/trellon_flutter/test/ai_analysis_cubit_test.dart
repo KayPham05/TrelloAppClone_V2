@@ -40,7 +40,11 @@ void main() {
     'analyze emits loading then loaded for board scope',
     build: () {
       when(
-        () => repository.analyzeBoard(boardUId: 'board-1', userUId: 'user-1'),
+        () => repository.analyzeBoard(
+          boardUId: 'board-1',
+          userUId: 'user-1',
+          forceRefresh: false,
+        ),
       ).thenAnswer((_) async => analysis);
       return cubit;
     },
@@ -63,7 +67,11 @@ void main() {
     'analyze emits error when repository throws',
     build: () {
       when(
-        () => repository.analyzeBoard(boardUId: 'board-1', userUId: 'viewer'),
+        () => repository.analyzeBoard(
+          boardUId: 'board-1',
+          userUId: 'viewer',
+          forceRefresh: false,
+        ),
       ).thenThrow(Exception('Bạn không có quyền'));
       return cubit;
     },

@@ -10,6 +10,7 @@ import '../cubit/ai_analysis_cubit.dart';
 import '../cubit/ai_analysis_state.dart';
 import '../widgets/analysis_metric_grid.dart';
 import '../widgets/analysis_risk_list.dart';
+import '../widgets/analysis_status_chart.dart';
 import '../widgets/analysis_suggestion_list.dart';
 import '../widgets/analysis_summary_card.dart';
 
@@ -45,7 +46,7 @@ class _AiAnalysisPageState extends State<AiAnalysisPage> {
     super.dispose();
   }
 
-  Future<void> _loadAnalysis() async {
+  Future<void> _loadAnalysis({bool forceRefresh = false}) async {
     final userUId = await serviceLocator<UserLocalDataSource>().getUserId();
     if (userUId == null || userUId.isEmpty) {
       _cubit.showError('Không tìm thấy người dùng hiện tại.');
@@ -55,6 +56,7 @@ class _AiAnalysisPageState extends State<AiAnalysisPage> {
       scopeType: widget.scopeType,
       scopeUId: widget.scopeUId,
       userUId: userUId,
+      forceRefresh: forceRefresh,
     );
   }
 
@@ -75,7 +77,9 @@ class _AiAnalysisPageState extends State<AiAnalysisPage> {
             IconButton(
               tooltip: 'Tải lại báo cáo',
               icon: const Icon(Icons.refresh),
-              onPressed: _loadAnalysis,
+              onPressed: () {
+                _loadAnalysis(forceRefresh: true);
+              },
             ),
           ],
         ),
@@ -85,7 +89,12 @@ class _AiAnalysisPageState extends State<AiAnalysisPage> {
               return const Center(child: CircularProgressIndicator());
             }
             if (state is AiAnalysisError) {
-              return _ErrorView(message: state.message, onRetry: _loadAnalysis);
+              return _ErrorView(
+                message: state.message,
+                onRetry: () {
+                  _loadAnalysis(forceRefresh: true);
+                },
+              );
             }
             if (state is AiAnalysisLoaded) {
               return _LoadedAnalysisView(state: state);
@@ -119,6 +128,7 @@ class _LoadedAnalysisView extends StatelessWidget {
           scopeType: analysis.scopeType,
           scopeUId: analysis.scopeUId,
           userUId: userUId,
+          forceRefresh: true,
         );
       },
       child: ListView(
@@ -129,6 +139,10 @@ class _LoadedAnalysisView extends StatelessWidget {
           _SectionTitle('Chỉ số chính'),
           const SizedBox(height: 10),
           AnalysisMetricGrid(metrics: analysis.metrics),
+          const SizedBox(height: 18),
+          _SectionTitle('Trạng thái thẻ'),
+          const SizedBox(height: 10),
+          AnalysisStatusChart(metrics: analysis.metrics),
           const SizedBox(height: 18),
           _SectionTitle('Rủi ro'),
           const SizedBox(height: 10),
