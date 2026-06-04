@@ -37,6 +37,7 @@ jobs:
           echo "$HOME/.dotnet/tools" >> "$GITHUB_PATH"
 
       - name: Begin SonarScanner
+        working-directory: C#/TodoAppAPI
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: >
@@ -45,8 +46,9 @@ jobs:
           /o:"kaypham05"
           /d:sonar.token="$SONAR_TOKEN"
           /d:sonar.host.url="https://sonarcloud.io"
-          /d:sonar.cs.opencover.reportsPaths="coverage/dotnet/**/coverage.opencover.xml"
-          /d:sonar.dart.lcov.reportPaths="coverage/lcov.info"
+          /d:sonar.projectBaseDir="$GITHUB_WORKSPACE"
+          /d:sonar.cs.opencover.reportsPaths="../../coverage/dotnet/**/coverage.opencover.xml"
+          /d:sonar.dart.lcov.reportPaths="../../coverage/lcov.info"
           /d:sonar.exclusions="**/node_modules/**,**/vendor/**,**/*.g.dart,**/*.freezed.dart,**/*.gen.dart,**/generated/**,**/build/**,**/ios/**,**/android/**,**/bin/**,**/obj/**,**/Migrations/**,**/wwwroot/**,Web/**"
           /d:sonar.coverage.exclusions="Flutter/trellon_flutter/lib/**/presentation/pages/**/*.dart,Flutter/trellon_flutter/lib/**/presentation/widgets/**/*.dart,Flutter/trellon_flutter/lib/**/presentation/controllers/**/*.dart,Flutter/trellon_flutter/lib/core/common_widgets/**/*.dart,Flutter/trellon_flutter/lib/core/widgets/**/*.dart,Flutter/trellon_flutter/lib/core/errors/app_exception_mapper.dart,Flutter/trellon_flutter/lib/core/network/interceptors/auth_interceptor.dart,Flutter/trellon_flutter/lib/features/board/presentation/cubit/board_cubit.dart,Flutter/trellon_flutter/lib/features/inbox/presentation/bloc/inbox_cubit.dart,Flutter/trellon_flutter/lib/features/inbox/**/*.dart,Flutter/trellon_flutter/lib/init_dependencies.dart,Flutter/trellon_flutter/lib/core/data_sources/user_local_data_source.dart,Flutter/trellon_flutter/lib/features/activity/data/services/notification_realtime_service.dart"
           /d:sonar.c.file.suffixes=-
@@ -93,15 +95,18 @@ jobs:
 
       # ===== .NET BUILD & TEST =====
       - name: Restore .NET dependencies
-        run: dotnet restore "C#/TodoAppAPI/TodoAppAPI.sln"
+        working-directory: C#/TodoAppAPI
+        run: dotnet restore TodoAppAPI.sln
         continue-on-error: false
 
       - name: Build .NET project
-        run: dotnet build "C#/TodoAppAPI/TodoAppAPI.sln" --no-restore
+        working-directory: C#/TodoAppAPI
+        run: dotnet build TodoAppAPI.sln --no-restore
         continue-on-error: false
 
       - name: Run .NET tests with coverage
-        run: dotnet test "C#/TodoAppAPI/TodoAppAPI.sln" --no-build --collect:"XPlat Code Coverage" --results-directory coverage/dotnet -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
+        working-directory: C#/TodoAppAPI
+        run: dotnet test TodoAppAPI.sln --no-build --collect:"XPlat Code Coverage" --results-directory ../../coverage/dotnet -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
         continue-on-error: false
 
       - name: Verify coverage reports
@@ -111,6 +116,7 @@ jobs:
 
       # ===== SONARCLOUD SCAN END =====
       - name: End SonarScanner
+        working-directory: C#/TodoAppAPI
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: dotnet sonarscanner end /d:sonar.token="$SONAR_TOKEN"
