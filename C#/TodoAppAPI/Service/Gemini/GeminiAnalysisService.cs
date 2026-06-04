@@ -140,8 +140,7 @@ namespace TodoAppAPI.Service.Gemini
             var snapshotHash = ComputeSnapshotHash(snapshot);
             var report = CreateBaseReport(snapshot);
 
-            if (!forceRefresh &&
-                _cache.TryGetValue<AnalysisCacheEntry>(cacheKey, out var cached) &&
+            if (_cache.TryGetValue<AnalysisCacheEntry>(cacheKey, out var cached) &&
                 cached != null &&
                 cached.SnapshotHash == snapshotHash)
             {

@@ -214,7 +214,7 @@ public class GeminiAnalysisServiceTests
 
         Assert.Equal(AnalysisResultStatus.Success, result.Status);
         Assert.NotNull(result.Analysis);
-        Assert.Contains("hoàn thành", result.Analysis.Summary);
+        Assert.Contains("quá hạn", result.Analysis.Summary);
         Assert.Equal(2, result.Analysis.Metrics.TotalCards);
         Assert.NotEmpty(result.Analysis.Risks);
         Assert.NotEmpty(result.Analysis.Suggestions);
