@@ -72,10 +72,10 @@ public class AnalysisAuthorizationServiceTests
     {
         await using var context = CreateContext();
         context.Boards.Add(new Board { BoardUId = "board-1", BoardName = "Board", UserUId = "owner" });
-        context.Lists.Add(new ModelList { ListUId = "list-1", BoardUId = "board-1" });
-        context.Todos.Add(new Card { CardUId = "card-1", ListUId = "list-1", Title = "Card" });
-        context.Todos.Add(new Card { CardUId = "card-inbox", ListUId = null, Title = "Inbox Card" });
-        context.UserInboxCards.Add(new UserInboxCard { UserInboxCardId = "uic-1", CardUId = "card-inbox", UserUId = "inbox-owner" });
+        context.Lists.Add(new TodoAppAPI.Models.List { ListUId = "list-1", BoardUId = "board-1" });
+        context.Todos.Add(new Card { CardUId = "card-1", ListUId = "list-1", Title = "Card", Status = "Active" });
+        context.Todos.Add(new Card { CardUId = "card-inbox", ListUId = null, Title = "Inbox Card", Status = "Active" });
+        context.UserInboxCards.Add(new UserInboxCard { CardUId = "card-inbox", UserUId = "inbox-owner" });
         context.BoardMembers.Add(new BoardMember { BoardMemberUId = "bm-1", BoardUId = "board-1", UserUId = "board-admin", BoardRole = RoleConstants.BoardAdmin });
         
         await context.SaveChangesAsync();

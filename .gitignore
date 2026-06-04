@@ -106,3 +106,10 @@ Docs/Reviews/
 coverage.cobertura.xml
 coverage.opencover.xml
 coverage/
+
+# -----------------------------
+# SonarQube
+# -----------------------------
+.sonarqube/
+SonarQube.Analysis.xml
+.sonar/
