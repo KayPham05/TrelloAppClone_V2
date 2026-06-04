@@ -152,13 +152,6 @@ builder.Services.AddCors(options =>
               .AllowAnyMethod()
               .AllowCredentials();
     });
-
-    options.AddPolicy("AllowAllMobile", policy =>
-    {
-        policy.AllowAnyOrigin()
-              .AllowAnyHeader()
-              .AllowAnyMethod();
-    });
 });
 
 builder.Services.AddControllers()
