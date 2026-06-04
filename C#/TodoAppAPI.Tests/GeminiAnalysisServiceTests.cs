@@ -60,6 +60,137 @@ public class GeminiAnalysisServiceTests
     }
 
     [Fact]
+    public async Task AnalyzeBoardAsync_does_not_auto_persist_gemini_report()
+    {
+        await using var context = CreateContext();
+        SeedBoardWithCards(context, requesterRole: RoleConstants.BoardEditor);
+        var service = CreateService(context, new FakeGeminiClient(ValidGeminiJson("history test")));
+
+        var result = await service.AnalyzeBoardAsync("board-1", "requester", false, CancellationToken.None);
+
+        Assert.Equal(AnalysisResultStatus.Success, result.Status);
+        Assert.Empty(context.AnalysisReports);
+    }
+
+    [Fact]
+    public async Task SaveLatestReportAsync_persists_latest_gemini_report()
+    {
+        await using var context = CreateContext();
+        SeedBoardWithCards(context, requesterRole: RoleConstants.BoardEditor);
+        var service = CreateService(context, new FakeGeminiClient(ValidGeminiJson("history test")));
+
+        await service.AnalyzeBoardAsync("board-1", "requester", false, CancellationToken.None);
+        var result = await service.SaveLatestReportAsync("board", "board-1", "requester", CancellationToken.None);
+
+        Assert.Equal(AnalysisResultStatus.Success, result.Status);
+        Assert.NotNull(result.Report);
+        var report = Assert.Single(context.AnalysisReports);
+        Assert.Equal("board", report.ScopeType);
+        Assert.Equal("board-1", report.ScopeUId);
+        Assert.Equal("requester", report.GeneratedByUId);
+        Assert.Equal("Sprint Board", report.Title);
+        Assert.Equal("gemini-test", report.ModelUsed);
+        Assert.Contains("history test", report.ReportData);
+    }
+
+    [Fact]
+    public async Task SaveLatestReportAsync_does_not_persist_deterministic_fallback_report()
+    {
+        await using var context = CreateContext();
+        SeedBoardWithCards(context, requesterRole: RoleConstants.BoardAdmin);
+        var service = CreateService(context, new FakeGeminiClient("not-json"));
+
+        await service.AnalyzeBoardAsync("board-1", "requester", false, CancellationToken.None);
+        var result = await service.SaveLatestReportAsync("board", "board-1", "requester", CancellationToken.None);
+
+        Assert.Equal(AnalysisResultStatus.BadRequest, result.Status);
+        Assert.Empty(context.AnalysisReports);
+    }
+
+    [Fact]
+    public async Task SaveLatestReportAsync_can_save_cached_gemini_report()
+    {
+        await using var context = CreateContext();
+        SeedBoardWithCards(context, requesterRole: RoleConstants.BoardAdmin);
+        var service = CreateService(context, new FakeGeminiClient(ValidGeminiJson("cache test")));
+
+        await service.AnalyzeBoardAsync("board-1", "requester", false, CancellationToken.None);
+        await service.AnalyzeBoardAsync("board-1", "requester", false, CancellationToken.None);
+        var saveResult = await service.SaveLatestReportAsync("board", "board-1", "requester", CancellationToken.None);
+
+        Assert.Equal(AnalysisResultStatus.Success, saveResult.Status);
+        Assert.Single(context.AnalysisReports);
+    }
+
+    [Fact]
+    public async Task SaveLatestReportAsync_keeps_latest_five_reports_per_scope()
+    {
+        await using var context = CreateContext();
+        SeedBoardWithCards(context, requesterRole: RoleConstants.BoardAdmin);
+        var service = CreateService(context, new FakeGeminiClient(ValidGeminiJson("retention test")));
+
+        for (var i = 0; i < 6; i++)
+        {
+            await service.AnalyzeBoardAsync("board-1", "requester", true, CancellationToken.None);
+            await service.SaveLatestReportAsync("board", "board-1", "requester", CancellationToken.None);
+        }
+
+        Assert.Equal(5, context.AnalysisReports.Count(r => r.ScopeType == "board" && r.ScopeUId == "board-1"));
+    }
+
+    [Fact]
+    public async Task GetReportHistoryAsync_returns_page_for_authorized_user()
+    {
+        await using var context = CreateContext();
+        SeedBoardWithCards(context, requesterRole: RoleConstants.BoardAdmin);
+        context.AnalysisReports.AddRange(
+            SavedReport("report-1", generatedAt: DateTime.UtcNow.AddMinutes(-2), progress: 40),
+            SavedReport("report-2", generatedAt: DateTime.UtcNow.AddMinutes(-1), progress: 70));
+        context.SaveChanges();
+        var service = CreateService(context, new FakeGeminiClient("{}"));
+
+        var result = await service.GetReportHistoryAsync("board", "board-1", "requester", 1, 1, CancellationToken.None);
+
+        Assert.Equal(AnalysisResultStatus.Success, result.Status);
+        Assert.NotNull(result.Page);
+        Assert.Single(result.Page.Items);
+        Assert.Equal("report-2", result.Page.Items[0].ReportUId);
+        Assert.True(result.Page.HasMore);
+    }
+
+    [Fact]
+    public async Task GetReportByIdAsync_returns_saved_payload_for_authorized_user()
+    {
+        await using var context = CreateContext();
+        SeedBoardWithCards(context, requesterRole: RoleConstants.BoardAdmin);
+        context.AnalysisReports.Add(SavedReport("report-1", cached: true));
+        context.SaveChanges();
+        var service = CreateService(context, new FakeGeminiClient("{}"));
+
+        var result = await service.GetReportByIdAsync("report-1", "requester", CancellationToken.None);
+
+        Assert.Equal(AnalysisResultStatus.Success, result.Status);
+        Assert.NotNull(result.Analysis);
+        Assert.Equal("board-1", result.Analysis.ScopeUId);
+        Assert.False(result.Analysis.Cached);
+    }
+
+    [Fact]
+    public async Task GetReportByIdAsync_returns_forbidden_for_unauthorized_user()
+    {
+        await using var context = CreateContext();
+        SeedBoardWithCards(context, requesterRole: RoleConstants.BoardViewer);
+        context.AnalysisReports.Add(SavedReport("report-1"));
+        context.SaveChanges();
+        var service = CreateService(context, new FakeGeminiClient("{}"));
+
+        var result = await service.GetReportByIdAsync("report-1", "requester", CancellationToken.None);
+
+        Assert.Equal(AnalysisResultStatus.Forbidden, result.Status);
+        Assert.Null(result.Analysis);
+    }
+
+    [Fact]
     public async Task AnalyzeBoardAsync_rejects_viewer_role()
     {
         await using var context = CreateContext();
@@ -90,7 +221,7 @@ public class GeminiAnalysisServiceTests
     }
 
     [Fact]
-    public async Task AnalyzeBoardAsync_force_refresh_bypasses_cache()
+    public async Task AnalyzeBoardAsync_force_refresh_reuses_cache_when_snapshot_is_unchanged()
     {
         await using var context = CreateContext();
         SeedBoardWithCards(context, requesterRole: RoleConstants.BoardAdmin);
@@ -99,6 +230,23 @@ public class GeminiAnalysisServiceTests
 
         await service.AnalyzeBoardAsync("board-1", "requester", false, CancellationToken.None);
         await service.AnalyzeBoardAsync("board-1", "requester", false, CancellationToken.None);
+        await service.AnalyzeBoardAsync("board-1", "requester", true, CancellationToken.None);
+
+        Assert.Equal(1, gemini.Calls);
+    }
+
+    [Fact]
+    public async Task AnalyzeBoardAsync_force_refresh_calls_gemini_when_snapshot_changed()
+    {
+        await using var context = CreateContext();
+        SeedBoardWithCards(context, requesterRole: RoleConstants.BoardAdmin);
+        var gemini = new FakeGeminiClient("""{"summary":"changed test","risks":[],"suggestions":[],"inferredMilestones":[]}""");
+        var service = CreateService(context, gemini);
+
+        await service.AnalyzeBoardAsync("board-1", "requester", false, CancellationToken.None);
+        var card = await context.Todos.FirstAsync(c => c.CardUId == "card-active");
+        card.Title = "Fix login bug after data changed";
+        await context.SaveChangesAsync();
         await service.AnalyzeBoardAsync("board-1", "requester", true, CancellationToken.None);
 
         Assert.Equal(2, gemini.Calls);
@@ -187,6 +335,50 @@ public class GeminiAnalysisServiceTests
             new TodoItem { TodoItemUId = "todo-2", CardUId = "card-active", Content = "fix bug", IsCompleted = false },
             new TodoItem { TodoItemUId = "todo-3", CardUId = "card-done", Content = "deploy", IsCompleted = true });
         context.SaveChanges();
+    }
+
+    private static AnalysisReport SavedReport(
+        string reportUId,
+        DateTime? generatedAt = null,
+        int progress = 64,
+        bool cached = false)
+    {
+        var report = new ProjectAnalysisDto
+        {
+            ScopeType = "board",
+            ScopeUId = "board-1",
+            Title = "Sprint Board",
+            OverallProgress = progress,
+            Summary = "Saved report",
+            GeneratedAt = generatedAt ?? DateTime.UtcNow,
+            Model = "gemini-test",
+            Cached = cached
+        };
+
+        return new AnalysisReport
+        {
+            ReportUId = reportUId,
+            ScopeType = report.ScopeType,
+            ScopeUId = report.ScopeUId,
+            GeneratedByUId = "requester",
+            GeneratedAt = report.GeneratedAt,
+            Title = report.Title,
+            OverallProgress = report.OverallProgress,
+            ModelUsed = report.Model,
+            ReportData = System.Text.Json.JsonSerializer.Serialize(report)
+        };
+    }
+
+    private static string ValidGeminiJson(string summary)
+    {
+        return $$"""
+        {
+          "summary": "{{summary}}",
+          "risks": [],
+          "suggestions": [],
+          "inferredMilestones": []
+        }
+        """;
     }
 
     private sealed class FakeGeminiClient : IGeminiClient

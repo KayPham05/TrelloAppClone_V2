@@ -38,14 +38,8 @@ namespace TodoAppAPI.Service.Gemini
                 },
                 generationConfig = new
                 {
-                    responseFormat = new
-                    {
-                        text = new
-                        {
-                            mimeType = "application/json",
-                            schema = responseSchema
-                        }
-                    }
+                    responseMimeType = "application/json",
+                    responseSchema = responseSchema
                 }
             };
 
@@ -60,8 +54,12 @@ namespace TodoAppAPI.Service.Gemini
             using var response = await _httpClient.SendAsync(httpRequest, cancellationToken);
             if (!response.IsSuccessStatusCode)
             {
-                _logger.LogWarning("Gemini request failed with status {StatusCode}", response.StatusCode);
-                throw new HttpRequestException($"Gemini request failed with status {(int)response.StatusCode}.");
+                var errorBody = await response.Content.ReadAsStringAsync(cancellationToken);
+                _logger.LogWarning(
+                    "Gemini request failed with status {StatusCode}: {ErrorBody}",
+                    response.StatusCode,
+                    errorBody);
+                throw new HttpRequestException($"Gemini request failed with status {(int)response.StatusCode}: {errorBody}");
             }
 
             await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);

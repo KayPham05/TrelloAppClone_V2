@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
@@ -23,6 +25,10 @@ namespace TodoAppAPI.Service.Gemini
         private readonly GeminiSettings _settings;
         private readonly ILogger<GeminiAnalysisService> _logger;
         private readonly ProjectAnalysisPromptBuilder _promptBuilder = new();
+        private static readonly JsonSerializerOptions ReportJsonOptions = new()
+        {
+            PropertyNameCaseInsensitive = true
+        };
 
         public GeminiAnalysisService(
             TodoDbContext context,
@@ -66,7 +72,7 @@ namespace TodoAppAPI.Service.Gemini
                 .Include(c => c.List)
                 .Include(c => c.TodoItems)
                 .Include(c => c.CardLabels)
-                .Where(c => c.List != null && boardIds.Contains(c.List.BoardUId) && c.Status != "Deleted")
+                .Where(c => c.List != null && boardIds.Contains(c.List.BoardUId) && c.Status != "Deleted" && !c.IsArchived)
                 .OrderBy(c => c.List!.Position)
                 .ThenBy(c => c.Position)
                 .ToListAsync(cancellationToken);
@@ -88,7 +94,7 @@ namespace TodoAppAPI.Service.Gemini
 
             var lists = await _context.Lists
                 .AsNoTracking()
-                .Where(l => l.BoardUId == boardUId)
+                .Where(l => l.BoardUId == boardUId && l.Status != "Deleted" && l.Status != "Archived" && l.Status != "archived")
                 .OrderBy(l => l.Position)
                 .ToListAsync(cancellationToken);
             var cards = await _context.Todos
@@ -96,7 +102,7 @@ namespace TodoAppAPI.Service.Gemini
                 .Include(c => c.List)
                 .Include(c => c.TodoItems)
                 .Include(c => c.CardLabels)
-                .Where(c => c.List != null && c.List.BoardUId == boardUId && c.Status != "Deleted")
+                .Where(c => c.List != null && c.List.BoardUId == boardUId && c.Status != "Deleted" && !c.IsArchived && c.List.Status != "Deleted" && c.List.Status != "Archived" && c.List.Status != "archived")
                 .OrderBy(c => c.List!.Position)
                 .ThenBy(c => c.Position)
                 .ToListAsync(cancellationToken);
@@ -112,7 +118,7 @@ namespace TodoAppAPI.Service.Gemini
                 .Include(c => c.List)
                 .Include(c => c.TodoItems)
                 .Include(c => c.CardLabels)
-                .FirstOrDefaultAsync(c => c.CardUId == cardUId && c.Status != "Deleted", cancellationToken);
+                .FirstOrDefaultAsync(c => c.CardUId == cardUId && c.Status != "Deleted" && !c.IsArchived, cancellationToken);
             if (card == null)
                 return AnalysisResult.NotFound("Không tìm thấy card.");
 
@@ -130,27 +136,201 @@ namespace TodoAppAPI.Service.Gemini
             bool forceRefresh,
             CancellationToken cancellationToken)
         {
-            var cacheKey = $"analysis:{snapshot.ScopeType}:{snapshot.ScopeUId}:{userUId}:{_settings.Model}";
-            if (!forceRefresh && _cache.TryGetValue<ProjectAnalysisDto>(cacheKey, out var cached) && cached != null)
-            {
-                cached.Cached = true;
-                return AnalysisResult.Success(cached);
-            }
-
+            var cacheKey = BuildCacheKey(snapshot.ScopeType, snapshot.ScopeUId, userUId);
+            var snapshotHash = ComputeSnapshotHash(snapshot);
             var report = CreateBaseReport(snapshot);
+
+            if (!forceRefresh &&
+                _cache.TryGetValue<AnalysisCacheEntry>(cacheKey, out var cached) &&
+                cached != null &&
+                cached.SnapshotHash == snapshotHash)
+            {
+                // Lấy phần AI text từ cache ghép vào số liệu mới
+                report.Summary = cached.Report.Summary;
+                report.Risks = cached.Report.Risks;
+                report.Suggestions = cached.Report.Suggestions;
+                report.InferredMilestones = cached.Report.InferredMilestones;
+                report.Cached = true;
+                report.IsGeminiSuccess = cached.CanSave;
+                
+                return AnalysisResult.Success(report);
+            }
+            var geminiSucceeded = false;
             try
             {
                 var prompt = _promptBuilder.BuildPrompt(snapshot, report.Metrics, report.OverallProgress);
                 var json = await _geminiClient.GenerateJsonAsync(prompt, _promptBuilder.BuildResponseSchema(), cancellationToken);
                 MergeGeminiJson(report, snapshot, json);
+                geminiSucceeded = true;
             }
             catch (Exception ex)
             {
                 _logger.LogWarning(ex, "Gemini analysis fallback used for {ScopeType} {ScopeUId}", snapshot.ScopeType, snapshot.ScopeUId);
             }
 
-            _cache.Set(cacheKey, report, TimeSpan.FromMinutes(Math.Max(1, _settings.CacheMinutes)));
+            _cache.Set(
+                cacheKey,
+                new AnalysisCacheEntry(report, snapshotHash, geminiSucceeded),
+                TimeSpan.FromMinutes(Math.Max(1, _settings.CacheMinutes)));
+            report.IsGeminiSuccess = geminiSucceeded;
             return AnalysisResult.Success(report);
+        }
+
+        public async Task<AnalysisReportSaveResult> SaveLatestReportAsync(
+            string scopeType,
+            string scopeUId,
+            string userUId,
+            CancellationToken cancellationToken)
+        {
+            scopeType = scopeType.ToLowerInvariant();
+            if (!await CanViewAnalysisScopeAsync(scopeType, scopeUId, userUId))
+                return AnalysisReportSaveResult.Forbidden("Bạn không có quyền lưu báo cáo này.");
+
+            var cacheKey = BuildCacheKey(scopeType, scopeUId, userUId);
+            if (!_cache.TryGetValue<AnalysisCacheEntry>(cacheKey, out var cached) || cached == null)
+                return AnalysisReportSaveResult.NotFound("Không tìm thấy báo cáo hiện tại để lưu.");
+
+            if (!cached.CanSave)
+                return AnalysisReportSaveResult.BadRequest("Chỉ có thể lưu báo cáo Gemini thành công.");
+
+            var summary = await SaveReportHistoryAsync(cached.Report, userUId, cancellationToken);
+            return AnalysisReportSaveResult.Success(summary);
+        }
+
+        public async Task<AnalysisReportHistoryResult> GetReportHistoryAsync(
+            string scopeType,
+            string scopeUId,
+            string userUId,
+            int page,
+            int pageSize,
+            CancellationToken cancellationToken)
+        {
+            if (!await CanViewAnalysisScopeAsync(scopeType, scopeUId, userUId))
+                return AnalysisReportHistoryResult.Forbidden("Bạn không có quyền xem lịch sử báo cáo này.");
+
+            page = Math.Max(1, page);
+            pageSize = Math.Clamp(pageSize, 1, 20);
+
+            var rows = await _context.AnalysisReports
+                .AsNoTracking()
+                .Where(r => r.ScopeType == scopeType && r.ScopeUId == scopeUId)
+                .OrderByDescending(r => r.GeneratedAt)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize + 1)
+                .Select(r => new AnalysisReportSummaryDto
+                {
+                    ReportUId = r.ReportUId,
+                    ScopeType = r.ScopeType,
+                    ScopeUId = r.ScopeUId,
+                    Title = r.Title,
+                    OverallProgress = r.OverallProgress,
+                    ModelUsed = r.ModelUsed,
+                    GeneratedAt = r.GeneratedAt
+                })
+                .ToListAsync(cancellationToken);
+
+            return AnalysisReportHistoryResult.Success(new AnalysisReportHistoryPageDto
+            {
+                Items = rows.Take(pageSize).ToList(),
+                Page = page,
+                PageSize = pageSize,
+                HasMore = rows.Count > pageSize
+            });
+        }
+
+        public async Task<AnalysisResult> GetReportByIdAsync(string reportUId, string userUId, CancellationToken cancellationToken)
+        {
+            var row = await _context.AnalysisReports
+                .AsNoTracking()
+                .FirstOrDefaultAsync(r => r.ReportUId == reportUId, cancellationToken);
+            if (row == null)
+                return AnalysisResult.NotFound("Không tìm thấy báo cáo.");
+
+            if (!await CanViewAnalysisScopeAsync(row.ScopeType, row.ScopeUId, userUId))
+                return AnalysisResult.Forbidden("Bạn không có quyền xem báo cáo này.");
+
+            var report = JsonSerializer.Deserialize<ProjectAnalysisDto>(row.ReportData, ReportJsonOptions);
+            if (report == null)
+                return AnalysisResult.NotFound("Không đọc được dữ liệu báo cáo.");
+
+            report.Cached = false;
+            return AnalysisResult.Success(report);
+        }
+
+        private async Task<AnalysisReportSummaryDto> SaveReportHistoryAsync(
+            ProjectAnalysisDto report,
+            string userUId,
+            CancellationToken cancellationToken)
+        {
+            report.Cached = false;
+
+            var entity = new AnalysisReport
+            {
+                ScopeType = report.ScopeType,
+                ScopeUId = report.ScopeUId,
+                GeneratedByUId = userUId,
+                GeneratedAt = report.GeneratedAt,
+                Title = Truncate(report.Title, 200),
+                OverallProgress = Math.Clamp(report.OverallProgress, 0, 100),
+                ModelUsed = Truncate(report.Model, 100),
+                ReportData = JsonSerializer.Serialize(report, ReportJsonOptions)
+            };
+
+            _context.AnalysisReports.Add(entity);
+            await _context.SaveChangesAsync(cancellationToken);
+            await CleanupReportHistoryAsync(report.ScopeType, report.ScopeUId, cancellationToken);
+
+            return new AnalysisReportSummaryDto
+            {
+                ReportUId = entity.ReportUId,
+                ScopeType = entity.ScopeType,
+                ScopeUId = entity.ScopeUId,
+                Title = entity.Title,
+                OverallProgress = entity.OverallProgress,
+                ModelUsed = entity.ModelUsed,
+                GeneratedAt = entity.GeneratedAt
+            };
+        }
+
+        private async Task CleanupReportHistoryAsync(
+            string scopeType,
+            string scopeUId,
+            CancellationToken cancellationToken)
+        {
+            if (_context.Database.IsRelational())
+            {
+                await _context.AnalysisReports
+                    .Where(r => r.ScopeType == scopeType && r.ScopeUId == scopeUId)
+                    .OrderByDescending(r => r.GeneratedAt)
+                    .Skip(5)
+                    .ExecuteDeleteAsync(cancellationToken);
+                return;
+            }
+
+            var oldReports = await _context.AnalysisReports
+                .Where(r => r.ScopeType == scopeType && r.ScopeUId == scopeUId)
+                .OrderByDescending(r => r.GeneratedAt)
+                .Skip(5)
+                .ToListAsync(cancellationToken);
+            if (oldReports.Count > 0)
+            {
+                _context.AnalysisReports.RemoveRange(oldReports);
+                await _context.SaveChangesAsync(cancellationToken);
+            }
+        }
+
+        private async Task<bool> CanViewAnalysisScopeAsync(
+            string scopeType,
+            string scopeUId,
+            string userUId)
+        {
+            return scopeType switch
+            {
+                "workspace" => await _authorizationService.CanViewWorkspaceAnalysisAsync(scopeUId, userUId),
+                "board" => await _authorizationService.CanViewBoardAnalysisAsync(scopeUId, userUId),
+                "card" => await _authorizationService.CanViewCardAnalysisAsync(scopeUId, userUId),
+                _ => false
+            };
         }
 
         private ProjectAnalysisDto CreateBaseReport(ProjectAnalysisSnapshotDto snapshot)
@@ -167,7 +347,7 @@ namespace TodoAppAPI.Service.Gemini
                 Risks = BuildDeterministicRisks(snapshot, metrics),
                 Suggestions = BuildDeterministicSuggestions(metrics),
                 Breakdown = BuildBreakdown(snapshot),
-                GeneratedAt = DateTime.UtcNow,
+                GeneratedAt = DateTime.UtcNow.AddHours(7),
                 Model = string.IsNullOrWhiteSpace(_settings.Model) ? "gemini-3.5-flash" : _settings.Model,
                 Cached = false
             };
@@ -210,7 +390,7 @@ namespace TodoAppAPI.Service.Gemini
         private static ProjectAnalysisMetricDto BuildMetrics(ProjectAnalysisSnapshotDto snapshot)
         {
             var completedCards = snapshot.Cards.Count(IsCompletedCard);
-            var today = DateTime.UtcNow.Date;
+            var today = DateTime.UtcNow.AddHours(7).Date;
             var dueSoonLimit = today.AddDays(3);
             var statusDistribution = snapshot.Cards
                 .GroupBy(GetStatusCategory)
@@ -251,7 +431,7 @@ namespace TodoAppAPI.Service.Gemini
 
         private static List<ProjectAnalysisBreakdownDto> BuildBreakdown(ProjectAnalysisSnapshotDto snapshot)
         {
-            var today = DateTime.UtcNow.Date;
+            var today = DateTime.UtcNow.AddHours(7).Date;
             return snapshot.Lists.Select(list =>
             {
                 var cards = snapshot.Cards.Where(c => c.ListUId == list.ListUId).ToList();
@@ -327,7 +507,6 @@ namespace TodoAppAPI.Service.Gemini
             if (metrics.TotalCards == 0)
                 return "Bảng chưa có thẻ để phân tích. Hãy thêm một vài thẻ, trạng thái và hạn xử lý để báo cáo có ngữ cảnh hơn.";
 
-            var summary = $"Dự án hoàn thành {CalculateProgress(metrics)}% ({metrics.CompletedCards}/{metrics.TotalCards} thẻ).";
             var signals = new List<string>();
 
             if (metrics.OverdueCards > 0)
@@ -339,13 +518,13 @@ namespace TodoAppAPI.Service.Gemini
             if (snapshot.Cards.Count > 0 && metrics.TotalTodoItems == 0)
                 signals.Add("Chưa có checklist để đo mức hoàn thành chi tiết");
 
-            return signals.Count == 0 ? summary : $"{summary} {string.Join(". ", signals)}.";
+            return signals.Count == 0 ? "Dự án đang diễn ra bình thường." : $"{string.Join(". ", signals)}.";
         }
 
         private static List<ProjectAnalysisRiskDto> BuildDeterministicRisks(ProjectAnalysisSnapshotDto snapshot, ProjectAnalysisMetricDto metrics)
         {
             var risks = new List<ProjectAnalysisRiskDto>();
-            var today = DateTime.UtcNow.Date;
+            var today = DateTime.UtcNow.AddHours(7).Date;
             var dueSoonLimit = today.AddDays(3);
 
             var overdueCardIds = snapshot.Cards
@@ -491,6 +670,17 @@ namespace TodoAppAPI.Service.Gemini
             return value.Length <= maxLength ? value : value[..maxLength];
         }
 
+        private string BuildCacheKey(string scopeType, string scopeUId, string userUId)
+        {
+            return $"analysis:{scopeType}:{scopeUId}:{userUId}:{_settings.Model}";
+        }
+
+        private static string ComputeSnapshotHash(ProjectAnalysisSnapshotDto snapshot)
+        {
+            var json = JsonSerializer.Serialize(snapshot, ReportJsonOptions);
+            return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(json)));
+        }
+
         private sealed class GeminiContentDto
         {
             public string Summary { get; set; } = string.Empty;
@@ -520,5 +710,10 @@ namespace TodoAppAPI.Service.Gemini
             public string Status { get; set; } = "onTrack";
             public string Description { get; set; } = string.Empty;
         }
+
+        private sealed record AnalysisCacheEntry(
+            ProjectAnalysisDto Report,
+            string SnapshotHash,
+            bool CanSave);
     }
 }

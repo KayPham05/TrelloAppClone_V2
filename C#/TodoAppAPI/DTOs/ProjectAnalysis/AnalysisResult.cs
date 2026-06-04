@@ -4,7 +4,8 @@ namespace TodoAppAPI.DTOs.ProjectAnalysis
     {
         Success,
         NotFound,
-        Forbidden
+        Forbidden,
+        BadRequest
     }
 
     public class AnalysisResult

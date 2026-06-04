@@ -42,12 +42,11 @@ namespace TodoAppAPI.Service.Gemini
 
             === INSTRUCTIONS ===
             Return a JSON object matching the schema provided by the API request.
-            Base progress and status observations on the card Status field and pre-calculated metrics.
             Do not include any text outside the JSON object.
+            Do NOT mention the project progress percentage or the number of completed cards in the summary, as this is already visible in the UI. Keep the summary under 300 characters.
             Limit risks to at most 5 items.
             Limit suggestions to at most 5 items.
             Keep each description under 200 characters.
-            Keep summary under 800 characters.
             For relatedCardUIds, only use card UIDs that appear in the snapshot.
             """;
         }
