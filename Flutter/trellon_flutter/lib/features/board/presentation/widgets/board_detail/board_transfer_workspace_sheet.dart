@@ -90,6 +90,7 @@ class _BoardTransferWorkspaceSheetState
     );
 
     if (confirmed != true) return;
+    if (!mounted) return;
 
     setState(() => _transferring = true);
 
@@ -135,7 +136,7 @@ class _BoardTransferWorkspaceSheetState
         height: 36,
         decoration: BoxDecoration(
           color: current
-              ? AppColors.primaryContainer.withOpacity(0.15)
+              ? AppColors.primaryContainer.withValues(alpha: 0.15)
               : AppColors.surfaceContainerLow,
           borderRadius: BorderRadius.circular(8),
         ),
@@ -183,7 +184,7 @@ class _BoardTransferWorkspaceSheetState
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: Colors.grey.withOpacity(0.5),
+              color: Colors.grey.withValues(alpha: 0.5),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -241,7 +242,7 @@ class _BoardTransferWorkspaceSheetState
                         ...List.generate(_workspaces.length, (i) {
                           final ws = _workspaces[i];
                           final id = ws['workspaceUId'] ?? ws['id'] ?? '';
-                          final name = ws['name'] ?? 'Workspace';
+                          final name = ws['name'] ?? 'Không gian làm việc';
                           return Column(
                             children: [
                               _buildTile(

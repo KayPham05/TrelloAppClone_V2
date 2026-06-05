@@ -131,6 +131,59 @@ namespace TodoAppAPI.Service
             return await CanManageBoardAsync(boardId, userId);
         }
 
+        public async Task<bool> CanViewWorkspaceAnalysisAsync(string workspaceId, string userId)
+        {
+            var workspace = await _context.Workspaces
+                .AsNoTracking()
+                .FirstOrDefaultAsync(w => w.WorkspaceUId == workspaceId && w.Status != "Deleted");
+            if (workspace == null) return false;
+
+            var member = await _context.WorkspaceMembers
+                .AsNoTracking()
+                .FirstOrDefaultAsync(m => m.WorkspaceUId == workspaceId && m.UserUId == userId);
+
+            return member?.Role == RoleConstants.WorkspaceOwner ||
+                   member?.Role == RoleConstants.WorkspaceAdmin;
+        }
+
+        public async Task<bool> CanViewBoardAnalysisAsync(string boardId, string userId)
+        {
+            var board = await _context.Boards
+                .AsNoTracking()
+                .FirstOrDefaultAsync(b => b.BoardUId == boardId);
+            if (board == null) return false;
+
+            var member = await _context.BoardMembers
+                .AsNoTracking()
+                .FirstOrDefaultAsync(m => m.BoardUId == boardId && m.UserUId == userId);
+
+            if (member != null)
+            {
+                return member.BoardRole == RoleConstants.BoardOwner ||
+                       member.BoardRole == RoleConstants.BoardAdmin ||
+                       member.BoardRole == RoleConstants.BoardEditor;
+            }
+
+            if (!string.IsNullOrEmpty(board.WorkspaceUId))
+                return await CanViewWorkspaceAnalysisAsync(board.WorkspaceUId, userId);
+
+            return false;
+        }
+
+        public async Task<bool> CanViewCardAnalysisAsync(string cardId, string userId)
+        {
+            var card = await _context.Todos
+                .AsNoTracking()
+                .Include(c => c.List)
+                .FirstOrDefaultAsync(c => c.CardUId == cardId);
+            if (card == null) return false;
+
+            if (card.ListUId == null)
+                return await _context.UserInboxCards.AnyAsync(u => u.CardUId == cardId && u.UserUId == userId);
+
+            return card.List != null && await CanViewBoardAnalysisAsync(card.List.BoardUId, userId);
+        }
+
         // ==================== LIST & CARD AUTHORIZATION ====================
 
         public async Task<bool> CanCreateCardAsync(string boardId, string userId)

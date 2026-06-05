@@ -309,7 +309,7 @@ class _LabelPickerContentState extends State<_LabelPickerContent> {
             onPressed: () {
               if (selectedCustomColor != null) {
                 final hexCode =
-                    '#${selectedCustomColor!.value.toRadixString(16).substring(2).toUpperCase()}';
+                    '#${selectedCustomColor!.toARGB32().toRadixString(16).substring(2).toUpperCase()}';
 
                 // Add to repository if not exists
                 final existsInRepo = LabelPickerSheet.boardLabelRepository.any(

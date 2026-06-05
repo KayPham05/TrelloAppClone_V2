@@ -120,13 +120,13 @@ class _RegisterViewState extends State<RegisterView> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  'Create an Account',
+                  'Tạo tài khoản',
                   textAlign: TextAlign.center,
                   style: AzureAuthTheme.headlineLg,
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Join us to experience effortless productivity.',
+                  'Tham gia cùng chúng tôi để làm việc hiệu quả hơn.',
                   textAlign: TextAlign.center,
                   style: AzureAuthTheme.bodyLg,
                 ),
@@ -134,25 +134,25 @@ class _RegisterViewState extends State<RegisterView> {
                 
                 AuthTextField(
                   controller: _usernameController,
-                  labelText: 'Full name',
-                  hintText: 'Enter your full name',
-                  validator: (v) => (v == null || v.isEmpty) ? 'Please enter your name' : null,
+                  labelText: 'Họ và tên',
+                  hintText: 'Nhập họ và tên của bạn',
+                  validator: (v) => (v == null || v.isEmpty) ? 'Vui lòng nhập họ tên' : null,
                 ),
                 const SizedBox(height: 24),
                 
                 AuthTextField(
                   controller: _emailController,
                   labelText: 'Email',
-                  hintText: 'Enter your email address',
+                  hintText: 'Nhập địa chỉ email của bạn',
                   keyboardType: TextInputType.emailAddress,
-                  validator: (v) => (v == null || !v.contains('@')) ? 'Invalid email' : null,
+                  validator: (v) => (v == null || !v.contains('@')) ? 'Email không hợp lệ' : null,
                 ),
                 const SizedBox(height: 24),
                 
                 AuthTextField(
                   controller: _passwordController,
-                  labelText: 'Password',
-                  hintText: 'Create a password',
+                  labelText: 'Mật khẩu',
+                  hintText: 'Tạo mật khẩu',
                   obscureText: _obscurePassword,
                   suffixIcon: IconButton(
                     icon: Icon(
@@ -161,7 +161,7 @@ class _RegisterViewState extends State<RegisterView> {
                     ),
                     onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                   ),
-                  validator: (v) => (v == null || v.length < 6) ? 'Password must be at least 6 characters' : null,
+                  validator: (v) => (v == null || v.length < 6) ? 'Mật khẩu phải chứa ít nhất 6 ký tự' : null,
                 ),
                 
                 const SizedBox(height: 32),
@@ -179,7 +179,7 @@ class _RegisterViewState extends State<RegisterView> {
                     ),
                     child: isLoading
                         ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                        : Text('SIGN UP', style: AzureAuthTheme.buttonText),
+                        : Text('ĐĂNG KÝ', style: AzureAuthTheme.buttonText),
                   ),
                 ),
                 const SizedBox(height: 32),
@@ -189,7 +189,7 @@ class _RegisterViewState extends State<RegisterView> {
                     Expanded(child: Divider(color: AzureAuthTheme.outlineVariant)),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Text('or', style: AzureAuthTheme.bodyMd),
+                      child: Text('hoặc', style: AzureAuthTheme.bodyMd),
                     ),
                     Expanded(child: Divider(color: AzureAuthTheme.outlineVariant)),
                   ],
@@ -205,7 +205,7 @@ class _RegisterViewState extends State<RegisterView> {
                     },
                     icon: Image.asset('lib/core/asset/GoogleIcon.png', height: 24, width: 24),
                     label: Text(
-                      'Sign up with Google',
+                      'Đăng ký bằng Google',
                       style: AzureAuthTheme.buttonText.copyWith(color: AzureAuthTheme.azureBlue),
                     ),
                     style: ElevatedButton.styleFrom(
@@ -224,14 +224,14 @@ class _RegisterViewState extends State<RegisterView> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text('Already have an account?', style: AzureAuthTheme.bodyLg),
+                    Text('Đã có tài khoản?', style: AzureAuthTheme.bodyLg),
                     TextButton(
                       onPressed: () => Navigator.pushReplacementNamed(context, '/login'),
                       style: TextButton.styleFrom(
                         foregroundColor: AzureAuthTheme.azureBlue,
                         padding: const EdgeInsets.symmetric(horizontal: 8),
                       ),
-                      child: Text('Sign in', style: AzureAuthTheme.labelMd.copyWith(color: AzureAuthTheme.azureBlue)),
+                      child: Text('Đăng nhập', style: AzureAuthTheme.labelMd.copyWith(color: AzureAuthTheme.azureBlue)),
                     ),
                   ],
                 ),

@@ -245,10 +245,12 @@ class NotificationCubit extends Cubit<NotificationState> {
 
   Future<void> applyRealtimeProfileUpdated(Map<String, dynamic> payload) async {
     final prefs = await SharedPreferences.getInstance();
-    if (payload['userName'] != null)
+    if (payload['userName'] != null) {
       await prefs.setString('user_name', payload['userName']);
-    if (payload['avatarUrl'] != null)
+    }
+    if (payload['avatarUrl'] != null) {
       await prefs.setString('user_avatar', payload['avatarUrl']);
+    }
     // Bio is not typically in shared_prefs but could be added if needed
 
     // We don't necessarily need to emit a new state for NotificationCubit

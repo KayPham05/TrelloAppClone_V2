@@ -25,7 +25,10 @@ class KanbanCardUiWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final statusLower = card.status.toLowerCase();
-    final isCompleted = statusLower == 'hoan_thanh' || statusLower == 'hoàn thành' || statusLower == 'completed';
+    final isCompleted =
+        statusLower == 'hoan_thanh' ||
+        statusLower == 'hoàn thành' ||
+        statusLower == 'completed';
 
     return GestureDetector(
       onTap: onTap,
@@ -82,8 +85,9 @@ class KanbanCardUiWidget extends StatelessWidget {
                     Color color;
                     if (l.colorCode.isNotEmpty) {
                       final buffer = StringBuffer();
-                      if (l.colorCode.length == 6 || l.colorCode.length == 7)
+                      if (l.colorCode.length == 6 || l.colorCode.length == 7) {
                         buffer.write('ff');
+                      }
                       buffer.write(l.colorCode.replaceFirst('#', ''));
                       color = Color(
                         int.tryParse(buffer.toString(), radix: 16) ??

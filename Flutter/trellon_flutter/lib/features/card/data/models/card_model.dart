@@ -194,12 +194,12 @@ class CardModel {
           )).toList()
         : [];
 
-    var membersFromJson = json['cardMembers'] as List?;
+    var membersFromJson = (json['members'] ?? json['cardMembers']) as List?;
     List<CardMemberEntity> memberList = membersFromJson != null
         ? membersFromJson.map((json) => CardMemberEntity(
             id: json['id'] ?? json['cardMemberUId'] ?? '',
             userUId: json['userUId'] ?? '',
-            userName: json['userName'] ?? json['fullName'] ?? (json['user'] != null ? json['user']['userName'] : 'Unknown'),
+            userName: json['userName'] ?? json['fullName'] ?? (json['user'] != null ? (json['user']['userName'] ?? json['user']['name'] ?? 'Unknown') : 'Unknown'),
             email: json['email'] ?? (json['user'] != null ? json['user']['email'] : ''),
             avatarUrl: json['avatarUrl'] ?? json['avatar'] ?? (json['user'] != null ? (json['user']['avatarUrl'] ?? json['user']['avatar']) : null),
             role: json['role'] ?? 'Observer',

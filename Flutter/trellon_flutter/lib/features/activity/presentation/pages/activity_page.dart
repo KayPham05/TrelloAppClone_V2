@@ -91,7 +91,7 @@ class _ActivityPageViewState extends State<ActivityPageView> {
           const Icon(Icons.grid_view_rounded, color: Color(0xFF1D4ED8), size: 24),
           const SizedBox(width: 10),
           Text(
-            'Workspace',
+            'Không gian làm việc',
             style: GoogleFonts.inter(
               fontSize: 20,
               fontWeight: FontWeight.w700,

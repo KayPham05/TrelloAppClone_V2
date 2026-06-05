@@ -9,6 +9,7 @@ import '../../../features/profile/presentation/pages/profile_page.dart';
 import '../../../features/workspace/presentation/cubit/workspace_cubit.dart';
 import '../../../features/activity/presentation/cubit/notification_cubit.dart';
 import '../../../features/activity/presentation/cubit/notification_state.dart';
+import '../../../features/planner/presentation/cubit/planner_cubit.dart';
 import '../../../features/activity/data/services/notification_realtime_service.dart';
 import '../../../features/board/data/services/board_realtime_service.dart';
 import '../../../routes.dart';
@@ -29,6 +30,7 @@ class _MainShellState extends State<MainShell>
   late final WorkspaceCubit _workspaceCubit = serviceLocator<WorkspaceCubit>();
   late final NotificationCubit _notificationCubit =
       serviceLocator<NotificationCubit>();
+  late final PlannerCubit _plannerCubit = serviceLocator<PlannerCubit>();
   late final NotificationRealtimeService _notificationRealtimeService =
       serviceLocator<NotificationRealtimeService>();
   late final BoardRealtimeService _boardRealtimeService =
@@ -116,6 +118,7 @@ class _MainShellState extends State<MainShell>
       providers: [
         BlocProvider<WorkspaceCubit>.value(value: _workspaceCubit),
         BlocProvider<NotificationCubit>.value(value: _notificationCubit),
+        BlocProvider<PlannerCubit>.value(value: _plannerCubit),
       ],
       child: BlocListener<NotificationCubit, NotificationState>(
         listener: (context, state) {

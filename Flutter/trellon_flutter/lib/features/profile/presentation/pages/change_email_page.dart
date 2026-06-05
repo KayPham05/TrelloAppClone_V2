@@ -21,7 +21,7 @@ class _ChangeEmailPageState extends State<ChangeEmailPage> {
   final _formKey = GlobalKey<FormState>();
   final _newEmailController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _2faController = TextEditingController();
+  final _twoFaController = TextEditingController();
   
   final List<TextEditingController> _otpControllers =
       List.generate(6, (_) => TextEditingController());
@@ -54,7 +54,7 @@ class _ChangeEmailPageState extends State<ChangeEmailPage> {
   void dispose() {
     _newEmailController.dispose();
     _passwordController.dispose();
-    _2faController.dispose();
+    _twoFaController.dispose();
     for (var controller in _otpControllers) {
       controller.dispose();
     }
@@ -107,7 +107,7 @@ class _ChangeEmailPageState extends State<ChangeEmailPage> {
         data: {
           'newEmail': _newEmailController.text.trim(),
           'currentPassword': _passwordController.text,
-          'twoFactorCode': _step == 2 ? _2faController.text.trim() : null,
+          'twoFactorCode': _step == 2 ? _twoFaController.text.trim() : null,
         },
       );
 
@@ -260,7 +260,7 @@ class _ChangeEmailPageState extends State<ChangeEmailPage> {
                   ProfileTextFieldWidget(
                     label: 'Mã 2FA',
                     hintText: 'Nhập mã 2FA',
-                    controller: _2faController,
+                    controller: _twoFaController,
                     icon: Icons.security,
                     keyboardType: TextInputType.number,
                   ),

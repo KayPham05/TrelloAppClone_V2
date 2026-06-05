@@ -457,7 +457,7 @@ class CardDetailTitle extends StatelessWidget {
                           ? Image.network(
                               boardBackgroundUrl!,
                               fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => _colorPlaceholder(),
+                              errorBuilder: (_, _, _) => _colorPlaceholder(),
                             )
                           : _colorPlaceholder(),
                     ),

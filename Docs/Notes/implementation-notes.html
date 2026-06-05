@@ -2,35 +2,118 @@
 <html lang="vi">
 <head>
   <meta charset="utf-8">
-  <title>Notification Implementation Notes</title>
+  <title>Gemini Project Analysis Implementation Notes</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 32px; line-height: 1.5; color: #172b4d; }
-    h1 { font-size: 24px; }
-    h2 { font-size: 18px; margin-top: 28px; }
-    section { border-top: 1px solid #dfe1e6; padding-top: 16px; margin-top: 16px; }
-    dt { font-weight: 700; margin-top: 10px; }
-    dd { margin: 4px 0 8px 0; }
-    code { background: #f4f5f7; padding: 2px 4px; border-radius: 3px; }
+    body { font-family: Arial, sans-serif; line-height: 1.5; margin: 24px; color: #1f2937; }
+    h1 { font-size: 24px; margin-bottom: 8px; }
+    h2 { font-size: 18px; margin-top: 24px; border-bottom: 1px solid #d1d5db; padding-bottom: 4px; }
+    .entry { border: 1px solid #d1d5db; border-radius: 8px; padding: 12px 16px; margin: 12px 0; }
+    .timestamp { color: #4b5563; font-size: 13px; margin-bottom: 8px; }
+    ul { margin-top: 6px; }
+    code { background: #f3f4f6; padding: 1px 4px; border-radius: 4px; }
   </style>
 </head>
 <body>
-  <h1>Notification Implementation Notes</h1>
+  <h1>Gemini Project Analysis Implementation Notes</h1>
+  <p>Ghi chú triển khai cho tính năng Gemini API phân tích và báo cáo tiến độ dự án.</p>
 
+  <div class="entry">
+    <div class="timestamp">2026-06-02 00:00 Asia/Bangkok - Phase 1 kickoff</div>
+    <h2>Design decisions</h2>
+    <ul>
+      <li>Chọn REST typed <code>HttpClient</code> cho Gemini thay vì thêm package <code>Google.GenAI</code> trong Phase 1. Lý do: REST docs hiện mô tả structured JSON schema rõ hơn, không cần tải dependency mới, và vẫn giữ API key ở backend.</li>
+      <li>Không tạo DB phase trong lượt MVP này. Plan mới nói DB report history là later phase; MVP dùng <code>IMemoryCache</code> 5 phút.</li>
+      <li>Flutter Phase 2 chỉ expose Board analysis. Backend Phase 1 vẫn tạo service/route cho Workspace, Board, Card theo plan.</li>
+    </ul>
+    <h2>Deviations</h2>
+    <ul>
+      <li>Nếu plan còn nhắc <code>Google.GenAI</code> như lựa chọn ưu tiên, implementation thực tế dùng REST để giảm rủi ro dependency và giữ structured output kiểm soát được.</li>
+    </ul>
+    <h2>Tradeoffs</h2>
+    <ul>
+      <li>REST cần tự parse response <code>candidates[].content.parts[].text</code>, nhưng đổi lại dễ mock test và không phụ thuộc SDK API surface.</li>
+    </ul>
+    <h2>Open questions</h2>
+    <ul>
+      <li>DB report history có cần triển khai ngay sau MVP hay để sprint riêng?</li>
+    </ul>
+  </div>
 
-  <section>
-    <h2>2026-05-26 (local rerun evidence)</h2>
-    <dl>
-      <dt>Design decisions</dt>
-      <dd>Review artifacts were updated to treat Flutter verification as confirmed rather than blocked. The latest local rerun provides concrete command output, not just a summarized pass/fail note.</dd>
-      <dd>Verification status is now split more clearly: focused Flutter automation is green, while remaining completion gaps are product behavior and backend hardening items.</dd>
+  <div class="entry">
+    <div class="timestamp">2026-06-02 00:00 Asia/Bangkok - Phase 1 backend implementation</div>
+    <h2>Design decisions</h2>
+    <ul>
+      <li>Thêm <code>AnalysisResult</code> wrapper để service phân biệt <code>Success</code>, <code>NotFound</code>, và <code>Forbidden</code>. Controller chuyển wrapper này thành HTTP status tương ứng.</li>
+      <li>Backend analysis authorization dùng role chặt hơn view thường: Board Owner/Admin/Editor được phân tích; Board Viewer bị từ chối. Workspace Owner/Admin được phân tích workspace hoặc board thuộc workspace.</li>
+      <li>Gemini lỗi, thiếu key, timeout, hoặc JSON không hợp lệ đều fallback về DTO metric-only để frontend không crash.</li>
+    </ul>
+    <h2>Deviations</h2>
+    <ul>
+      <li>Không thêm NuGet <code>Google.GenAI</code>; REST client được dùng cho Phase 1.</li>
+      <li>Không tạo DB migration/report history vì plan đã chuyển phần này sang later phase.</li>
+    </ul>
+    <h2>Tradeoffs</h2>
+    <ul>
+      <li>Metric hoàn thành card dùng rule explicit: status/list name chứa done/completed/hoàn thành/xong. Đây là heuristic vì repo chưa có trạng thái workflow chuẩn.</li>
+      <li>Cache hiện mutate DTO cached bằng cách set <code>Cached = true</code> khi hit cache. Cách này đơn giản cho MVP, nhưng nếu sau này cần immutable DTO thì nên clone report trước khi trả.</li>
+    </ul>
+    <h2>Open questions</h2>
+    <ul>
+      <li>Có cần thay query param <code>userUId</code> bằng user id lấy từ JWT claim ở một phase hardening riêng không?</li>
+    </ul>
+  </div>
 
-      <dt>Deviations</dt>
-      <dd>No production code changes were made in this pass. Only <code>Docs/Reviews/</code> and <code>Docs/Notes/</code> were corrected to match the latest local Flutter evidence.</dd>
+  <div class="entry">
+    <div class="timestamp">2026-06-02 00:00 Asia/Bangkok - Phase 2 frontend implementation</div>
+    <h2>Design decisions</h2>
+    <ul>
+      <li>Frontend dùng feature folder <code>features/ai_analysis</code> với các lớp data/domain/presentation riêng để bám theo kiến trúc Flutter hiện có.</li>
+      <li>Màn hình Phase 2 mở từ Board Detail và gọi endpoint <code>analysis/board/{boardUId}?userUId=...</code>; repository/usecase vẫn hỗ trợ Workspace/Card để không lệch contract backend Phase 1.</li>
+      <li>Nút <code>Báo cáo AI</code> chỉ hiển thị cho Board Owner/Admin/Editor. Viewer không thấy entry point để khớp authorization backend.</li>
+      <li>Parser model chấp nhận cả schema DTO Phase 1 (<code>detail</code>, <code>doneCards</code>, <code>label</code>) và schema mô tả trong test/plan (<code>description</code>, <code>completedCards</code>, <code>name</code>).</li>
+    </ul>
+    <h2>Deviations</h2>
+    <ul>
+      <li>Chưa thêm route global trong router vì board detail hiện đang dùng <code>Navigator.push</code>/<code>MaterialPageRoute</code> cho nhiều luồng cục bộ; entry point AI dùng cùng kiểu này để scope thay đổi nhỏ.</li>
+      <li>Chưa expose Workspace/Card analysis trong UI mặc dù data layer đã hỗ trợ, vì plan Phase 2 ưu tiên Board analysis trong board detail.</li>
+    </ul>
+    <h2>Tradeoffs</h2>
+    <ul>
+      <li>Không thêm package chart/progress mới; dùng widget Flutter mặc định để tránh dependency và giữ MVP nhẹ. Khi cần dashboard giàu hơn có thể bổ sung chart library ở phase sau.</li>
+      <li>UI hiển thị fallback banner khi rủi ro và đề xuất rỗng. Cách này đơn giản hơn việc backend phải thêm field fallback riêng, nhưng có thể nhận nhầm board thật sự không có risk/suggestion.</li>
+    </ul>
+    <h2>Open questions</h2>
+    <ul>
+      <li>Có muốn thêm entry point phân tích cho Workspace menu và Card detail ngay ở phase sau không?</li>
+      <li>Có cần lưu lịch sử báo cáo phía client/server để so sánh tiến độ theo thời gian không?</li>
+    </ul>
+  </div>
 
-      <dt>Tradeoffs</dt>
-      <dd>The rerun still does not automate live SignalR event forwarding or full <code>ActivityPage</code> widget navigation. Those remain manual smoke-test items even though the cubit, model, and datasource suite is green.</dd>
-      <dd>Backend risk posture is unchanged. There is still no backend automated coverage for the critical notification flows, so Flutter green status should not be mistaken for end-to-end production readiness.</dd>
+  <div class="entry">
+    <div class="timestamp">2026-06-03 11:00 Asia/Bangkok - Resolve Flutter Static Analysis Issues</div>
+    <h2>Design decisions</h2>
+    <ul>
+      <li>Thay thế <code>withOpacity(opacity)</code> đã lỗi thời bằng <code>withValues(alpha: alpha)</code> theo khuyến nghị của Flutter mới nhất.</li>
+      <li>Sử dụng cú pháp null-aware element marker <code>?trailing</code> thay vì kiểm tra null bằng <code>if</code> hoặc dùng bang operator <code>trailing!</code> để tuân thủ luật phân tích tĩnh <code>use_null_aware_elements</code> và tránh syntax error.</li>
+      <li>Thay thế <code>Color.value</code> đã deprecated bằng <code>toARGB32()</code> để giữ nguyên biểu diễn màu số nguyên 32-bit.</li>
+      <li>Chuyển đổi <code>onReorder</code> cũ sang <code>onReorderItem</code> trong <code>ReorderableListView</code>, đồng thời điều chỉnh index phù hợp trước khi gọi cubit.</li>
+      <li>Loại bỏ bóng (shadow shadowing) của biến <code>isStarred</code> tại <code>workspace_board_item_widget.dart</code> để kích hoạt lại sử dụng trường chính xác của widget.</li>
+    </ul>
+    <h2>Deviations</h2>
+    <ul>
+      <li>Không có.</li>
+    </ul>
+    <h2>Tradeoffs</h2>
+    <ul>
+      <li>Không có.</li>
+    </ul>
+    <h2>Open questions</h2>
+    <ul>
+      <li>Không có.</li>
+    </ul>
+  </div>
 
+<<<<<<< HEAD
       <dt>Open questions</dt>
       <dd>Whether the completion bar before merge includes Trello-like tap-to-navigate and multi-device <code>NotificationReadAll</code> parity, or whether those move to a hardening follow-up.</dd>
     </dl>
@@ -194,6 +277,91 @@
     </dl>
     <p>Verification: Modified the SonarCloud workflow and pushed to <code>origin/Notification_Activity</code> to trigger the remote build and verify that the "Run Flutter tests with coverage" step passes successfully.</p>
   </section>
+=======
+  <div class="entry">
+    <div class="timestamp">2026-06-03 11:06 Asia/Bangkok - gitignore Cleanup & .vscode untracking</div>
+    <h2>Design decisions</h2>
+    <ul>
+      <li>Bỏ qua (uncomment) thư mục <code>.vscode/</code> trong root <code>.gitignore</code> và thực hiện untrack các file Peacock settings của VS Code để tránh commit các cấu hình mang tính cá nhân của lập trình viên.</li>
+      <li>Loại bỏ luật ignore Migrations (<code>**/Migrations/*</code>) ra khỏi root <code>.gitignore</code> vì các file Migrations của Entity Framework Core cần được đưa lên git để đồng bộ cơ sở dữ liệu giữa các máy phát triển và môi trường production.</li>
+      <li>Loại bỏ <code>appsettings.json</code> khỏi danh sách ignore của <code>C#/TodoAppAPI/.gitignore</code> vì file cấu hình cơ sở này cần được theo dõi (track) với các giá trị placeholder, còn các thông tin nhạy cảm của máy cá nhân được chuyển sang file <code>appsettings.Development.json</code> đã được ignore sẵn.</li>
+    </ul>
+    <h2>Deviations</h2>
+    <ul>
+      <li>Không có.</li>
+    </ul>
+    <h2>Tradeoffs</h2>
+    <ul>
+      <li>Không có.</li>
+    </ul>
+    <h2>Open questions</h2>
+    <ul>
+      <li>Không có.</li>
+    </ul>
+  </div>
+
+  <div class="entry">
+    <div class="timestamp">2026-06-03 13:10 Asia/Bangkok - Phase 3 overall verification</div>
+    <h2>Design decisions</h2>
+    <ul>
+      <li>Chạy toàn bộ các lệnh verification tĩnh và động: backend build, backend unit tests, frontend analysis, frontend unit tests.</li>
+      <li>Thực hiện quét bảo mật thủ công trên toàn bộ repository đối với các chuỗi nhạy cảm để đảm bảo khóa Gemini API thật sự không bị lộ trên git.</li>
+      <li>Đã kiểm tra kỹ phân quyền (role-based) và endpoint contract để đảm bảo backend giữ khóa và phân quyền chính xác cho Workspace/Board/Card, còn Flutter gọi backend và kiểm tra quyền trước khi vẽ nút AI.</li>
+    </ul>
+    <h2>Deviations</h2>
+    <ul>
+      <li>Không có thay đổi về mã nguồn trong pha này do tất cả các bài test tự động và phân tích tĩnh đều vượt qua ngay trong lần chạy đầu tiên.</li>
+    </ul>
+    <h2>Tradeoffs</h2>
+    <ul>
+      <li>Việc giấu hoàn toàn nút AI Analysis đối với Viewer thay vì hiển thị nút disabled giúp giao diện sạch sẽ, nhưng Viewer có thể không biết tính năng này tồn tại trừ khi được Admin/Editor chia sẻ. Điều này được chấp nhận theo đúng đặc tả thiết kế MVP.</li>
+    </ul>
+    <h2>Open questions</h2>
+    <ul>
+      <li>Mặc dù Firebase API keys nằm trong <code>firebase_options.dart</code> không phải là Gemini API key và là cấu hình phía máy khách bình thường của Firebase, có cần đưa chúng vào cơ chế bảo mật nghiêm ngặt hơn ở các sprint sau không?</li>
+    </ul>
+    <h2>Verification Results</h2>
+    <ul>
+      <li><strong>Backend Build:</strong> Lệnh <code>dotnet build "C#\TodoAppAPI\TodoAppAPI.csproj"</code> thành công hoàn toàn (0 warnings, 0 errors).</li>
+      <li><strong>Backend Tests:</strong> Lệnh <code>dotnet test "C#\TodoAppAPI.Tests\TodoAppAPI.Tests.csproj" --no-restore</code> vượt qua toàn bộ 39 tests thành công.</li>
+      <li><strong>Frontend Analyze:</strong> Lệnh <code>flutter analyze</code> chạy trong thư mục <code>Flutter/trellon_flutter</code> thành công không có bất kỳ lỗi nào (No issues found! - 219.5s).</li>
+      <li><strong>Frontend Tests:</strong> Lệnh <code>flutter test --no-pub</code> vượt qua toàn bộ 90 tests thành công (All tests passed!).</li>
+      <li><strong>Security Check:</strong> Quét các pattern <code>AIza</code>, <code>GEMINI_API_KEY</code>, <code>GeminiSettings:ApiKey</code>, và <code>GeminiSettings__ApiKey</code>. Kết quả: Chỉ tìm thấy các Firebase API keys công khai trong <code>firebase_options.dart</code> và placeholder trong <code>appsettings.Development.json.example</code>. Không phát hiện rò rỉ Gemini API Key thật trên Git.</li>
+      <li><strong>Contract Verification:</strong> Endpoint backend đầy đủ cho workspace/board/card. Flutter gọi backend Dio remote data source. Nút AI Analysis được bảo vệ đúng vai trò tại <code>board_detail_page.dart</code> dòng 309-322.</li>
+    </ul>
+  </div>
+  <div class="entry">
+    <div class="timestamp">2026-06-04 Asia/Bangkok - AI report metrics, charts, and force refresh improvement</div>
+    <h2>Design decisions</h2>
+    <ul>
+      <li>Không thay đổi database. Các số liệu mới được tính từ dữ liệu hiện có: <code>Cards.Status</code>, <code>Cards.DueDate</code>, checklist/todo items, lists và board.</li>
+      <li>Backend chuyển tiến độ tổng thể sang logic dựa trên tỷ lệ thẻ hoàn tất theo <code>Card.Status</code>; checklist vẫn là chỉ số phụ, không kéo lệch phần trăm header.</li>
+      <li>Thêm <code>forceRefresh</code> vào endpoint phân tích để nút refresh và pull-to-refresh bỏ cache, đọc lại dữ liệu board mới nhất rồi ghi cache mới.</li>
+      <li>Backend luôn tạo summary, risks và suggestions deterministic từ metric trước; Gemini chỉ nâng chất lượng diễn giải khi trả JSON hợp lệ.</li>
+      <li>Frontend thêm donut chart và bar chart bằng <code>CustomPainter</code>/<code>LinearProgressIndicator</code> thay vì thêm chart package mới.</li>
+    </ul>
+    <h2>Deviations</h2>
+    <ul>
+      <li>Không triển khai mini timeline due-date trong lượt này để tránh mở rộng DTO danh sách card chi tiết. Thay vào đó thêm metric <code>dueSoonCards</code> và risk/suggestion tương ứng.</li>
+      <li>Không thêm report history/cloud storage trong lượt này vì yêu cầu hiện tại tập trung vào chất lượng báo cáo hiện tại và refresh dữ liệu mới.</li>
+    </ul>
+    <h2>Tradeoffs</h2>
+    <ul>
+      <li>Custom chart nhẹ giúp tránh dependency mới, nhưng khả năng tương tác chart còn giới hạn so với chart library chuyên dụng.</li>
+      <li>Status distribution dùng các nhóm ổn định <code>todo</code>, <code>inProgress</code>, <code>completed</code>, <code>other</code>; các status lạ được gom vào <code>other</code> để không làm sai tiến độ.</li>
+    </ul>
+    <h2>Open questions</h2>
+    <ul>
+      <li>Có cần chuẩn hóa danh sách giá trị <code>Card.Status</code> ở toàn app trong sprint sau không? Hiện tại feature AI chỉ phân nhóm mềm từ status hiện có.</li>
+    </ul>
+    <h2>Verification Results</h2>
+    <ul>
+      <li><strong>Backend Build:</strong> <code>dotnet build C#\TodoAppAPI\TodoAppAPI.csproj</code> thành công.</li>
+      <li><strong>Backend Tests:</strong> <code>dotnet test C#\TodoAppAPI.Tests\TodoAppAPI.Tests.csproj --filter GeminiAnalysis</code> pass 9/9 tests.</li>
+      <li><strong>Frontend Analyze:</strong> <code>flutter analyze</code> trong <code>Flutter/trellon_flutter</code> thành công, không có issue.</li>
+      <li><strong>Frontend Tests:</strong> <code>flutter test test\ai_analysis_remote_data_source_test.dart test\ai_analysis_cubit_test.dart</code> pass 5/5 tests.</li>
+    </ul>
+  </div>
+>>>>>>> b99a997132fbff90878e7a87c25feac790e238f9
 </body>
 </html>
-

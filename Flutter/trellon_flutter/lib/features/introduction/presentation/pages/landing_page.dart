@@ -47,7 +47,7 @@ class LandingPage extends StatelessWidget {
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF2E6FF1).withOpacity(0.3),
+                      color: const Color(0xFF2E6FF1).withValues(alpha: 0.3),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
                     ),

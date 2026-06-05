@@ -46,7 +46,8 @@ class BoardDetailTopBarWidget extends StatelessWidget {
             icon: const Icon(Icons.search_rounded, color: Color(0xFF64748B)),
             onPressed: () async {
               final uid = await serviceLocator<UserLocalDataSource>().getUserId();
-              print('Search tapped in BoardDetailTopBar. UID: $uid');
+              if (!context.mounted) return;
+              debugPrint('Search tapped in BoardDetailTopBar. UID: $uid');
               if (uid != null) {
                 showSearch(context: context, delegate: GlobalSearchDelegate(userUId: uid));
               } else {

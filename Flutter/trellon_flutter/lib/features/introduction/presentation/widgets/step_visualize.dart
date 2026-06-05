@@ -23,7 +23,7 @@ class StepVisualize extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
             child: IntroductionAppBar(
-              title: 'Step 2 of 5',
+              title: 'Bước 2 / 5',
               actionText: '',
               onSkip: onSkip,
               onBack: onBack,
@@ -37,7 +37,7 @@ class StepVisualize extends StatelessWidget {
                 children: [
                   const SizedBox(height: 32),
                   Text(
-                    'Visualize Your\nProgress',
+                    'Trực quan hóa\ntiến trình',
                     textAlign: TextAlign.center,
                     style: GoogleFonts.manrope(
                       fontSize: 36,
@@ -49,7 +49,7 @@ class StepVisualize extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'Use boards to track projects from idea to completion. Our intuitive layout turns complex workflows into clear visual journeys.',
+                    'Sử dụng các bảng để theo dõi dự án từ ý tưởng đến hoàn thành. Giao diện trực quan biến các quy trình phức tạp thành các hành trình rõ ràng.',
                     textAlign: TextAlign.center,
                     style: GoogleFonts.inter(
                       fontSize: 16,
@@ -85,7 +85,7 @@ class StepVisualize extends StatelessWidget {
           ),
           Padding(
             padding: const EdgeInsets.all(24),
-            child: IntroductionPrimaryButton(text: 'Next Step', onPressed: onNext),
+            child: IntroductionPrimaryButton(text: 'Bước tiếp theo', onPressed: onNext),
           ),
         ],
       ),

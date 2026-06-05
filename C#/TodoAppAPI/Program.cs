@@ -8,6 +8,7 @@ using TodoAppAPI.Models;
 using TodoAppAPI.Service;
 using TodoAppAPI.Service.JWT;
 using TodoAppAPI.Service.Cloudinary;
+using TodoAppAPI.Service.Gemini;
 using TodoAppAPI.Services;
 using TodoAppAPI.Hubs;
 
@@ -38,7 +39,14 @@ builder.Services.AddScoped<ICardDueDateReminderService, CardDueDateReminderServi
 builder.Services.AddScoped<ITwoFactorService, TwoFactorService>();
 builder.Services.AddScoped<ISearchService, SearchService>();
 builder.Services.AddScoped<IPlannerService, PlannerService>();
+builder.Services.AddScoped<IGeminiAnalysisService, GeminiAnalysisService>();
+builder.Services.AddHttpClient<IGeminiClient, GeminiClient>((serviceProvider, client) =>
+{
+    var settings = serviceProvider.GetRequiredService<Microsoft.Extensions.Options.IOptions<GeminiSettings>>().Value;
+    client.Timeout = TimeSpan.FromSeconds(Math.Max(1, settings.TimeoutSeconds));
+});
 builder.Services.AddHostedService<CardDueDateReminderHostedService>();
+builder.Services.AddScoped<IPlannerService, PlannerService>();
 
 // IMemoryCache for 2FA temp secrets
 builder.Services.AddMemoryCache();
@@ -47,6 +55,9 @@ builder.Services.AddScoped<IAuthorizationService, AuthorizationService>();
 // Cloudinary
 builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection("CloudinarySettings"));
 builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
+
+// Gemini project analysis
+builder.Services.Configure<GeminiSettings>(builder.Configuration.GetSection("GeminiSettings"));
 
 // 1. JWT Security Validation
 var jwtKey = builder.Configuration["Jwt:Key"];
@@ -89,7 +100,33 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddAuthorization();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+        Description = "Nhập token của bạn vào đây (không cần gõ chữ Bearer)"
+    });
+
+    c.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
+    {
+        {
+            new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+            {
+                Reference = new Microsoft.OpenApi.Models.OpenApiReference
+                {
+                    Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            new string[] {}
+        }
+    });
+});
 
 builder.Services.AddDbContext<TodoDbContext>(option =>
 {
@@ -108,19 +145,12 @@ builder.Services.AddDbContext<TodoDbContext>(option =>
 // ================== CORS ==================
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowFrontend", policy =>
+    options.AddPolicy("AllowAllWeb", policy =>
     {
-        policy.WithOrigins("http://localhost:5173")
+        policy.SetIsOriginAllowed(origin => true)
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();
-    });
-
-    options.AddPolicy("AllowAllMobile", policy =>
-    {
-        policy.AllowAnyOrigin()
-              .AllowAnyHeader()
-              .AllowAnyMethod();
     });
 });
 
@@ -138,7 +168,7 @@ var app = builder.Build();
 
 
 // 3. Sử dụng CORS
-app.UseCors("AllowFrontend");
+app.UseCors("AllowAllWeb");
 
 
 //app.UseHttpsRedirection();
