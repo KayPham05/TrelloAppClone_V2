@@ -103,6 +103,34 @@ class NotificationRealtimeService {
       plannerCubit.applyRealtimeCardDueDateUpdated();
     });
 
+    connection.on('CardAdded', (_) {
+      plannerCubit.applyRealtimeCardDueDateUpdated();
+    });
+
+    connection.on('CardDeleted', (_) {
+      plannerCubit.applyRealtimeCardDueDateUpdated();
+    });
+
+    connection.on('CardUpdated', (_) {
+      plannerCubit.applyRealtimeCardDueDateUpdated();
+    });
+
+    connection.on('CardMoved', (_) {
+      plannerCubit.applyRealtimeCardDueDateUpdated();
+    });
+
+    connection.on('CardStatusUpdated', (_) {
+      plannerCubit.applyRealtimeCardDueDateUpdated();
+    });
+
+    connection.on('CardArchived', (_) {
+      plannerCubit.applyRealtimeCardDueDateUpdated();
+    });
+
+    connection.on('CardUnarchived', (_) {
+      plannerCubit.applyRealtimeCardDueDateUpdated();
+    });
+
     connection.on('AccountLocked', (_) {
       cubit.applyAccountLocked();
     });

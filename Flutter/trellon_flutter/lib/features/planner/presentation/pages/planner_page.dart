@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+
 import '../../../../init_dependencies.dart';
 import '../cubit/planner_cubit.dart';
 import '../cubit/planner_state.dart';
-import '../widgets/planner_day_row_widget.dart';
 import '../widgets/add_planner_task_bottom_sheet.dart';
+import '../widgets/planner_day_row_widget.dart';
 import '../widgets/planner_options_bottom_sheet.dart';
 
 class PlannerPage extends StatefulWidget {
@@ -70,13 +71,19 @@ class _PlannerPageState extends State<PlannerPage> {
                           ),
                         ),
                         IconButton(
-                          icon: const Icon(Icons.add, color: Color(0xFF050505), size: 22),
+                          icon: const Icon(
+                            Icons.add,
+                            color: Color(0xFF050505),
+                            size: 22,
+                          ),
                           onPressed: () async {
                             final result = await showModalBottomSheet(
                               context: context,
                               isScrollControlled: true,
                               shape: const RoundedRectangleBorder(
-                                borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+                                borderRadius: BorderRadius.vertical(
+                                  top: Radius.circular(16),
+                                ),
                               ),
                               builder: (_) => const AddPlannerTaskBottomSheet(),
                             );
@@ -87,38 +94,53 @@ class _PlannerPageState extends State<PlannerPage> {
                                   backgroundColor: Color(0xFF0055FF),
                                 ),
                               );
-                              context.read<PlannerCubit>().loadMonth(_currentMonth);
+                              context.read<PlannerCubit>().loadMonth(
+                                _currentMonth,
+                              );
                             }
                           },
                         ),
                         IconButton(
-                          icon: const Icon(Icons.more_horiz, color: Color(0xFF050505)),
+                          icon: const Icon(
+                            Icons.more_horiz,
+                            color: Color(0xFF050505),
+                          ),
                           onPressed: () {
                             showModalBottomSheet(
                               context: context,
                               shape: const RoundedRectangleBorder(
-                                borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+                                borderRadius: BorderRadius.vertical(
+                                  top: Radius.circular(16),
+                                ),
                               ),
                               builder: (_) => PlannerOptionsBottomSheet(
                                 onJumpToToday: () {
-                                  final state = context.read<PlannerCubit>().state;
+                                  final state = context
+                                      .read<PlannerCubit>()
+                                      .state;
                                   if (state is PlannerLoaded) {
                                     final now = DateTime.now();
-                                    final index = state.days.indexWhere((d) => 
-                                        d.date.year == now.year && 
-                                        d.date.month == now.month && 
-                                        d.date.day == now.day);
+                                    final index = state.days.indexWhere(
+                                      (d) =>
+                                          d.date.year == now.year &&
+                                          d.date.month == now.month &&
+                                          d.date.day == now.day,
+                                    );
                                     if (index != -1) {
                                       _scrollController.animateTo(
-                                        index * 120.0, 
-                                        duration: const Duration(milliseconds: 500), 
+                                        index * 120.0,
+                                        duration: const Duration(
+                                          milliseconds: 500,
+                                        ),
                                         curve: Curves.easeInOut,
                                       );
                                     }
                                   }
                                 },
                                 onRefresh: () {
-                                  context.read<PlannerCubit>().loadMonth(_currentMonth);
+                                  context.read<PlannerCubit>().loadMonth(
+                                    _currentMonth,
+                                  );
                                 },
                               ),
                             );
@@ -133,19 +155,25 @@ class _PlannerPageState extends State<PlannerPage> {
                     child: BlocBuilder<PlannerCubit, PlannerState>(
                       builder: (context, state) {
                         if (state is PlannerLoading) {
-                          return const Center(child: CircularProgressIndicator());
+                          return const Center(
+                            child: CircularProgressIndicator(),
+                          );
                         } else if (state is PlannerError) {
                           return Center(child: Text(state.message));
                         } else if (state is PlannerLoaded) {
                           final today = DateTime.now();
                           return RefreshIndicator(
                             onRefresh: () async {
-                              await context.read<PlannerCubit>().loadMonth(_currentMonth);
+                              await context.read<PlannerCubit>().loadMonth(
+                                _currentMonth,
+                              );
                             },
                             child: ListView.builder(
                               controller: _scrollController,
                               physics: const AlwaysScrollableScrollPhysics(),
-                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                              ),
                               itemCount: state.days.length,
                               itemBuilder: (ctx, i) {
                                 final day = state.days[i];

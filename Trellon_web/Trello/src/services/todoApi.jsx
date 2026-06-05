@@ -7,8 +7,8 @@ export const  getCardsAPI = (boardUId) => {
     return axiosClient.get(`${END_POINT.TODOS}/by-board/${boardUId}`);
 }
 
-export const deleteCardAPI = (id) => {
-    return axiosClient.delete(`${END_POINT.TODOS}/${id}`);
+export const deleteCardAPI = (id, userUId) => {
+    return axiosClient.delete(`${END_POINT.TODOS}/${id}?userUId=${userUId || ""}`);
 }
 
 export const addCardAPI = (card) => {
@@ -24,7 +24,9 @@ export const updateCardAPI = (card) => {
     console.error(" Không có cardUId để cập nhật!");
     return;
   }
-  return axiosClient.put(`${END_POINT.TODOS}/${card.cardUId}`, card);
+  const userUId = card.userUId ||
+    JSON.parse(localStorage.getItem("user") || "{}")?.userUId || "";
+  return axiosClient.put(`${END_POINT.TODOS}/${card.cardUId}?userUId=${userUId}`, card);
 };
 
 export const updateCardListAPI =(cardUId, listUId, userUId) => {
@@ -33,7 +35,7 @@ export const updateCardListAPI =(cardUId, listUId, userUId) => {
     });
 }
 
-export const updateCardStatus =(cardUId, newStatus) => {
-    return axiosClient.put(`${END_POINT.TODOS}/${cardUId}/update-status?newStatus=${newStatus}`);
+export const updateCardStatus = (cardUId, newStatus, userUId) => {
+    return axiosClient.put(`${END_POINT.TODOS}/${cardUId}/update-status?newStatus=${newStatus}&userUId=${userUId || ""}`);
 }
 

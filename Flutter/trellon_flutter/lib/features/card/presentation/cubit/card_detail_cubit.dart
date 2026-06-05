@@ -42,7 +42,14 @@ class CardDetailCubit extends Cubit<CardDetailState> {
       CardEntity latestCard = card;
       if (!isInboxCard) {
         // Refresh the card from the server to get the latest backgroundUrl etc.
-        latestCard = await repository.getCard(card.id);
+        final fetched = await repository.getCard(card.id);
+        // API does not return boardName/listName/boardBackgroundUrl — preserve them from original card
+        latestCard = fetched.copyWith(
+          boardName: fetched.boardName ?? card.boardName,
+          listName: fetched.listName ?? card.listName,
+          boardBackgroundUrl: fetched.boardBackgroundUrl ?? card.boardBackgroundUrl,
+          boardId: fetched.boardId ?? card.boardId,
+        );
       }
       
       final futures = await Future.wait([
@@ -242,8 +249,8 @@ class CardDetailCubit extends Cubit<CardDetailState> {
           );
           emit(currentState.copyWith(card: currentState.card.copyWith(status: newStatus)));
         } else {
-          final updatedCard = await repository.updateStatus(cardId: currentState.card.id, newStatus: newStatus, userUId: userUId);
-          emit(currentState.copyWith(card: updatedCard));
+          await repository.updateStatus(cardId: currentState.card.id, newStatus: newStatus, userUId: userUId);
+          emit(currentState.copyWith(card: currentState.card.copyWith(status: newStatus)));
         }
       } catch (e) {
         // Handle error silently or surface
@@ -544,6 +551,19 @@ class CardDetailCubit extends Cubit<CardDetailState> {
       emit(CardDetailArchived());
     } catch (e) {
       emit(CardDetailError('Không thể lưu trữ thẻ: ${e.toString()}'));
+      emit(currentState);
+    }
+  }
+
+  Future<void> unarchiveCard() async {
+    final currentState = state;
+    if (currentState is! CardDetailLoaded) return;
+    try {
+      final userUId = await UserLocalDataSource().getUserId() ?? '';
+      await repository.unarchiveCard(cardId: currentState.card.id, userUId: userUId);
+      // Stay on the same state, just UI will be updated via boolean callback in UI layer
+    } catch (e) {
+      emit(CardDetailError('Không thể khôi phục thẻ: ${e.toString()}'));
       emit(currentState);
     }
   }

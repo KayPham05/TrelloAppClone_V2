@@ -15,6 +15,7 @@ import '../../../board/domain/entities/board_entity.dart';
 import '../../../../core/services/authorization_service.dart';
 import '../../../../init_dependencies.dart';
 import '../../../../core/data_sources/user_local_data_source.dart';
+import '../../../search/presentation/delegates/global_search_delegate.dart';
 
 class WorkspaceMenuPage extends StatefulWidget {
   final WorkspaceEntity workspace;
@@ -176,7 +177,7 @@ class _WorkspaceMenuPageState extends State<WorkspaceMenuPage> {
       ),
     );
     if (confirm == true && mounted) {
-      _showSnack('Tính năng xóa board sẽ có trong phiên bản tiếp theo');
+      context.read<WorkspaceCubit>().deleteBoard(board.id);
     }
   }
 
@@ -420,6 +421,15 @@ class _WorkspaceMenuPageState extends State<WorkspaceMenuPage> {
   Widget _buildSearchBar() {
     return TextField(
       controller: _searchController,
+      readOnly: true,
+      onTap: () {
+        print('Search tapped in WorkspaceMenuPage. UID: $_currentUserUId');
+        if (_currentUserUId != null) {
+          showSearch(context: context, delegate: GlobalSearchDelegate(userUId: _currentUserUId!));
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Lỗi: Không tìm thấy User ID!')));
+        }
+      },
       style: GoogleFonts.inter(
         fontSize: 14,
         fontWeight: FontWeight.w500,

@@ -1,45 +1,45 @@
-# Design System — Trellon Mobile App
+﻿# Design System â€” Kabo Mobile App
 
-> Phiên bản ứng dụng: `2026.10.1` | Build: `20260513.155745`  
-> Ngôn ngữ: Tiếng Việt | Platform: iOS
-
----
-
-## 1. Brand & Tổng quan
-
-Trellon là ứng dụng quản lý công việc theo mô hình Kanban board, được thiết kế cho mobile-first. Giao diện sạch, rõ ràng, tập trung vào nội dung, tối giản nhưng đủ thông tin.
+> PhiÃªn báº£n á»©ng dá»¥ng: `2026.10.1` | Build: `20260513.155745`  
+> NgÃ´n ngá»¯: Tiáº¿ng Viá»‡t | Platform: iOS
 
 ---
 
-## 2. Màu sắc (Color Palette)
+## 1. Brand & Tá»•ng quan
+
+Kabo lÃ  á»©ng dá»¥ng quáº£n lÃ½ cÃ´ng viá»‡c theo mÃ´ hÃ¬nh Kanban board, Ä‘Æ°á»£c thiáº¿t káº¿ cho mobile-first. Giao diá»‡n sáº¡ch, rÃµ rÃ ng, táº­p trung vÃ o ná»™i dung, tá»‘i giáº£n nhÆ°ng Ä‘á»§ thÃ´ng tin.
+
+---
+
+## 2. MÃ u sáº¯c (Color Palette)
 
 ### Primary Colors
 
-| Tên | Hex | Dùng cho |
+| TÃªn | Hex | DÃ¹ng cho |
 |-----|-----|---------|
-| Primary Blue | `#0052CC` | Nút CTA chính, icon active, link |
-| Blue Light | `#579DFF` | Badge, highlight chọn |
-| Background | `#F4F5F7` | Nền màn hình |
+| Primary Blue | `#0052CC` | NÃºt CTA chÃ­nh, icon active, link |
+| Blue Light | `#579DFF` | Badge, highlight chá»n |
+| Background | `#F4F5F7` | Ná»n mÃ n hÃ¬nh |
 | Surface White | `#FFFFFF` | Card, sheet, modal |
 
 ### Priority Label Colors
 
-| Tag | Hex | Mô tả |
+| Tag | Hex | MÃ´ táº£ |
 |-----|-----|-------|
-| P1 (Cao nhất) | `#F87462` | Cam đỏ — Ưu tiên cao |
-| P2 | `#388BFF` | Xanh dương — Ưu tiên trung bình |
-| P3 | `#4BCE97` | Xanh lá — Ưu tiên thấp |
+| P1 (Cao nháº¥t) | `#F87462` | Cam Ä‘á» â€” Æ¯u tiÃªn cao |
+| P2 | `#388BFF` | Xanh dÆ°Æ¡ng â€” Æ¯u tiÃªn trung bÃ¬nh |
+| P3 | `#4BCE97` | Xanh lÃ¡ â€” Æ¯u tiÃªn tháº¥p |
 
 ### Type Tag Colors
 
-| Tag | Hex | Mô tả |
+| Tag | Hex | MÃ´ táº£ |
 |-----|-----|-------|
-| FE (Frontend) | `#579DFF` | Xanh nhạt |
-| Full-stack | `#F5A623` | Cam vàng |
+| FE (Frontend) | `#579DFF` | Xanh nháº¡t |
+| Full-stack | `#F5A623` | Cam vÃ ng |
 
-### Label / Nhãn Colors (6 màu chuẩn)
+### Label / NhÃ£n Colors (6 mÃ u chuáº©n)
 
-| Tên | Hex |
+| TÃªn | Hex |
 |-----|-----|
 | Green | `#4BCE97` |
 | Yellow | `#CCA300` |
@@ -50,18 +50,18 @@ Trellon là ứng dụng quản lý công việc theo mô hình Kanban board, đ
 
 ### Text Colors
 
-| Tên | Hex | Dùng cho |
+| TÃªn | Hex | DÃ¹ng cho |
 |-----|-----|---------|
-| Text Primary | `#172B4D` | Tiêu đề, nội dung chính |
-| Text Secondary | `#6B778C` | Phụ đề, metadata |
+| Text Primary | `#172B4D` | TiÃªu Ä‘á», ná»™i dung chÃ­nh |
+| Text Secondary | `#6B778C` | Phá»¥ Ä‘á», metadata |
 | Text Placeholder | `#A5ADBA` | Input placeholder |
-| Text Link / Action | `#0052CC` | Link, nút văn bản |
-| Text Destructive | `#CA3521` | Nút xóa ngày, cảnh báo |
-| Text Disabled | `#C1C7D0` | Trạng thái vô hiệu |
+| Text Link / Action | `#0052CC` | Link, nÃºt vÄƒn báº£n |
+| Text Destructive | `#CA3521` | NÃºt xÃ³a ngÃ y, cáº£nh bÃ¡o |
+| Text Disabled | `#C1C7D0` | Tráº¡ng thÃ¡i vÃ´ hiá»‡u |
 
-### Trạng thái (State Colors)
+### Tráº¡ng thÃ¡i (State Colors)
 
-| Trạng thái | Hex |
+| Tráº¡ng thÃ¡i | Hex |
 |-----------|-----|
 | Success / Done | `#22A06B` |
 | Warning | `#FF8B00` |
@@ -75,97 +75,97 @@ Trellon là ứng dụng quản lý công việc theo mô hình Kanban board, đ
 
 ### Font
 
-- **Font chính**: San Francisco (iOS system font) — `-apple-system, BlinkMacSystemFont`
-- **Không sử dụng** custom typeface; toàn bộ theo iOS system typography
+- **Font chÃ­nh**: San Francisco (iOS system font) â€” `-apple-system, BlinkMacSystemFont`
+- **KhÃ´ng sá»­ dá»¥ng** custom typeface; toÃ n bá»™ theo iOS system typography
 
-### Thang cỡ chữ
+### Thang cá»¡ chá»¯
 
-| Tên | Size | Weight | Line Height | Dùng cho |
+| TÃªn | Size | Weight | Line Height | DÃ¹ng cho |
 |-----|------|--------|-------------|---------|
-| Large Title | 34pt | Bold (700) | 41pt | Tiêu đề màn hình (Bảng, Tài khoản) |
-| Title 1 | 28pt | Bold | 34pt | Tiêu đề section lớn (tháng 5) |
-| Title 2 | 22pt | Semibold (600) | 28pt | Tên Board, tên Card |
+| Large Title | 34pt | Bold (700) | 41pt | TiÃªu Ä‘á» mÃ n hÃ¬nh (Báº£ng, TÃ i khoáº£n) |
+| Title 1 | 28pt | Bold | 34pt | TiÃªu Ä‘á» section lá»›n (thÃ¡ng 5) |
+| Title 2 | 22pt | Semibold (600) | 28pt | TÃªn Board, tÃªn Card |
 | Title 3 | 20pt | Semibold | 25pt | Header card detail |
-| Headline | 17pt | Semibold | 22pt | Tên task trong card |
-| Body | 17pt | Regular (400) | 22pt | Nội dung mô tả, bình luận |
-| Callout | 16pt | Regular | 21pt | Metadata phụ |
-| Subheadline | 15pt | Regular | 20pt | Section header (KHÔNG GIAN LÀM VIỆC) |
-| Footnote | 13pt | Regular | 18pt | Timestamp, thông tin phụ (14:52 23 thg 4) |
+| Headline | 17pt | Semibold | 22pt | TÃªn task trong card |
+| Body | 17pt | Regular (400) | 22pt | Ná»™i dung mÃ´ táº£, bÃ¬nh luáº­n |
+| Callout | 16pt | Regular | 21pt | Metadata phá»¥ |
+| Subheadline | 15pt | Regular | 20pt | Section header (KHÃ”NG GIAN LÃ€M VIá»†C) |
+| Footnote | 13pt | Regular | 18pt | Timestamp, thÃ´ng tin phá»¥ (14:52 23 thg 4) |
 | Caption 1 | 12pt | Regular | 16pt | Label badge text |
 | Caption 2 | 11pt | Regular | 13pt | Micro metadata |
 
-### Đặc biệt
+### Äáº·c biá»‡t
 
-- **Section header dạng ALL CAPS**: `KHÔNG GIAN LÀM VIỆC` — Subheadline + Letter-spacing 0.5px + `#6B778C`
-- **Badge text**: Caption 1 + Bold + White trên nền màu priority
+- **Section header dáº¡ng ALL CAPS**: `KHÃ”NG GIAN LÃ€M VIá»†C` â€” Subheadline + Letter-spacing 0.5px + `#6B778C`
+- **Badge text**: Caption 1 + Bold + White trÃªn ná»n mÃ u priority
 
 ---
 
 ## 4. Spacing & Layout
 
-### Đơn vị cơ sở
+### ÄÆ¡n vá»‹ cÆ¡ sá»Ÿ
 
 - **Base unit**: 4pt
 - **Grid**: 8pt grid
 
-### Khoảng cách thông dụng
+### Khoáº£ng cÃ¡ch thÃ´ng dá»¥ng
 
-| Token | Value | Dùng cho |
+| Token | Value | DÃ¹ng cho |
 |-------|-------|---------|
-| `space-xs` | 4pt | Khoảng cách nhỏ nhất |
-| `space-sm` | 8pt | Padding nội bộ card nhỏ |
-| `space-md` | 12pt | Padding card thông thường |
-| `space-lg` | 16pt | Padding màn hình |
-| `space-xl` | 20pt | Khoảng cách section |
+| `space-xs` | 4pt | Khoáº£ng cÃ¡ch nhá» nháº¥t |
+| `space-sm` | 8pt | Padding ná»™i bá»™ card nhá» |
+| `space-md` | 12pt | Padding card thÃ´ng thÆ°á»ng |
+| `space-lg` | 16pt | Padding mÃ n hÃ¬nh |
+| `space-xl` | 20pt | Khoáº£ng cÃ¡ch section |
 | `space-2xl` | 24pt | Header margin |
-| `space-3xl` | 32pt | Khoảng cách lớn |
+| `space-3xl` | 32pt | Khoáº£ng cÃ¡ch lá»›n |
 
 ### Screen Margins
 
-- **Horizontal padding màn hình**: 16pt (trái/phải)
-- **Card padding nội bộ**: 12pt
+- **Horizontal padding mÃ n hÃ¬nh**: 16pt (trÃ¡i/pháº£i)
+- **Card padding ná»™i bá»™**: 12pt
 
 ---
 
-## 5. Các thành phần UI (Components)
+## 5. CÃ¡c thÃ nh pháº§n UI (Components)
 
 ### 5.1 Bottom Navigation Bar
 
 ```
-[Bảng] [Hộp thư đến] [Trình lập kế hoạch] [Hoạt động 🔴7] [Tài khoản]
+[Báº£ng] [Há»™p thÆ° Ä‘áº¿n] [TrÃ¬nh láº­p káº¿ hoáº¡ch] [Hoáº¡t Ä‘á»™ng ðŸ”´7] [TÃ i khoáº£n]
 ```
 
-| Thuộc tính | Giá trị |
+| Thuá»™c tÃ­nh | GiÃ¡ trá»‹ |
 |-----------|---------|
-| Height | 83pt (bao gồm safe area) |
-| Icon size | 24×24pt |
+| Height | 83pt (bao gá»“m safe area) |
+| Icon size | 24Ã—24pt |
 | Label size | 10pt |
 | Active color | `#0052CC` |
 | Inactive color | `#6B778C` |
 | Background | `#FFFFFF` |
 | Border top | 0.5pt `#E3E6EA` |
-| Badge (số thông báo) | Đỏ `#DE350B`, 18pt circle, 10pt white bold |
+| Badge (sá»‘ thÃ´ng bÃ¡o) | Äá» `#DE350B`, 18pt circle, 10pt white bold |
 
 **Tabs:**
-1. Bảng (Board icon)
-2. Hộp thư đến (Inbox icon)
-3. Trình lập kế hoạch (Calendar icon)
-4. Hoạt động (Bell icon + badge số)
-5. Tài khoản (Avatar circle)
+1. Báº£ng (Board icon)
+2. Há»™p thÆ° Ä‘áº¿n (Inbox icon)
+3. TrÃ¬nh láº­p káº¿ hoáº¡ch (Calendar icon)
+4. Hoáº¡t Ä‘á»™ng (Bell icon + badge sá»‘)
+5. TÃ i khoáº£n (Avatar circle)
 
 ---
 
-### 5.2 Card (Thẻ Kanban)
+### 5.2 Card (Tháº» Kanban)
 
 ```
-┌─────────────────────────────┐
-│ [P2] [FE]                   │
-│ ○  Tên task                 │
-│ 👁 ≡ ☑ 0/4         [Avatar] │
-└─────────────────────────────┘
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚ [P2] [FE]                   â”‚
+â”‚ â—‹  TÃªn task                 â”‚
+â”‚ ðŸ‘ â‰¡ â˜‘ 0/4         [Avatar] â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 ```
 
-| Thuộc tính | Giá trị |
+| Thuá»™c tÃ­nh | GiÃ¡ trá»‹ |
 |-----------|---------|
 | Background | `#FFFFFF` |
 | Border radius | 8pt |
@@ -173,18 +173,18 @@ Trellon là ứng dụng quản lý công việc theo mô hình Kanban board, đ
 | Padding | 12pt |
 | Margin bottom | 8pt |
 
-**Cấu trúc Card:**
-1. **Row 1 — Priority + Type tags**: Hàng ngang, gap 4pt
-2. **Row 2 — Checkbox + Title**: `○` (16pt) + text Headline
-3. **Row 3 — Metadata icons**: Mắt 👁, dòng kẻ ≡, checkbox ☑ `0/4`, avatar góc phải
+**Cáº¥u trÃºc Card:**
+1. **Row 1 â€” Priority + Type tags**: HÃ ng ngang, gap 4pt
+2. **Row 2 â€” Checkbox + Title**: `â—‹` (16pt) + text Headline
+3. **Row 3 â€” Metadata icons**: Máº¯t ðŸ‘, dÃ²ng káº» â‰¡, checkbox â˜‘ `0/4`, avatar gÃ³c pháº£i
 
-**Card Cover Image**: Ảnh full-width, border-radius-top 8pt, height ~160pt
+**Card Cover Image**: áº¢nh full-width, border-radius-top 8pt, height ~160pt
 
 ---
 
 ### 5.3 Priority & Type Badges
 
-| Badge | Nền | Chữ | Border radius |
+| Badge | Ná»n | Chá»¯ | Border radius |
 |-------|-----|-----|--------------|
 | P1 | `#FFEBE6` | `#CA3521` | 3pt |
 | P2 | `#DEEBFF` | `#0052CC` | 3pt |
@@ -199,21 +199,21 @@ Trellon là ứng dụng quản lý công việc theo mô hình Kanban board, đ
 ### 5.4 Kanban Column Header
 
 ```
-Backlog                    ···
+Backlog                    Â·Â·Â·
 ```
 
-| Thuộc tính | Giá trị |
+| Thuá»™c tÃ­nh | GiÃ¡ trá»‹ |
 |-----------|---------|
 | Font | Headline Semibold |
 | Color | `#172B4D` |
 | Background | `#F4F5F7` |
 | Padding | 12pt 16pt |
-| Menu icon (···) | 20pt, `#6B778C` |
+| Menu icon (Â·Â·Â·) | 20pt, `#6B778C` |
 
-**Các trạng thái cột:**
-- `Backlog` — Tồn đọng
-- `In Progress` — Đang làm
-- `Done` / `Review` (suy đoán)
+**CÃ¡c tráº¡ng thÃ¡i cá»™t:**
+- `Backlog` â€” Tá»“n Ä‘á»ng
+- `In Progress` â€” Äang lÃ m
+- `Done` / `Review` (suy Ä‘oÃ¡n)
 
 ---
 
@@ -222,10 +222,10 @@ Backlog                    ···
 #### Primary Button
 
 ```
-[  Đánh giá chúng tôi trên App Store  ]
+[  ÄÃ¡nh giÃ¡ chÃºng tÃ´i trÃªn App Store  ]
 ```
 
-| Thuộc tính | Giá trị |
+| Thuá»™c tÃ­nh | GiÃ¡ trá»‹ |
 |-----------|---------|
 | Background | `#0052CC` |
 | Text | White, 17pt Semibold |
@@ -236,10 +236,10 @@ Backlog                    ···
 #### Text Button / Action Link
 
 ```
-Di chuyển
+Di chuyá»ƒn
 ```
 
-| Thuộc tính | Giá trị |
+| Thuá»™c tÃ­nh | GiÃ¡ trá»‹ |
 |-----------|---------|
 | Color | `#0052CC` |
 | Font | 17pt Regular |
@@ -247,20 +247,20 @@ Di chuyển
 #### Icon Button (Circle)
 
 ```
-(+)  (Q)  ···
+(+)  (Q)  Â·Â·Â·
 ```
 
-| Thuộc tính | Giá trị |
+| Thuá»™c tÃ­nh | GiÃ¡ trá»‹ |
 |-----------|---------|
 | Size | 36pt diameter |
-| Background | `#FFFFFF` hoặc `#0052CC` |
+| Background | `#FFFFFF` hoáº·c `#0052CC` |
 | Icon | 20pt |
 | Shadow | Subtle 1pt |
 
 #### Destructive Text
 
 ```
-Xóa ngày
+XÃ³a ngÃ y
 ```
 
 | Color | `#CA3521` |
@@ -272,9 +272,9 @@ Xóa ngày
 
 ### 5.6 Sheet / Bottom Sheet
 
-Modal từ dưới lên (Card Detail, Ngày hết hạn, Nhãn...)
+Modal tá»« dÆ°á»›i lÃªn (Card Detail, NgÃ y háº¿t háº¡n, NhÃ£n...)
 
-| Thuộc tính | Giá trị |
+| Thuá»™c tÃ­nh | GiÃ¡ trá»‹ |
 |-----------|---------|
 | Background | `#FFFFFF` |
 | Border radius top | 12pt |
@@ -287,10 +287,10 @@ Modal từ dưới lên (Card Detail, Ngày hết hạn, Nhãn...)
 ### 5.7 List Row (Settings / Account)
 
 ```
-⚙  Cài đặt ứng dụng                    >
+âš™  CÃ i Ä‘áº·t á»©ng dá»¥ng                    >
 ```
 
-| Thuộc tính | Giá trị |
+| Thuá»™c tÃ­nh | GiÃ¡ trá»‹ |
 |-----------|---------|
 | Height | 44pt min |
 | Padding | 16pt horizontal |
@@ -311,55 +311,55 @@ Modal từ dưới lên (Card Detail, Ngày hết hạn, Nhãn...)
 | On | `#0052CC` | White |
 | Off | `#E3E6EA` | White |
 
-**Size:** 51×31pt (iOS standard)
+**Size:** 51Ã—31pt (iOS standard)
 
 ---
 
 ### 5.9 Avatar
 
-| Size | Dùng cho |
+| Size | DÃ¹ng cho |
 |------|---------|
 | 32pt | Card assignee |
 | 40pt | Tab bar account |
 | 56pt | Account page header |
 
-**Fallback:** Chữ tắt tên (KP, DP) trên nền màu ngẫu nhiên từ palette (`#0052CC`, `#F5A623`, v.v.)  
+**Fallback:** Chá»¯ táº¯t tÃªn (KP, DP) trÃªn ná»n mÃ u ngáº«u nhiÃªn tá»« palette (`#0052CC`, `#F5A623`, v.v.)  
 **Border radius:** 50% (circle)
 
 ---
 
 ### 5.10 Date Picker
 
-| Thuộc tính | Giá trị |
+| Thuá»™c tÃ­nh | GiÃ¡ trá»‹ |
 |-----------|---------|
 | Sheet height | ~80% screen |
-| Quick picks | Pill chips: "Hôm nay", "Ngày mai", "Tuần tới" |
-| Calendar header | `tháng 5 năm 2026 >` — Title 2 Semibold |
+| Quick picks | Pill chips: "HÃ´m nay", "NgÃ y mai", "Tuáº§n tá»›i" |
+| Calendar header | `thÃ¡ng 5 nÄƒm 2026 >` â€” Title 2 Semibold |
 | Today | Blue text `#0052CC` |
 | Selected date | Blue circle `#0052CC`, white text |
 | Navigation arrows | `#0052CC` |
 | Day labels | TH 2...CN, Caption 2, `#6B778C` |
 | Time section | Footnote label + pill chip value |
-| Reminder | Row với picker inline |
+| Reminder | Row vá»›i picker inline |
 
 ---
 
-### 5.11 Label Manager (Nhãn)
+### 5.11 Label Manager (NhÃ£n)
 
-- **Header**: "Nhãn" — Title 2 Semibold | Nút X (đóng) + Nút + (thêm)
-- **Color blindness toggle**: "Chế độ mù màu" + Switch
-- **Label name display toggle**: "Hiển thị tên nhãn trên mặt trước thẻ" + Switch (ON mặc định)
-- **Label row**: Full-width color bar, border-radius 6pt, height 48pt, edit icon `✏` bên phải
+- **Header**: "NhÃ£n" â€” Title 2 Semibold | NÃºt X (Ä‘Ã³ng) + NÃºt + (thÃªm)
+- **Color blindness toggle**: "Cháº¿ Ä‘á»™ mÃ¹ mÃ u" + Switch
+- **Label name display toggle**: "Hiá»ƒn thá»‹ tÃªn nhÃ£n trÃªn máº·t trÆ°á»›c tháº»" + Switch (ON máº·c Ä‘á»‹nh)
+- **Label row**: Full-width color bar, border-radius 6pt, height 48pt, edit icon `âœ` bÃªn pháº£i
 
 ---
 
 ### 5.12 Search Bar
 
 ```
-🔍  Bảng
+ðŸ”  Báº£ng
 ```
 
-| Thuộc tính | Giá trị |
+| Thuá»™c tÃ­nh | GiÃ¡ trá»‹ |
 |-----------|---------|
 | Background | `#FFFFFF` |
 | Border radius | 10pt |
@@ -369,47 +369,47 @@ Modal từ dưới lên (Card Detail, Ngày hết hạn, Nhãn...)
 
 ---
 
-### 5.13 Inbox Card (Hộp thư đến)
+### 5.13 Inbox Card (Há»™p thÆ° Ä‘áº¿n)
 
-Dạng thẻ nổi bật trên màn hình Bảng
+Dáº¡ng tháº» ná»•i báº­t trÃªn mÃ n hÃ¬nh Báº£ng
 
-| Thuộc tính | Giá trị |
+| Thuá»™c tÃ­nh | GiÃ¡ trá»‹ |
 |-----------|---------|
 | Background | `#EAF2FF` (light blue tint) |
 | Border | 1pt `#B3D4FF` |
 | Border radius | 12pt |
-| Header | "Hộp thư đến 1" — Headline Semibold + Badge số |
-| Edit icon | `✏` top right |
+| Header | "Há»™p thÆ° Ä‘áº¿n 1" â€” Headline Semibold + Badge sá»‘ |
+| Edit icon | `âœ` top right |
 
 ---
 
 ### 5.14 Activity Feed Row
 
 ```
-🖥  [Tên] đã thêm bạn vào thẻ [Tên thẻ] ở bảng [Tên bảng]
+ðŸ–¥  [TÃªn] Ä‘Ã£ thÃªm báº¡n vÃ o tháº» [TÃªn tháº»] á»Ÿ báº£ng [TÃªn báº£ng]
     14:52 23 thg 4
 ```
 
-| Thuộc tính | Giá trị |
+| Thuá»™c tÃ­nh | GiÃ¡ trá»‹ |
 |-----------|---------|
-| Icon | 24pt, xám nhạt |
-| Tên người dùng | Bold `#172B4D` |
+| Icon | 24pt, xÃ¡m nháº¡t |
+| TÃªn ngÆ°á»i dÃ¹ng | Bold `#172B4D` |
 | Card link | Underline `#172B4D` |
 | Timestamp | Footnote `#6B778C` |
 | Separator | 0.5pt `#E3E6EA` |
-| Unread indicator | 3pt blue bar bên trái trái |
-| Filter chips | "Tất cả các loại ▾" + "✓ Chưa đọc" — pill shape |
+| Unread indicator | 3pt blue bar bÃªn trÃ¡i trÃ¡i |
+| Filter chips | "Táº¥t cáº£ cÃ¡c loáº¡i â–¾" + "âœ“ ChÆ°a Ä‘á»c" â€” pill shape |
 
 ---
 
 ### 5.15 Calendar / Planner View
 
-| Thuộc tính | Giá trị |
+| Thuá»™c tÃ­nh | GiÃ¡ trá»‹ |
 |-----------|---------|
-| Header | "tháng 5" — Large Title Bold |
-| Ngày hiện tại | Purple circle `#6554C0` + CN/17 |
-| Ngày khác | Day label + số, Regular |
-| Trạng thái trống | "Chưa lên kế hoạch nào" — Body `#6B778C` |
+| Header | "thÃ¡ng 5" â€” Large Title Bold |
+| NgÃ y hiá»‡n táº¡i | Purple circle `#6554C0` + CN/17 |
+| NgÃ y khÃ¡c | Day label + sá»‘, Regular |
+| Tráº¡ng thÃ¡i trá»‘ng | "ChÆ°a lÃªn káº¿ hoáº¡ch nÃ o" â€” Body `#6B778C` |
 | Separator | Full-width 1pt `#E3E6EA` |
 | Time indicator line | Purple `#6554C0` full width |
 
@@ -417,50 +417,50 @@ Dạng thẻ nổi bật trên màn hình Bảng
 
 ## 6. Iconography
 
-- **Style**: SF Symbols (iOS system icons) — Outlined, 22–24pt
+- **Style**: SF Symbols (iOS system icons) â€” Outlined, 22â€“24pt
 - **Weight**: Regular
-- **Colors**: Inherit từ context (active = `#0052CC`, default = `#6B778C`, destructive = `#CA3521`)
+- **Colors**: Inherit tá»« context (active = `#0052CC`, default = `#6B778C`, destructive = `#CA3521`)
 
-### Icon chuẩn dùng trong app
+### Icon chuáº©n dÃ¹ng trong app
 
-| Icon | Dùng cho |
+| Icon | DÃ¹ng cho |
 |------|---------|
-| `square.grid.2x2` | Tab Bảng |
-| `tray` | Tab Hộp thư đến |
-| `calendar` | Tab Trình lập kế hoạch |
-| `bell` | Tab Hoạt động |
-| `person.crop.circle` | Tab Tài khoản |
+| `square.grid.2x2` | Tab Báº£ng |
+| `tray` | Tab Há»™p thÆ° Ä‘áº¿n |
+| `calendar` | Tab TrÃ¬nh láº­p káº¿ hoáº¡ch |
+| `bell` | Tab Hoáº¡t Ä‘á»™ng |
+| `person.crop.circle` | Tab TÃ i khoáº£n |
 | `checkmark.square` | Checklist item |
-| `paperclip` | Đính kèm |
-| `eye` | Đang theo dõi |
-| `line.3.horizontal` | Mô tả / menu |
-| `circle` | Checkbox chưa hoàn thành |
-| `checkmark.circle.fill` | Checkbox hoàn thành |
-| `clock` | Ngày bắt đầu |
-| `tag` | Nhãn |
-| `photo` | Ảnh bìa |
-| `plus` | Thêm mới |
-| `xmark` | Đóng |
-| `chevron.right` | Điều hướng sang phải |
+| `paperclip` | ÄÃ­nh kÃ¨m |
+| `eye` | Äang theo dÃµi |
+| `line.3.horizontal` | MÃ´ táº£ / menu |
+| `circle` | Checkbox chÆ°a hoÃ n thÃ nh |
+| `checkmark.circle.fill` | Checkbox hoÃ n thÃ nh |
+| `clock` | NgÃ y báº¯t Ä‘áº§u |
+| `tag` | NhÃ£n |
+| `photo` | áº¢nh bÃ¬a |
+| `plus` | ThÃªm má»›i |
+| `xmark` | ÄÃ³ng |
+| `chevron.right` | Äiá»u hÆ°á»›ng sang pháº£i |
 | `square.and.arrow.up` | External link |
-| `gearshape` | Cài đặt |
-| `arrow.triangle.2.circlepath` | Đồng bộ |
+| `gearshape` | CÃ i Ä‘áº·t |
+| `arrow.triangle.2.circlepath` | Äá»“ng bá»™ |
 | `wrench.and.screwdriver` | Dev tools |
-| `questionmark.circle` | Trợ giúp |
-| `person.badge.key` | Quản lý tài khoản |
-| `trash` | Xóa |
+| `questionmark.circle` | Trá»£ giÃºp |
+| `person.badge.key` | Quáº£n lÃ½ tÃ i khoáº£n |
+| `trash` | XÃ³a |
 | `bolt` | Beta |
-| `rectangle.portrait.and.arrow.right` | Đăng xuất |
-| `magnifyingglass` | Tìm kiếm |
-| `pencil` | Chỉnh sửa |
+| `rectangle.portrait.and.arrow.right` | ÄÄƒng xuáº¥t |
+| `magnifyingglass` | TÃ¬m kiáº¿m |
+| `pencil` | Chá»‰nh sá»­a |
 | `star` | Star/Unstar |
-| `arrow.up.arrow.down` | Di chuyển |
+| `arrow.up.arrow.down` | Di chuyá»ƒn |
 
 ---
 
 ## 7. Motion & Animation
 
-- **Sheet present**: Slide up từ dưới, duration 300ms, ease-out
+- **Sheet present**: Slide up tá»« dÆ°á»›i, duration 300ms, ease-out
 - **Sheet dismiss**: Slide down, duration 250ms, ease-in
 - **Card tap**: Scale 0.97, opacity 0.8, duration 100ms
 - **Badge update**: Fade in, duration 200ms
@@ -471,52 +471,52 @@ Dạng thẻ nổi bật trên màn hình Bảng
 
 ## 8. Navigation Patterns
 
-### Kiểu màn hình
+### Kiá»ƒu mÃ n hÃ¬nh
 
-| Pattern | Dùng khi |
+| Pattern | DÃ¹ng khi |
 |---------|---------|
-| Bottom Tab | Navigation chính (5 tabs) |
-| Full-screen push | Board detail, Card detail (full màn hình) |
-| Bottom Sheet | Modal ngắn (Date picker, Label, Di chuyển) |
-| Half Sheet | Modal vừa (Card detail) |
+| Bottom Tab | Navigation chÃ­nh (5 tabs) |
+| Full-screen push | Board detail, Card detail (full mÃ n hÃ¬nh) |
+| Bottom Sheet | Modal ngáº¯n (Date picker, Label, Di chuyá»ƒn) |
+| Half Sheet | Modal vá»«a (Card detail) |
 
 ### Header Actions
 
-- **Left**: X (đóng) — circle button 36pt
-- **Right**: + (thêm) hoặc ··· (menu) hoặc Lưu/text action
-- **Center**: Tiêu đề màn hình — Title 2 Semibold
+- **Left**: X (Ä‘Ã³ng) â€” circle button 36pt
+- **Right**: + (thÃªm) hoáº·c Â·Â·Â· (menu) hoáº·c LÆ°u/text action
+- **Center**: TiÃªu Ä‘á» mÃ n hÃ¬nh â€” Title 2 Semibold
 
 ---
 
 ## 9. Card Detail Screen
 
-Cấu trúc màn hình chi tiết thẻ (scroll view):
+Cáº¥u trÃºc mÃ n hÃ¬nh chi tiáº¿t tháº» (scroll view):
 
 ```
-[Cover Image — Full width, ~200pt height]
-[Photo icon] Ảnh bìa
+[Cover Image â€” Full width, ~200pt height]
+[Photo icon] áº¢nh bÃ¬a
 
-○  Tên thẻ (Title 2 Bold)
+â—‹  TÃªn tháº» (Title 2 Bold)
 
-[Color chip]  Tên list          Di chuyển (link)
+[Color chip]  TÃªn list          Di chuyá»ƒn (link)
 
-─────────────────────────────────────
-≡  Thêm mô tả
+â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+â‰¡  ThÃªm mÃ´ táº£
 
-⏱  Ngày bắt đầu
-   Ngày hết hạn
+â±  NgÃ y báº¯t Ä‘áº§u
+   NgÃ y háº¿t háº¡n
 
-🏷  Nhãn
+ðŸ·  NhÃ£n
 
-☑  Danh sách công việc              +
+â˜‘  Danh sÃ¡ch cÃ´ng viá»‡c              +
 
-📎  Các tập tin đính kèm            +
+ðŸ“Ž  CÃ¡c táº­p tin Ä‘Ã­nh kÃ¨m            +
 
-:≡  Bình luận
-    Không có nhận xét nào về thẻ này
+:â‰¡  BÃ¬nh luáº­n
+    KhÃ´ng cÃ³ nháº­n xÃ©t nÃ o vá» tháº» nÃ y
 
-─────────────────────────────────────
-[KP Avatar]  Bình luận...          📎
+â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+[KP Avatar]  BÃ¬nh luáº­n...          ðŸ“Ž
 ```
 
 ---
@@ -524,66 +524,66 @@ Cấu trúc màn hình chi tiết thẻ (scroll view):
 ## 10. Account Screen
 
 ```
-[Tài khoản — Large Title]
+[TÃ i khoáº£n â€” Large Title]
 
-┌────────────────────────────────┐
-│  [KP]  Kha Pham                │
-│        kha999...@gmail.com  [+]│
-└────────────────────────────────┘
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚  [KP]  Kha Pham                â”‚
+â”‚        kha999...@gmail.com  [+]â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 
-Không gian làm việc
-┌────────────────────────────────┐
-│  Không gian làm việc của bạn  >│
-│  Không gian làm việc của khách>│
-└────────────────────────────────┘
+KhÃ´ng gian lÃ m viá»‡c
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚  KhÃ´ng gian lÃ m viá»‡c cá»§a báº¡n  >â”‚
+â”‚  KhÃ´ng gian lÃ m viá»‡c cá»§a khÃ¡ch>â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 
-Cài đặt và công cụ
-┌────────────────────────────────┐
-│ ⚙  Cài đặt ứng dụng           │
-│ ↺  Hàng đợi đồng bộ           │
-│ 🔧 Công cụ cho Nhà phát triển >│
-│ ?  Giới thiệu và trợ giúp     >│
-│ 👤 Quản lý tài khoản         ↗ │
-│ 🗑 Xóa tài khoản             ↗ │
-│ ⚡ Tham gia thử nghiệm bản beta↗│
-│ → Đăng xuất                   │
-└────────────────────────────────┘
+CÃ i Ä‘áº·t vÃ  cÃ´ng cá»¥
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚ âš™  CÃ i Ä‘áº·t á»©ng dá»¥ng           â”‚
+â”‚ â†º  HÃ ng Ä‘á»£i Ä‘á»“ng bá»™           â”‚
+â”‚ ðŸ”§ CÃ´ng cá»¥ cho NhÃ  phÃ¡t triá»ƒn >â”‚
+â”‚ ?  Giá»›i thiá»‡u vÃ  trá»£ giÃºp     >â”‚
+â”‚ ðŸ‘¤ Quáº£n lÃ½ tÃ i khoáº£n         â†— â”‚
+â”‚ ðŸ—‘ XÃ³a tÃ i khoáº£n             â†— â”‚
+â”‚ âš¡ Tham gia thá»­ nghiá»‡m báº£n betaâ†—â”‚
+â”‚ â†’ ÄÄƒng xuáº¥t                   â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 
-Thông tin ứng dụng
-┌────────────────────────────────┐
-│ Phiên bản ứng dụng:  2026.10.1 │
-│ Bản dựng:    20260513.155745   │
-└────────────────────────────────┘
+ThÃ´ng tin á»©ng dá»¥ng
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚ PhiÃªn báº£n á»©ng dá»¥ng:  2026.10.1 â”‚
+â”‚ Báº£n dá»±ng:    20260513.155745   â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 
-[Đánh giá chúng tôi trên App Store]
+[ÄÃ¡nh giÃ¡ chÃºng tÃ´i trÃªn App Store]
 ```
 
 ---
 
-## 11. Board List Screen (Màn hình Bảng)
+## 11. Board List Screen (MÃ n hÃ¬nh Báº£ng)
 
 ```
-Bảng                        🔍  +
+Báº£ng                        ðŸ”  +
 
-[🔍 Bảng — Search bar]
+[ðŸ” Báº£ng â€” Search bar]
 
-┌─────────────────────────────┐
-│ 📥 Hộp thư đến  1       ✏  │
-│ [Thêm thẻ...]          📎  │
-└─────────────────────────────┘
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚ ðŸ“¥ Há»™p thÆ° Ä‘áº¿n  1       âœ  â”‚
+â”‚ [ThÃªm tháº»...]          ðŸ“Ž  â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 
-⏱ Bảng Gần Đây
+â± Báº£ng Gáº§n ÄÃ¢y
 
-[img] Ăn
-[img] My Trellon                 🔵
-[   ] Bảng Trello của tôi
-[img] Học
+[img] Ä‚n
+[img] My Kabo                 ðŸ”µ
+[   ] Báº£ng Trello cá»§a tÃ´i
+[img] Há»c
 
-KHÔNG GIAN LÀM VIỆC CỦA BẠN
-👥 Trello Không gian làm việc    Bảng >
+KHÃ”NG GIAN LÃ€M VIá»†C Cá»¦A Báº N
+ðŸ‘¥ Trello KhÃ´ng gian lÃ m viá»‡c    Báº£ng >
 
-[img] Ăn
-[   ] Bảng Trello của tôi
+[img] Ä‚n
+[   ] Báº£ng Trello cá»§a tÃ´i
 ...
 ```
 
@@ -591,20 +591,20 @@ KHÔNG GIAN LÀM VIỆC CỦA BẠN
 
 ## 12. Responsive & Safe Areas
 
-- **Status bar**: 44–54pt (dynamic island / notch)
+- **Status bar**: 44â€“54pt (dynamic island / notch)
 - **Home indicator safe area**: 34pt bottom
 - **Tab bar height**: 49pt + safe area
-- **Min touch target**: 44×44pt (Apple HIG)
+- **Min touch target**: 44Ã—44pt (Apple HIG)
 - **Viewport**: 390pt wide (iPhone 15 base)
 
 ---
 
 ## 13. Accessibility
 
-- Contrast ratio tối thiểu: **4.5:1** (WCAG AA)
-- Chế độ mù màu: Có toggle trong Label Manager
-- Dynamic Type: Support scale font theo cài đặt hệ thống
-- VoiceOver labels: Tất cả icon cần accessibility label
+- Contrast ratio tá»‘i thiá»ƒu: **4.5:1** (WCAG AA)
+- Cháº¿ Ä‘á»™ mÃ¹ mÃ u: CÃ³ toggle trong Label Manager
+- Dynamic Type: Support scale font theo cÃ i Ä‘áº·t há»‡ thá»‘ng
+- VoiceOver labels: Táº¥t cáº£ icon cáº§n accessibility label
 - Minimum tap target: 44pt
 
 ---
@@ -637,112 +637,112 @@ space-xs / space-sm / space-md / space-lg / space-xl / space-2xl / space-3xl
 
 ---
 
-## 15. Board Menu Screen (Menu bảng)
+## 15. Board Menu Screen (Menu báº£ng)
 
-Màn hình menu nhanh của board, dạng **full-screen sheet** (push từ phải hoặc bottom sheet lớn).
+MÃ n hÃ¬nh menu nhanh cá»§a board, dáº¡ng **full-screen sheet** (push tá»« pháº£i hoáº·c bottom sheet lá»›n).
 
 ```
-X    Menu bảng
+X    Menu báº£ng
 
-[☆ Star] [👥 Members] [⬆ Share] [···More]
+[â˜† Star] [ðŸ‘¥ Members] [â¬† Share] [Â·Â·Â·More]
 
-👤  Thành viên
-    [Avatar1] [Avatar2] [Avatar3] ... (hàng ngang, 40pt circles)
+ðŸ‘¤  ThÃ nh viÃªn
+    [Avatar1] [Avatar2] [Avatar3] ... (hÃ ng ngang, 40pt circles)
 
-ⓘ  Về bảng này                        >
+â“˜  Vá» báº£ng nÃ y                        >
 
-📣  Gửi phản hồi...
+ðŸ“£  Gá»­i pháº£n há»“i...
 
-🗄  Lưu trữ các thẻ được đánh dấu hoàn tất
+ðŸ—„  LÆ°u trá»¯ cÃ¡c tháº» Ä‘Æ°á»£c Ä‘Ã¡nh dáº¥u hoÃ n táº¥t
 
-⚡  Power-Ups
-    Bình chọn, Thẻ bị "bỏ quên"...
-    [🗓 Power-Up Lịch]                 >
-    [Quản lý Power-Ups]                >
+âš¡  Power-Ups
+    BÃ¬nh chá»n, Tháº» bá»‹ "bá» quÃªn"...
+    [ðŸ—“ Power-Up Lá»‹ch]                 >
+    [Quáº£n lÃ½ Power-Ups]                >
 
-:≡  Hoạt động
-→   [actor] đã di chuyển thẻ [tên thẻ]
-    từ [list] tới [list]  •  1 giờ trước
+:â‰¡  Hoáº¡t Ä‘á»™ng
+â†’   [actor] Ä‘Ã£ di chuyá»ƒn tháº» [tÃªn tháº»]
+    tá»« [list] tá»›i [list]  â€¢  1 giá» trÆ°á»›c
 
-↺   Đã đồng bộ
+â†º   ÄÃ£ Ä‘á»“ng bá»™
 ```
 
-### Cấu trúc layout
+### Cáº¥u trÃºc layout
 
-| Khu vực | Mô tả |
+| Khu vá»±c | MÃ´ táº£ |
 |---------|-------|
-| **Header** | X (đóng) trái + "Menu bảng" Headline center |
-| **Quick actions row** | 4 nút icon ngang, border bottom 0.5pt `#E3E6EA` |
-| **Member section** | Icon người + label "Thành viên" + hàng avatar |
-| **Menu rows** | List row chuẩn, icon trái + label + chevron phải |
-| **Power-Ups block** | Tiêu đề + subtitle nhỏ + sub-rows thụt vào |
-| **Activity inline** | Tiêu đề section + 1 activity row preview |
-| **Sync status** | Row cuối, icon sync + "Đã đồng bộ" |
+| **Header** | X (Ä‘Ã³ng) trÃ¡i + "Menu báº£ng" Headline center |
+| **Quick actions row** | 4 nÃºt icon ngang, border bottom 0.5pt `#E3E6EA` |
+| **Member section** | Icon ngÆ°á»i + label "ThÃ nh viÃªn" + hÃ ng avatar |
+| **Menu rows** | List row chuáº©n, icon trÃ¡i + label + chevron pháº£i |
+| **Power-Ups block** | TiÃªu Ä‘á» + subtitle nhá» + sub-rows thá»¥t vÃ o |
+| **Activity inline** | TiÃªu Ä‘á» section + 1 activity row preview |
+| **Sync status** | Row cuá»‘i, icon sync + "ÄÃ£ Ä‘á»“ng bá»™" |
 
 ### Quick Actions Row
 
 ```
-[  ☆  ]  [  👥  ]  [  ⬆  ]  [  ···  ]
+[  â˜†  ]  [  ðŸ‘¥  ]  [  â¬†  ]  [  Â·Â·Â·  ]
  Star    Members   Share    More
 ```
 
-| Thuộc tính | Giá trị |
+| Thuá»™c tÃ­nh | GiÃ¡ trá»‹ |
 |-----------|---------|
 | Button width | 25% each (equal split) |
 | Height | 52pt |
 | Icon size | 22pt |
-| Border | 0.5pt `#E3E6EA` ngăn cách + bottom |
+| Border | 0.5pt `#E3E6EA` ngÄƒn cÃ¡ch + bottom |
 | Icon color | `#172B4D` |
 | Background | `#FFFFFF` |
 
 ### Member Avatars Strip
 
-- Hiển thị tối đa **6–7 avatar** hàng ngang, gap 4pt
+- Hiá»ƒn thá»‹ tá»‘i Ä‘a **6â€“7 avatar** hÃ ng ngang, gap 4pt
 - Avatar 40pt circle
-- Màu nền avatar ngẫu nhiên (xem Section 5.9)
-- Có thể dùng ảnh profile thật
+- MÃ u ná»n avatar ngáº«u nhiÃªn (xem Section 5.9)
+- CÃ³ thá»ƒ dÃ¹ng áº£nh profile tháº­t
 
 ### Power-Ups Section
 
 ```
-⚡  Power-Ups
-    Bình chọn, Thẻ bị "bỏ quên"...      ← subtitle 13pt #6B778C
+âš¡  Power-Ups
+    BÃ¬nh chá»n, Tháº» bá»‹ "bá» quÃªn"...      â† subtitle 13pt #6B778C
 
-    [🗓]  Power-Up Lịch               >
-          Quản lý Power-Ups            >
+    [ðŸ—“]  Power-Up Lá»‹ch               >
+          Quáº£n lÃ½ Power-Ups            >
 ```
 
-| Thuộc tính | Giá trị |
+| Thuá»™c tÃ­nh | GiÃ¡ trá»‹ |
 |-----------|---------|
-| Power-Up icon | 32pt rounded square, màu riêng (lịch = xanh dương) |
-| Sub-row indent | 16pt so với icon chính |
+| Power-Up icon | 32pt rounded square, mÃ u riÃªng (lá»‹ch = xanh dÆ°Æ¡ng) |
+| Sub-row indent | 16pt so vá»›i icon chÃ­nh |
 | Subtitle | Footnote `#6B778C` |
 
 ### Activity Inline Preview
 
 ```
-:≡  Hoạt động
+:â‰¡  Hoáº¡t Ä‘á»™ng
 
-→   phamtan606 đã di chuyển thẻ Mark as read + Delete notification
-    từ danh sách In Progress tới danh sách Review
-    1 giờ trước
+â†’   phamtan606 Ä‘Ã£ di chuyá»ƒn tháº» Mark as read + Delete notification
+    tá»« danh sÃ¡ch In Progress tá»›i danh sÃ¡ch Review
+    1 giá» trÆ°á»›c
 ```
 
-| Thuộc tính | Giá trị |
+| Thuá»™c tÃ­nh | GiÃ¡ trá»‹ |
 |-----------|---------|
-| Action icon | Arrow right `→`, 20pt, `#6B778C` |
+| Action icon | Arrow right `â†’`, 20pt, `#6B778C` |
 | Actor name | Bold `#172B4D` |
 | Card name | Underline + Bold `#172B4D` |
 | List names | Bold `#172B4D` |
-| Timestamp relative | Footnote `#6B778C` ("1 giờ trước") |
+| Timestamp relative | Footnote `#6B778C` ("1 giá» trÆ°á»›c") |
 
 ### Sync Status Row
 
 ```
-↺   Đã đồng bộ
+â†º   ÄÃ£ Ä‘á»“ng bá»™
 ```
 
-| Thuộc tính | Giá trị |
+| Thuá»™c tÃ­nh | GiÃ¡ trá»‹ |
 |-----------|---------|
 | Icon | `arrow.clockwise`, 20pt, `#6B778C` |
 | Text | Body Regular `#6B778C` |
@@ -750,51 +750,51 @@ X    Menu bảng
 
 ---
 
-## 16. Board Settings Screen (Thiết lập bảng)
+## 16. Board Settings Screen (Thiáº¿t láº­p báº£ng)
 
-Màn hình cài đặt board, dạng **push navigation** từ Menu bảng.
+MÃ n hÃ¬nh cÃ i Ä‘áº·t board, dáº¡ng **push navigation** tá»« Menu báº£ng.
 
 ```
-<   Thiết lập bảng
+<   Thiáº¿t láº­p báº£ng
 
 [Group 1]
-Không gian làm việc    Báo cáo 💯
-Phông nền              [img thumbnail] >
-Hiển thị ảnh bìa thẻ              [Toggle ON]
-Chỉnh sửa nhãn                    >
-Đang theo dõi                     [Toggle OFF]
-Cài đặt thêm thẻ qua email
+KhÃ´ng gian lÃ m viá»‡c    BÃ¡o cÃ¡o ðŸ’¯
+PhÃ´ng ná»n              [img thumbnail] >
+Hiá»ƒn thá»‹ áº£nh bÃ¬a tháº»              [Toggle ON]
+Chá»‰nh sá»­a nhÃ£n                    >
+Äang theo dÃµi                     [Toggle OFF]
+CÃ i Ä‘áº·t thÃªm tháº» qua email
 
 [Group 2]
-Lưu trữ                            >
+LÆ°u trá»¯                            >
 
 [Group 3]
-Hiển thị                Không gian làm việc
-Quyền bình luận         Thành viên
-Bình chọn               Đã tắt
-Thêm thành viên         Quản trị viên
+Hiá»ƒn thá»‹                KhÃ´ng gian lÃ m viá»‡c
+Quyá»n bÃ¬nh luáº­n         ThÃ nh viÃªn
+BÃ¬nh chá»n               ÄÃ£ táº¯t
+ThÃªm thÃ nh viÃªn         Quáº£n trá»‹ viÃªn
 
 [Group 4]
-Tự tham gia                        [Toggle ON]
-Bạn phải là quản trị viên của bảng để thay đổi cài đặt này.
+Tá»± tham gia                        [Toggle ON]
+Báº¡n pháº£i lÃ  quáº£n trá»‹ viÃªn cá»§a báº£ng Ä‘á»ƒ thay Ä‘á»•i cÃ i Ä‘áº·t nÃ y.
 ```
 
-### Các setting rows
+### CÃ¡c setting rows
 
-| Row | Loại | Giá trị mẫu |
+| Row | Loáº¡i | GiÃ¡ trá»‹ máº«u |
 |-----|------|------------|
-| Không gian làm việc | Label + value text | "Báo cáo 💯" |
-| Phông nền | Label + thumbnail 32pt + chevron | Ảnh núi |
-| Hiển thị ảnh bìa thẻ | Label + Toggle | ON (blue) |
-| Chỉnh sửa nhãn | Label + chevron | — |
-| Đang theo dõi | Label + Toggle | OFF (gray) |
-| Cài đặt thêm thẻ qua email | Label only | — |
-| Lưu trữ | Label + chevron | — (group riêng) |
-| Hiển thị | Label + value text | "Không gian làm việc" |
-| Quyền bình luận | Label + value text | "Thành viên" |
-| Bình chọn | Label + value text | "Đã tắt" |
-| Thêm thành viên | Label + value text | "Quản trị viên" |
-| Tự tham gia | Label + Toggle | ON (blue) |
+| KhÃ´ng gian lÃ m viá»‡c | Label + value text | "BÃ¡o cÃ¡o ðŸ’¯" |
+| PhÃ´ng ná»n | Label + thumbnail 32pt + chevron | áº¢nh nÃºi |
+| Hiá»ƒn thá»‹ áº£nh bÃ¬a tháº» | Label + Toggle | ON (blue) |
+| Chá»‰nh sá»­a nhÃ£n | Label + chevron | â€” |
+| Äang theo dÃµi | Label + Toggle | OFF (gray) |
+| CÃ i Ä‘áº·t thÃªm tháº» qua email | Label only | â€” |
+| LÆ°u trá»¯ | Label + chevron | â€” (group riÃªng) |
+| Hiá»ƒn thá»‹ | Label + value text | "KhÃ´ng gian lÃ m viá»‡c" |
+| Quyá»n bÃ¬nh luáº­n | Label + value text | "ThÃ nh viÃªn" |
+| BÃ¬nh chá»n | Label + value text | "ÄÃ£ táº¯t" |
+| ThÃªm thÃ nh viÃªn | Label + value text | "Quáº£n trá»‹ viÃªn" |
+| Tá»± tham gia | Label + Toggle | ON (blue) |
 
 ### Value text style
 
@@ -805,10 +805,10 @@ Bạn phải là quản trị viên của bảng để thay đổi cài đặt n
 ### Footnote / Helper text
 
 ```
-Bạn phải là quản trị viên của bảng để thay đổi cài đặt này.
+Báº¡n pháº£i lÃ  quáº£n trá»‹ viÃªn cá»§a báº£ng Ä‘á»ƒ thay Ä‘á»•i cÃ i Ä‘áº·t nÃ y.
 ```
 
-| Thuộc tính | Giá trị |
+| Thuá»™c tÃ­nh | GiÃ¡ trá»‹ |
 |-----------|---------|
 | Font | Footnote 13pt Regular |
 | Color | `#6B778C` |
@@ -816,71 +816,71 @@ Bạn phải là quản trị viên của bảng để thay đổi cài đặt n
 
 ### Background Thumbnail
 
-- Size: 32×32pt
+- Size: 32Ã—32pt
 - Border radius: 6pt
-- Hiển thị preview ảnh phông nền hiện tại
+- Hiá»ƒn thá»‹ preview áº£nh phÃ´ng ná»n hiá»‡n táº¡i
 
 ---
 
-## 17. Activity Screen — Filter & Variants
+## 17. Activity Screen â€” Filter & Variants
 
-Màn hình Hoạt động có 2 biến thể header:
+MÃ n hÃ¬nh Hoáº¡t Ä‘á»™ng cÃ³ 2 biáº¿n thá»ƒ header:
 
-### Variant A — Tab chính (Bottom tab "Hoạt động")
-
-```
-Hoạt động              [📋✓]  [···]
-
-[Tất cả các loại ▾]  [✓ Chưa đọc]
-```
-
-- Header: **Large Title** "Hoạt động"
-- Filter chips: dạng pill, 2 chips song song
-
-### Variant B — Sheet từ Board/Card
+### Variant A â€” Tab chÃ­nh (Bottom tab "Hoáº¡t Ä‘á»™ng")
 
 ```
-X    Hoạt động         [📋✓]  [···]
+Hoáº¡t Ä‘á»™ng              [ðŸ“‹âœ“]  [Â·Â·Â·]
 
-[✓ Tôi ▾]  [✓ Chưa đọc]
+[Táº¥t cáº£ cÃ¡c loáº¡i â–¾]  [âœ“ ChÆ°a Ä‘á»c]
 ```
 
-- Header: dạng **sheet** với X đóng bên trái, Headline center
-- Filter mặc định: "Tôi" (lọc theo người dùng hiện tại) + "Chưa đọc"
+- Header: **Large Title** "Hoáº¡t Ä‘á»™ng"
+- Filter chips: dáº¡ng pill, 2 chips song song
+
+### Variant B â€” Sheet tá»« Board/Card
+
+```
+X    Hoáº¡t Ä‘á»™ng         [ðŸ“‹âœ“]  [Â·Â·Â·]
+
+[âœ“ TÃ´i â–¾]  [âœ“ ChÆ°a Ä‘á»c]
+```
+
+- Header: dáº¡ng **sheet** vá»›i X Ä‘Ã³ng bÃªn trÃ¡i, Headline center
+- Filter máº·c Ä‘á»‹nh: "TÃ´i" (lá»c theo ngÆ°á»i dÃ¹ng hiá»‡n táº¡i) + "ChÆ°a Ä‘á»c"
 
 ### Filter Chips
 
 ```
-[✓ Tôi ▾]        [✓ Chưa đọc]
+[âœ“ TÃ´i â–¾]        [âœ“ ChÆ°a Ä‘á»c]
 ```
 
-| Thuộc tính | Giá trị |
+| Thuá»™c tÃ­nh | GiÃ¡ trá»‹ |
 |-----------|---------|
 | Background | `#FFFFFF` (border `#0052CC`) |
 | Text color | `#0052CC` |
-| Checkmark | `✓` blue, 14pt |
-| Dropdown arrow | `▾` — có dropdown chọn filter |
+| Checkmark | `âœ“` blue, 14pt |
+| Dropdown arrow | `â–¾` â€” cÃ³ dropdown chá»n filter |
 | Border radius | 20pt (pill) |
 | Height | 32pt |
 | Padding | 8pt 12pt |
 
-**Các loại filter:**
-- **Loại**: Tất cả các loại / Tôi (theo người dùng)
-- **Trạng thái đọc**: Chưa đọc / Tất cả
+**CÃ¡c loáº¡i filter:**
+- **Loáº¡i**: Táº¥t cáº£ cÃ¡c loáº¡i / TÃ´i (theo ngÆ°á»i dÃ¹ng)
+- **Tráº¡ng thÃ¡i Ä‘á»c**: ChÆ°a Ä‘á»c / Táº¥t cáº£
 
 ### Unread Indicator
 
-- Thanh dọc **3pt màu `#0052CC`** sát cạnh trái màn hình
-- Kéo dài toàn chiều cao của activity row chưa đọc
+- Thanh dá»c **3pt mÃ u `#0052CC`** sÃ¡t cáº¡nh trÃ¡i mÃ n hÃ¬nh
+- KÃ©o dÃ i toÃ n chiá»u cao cá»§a activity row chÆ°a Ä‘á»c
 
-### Activity Row — Anatomy
+### Activity Row â€” Anatomy
 
 ```
 [3pt blue bar] [icon 24pt]  [actor bold] [verb] [card underline+bold] [board bold]
                             [timestamp footnote]
 ```
 
-| Phần | Style |
+| Pháº§n | Style |
 |------|-------|
 | Icon | SF Symbol 24pt, `#8993A4` |
 | Actor | Bold 17pt `#172B4D` |
@@ -892,19 +892,19 @@ X    Hoạt động         [📋✓]  [···]
 
 ---
 
-## 18. Kanban Column — Confirmed States
+## 18. Kanban Column â€” Confirmed States
 
-Từ ảnh Board chi tiết, xác nhận các trạng thái cột thực tế:
+Tá»« áº£nh Board chi tiáº¿t, xÃ¡c nháº­n cÃ¡c tráº¡ng thÃ¡i cá»™t thá»±c táº¿:
 
-| Tên cột | Mô tả |
+| TÃªn cá»™t | MÃ´ táº£ |
 |---------|-------|
-| `Backlog` | Tồn đọng — chưa bắt đầu |
-| `In Progress` | Đang thực hiện |
-| `Review` | Đang review / kiểm tra |
-| `Done` | Hoàn thành (suy đoán) |
+| `Backlog` | Tá»“n Ä‘á»ng â€” chÆ°a báº¯t Ä‘áº§u |
+| `In Progress` | Äang thá»±c hiá»‡n |
+| `Review` | Äang review / kiá»ƒm tra |
+| `Done` | HoÃ n thÃ nh (suy Ä‘oÃ¡n) |
 
-**Lưu ý**: Người dùng di chuyển thẻ giữa các cột theo thứ tự Backlog → In Progress → Review → Done.
+**LÆ°u Ã½**: NgÆ°á»i dÃ¹ng di chuyá»ƒn tháº» giá»¯a cÃ¡c cá»™t theo thá»© tá»± Backlog â†’ In Progress â†’ Review â†’ Done.
 
 ---
 
-*Design System được trích xuất từ ảnh chụp màn hình ứng dụng Trellon — Phiên bản 2026.10.1*
+*Design System Ä‘Æ°á»£c trÃ­ch xuáº¥t tá»« áº£nh chá»¥p mÃ n hÃ¬nh á»©ng dá»¥ng Kabo â€” PhiÃªn báº£n 2026.10.1*

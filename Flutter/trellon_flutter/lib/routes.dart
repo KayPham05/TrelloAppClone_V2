@@ -15,6 +15,7 @@ import 'features/auth/presentation/pages/forgot_password_page.dart';
 import 'features/auth/presentation/pages/reset_password_page.dart';
 import 'features/auth/presentation/pages/success_page.dart';
 import 'features/introduction/presentation/pages/introduction_page.dart';
+import 'features/introduction/presentation/pages/landing_page.dart';
 import 'features/profile/presentation/pages/information_page.dart';
 import 'features/profile/presentation/pages/change_email_page.dart';
 import 'features/workspace/presentation/pages/workspace_menu_page.dart';
@@ -41,6 +42,7 @@ class AppRoutes {
 
   static const String workspaceDetail = '/workspace-detail';
   static const String introduction = '/introduction';
+  static const String landing = '/landing';
   static const String cardDetail = '/card-detail';
   static const String information = '/information';
   static const String changeEmail = '/change-email';
@@ -65,13 +67,11 @@ class AppRoutes {
     information: (context) => const InformationPage(),
     changeEmail: (context) => const ChangeEmailPage(),
     lockedAccount: (context) => const LockedAccountPage(),
-    introduction: (context) => MultiBlocProvider(
-      providers: [
-        BlocProvider(create: (_) => serviceLocator<WorkspaceCubit>()),
-        BlocProvider(create: (_) => serviceLocator<BoardCubit>()),
-      ],
+    introduction: (context) => BlocProvider(
+      create: (_) => serviceLocator<BoardCubit>(),
       child: const IntroductionPage(),
     ),
+    landing: (context) => const LandingPage(),
     boardDetail: (context) => BlocProvider(
       create: (_) => serviceLocator<BoardDetailCubit>(),
       child: const BoardDetailPage(),
@@ -89,8 +89,8 @@ class AppRoutes {
         body: Center(child: Text('Workspace not provided')),
       );
     }
-    return BlocProvider(
-      create: (_) => serviceLocator<WorkspaceCubit>(),
+    return BlocProvider.value(
+      value: serviceLocator<WorkspaceCubit>(),
       child: WorkspaceMenuPage(workspace: workspace),
     );
   }
@@ -102,7 +102,7 @@ class AppRoutes {
 
     if (args is CardEntity) {
       card = args;
-    } else if (args is Map<String, dynamic>) {
+    } else if (args is Map) {
       card = args['card'] as CardEntity?;
       boardId = args['boardId'] as String?;
       final boardName = args['boardName'] as String?;
@@ -114,6 +114,7 @@ class AppRoutes {
         boardName: boardName,
         listName: listName,
         boardBackgroundUrl: boardBackgroundUrl,
+        isArchived: args['isArchived'] ?? false,
       );
     }
 
@@ -121,6 +122,10 @@ class AppRoutes {
       return const Scaffold(body: Center(child: Text('Card not provided')));
     }
 
-    return CardDetailPage(card: card, boardId: boardId);
+    bool isArchived = false;
+    if (args is Map) {
+      isArchived = args['isArchived'] ?? false;
+    }
+    return CardDetailPage(card: card, boardId: boardId, isArchived: isArchived);
   }
 }

@@ -78,14 +78,26 @@ namespace TodoAppAPI.Service
 
         public Card? GetById(string cardUId)
         {
-            return _dbContext.Todos
-                .Include(c => c.List)
+            var card = _dbContext.Todos
+                .Include(c => c.List).ThenInclude(l => l.Board)
                 .Include(c => c.TodoItems)
                 .Include(c => c.Comments)
                 .Include(c => c.FileUrls)
-                .Include(c => c.CardMembers)
+                .Include(c => c.CardMembers).ThenInclude(m => m.User)
                 .Include(c => c.CardLabels)
                 .FirstOrDefault(c => c.CardUId == cardUId);
+
+            if (card != null && card.List != null)
+            {
+                card.ListName = card.List.ListName;
+                if (card.List.Board != null)
+                {
+                    card.BoardName = card.List.Board.BoardName;
+                    card.BoardBackgroundUrl = card.List.Board.BackgroundUrl;
+                }
+            }
+
+            return card;
         }
 
         public List<Card> GetCardsByBoardId(string boardUId)
@@ -95,7 +107,7 @@ namespace TodoAppAPI.Service
                 .Include(c => c.TodoItems)
                 .Include(c => c.Comments)
                 .Include(c => c.FileUrls)
-                .Include(c => c.CardMembers)
+                .Include(c => c.CardMembers).ThenInclude(m => m.User)
                 .Include(c => c.CardLabels)
                 .Where(c => c.Status != "Deleted" && c.List.BoardUId == boardUId && !c.IsArchived)
                 .ToList();
@@ -407,7 +419,7 @@ namespace TodoAppAPI.Service
                 .Where(c => c.IsArchived && c.List != null && c.List.BoardUId == boardUId)
                 .Include(c => c.List)
                 .Include(c => c.CardLabels)
-                .Include(c => c.CardMembers)
+                .Include(c => c.CardMembers).ThenInclude(m => m.User)
                 .OrderByDescending(c => c.CreatedAt)
                 .ToListAsync();
         }

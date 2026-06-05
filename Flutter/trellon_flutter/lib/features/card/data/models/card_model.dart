@@ -201,7 +201,7 @@ class CardModel {
             userUId: json['userUId'] ?? '',
             userName: json['userName'] ?? json['fullName'] ?? (json['user'] != null ? json['user']['userName'] : 'Unknown'),
             email: json['email'] ?? (json['user'] != null ? json['user']['email'] : ''),
-            avatarUrl: json['avatarUrl'] ?? (json['user'] != null ? json['user']['avatarUrl'] : null),
+            avatarUrl: json['avatarUrl'] ?? json['avatar'] ?? (json['user'] != null ? (json['user']['avatarUrl'] ?? json['user']['avatar']) : null),
             role: json['role'] ?? 'Observer',
           )).toList()
         : [];

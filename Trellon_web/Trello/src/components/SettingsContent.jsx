@@ -1,4 +1,4 @@
-// SettingsContent.jsx
+﻿// SettingsContent.jsx
 import React, { useMemo, useState, useEffect } from "react";
 import ActivityContent from "./ActivityContent.jsx";
 import TwoFactorSection from "./TwoFactorSection.jsx";
@@ -74,7 +74,7 @@ function ProfileVisibility({ currentUser, onSave, loading }) {
               Manage your personal information
             </h3>
             <p className="text-sm text-gray-600 dark:text-[#9AA0A6]">
-              Trellone Account Management. You may modify your information below.
+              Kaboe Account Management. You may modify your information below.
             </p>
           </div>
 
@@ -120,7 +120,7 @@ function ProfileVisibility({ currentUser, onSave, loading }) {
                   focus:outline-none focus:ring-2 focus:ring-blue-500/40"
                 value={form.bio}
                 onChange={e => onField("bio", e.target.value)}
-                placeholder="Tell people a bit about you…"
+                placeholder="Tell people a bit about youâ€¦"
                 disabled={loading || saving}
               />
               <VisPicker value={form.visibility.bio} onChange={v => onVis("bio", v)} />
@@ -210,7 +210,7 @@ function SaveBar({ disabled = true, saving = false, onSave }) {
             : "bg-gray-300 cursor-not-allowed dark:text-[#555]"
         ].join(" ")}
       >
-        {saving ? "Saving…" : "Save"}
+        {saving ? "Savingâ€¦" : "Save"}
       </button>
     </div>
   );

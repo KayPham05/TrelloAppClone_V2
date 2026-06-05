@@ -23,6 +23,7 @@ class BoardDetailLoaded extends BoardDetailState {
   final String? boardVisibility;
   final String? workspaceId;
   final String? workspaceName;
+  final bool isPersonal;
 
   const BoardDetailLoaded({
     required this.boardId,
@@ -35,6 +36,7 @@ class BoardDetailLoaded extends BoardDetailState {
     this.boardVisibility,
     this.workspaceId,
     this.workspaceName,
+    this.isPersonal = false,
   });
 
   BoardDetailLoaded copyWith({
@@ -49,6 +51,7 @@ class BoardDetailLoaded extends BoardDetailState {
     String? boardVisibility,
     String? workspaceId,
     String? workspaceName,
+    bool? isPersonal,
   }) {
     return BoardDetailLoaded(
       boardId: boardId ?? this.boardId,
@@ -61,11 +64,12 @@ class BoardDetailLoaded extends BoardDetailState {
       boardVisibility: boardVisibility ?? this.boardVisibility,
       workspaceId: workspaceId ?? this.workspaceId,
       workspaceName: workspaceName ?? this.workspaceName,
+      isPersonal: isPersonal ?? this.isPersonal,
     );
   }
 
   @override
-  List<Object?> get props => [boardId, boardName, backgroundUrl, lists, transientError, boardRole, workspaceRole, boardVisibility, workspaceId, workspaceName];
+  List<Object?> get props => [boardId, boardName, backgroundUrl, lists, transientError, boardRole, workspaceRole, boardVisibility, workspaceId, workspaceName, isPersonal];
 }
 
 class BoardDetailError extends BoardDetailState {

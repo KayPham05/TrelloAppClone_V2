@@ -1,4 +1,4 @@
-using System.Security.Cryptography;
+﻿using System.Security.Cryptography;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using OtpNet;
@@ -23,29 +23,29 @@ namespace TodoAppAPI.Service
         }
 
         /// <summary>
-        /// Bước 2: Sinh SecretKey Base32, lưu vào Cache tạm (TTL 15 phút), tạo QR URI.
-        /// CHƯA lưu vào DB, CHƯA bật Is2FAEnabled.
+        /// BÆ°á»›c 2: Sinh SecretKey Base32, lÆ°u vÃ o Cache táº¡m (TTL 15 phÃºt), táº¡o QR URI.
+        /// CHÆ¯A lÆ°u vÃ o DB, CHÆ¯A báº­t Is2FAEnabled.
         /// </summary>
         public async Task<Setup2FAResponse> Setup2FAAsync(string userUId)
         {
             var user = await _context.Users.FirstOrDefaultAsync(u => u.UserUId == userUId);
             if (user == null)
-                throw new KeyNotFoundException("Không tìm thấy tài khoản.");
+                throw new KeyNotFoundException("KhÃ´ng tÃ¬m tháº¥y tÃ i khoáº£n.");
 
             if (user.IsTwoFactorEnabled)
-                throw new InvalidOperationException("Xác thực 2 yếu tố đã được bật trước đó.");
+                throw new InvalidOperationException("XÃ¡c thá»±c 2 yáº¿u tá»‘ Ä‘Ã£ Ä‘Æ°á»£c báº­t trÆ°á»›c Ä‘Ã³.");
 
-            // Sinh SecretKey ngẫu nhiên 20 bytes → Base32
+            // Sinh SecretKey ngáº«u nhiÃªn 20 bytes â†’ Base32
             var secretBytes = KeyGeneration.GenerateRandomKey(20);
             var secretBase32 = Base32Encoding.ToString(secretBytes);
 
-            // Lưu vào Cache tạm với TTL 15 phút
+            // LÆ°u vÃ o Cache táº¡m vá»›i TTL 15 phÃºt
             var cacheKey = $"Temp2FASecret_{userUId}";
             _cache.Set(cacheKey, secretBase32, TimeSpan.FromMinutes(15));
             _logger.LogInformation($"[2FA Setup] Temp secret cached for user: {userUId}");
 
-            // Tạo chuỗi URI chuẩn cho Google Authenticator
-            var qrUri = $"otpauth://totp/Trellon:{Uri.EscapeDataString(user.Email)}?secret={secretBase32}&issuer=Trellon";
+            // Táº¡o chuá»—i URI chuáº©n cho Google Authenticator
+            var qrUri = $"otpauth://totp/Kabo:{Uri.EscapeDataString(user.Email)}?secret={secretBase32}&issuer=Kabo";
 
             return new Setup2FAResponse
             {
@@ -55,25 +55,25 @@ namespace TodoAppAPI.Service
         }
 
         /// <summary>
-        /// Bước 5: Verify mã TOTP 6 số, chống Replay Attack, kích hoạt 2FA, sinh backup codes.
+        /// BÆ°á»›c 5: Verify mÃ£ TOTP 6 sá»‘, chá»‘ng Replay Attack, kÃ­ch hoáº¡t 2FA, sinh backup codes.
         /// </summary>
         public async Task<Enable2FAResponse> Enable2FAAsync(string userUId, string code)
         {
             var user = await _context.Users.FirstOrDefaultAsync(u => u.UserUId == userUId);
             if (user == null)
-                throw new KeyNotFoundException("Không tìm thấy tài khoản.");
+                throw new KeyNotFoundException("KhÃ´ng tÃ¬m tháº¥y tÃ i khoáº£n.");
 
-            // Lấy Temp2FASecret từ Cache
+            // Láº¥y Temp2FASecret tá»« Cache
             var cacheKey = $"Temp2FASecret_{userUId}";
             if (!_cache.TryGetValue(cacheKey, out string? secretBase32) || string.IsNullOrEmpty(secretBase32))
-                throw new InvalidOperationException("Phiên thiết lập 2FA đã hết hạn. Vui lòng thử lại.");
+                throw new InvalidOperationException("PhiÃªn thiáº¿t láº­p 2FA Ä‘Ã£ háº¿t háº¡n. Vui lÃ²ng thá»­ láº¡i.");
 
-            // Chống Replay Attack: kiểm tra mã đã dùng trong 30s gần đây
+            // Chá»‘ng Replay Attack: kiá»ƒm tra mÃ£ Ä‘Ã£ dÃ¹ng trong 30s gáº§n Ä‘Ã¢y
             var replayCacheKey = $"2FAUsedCode_{userUId}_{code}";
             if (_cache.TryGetValue(replayCacheKey, out _))
-                throw new InvalidOperationException("Mã xác thực đã được sử dụng. Vui lòng chờ mã mới.");
+                throw new InvalidOperationException("MÃ£ xÃ¡c thá»±c Ä‘Ã£ Ä‘Æ°á»£c sá»­ dá»¥ng. Vui lÃ²ng chá» mÃ£ má»›i.");
 
-            // Verify mã TOTP bằng Otp.NET (cho phép +-30s time drift = +-1 step)
+            // Verify mÃ£ TOTP báº±ng Otp.NET (cho phÃ©p +-30s time drift = +-1 step)
             var secretBytes = Base32Encoding.ToBytes(secretBase32);
             var totp = new Totp(secretBytes, step: 30, totpSize: 6);
             var window = new VerificationWindow(previous: 1, future: 1);
@@ -83,30 +83,30 @@ namespace TodoAppAPI.Service
             if (!isValid)
             {
                 _logger.LogWarning($"[2FA Enable] Invalid TOTP code for user: {userUId}");
-                throw new UnauthorizedAccessException("Mã xác thực không hợp lệ.");
+                throw new UnauthorizedAccessException("MÃ£ xÃ¡c thá»±c khÃ´ng há»£p lá»‡.");
             }
 
             _logger.LogInformation($"[2FA Enable] TOTP verified for user: {userUId}, timeStep: {timeStepMatched}");
 
-            // Lưu mã đã dùng vào cache để chống Replay Attack (TTL 30s)
+            // LÆ°u mÃ£ Ä‘Ã£ dÃ¹ng vÃ o cache Ä‘á»ƒ chá»‘ng Replay Attack (TTL 30s)
             _cache.Set(replayCacheKey, true, TimeSpan.FromSeconds(30));
 
-            // Cập nhật DB: lưu SecretKey và bật Is2FAEnabled
+            // Cáº­p nháº­t DB: lÆ°u SecretKey vÃ  báº­t Is2FAEnabled
             user.TwoFactorSecret = secretBase32;
             user.IsTwoFactorEnabled = true;
             _context.Users.Update(user);
 
-            // Xóa Temp2FASecret khỏi Cache
+            // XÃ³a Temp2FASecret khá»i Cache
             _cache.Remove(cacheKey);
 
-            // Xóa backup codes cũ (nếu có)
+            // XÃ³a backup codes cÅ© (náº¿u cÃ³)
             var oldCodes = await _context.User2FABackupCodes
                 .Where(c => c.UserUId == userUId)
                 .ToListAsync();
             if (oldCodes.Any())
                 _context.User2FABackupCodes.RemoveRange(oldCodes);
 
-            // Sinh 8 mã dự phòng (mỗi mã 8 ký tự, format: XXXX-XXXX)
+            // Sinh 8 mÃ£ dá»± phÃ²ng (má»—i mÃ£ 8 kÃ½ tá»±, format: XXXX-XXXX)
             var plainBackupCodes = new List<string>();
             var backupCodeEntities = new List<User2FABackupCode>();
 
@@ -130,14 +130,14 @@ namespace TodoAppAPI.Service
 
             return new Enable2FAResponse
             {
-                Message = "Xác thực 2 yếu tố đã được bật thành công!",
+                Message = "XÃ¡c thá»±c 2 yáº¿u tá»‘ Ä‘Ã£ Ä‘Æ°á»£c báº­t thÃ nh cÃ´ng!",
                 IsTwoFactorEnabled = true,
                 BackupCodes = plainBackupCodes
             };
         }
 
         /// <summary>
-        /// Sinh mã dự phòng 8 ký tự (A-Z, 0-9), format: XXXX-XXXX
+        /// Sinh mÃ£ dá»± phÃ²ng 8 kÃ½ tá»± (A-Z, 0-9), format: XXXX-XXXX
         /// </summary>
         private static string GenerateBackupCode()
         {

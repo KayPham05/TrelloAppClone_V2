@@ -1,182 +1,182 @@
-# Tài Liệu Phân Tích & Thiết Kế Hệ Thống Trello Clone
+﻿# TÃ i Liá»‡u PhÃ¢n TÃ­ch & Thiáº¿t Káº¿ Há»‡ Thá»‘ng Trello Clone
 
-> **Ứng dụng:** TrellOn – Hệ thống quản lý công việc theo mô hình Kanban  
-> **Nền tảng:** Flutter (Mobile) + ASP.NET Core 9 (Backend API) + SQL Server  
-> **Phiên bản tài liệu:** 1.0  
-
----
-
-# PHẦN 1: PHÂN TÍCH HỆ THỐNG
+> **á»¨ng dá»¥ng:** Kabo â€“ Há»‡ thá»‘ng quáº£n lÃ½ cÃ´ng viá»‡c theo mÃ´ hÃ¬nh Kanban  
+> **Ná»n táº£ng:** Flutter (Mobile) + ASP.NET Core 9 (Backend API) + SQL Server  
+> **PhiÃªn báº£n tÃ i liá»‡u:** 1.0  
 
 ---
 
-## 1.1 Sơ Đồ Phân Cấp Chức Năng (BFD)
+# PHáº¦N 1: PHÃ‚N TÃCH Há»† THá»NG
+
+---
+
+## 1.1 SÆ¡ Äá»“ PhÃ¢n Cáº¥p Chá»©c NÄƒng (BFD)
 
 ```
-TrellOn – Hệ thống quản lý công việc
-│
-├── 1. Quản lý Tài khoản & Xác thực
-│   ├── 1.1 Đăng ký tài khoản
-│   │   ├── 1.1.1 Nhập thông tin đăng ký (email, mật khẩu, tên)
-│   │   └── 1.1.2 Xác minh email (gửi OTP / token)
-│   ├── 1.2 Đăng nhập
-│   │   ├── 1.2.1 Đăng nhập bằng email + mật khẩu (JWT)
-│   │   └── 1.2.2 Đăng nhập qua OAuth (Google, v.v.)
-│   ├── 1.3 Xác thực hai yếu tố (2FA)
-│   │   ├── 1.3.1 Bật/tắt 2FA
-│   │   ├── 1.3.2 Xác thực TOTP code
-│   │   └── 1.3.3 Dùng backup code
-│   ├── 1.4 Quản lý phiên đăng nhập (session / refresh token)
-│   └── 1.5 Quên & đặt lại mật khẩu
-│
-├── 2. Quản lý Hồ sơ Người dùng
-│   ├── 2.1 Xem & chỉnh sửa thông tin cá nhân (tên, bio)
-│   ├── 2.2 Thay đổi avatar (tải lên Cloudinary)
-│   └── 2.3 Xem lịch sử hoạt động cá nhân
-│
-├── 3. Quản lý Không gian Làm việc (Workspace)
-│   ├── 3.1 Tạo workspace mới
-│   ├── 3.2 Xem danh sách workspace của tôi
-│   ├── 3.3 Chỉnh sửa thông tin workspace
-│   ├── 3.4 Xóa workspace
-│   └── 3.5 Quản lý thành viên workspace
-│       ├── 3.5.1 Mời thành viên vào workspace
-│       ├── 3.5.2 Thay đổi vai trò thành viên (Admin / Member)
-│       └── 3.5.3 Xóa thành viên khỏi workspace
-│
-├── 4. Quản lý Bảng (Board)
-│   ├── 4.1 Tạo bảng mới (cá nhân / trong workspace)
-│   ├── 4.2 Xem danh sách bảng
-│   │   ├── 4.2.1 Bảng gần đây (Recent Boards)
-│   │   ├── 4.2.2 Bảng cá nhân
-│   │   └── 4.2.3 Bảng trong workspace nhóm
-│   ├── 4.3 Chỉnh sửa bảng
-│   │   ├── 4.3.1 Đổi tên bảng
-│   │   ├── 4.3.2 Thay đổi phông nền (ảnh / màu sắc từ Cloudinary)
-│   │   └── 4.3.3 Thay đổi quyền hiển thị (Private / Public / Workspace)
-│   ├── 4.4 Chuyển bảng sang workspace khác (Transfer)
-│   ├── 4.5 Xóa / Lưu trữ bảng
-│   └── 4.6 Quản lý thành viên bảng
-│       ├── 4.6.1 Thêm thành viên vào bảng
-│       ├── 4.6.2 Cập nhật vai trò thành viên (Owner / Admin / Member / Guest)
-│       └── 4.6.3 Xóa thành viên khỏi bảng
-│
-├── 5. Quản lý Danh sách (List / Column)
-│   ├── 5.1 Tạo danh sách mới trong bảng
-│   ├── 5.2 Đổi tên danh sách
-│   ├── 5.3 Xóa danh sách
-│   └── 5.4 Sắp xếp lại thứ tự các danh sách (kéo-thả / reorder)
-│
-├── 6. Quản lý Thẻ Công việc (Card)
-│   ├── 6.1 Tạo thẻ mới trong danh sách
-│   ├── 6.2 Xem chi tiết thẻ
-│   ├── 6.3 Chỉnh sửa thẻ
-│   │   ├── 6.3.1 Đổi tiêu đề / mô tả
-│   │   ├── 6.3.2 Đặt ngày hết hạn (Due date)
-│   │   ├── 6.3.3 Thay đổi trạng thái thẻ (To Do / In Progress / Completed)
-│   │   └── 6.3.4 Đặt phông nền thẻ
-│   ├── 6.4 Di chuyển thẻ
-│   │   ├── 6.4.1 Kéo-thả giữa các danh sách trong cùng bảng
-│   │   └── 6.4.2 Sắp xếp lại vị trí trong danh sách
-│   ├── 6.5 Phân công người thực hiện (Card Member)
-│   │   ├── 6.5.1 Thêm thành viên vào thẻ
-│   │   └── 6.5.2 Xóa thành viên khỏi thẻ
-│   ├── 6.6 Gắn nhãn màu (Label)
-│   │   ├── 6.6.1 Thêm nhãn vào thẻ
-│   │   └── 6.6.2 Gỡ nhãn khỏi thẻ
-│   ├── 6.7 Danh sách việc cần làm (Todo Items / Checklist)
-│   │   ├── 6.7.1 Thêm todo item
-│   │   ├── 6.7.2 Đánh dấu hoàn thành
-│   │   └── 6.7.3 Xóa todo item
-│   ├── 6.8 Bình luận trên thẻ
-│   │   ├── 6.8.1 Viết bình luận
-│   │   ├── 6.8.2 Chỉnh sửa bình luận
-│   │   └── 6.8.3 Xóa bình luận
-│   ├── 6.9 Đính kèm tệp tin (File Attachment)
-│   │   ├── 6.9.1 Tải tệp lên (Cloudinary)
-│   │   └── 6.9.2 Xóa tệp đính kèm
-│   └── 6.10 Xóa thẻ
-│
-├── 7. Hộp thư đến (Inbox / UserInboxCard)
-│   ├── 7.1 Xem danh sách thẻ được phân công
-│   └── 7.2 Điều hướng đến thẻ từ inbox
-│
-├── 8. Thông báo (Notification)
-│   ├── 8.1 Nhận thông báo khi có thay đổi liên quan
-│   ├── 8.2 Xem danh sách thông báo chưa đọc
-│   └── 8.3 Đánh dấu thông báo đã đọc
-│
-└── 9. [Tương lai] Các tính năng mở rộng
-    ├── 9.1 Lịch (Calendar view) – xem card theo due date
-    ├── 9.2 Tích hợp chatbot / AI
-    ├── 9.3 Báo cáo & thống kê tiến độ
-    ├── 9.4 Tích hợp API bên thứ ba (Zapier, Slack…)
-    └── 9.5 Thông báo nhắc việc (Reminder / Push Notification)
+Kabo â€“ Há»‡ thá»‘ng quáº£n lÃ½ cÃ´ng viá»‡c
+â”‚
+â”œâ”€â”€ 1. Quáº£n lÃ½ TÃ i khoáº£n & XÃ¡c thá»±c
+â”‚   â”œâ”€â”€ 1.1 ÄÄƒng kÃ½ tÃ i khoáº£n
+â”‚   â”‚   â”œâ”€â”€ 1.1.1 Nháº­p thÃ´ng tin Ä‘Äƒng kÃ½ (email, máº­t kháº©u, tÃªn)
+â”‚   â”‚   â””â”€â”€ 1.1.2 XÃ¡c minh email (gá»­i OTP / token)
+â”‚   â”œâ”€â”€ 1.2 ÄÄƒng nháº­p
+â”‚   â”‚   â”œâ”€â”€ 1.2.1 ÄÄƒng nháº­p báº±ng email + máº­t kháº©u (JWT)
+â”‚   â”‚   â””â”€â”€ 1.2.2 ÄÄƒng nháº­p qua OAuth (Google, v.v.)
+â”‚   â”œâ”€â”€ 1.3 XÃ¡c thá»±c hai yáº¿u tá»‘ (2FA)
+â”‚   â”‚   â”œâ”€â”€ 1.3.1 Báº­t/táº¯t 2FA
+â”‚   â”‚   â”œâ”€â”€ 1.3.2 XÃ¡c thá»±c TOTP code
+â”‚   â”‚   â””â”€â”€ 1.3.3 DÃ¹ng backup code
+â”‚   â”œâ”€â”€ 1.4 Quáº£n lÃ½ phiÃªn Ä‘Äƒng nháº­p (session / refresh token)
+â”‚   â””â”€â”€ 1.5 QuÃªn & Ä‘áº·t láº¡i máº­t kháº©u
+â”‚
+â”œâ”€â”€ 2. Quáº£n lÃ½ Há»“ sÆ¡ NgÆ°á»i dÃ¹ng
+â”‚   â”œâ”€â”€ 2.1 Xem & chá»‰nh sá»­a thÃ´ng tin cÃ¡ nhÃ¢n (tÃªn, bio)
+â”‚   â”œâ”€â”€ 2.2 Thay Ä‘á»•i avatar (táº£i lÃªn Cloudinary)
+â”‚   â””â”€â”€ 2.3 Xem lá»‹ch sá»­ hoáº¡t Ä‘á»™ng cÃ¡ nhÃ¢n
+â”‚
+â”œâ”€â”€ 3. Quáº£n lÃ½ KhÃ´ng gian LÃ m viá»‡c (Workspace)
+â”‚   â”œâ”€â”€ 3.1 Táº¡o workspace má»›i
+â”‚   â”œâ”€â”€ 3.2 Xem danh sÃ¡ch workspace cá»§a tÃ´i
+â”‚   â”œâ”€â”€ 3.3 Chá»‰nh sá»­a thÃ´ng tin workspace
+â”‚   â”œâ”€â”€ 3.4 XÃ³a workspace
+â”‚   â””â”€â”€ 3.5 Quáº£n lÃ½ thÃ nh viÃªn workspace
+â”‚       â”œâ”€â”€ 3.5.1 Má»i thÃ nh viÃªn vÃ o workspace
+â”‚       â”œâ”€â”€ 3.5.2 Thay Ä‘á»•i vai trÃ² thÃ nh viÃªn (Admin / Member)
+â”‚       â””â”€â”€ 3.5.3 XÃ³a thÃ nh viÃªn khá»i workspace
+â”‚
+â”œâ”€â”€ 4. Quáº£n lÃ½ Báº£ng (Board)
+â”‚   â”œâ”€â”€ 4.1 Táº¡o báº£ng má»›i (cÃ¡ nhÃ¢n / trong workspace)
+â”‚   â”œâ”€â”€ 4.2 Xem danh sÃ¡ch báº£ng
+â”‚   â”‚   â”œâ”€â”€ 4.2.1 Báº£ng gáº§n Ä‘Ã¢y (Recent Boards)
+â”‚   â”‚   â”œâ”€â”€ 4.2.2 Báº£ng cÃ¡ nhÃ¢n
+â”‚   â”‚   â””â”€â”€ 4.2.3 Báº£ng trong workspace nhÃ³m
+â”‚   â”œâ”€â”€ 4.3 Chá»‰nh sá»­a báº£ng
+â”‚   â”‚   â”œâ”€â”€ 4.3.1 Äá»•i tÃªn báº£ng
+â”‚   â”‚   â”œâ”€â”€ 4.3.2 Thay Ä‘á»•i phÃ´ng ná»n (áº£nh / mÃ u sáº¯c tá»« Cloudinary)
+â”‚   â”‚   â””â”€â”€ 4.3.3 Thay Ä‘á»•i quyá»n hiá»ƒn thá»‹ (Private / Public / Workspace)
+â”‚   â”œâ”€â”€ 4.4 Chuyá»ƒn báº£ng sang workspace khÃ¡c (Transfer)
+â”‚   â”œâ”€â”€ 4.5 XÃ³a / LÆ°u trá»¯ báº£ng
+â”‚   â””â”€â”€ 4.6 Quáº£n lÃ½ thÃ nh viÃªn báº£ng
+â”‚       â”œâ”€â”€ 4.6.1 ThÃªm thÃ nh viÃªn vÃ o báº£ng
+â”‚       â”œâ”€â”€ 4.6.2 Cáº­p nháº­t vai trÃ² thÃ nh viÃªn (Owner / Admin / Member / Guest)
+â”‚       â””â”€â”€ 4.6.3 XÃ³a thÃ nh viÃªn khá»i báº£ng
+â”‚
+â”œâ”€â”€ 5. Quáº£n lÃ½ Danh sÃ¡ch (List / Column)
+â”‚   â”œâ”€â”€ 5.1 Táº¡o danh sÃ¡ch má»›i trong báº£ng
+â”‚   â”œâ”€â”€ 5.2 Äá»•i tÃªn danh sÃ¡ch
+â”‚   â”œâ”€â”€ 5.3 XÃ³a danh sÃ¡ch
+â”‚   â””â”€â”€ 5.4 Sáº¯p xáº¿p láº¡i thá»© tá»± cÃ¡c danh sÃ¡ch (kÃ©o-tháº£ / reorder)
+â”‚
+â”œâ”€â”€ 6. Quáº£n lÃ½ Tháº» CÃ´ng viá»‡c (Card)
+â”‚   â”œâ”€â”€ 6.1 Táº¡o tháº» má»›i trong danh sÃ¡ch
+â”‚   â”œâ”€â”€ 6.2 Xem chi tiáº¿t tháº»
+â”‚   â”œâ”€â”€ 6.3 Chá»‰nh sá»­a tháº»
+â”‚   â”‚   â”œâ”€â”€ 6.3.1 Äá»•i tiÃªu Ä‘á» / mÃ´ táº£
+â”‚   â”‚   â”œâ”€â”€ 6.3.2 Äáº·t ngÃ y háº¿t háº¡n (Due date)
+â”‚   â”‚   â”œâ”€â”€ 6.3.3 Thay Ä‘á»•i tráº¡ng thÃ¡i tháº» (To Do / In Progress / Completed)
+â”‚   â”‚   â””â”€â”€ 6.3.4 Äáº·t phÃ´ng ná»n tháº»
+â”‚   â”œâ”€â”€ 6.4 Di chuyá»ƒn tháº»
+â”‚   â”‚   â”œâ”€â”€ 6.4.1 KÃ©o-tháº£ giá»¯a cÃ¡c danh sÃ¡ch trong cÃ¹ng báº£ng
+â”‚   â”‚   â””â”€â”€ 6.4.2 Sáº¯p xáº¿p láº¡i vá»‹ trÃ­ trong danh sÃ¡ch
+â”‚   â”œâ”€â”€ 6.5 PhÃ¢n cÃ´ng ngÆ°á»i thá»±c hiá»‡n (Card Member)
+â”‚   â”‚   â”œâ”€â”€ 6.5.1 ThÃªm thÃ nh viÃªn vÃ o tháº»
+â”‚   â”‚   â””â”€â”€ 6.5.2 XÃ³a thÃ nh viÃªn khá»i tháº»
+â”‚   â”œâ”€â”€ 6.6 Gáº¯n nhÃ£n mÃ u (Label)
+â”‚   â”‚   â”œâ”€â”€ 6.6.1 ThÃªm nhÃ£n vÃ o tháº»
+â”‚   â”‚   â””â”€â”€ 6.6.2 Gá»¡ nhÃ£n khá»i tháº»
+â”‚   â”œâ”€â”€ 6.7 Danh sÃ¡ch viá»‡c cáº§n lÃ m (Todo Items / Checklist)
+â”‚   â”‚   â”œâ”€â”€ 6.7.1 ThÃªm todo item
+â”‚   â”‚   â”œâ”€â”€ 6.7.2 ÄÃ¡nh dáº¥u hoÃ n thÃ nh
+â”‚   â”‚   â””â”€â”€ 6.7.3 XÃ³a todo item
+â”‚   â”œâ”€â”€ 6.8 BÃ¬nh luáº­n trÃªn tháº»
+â”‚   â”‚   â”œâ”€â”€ 6.8.1 Viáº¿t bÃ¬nh luáº­n
+â”‚   â”‚   â”œâ”€â”€ 6.8.2 Chá»‰nh sá»­a bÃ¬nh luáº­n
+â”‚   â”‚   â””â”€â”€ 6.8.3 XÃ³a bÃ¬nh luáº­n
+â”‚   â”œâ”€â”€ 6.9 ÄÃ­nh kÃ¨m tá»‡p tin (File Attachment)
+â”‚   â”‚   â”œâ”€â”€ 6.9.1 Táº£i tá»‡p lÃªn (Cloudinary)
+â”‚   â”‚   â””â”€â”€ 6.9.2 XÃ³a tá»‡p Ä‘Ã­nh kÃ¨m
+â”‚   â””â”€â”€ 6.10 XÃ³a tháº»
+â”‚
+â”œâ”€â”€ 7. Há»™p thÆ° Ä‘áº¿n (Inbox / UserInboxCard)
+â”‚   â”œâ”€â”€ 7.1 Xem danh sÃ¡ch tháº» Ä‘Æ°á»£c phÃ¢n cÃ´ng
+â”‚   â””â”€â”€ 7.2 Äiá»u hÆ°á»›ng Ä‘áº¿n tháº» tá»« inbox
+â”‚
+â”œâ”€â”€ 8. ThÃ´ng bÃ¡o (Notification)
+â”‚   â”œâ”€â”€ 8.1 Nháº­n thÃ´ng bÃ¡o khi cÃ³ thay Ä‘á»•i liÃªn quan
+â”‚   â”œâ”€â”€ 8.2 Xem danh sÃ¡ch thÃ´ng bÃ¡o chÆ°a Ä‘á»c
+â”‚   â””â”€â”€ 8.3 ÄÃ¡nh dáº¥u thÃ´ng bÃ¡o Ä‘Ã£ Ä‘á»c
+â”‚
+â””â”€â”€ 9. [TÆ°Æ¡ng lai] CÃ¡c tÃ­nh nÄƒng má»Ÿ rá»™ng
+    â”œâ”€â”€ 9.1 Lá»‹ch (Calendar view) â€“ xem card theo due date
+    â”œâ”€â”€ 9.2 TÃ­ch há»£p chatbot / AI
+    â”œâ”€â”€ 9.3 BÃ¡o cÃ¡o & thá»‘ng kÃª tiáº¿n Ä‘á»™
+    â”œâ”€â”€ 9.4 TÃ­ch há»£p API bÃªn thá»© ba (Zapier, Slackâ€¦)
+    â””â”€â”€ 9.5 ThÃ´ng bÃ¡o nháº¯c viá»‡c (Reminder / Push Notification)
 ```
 
 ---
 
-## 1.2 Bảng Phân Tích: Tiến Trình, Tác Nhân và Hồ Sơ
+## 1.2 Báº£ng PhÃ¢n TÃ­ch: Tiáº¿n TrÃ¬nh, TÃ¡c NhÃ¢n vÃ  Há»“ SÆ¡
 
-| STT | Tiến trình | Tác nhân chính | Tác nhân phụ | Hồ sơ đầu vào | Hồ sơ đầu ra |
+| STT | Tiáº¿n trÃ¬nh | TÃ¡c nhÃ¢n chÃ­nh | TÃ¡c nhÃ¢n phá»¥ | Há»“ sÆ¡ Ä‘áº§u vÃ o | Há»“ sÆ¡ Ä‘áº§u ra |
 |-----|-----------|---------------|--------------|---------------|--------------|
-| 1 | Đăng ký / Xác minh email | Người dùng mới | Hệ thống email | Thông tin đăng ký | Tài khoản + email xác nhận |
-| 2 | Đăng nhập (JWT) | Người dùng | Hệ thống JWT | Email + mật khẩu | Access token + Refresh token |
-| 3 | Xác thực 2FA | Người dùng | Hệ thống TOTP | OTP code / backup code | Phiên đăng nhập hợp lệ |
-| 4 | Tạo Workspace | Chủ sở hữu | — | Tên & mô tả workspace | Workspace mới |
-| 5 | Mời thành viên Workspace | Chủ sở hữu / Admin | Người được mời | UserUId + Role | WorkspaceMember record |
-| 6 | Tạo Board | Người dùng | — | Tên, workspace, background | Board mới |
-| 7 | Chuyển Board sang Workspace | Owner của Board | — | BoardId + WorkspaceId đích | Board được cập nhật workspace |
-| 8 | Tạo List | Admin / Member Board | — | Tên danh sách | List mới trong Board |
-| 9 | Tạo Card | Thành viên Board | — | Tiêu đề + ListId | Card mới |
-| 10 | Kéo-thả Card | Thành viên Board | — | CardId + ListId đích + vị trí | Card được cập nhật vị trí |
-| 11 | Kéo-thả List | Admin Board | — | ListId + vị trí mới | Thứ tự lists được cập nhật |
-| 12 | Phân công thành viên Card | Thành viên Board | Người được phân công | CardId + UserUId | CardMember record + Notification |
-| 13 | Bình luận trên Card | Thành viên Board | — | CardId + Nội dung | Comment record |
-| 14 | Đính kèm tệp | Thành viên Board | Cloudinary | CardId + File | FileUrl record |
-| 15 | Hoàn thành Todo Item | Thành viên Board | — | TodoItemId + trạng thái | TodoItem cập nhật |
-| 16 | Xem Bảng Gần Đây | Người dùng | — | UserUId | Danh sách 4 Board gần nhất |
-| 17 | Nhận & đọc Notification | Người dùng | — | UserUId | Danh sách thông báo |
-| 18 | Tải lên / thay đổi Avatar | Người dùng | Cloudinary | File ảnh | AvatarUrl |
-| 19 | Xóa Board / List / Card | Owner / Admin | — | Entity ID | Xóa khỏi DB |
-| 20 | Ghi nhật ký hoạt động | Hệ thống | — | Hành động + Actor | Activity record |
+| 1 | ÄÄƒng kÃ½ / XÃ¡c minh email | NgÆ°á»i dÃ¹ng má»›i | Há»‡ thá»‘ng email | ThÃ´ng tin Ä‘Äƒng kÃ½ | TÃ i khoáº£n + email xÃ¡c nháº­n |
+| 2 | ÄÄƒng nháº­p (JWT) | NgÆ°á»i dÃ¹ng | Há»‡ thá»‘ng JWT | Email + máº­t kháº©u | Access token + Refresh token |
+| 3 | XÃ¡c thá»±c 2FA | NgÆ°á»i dÃ¹ng | Há»‡ thá»‘ng TOTP | OTP code / backup code | PhiÃªn Ä‘Äƒng nháº­p há»£p lá»‡ |
+| 4 | Táº¡o Workspace | Chá»§ sá»Ÿ há»¯u | â€” | TÃªn & mÃ´ táº£ workspace | Workspace má»›i |
+| 5 | Má»i thÃ nh viÃªn Workspace | Chá»§ sá»Ÿ há»¯u / Admin | NgÆ°á»i Ä‘Æ°á»£c má»i | UserUId + Role | WorkspaceMember record |
+| 6 | Táº¡o Board | NgÆ°á»i dÃ¹ng | â€” | TÃªn, workspace, background | Board má»›i |
+| 7 | Chuyá»ƒn Board sang Workspace | Owner cá»§a Board | â€” | BoardId + WorkspaceId Ä‘Ã­ch | Board Ä‘Æ°á»£c cáº­p nháº­t workspace |
+| 8 | Táº¡o List | Admin / Member Board | â€” | TÃªn danh sÃ¡ch | List má»›i trong Board |
+| 9 | Táº¡o Card | ThÃ nh viÃªn Board | â€” | TiÃªu Ä‘á» + ListId | Card má»›i |
+| 10 | KÃ©o-tháº£ Card | ThÃ nh viÃªn Board | â€” | CardId + ListId Ä‘Ã­ch + vá»‹ trÃ­ | Card Ä‘Æ°á»£c cáº­p nháº­t vá»‹ trÃ­ |
+| 11 | KÃ©o-tháº£ List | Admin Board | â€” | ListId + vá»‹ trÃ­ má»›i | Thá»© tá»± lists Ä‘Æ°á»£c cáº­p nháº­t |
+| 12 | PhÃ¢n cÃ´ng thÃ nh viÃªn Card | ThÃ nh viÃªn Board | NgÆ°á»i Ä‘Æ°á»£c phÃ¢n cÃ´ng | CardId + UserUId | CardMember record + Notification |
+| 13 | BÃ¬nh luáº­n trÃªn Card | ThÃ nh viÃªn Board | â€” | CardId + Ná»™i dung | Comment record |
+| 14 | ÄÃ­nh kÃ¨m tá»‡p | ThÃ nh viÃªn Board | Cloudinary | CardId + File | FileUrl record |
+| 15 | HoÃ n thÃ nh Todo Item | ThÃ nh viÃªn Board | â€” | TodoItemId + tráº¡ng thÃ¡i | TodoItem cáº­p nháº­t |
+| 16 | Xem Báº£ng Gáº§n ÄÃ¢y | NgÆ°á»i dÃ¹ng | â€” | UserUId | Danh sÃ¡ch 4 Board gáº§n nháº¥t |
+| 17 | Nháº­n & Ä‘á»c Notification | NgÆ°á»i dÃ¹ng | â€” | UserUId | Danh sÃ¡ch thÃ´ng bÃ¡o |
+| 18 | Táº£i lÃªn / thay Ä‘á»•i Avatar | NgÆ°á»i dÃ¹ng | Cloudinary | File áº£nh | AvatarUrl |
+| 19 | XÃ³a Board / List / Card | Owner / Admin | â€” | Entity ID | XÃ³a khá»i DB |
+| 20 | Ghi nháº­t kÃ½ hoáº¡t Ä‘á»™ng | Há»‡ thá»‘ng | â€” | HÃ nh Ä‘á»™ng + Actor | Activity record |
 
 ---
 
-## 1.3 Biểu Đồ Luồng Dữ Liệu (DFD)
+## 1.3 Biá»ƒu Äá»“ Luá»“ng Dá»¯ Liá»‡u (DFD)
 
-### Mức 0 – Ngữ cảnh (Context Diagram)
+### Má»©c 0 â€“ Ngá»¯ cáº£nh (Context Diagram)
 
 ```mermaid
 graph LR
-    U(( Người dùng))
+    U(( NgÆ°á»i dÃ¹ng))
     A(( Admin Workspace<br>/Board))
     E(( Email Server))
     C(( Cloudinary CDN))
 
-    U -- "Đăng nhập/Đăng ký\nQuản lý thẻ/bảng\nBình luận/Phân công" --> SYS[ TrellOn System]
-    A -- "Quản lý workspace\nPhân quyền thành viên\nChuyển board" --> SYS
-    SYS -- "JWT Token\nThông báo\nDữ liệu bảng/thẻ" --> U
-    SYS -- "Gửi OTP/Xác minh\nEmail thông báo" --> E
-    E -- "Kết quả xác minh" --> SYS
-    SYS -- "Upload file/ảnh" --> C
+    U -- "ÄÄƒng nháº­p/ÄÄƒng kÃ½\nQuáº£n lÃ½ tháº»/báº£ng\nBÃ¬nh luáº­n/PhÃ¢n cÃ´ng" --> SYS[ Kabo System]
+    A -- "Quáº£n lÃ½ workspace\nPhÃ¢n quyá»n thÃ nh viÃªn\nChuyá»ƒn board" --> SYS
+    SYS -- "JWT Token\nThÃ´ng bÃ¡o\nDá»¯ liá»‡u báº£ng/tháº»" --> U
+    SYS -- "Gá»­i OTP/XÃ¡c minh\nEmail thÃ´ng bÃ¡o" --> E
+    E -- "Káº¿t quáº£ xÃ¡c minh" --> SYS
+    SYS -- "Upload file/áº£nh" --> C
     C -- "URL media" --> SYS
 ```
 
 ---
 
-### Mức 1 – Đỉnh (Level 0 DFD)
+### Má»©c 1 â€“ Äá»‰nh (Level 0 DFD)
 
 ```mermaid
 graph TB
-    U((Người dùng))
+    U((NgÆ°á»i dÃ¹ng))
     A((Admin))
 
-    P1[1.0\nXác thực &\nTài khoản]
-    P2[2.0\nQuản lý\nWorkspace]
-    P3[3.0\nQuản lý\nBoard]
-    P4[4.0\nQuản lý\nList & Card]
-    P5[5.0\nThông báo &\nHoạt động]
+    P1[1.0\nXÃ¡c thá»±c &\nTÃ i khoáº£n]
+    P2[2.0\nQuáº£n lÃ½\nWorkspace]
+    P3[3.0\nQuáº£n lÃ½\nBoard]
+    P4[4.0\nQuáº£n lÃ½\nList & Card]
+    P5[5.0\nThÃ´ng bÃ¡o &\nHoáº¡t Ä‘á»™ng]
 
     DS1[(D1: Users)]
     DS2[(D2: Workspaces\n& Members)]
@@ -184,129 +184,129 @@ graph TB
     DS4[(D4: Lists\n& Cards)]
     DS5[(D5: Notifications\n& Activities)]
 
-    U -- "Thông tin đăng nhập" --> P1
-    P1 -- "Lưu/truy vấn user" --> DS1
-    P1 -- "Token hợp lệ" --> U
+    U -- "ThÃ´ng tin Ä‘Äƒng nháº­p" --> P1
+    P1 -- "LÆ°u/truy váº¥n user" --> DS1
+    P1 -- "Token há»£p lá»‡" --> U
 
     A --> P2
     P2 -- "CRUD workspace/members" --> DS2
-    P2 -- "Danh sách workspace" --> U
+    P2 -- "Danh sÃ¡ch workspace" --> U
 
     U --> P3
     A --> P3
     P3 -- "CRUD board/members" --> DS3
-    P3 -- "Đọc workspace" --> DS2
-    P3 -- "Danh sách board" --> U
+    P3 -- "Äá»c workspace" --> DS2
+    P3 -- "Danh sÃ¡ch board" --> U
 
     U --> P4
     P4 -- "CRUD list/card/comment/todo" --> DS4
-    P4 -- "Đọc board" --> DS3
-    P4 -- "Kết quả" --> U
+    P4 -- "Äá»c board" --> DS3
+    P4 -- "Káº¿t quáº£" --> U
 
-    P4 -- "Ghi hoạt động" --> DS5
-    P3 -- "Ghi hoạt động" --> DS5
-    P5 -- "Đọc/Ghi thông báo" --> DS5
+    P4 -- "Ghi hoáº¡t Ä‘á»™ng" --> DS5
+    P3 -- "Ghi hoáº¡t Ä‘á»™ng" --> DS5
+    P5 -- "Äá»c/Ghi thÃ´ng bÃ¡o" --> DS5
     P5 -- "Push notification" --> U
 ```
 
 ---
 
-### Mức 2 – Dưới Đỉnh: Tiến trình 1.0 – Quản lý Người dùng (User)
+### Má»©c 2 â€“ DÆ°á»›i Äá»‰nh: Tiáº¿n trÃ¬nh 1.0 â€“ Quáº£n lÃ½ NgÆ°á»i dÃ¹ng (User)
 
 ```mermaid
 graph TB
-    U((Người dùng))
+    U((NgÆ°á»i dÃ¹ng))
     E((Email Server))
     C((Cloudinary))
 
-    P11[1.1\nĐăng ký\n& Xác minh Email]
-    P12[1.2\nĐăng nhập\n& Cấp Token]
-    P13[1.3\nXác thực\n2FA]
-    P14[1.4\nQuản lý\nHồ sơ]
-    P15[1.5\nĐặt lại\nMật khẩu]
+    P11[1.1\nÄÄƒng kÃ½\n& XÃ¡c minh Email]
+    P12[1.2\nÄÄƒng nháº­p\n& Cáº¥p Token]
+    P13[1.3\nXÃ¡c thá»±c\n2FA]
+    P14[1.4\nQuáº£n lÃ½\nHá»“ sÆ¡]
+    P15[1.5\nÄáº·t láº¡i\nMáº­t kháº©u]
 
     DS1[(D1: Users\n& Sessions)]
     DS2[(D2: UserOtp\n& BackupCodes)]
 
-    U -- "Thông tin đăng ký" --> P11
-    P11 -- "Lưu User (chưa xác minh)" --> DS1
-    P11 -- "Gửi OTP xác minh" --> E
-    E -- "Token xác minh" --> P11
-    P11 -- "Kích hoạt tài khoản" --> DS1
-    P11 -- "Đăng ký thành công" --> U
+    U -- "ThÃ´ng tin Ä‘Äƒng kÃ½" --> P11
+    P11 -- "LÆ°u User (chÆ°a xÃ¡c minh)" --> DS1
+    P11 -- "Gá»­i OTP xÃ¡c minh" --> E
+    E -- "Token xÃ¡c minh" --> P11
+    P11 -- "KÃ­ch hoáº¡t tÃ i khoáº£n" --> DS1
+    P11 -- "ÄÄƒng kÃ½ thÃ nh cÃ´ng" --> U
 
     U -- "Email + Password" --> P12
-    P12 -- "Đọc User" --> DS1
-    P12 -- "Tạo JWT + Lưu Session" --> DS1
+    P12 -- "Äá»c User" --> DS1
+    P12 -- "Táº¡o JWT + LÆ°u Session" --> DS1
     P12 -- "Access/Refresh Token" --> U
 
     U -- "OTP / Backup Code" --> P13
-    P13 -- "Đọc Secret / BackupCode" --> DS2
-    P13 -- "Xác nhận / Huỷ BackupCode" --> DS2
-    P13 -- "Phiên hợp lệ" --> U
+    P13 -- "Äá»c Secret / BackupCode" --> DS2
+    P13 -- "XÃ¡c nháº­n / Huá»· BackupCode" --> DS2
+    P13 -- "PhiÃªn há»£p lá»‡" --> U
 
-    U -- "Thông tin cập nhật / Avatar" --> P14
+    U -- "ThÃ´ng tin cáº­p nháº­t / Avatar" --> P14
     P14 -- "Upload avatar" --> C
     C -- "AvatarUrl" --> P14
     P14 -- "UPDATE User" --> DS1
-    P14 -- "Hồ sơ mới" --> U
+    P14 -- "Há»“ sÆ¡ má»›i" --> U
 
     U -- "Email" --> P15
-    P15 -- "Tạo OTP" --> DS2
-    P15 -- "Gửi email đặt lại" --> E
-    P15 -- "Cập nhật PasswordHash" --> DS1
-    P15 -- "Xác nhận thành công" --> U
+    P15 -- "Táº¡o OTP" --> DS2
+    P15 -- "Gá»­i email Ä‘áº·t láº¡i" --> E
+    P15 -- "Cáº­p nháº­t PasswordHash" --> DS1
+    P15 -- "XÃ¡c nháº­n thÃ nh cÃ´ng" --> U
 ```
 
 ---
 
-### Mức 2 – Dưới Đỉnh: Tiến trình 2.0 – Quản lý Workspace
+### Má»©c 2 â€“ DÆ°á»›i Äá»‰nh: Tiáº¿n trÃ¬nh 2.0 â€“ Quáº£n lÃ½ Workspace
 
 ```mermaid
 graph TB
     OW((Admin\nWorkspace))
-    U((Thành viên))
+    U((ThÃ nh viÃªn))
 
-    P21[2.1\nTạo / Sửa / Xóa\nWorkspace]
-    P22[2.2\nQuản lý\nThành viên WS]
-    P23[2.3\nXem danh sách\nWorkspace]
+    P21[2.1\nTáº¡o / Sá»­a / XÃ³a\nWorkspace]
+    P22[2.2\nQuáº£n lÃ½\nThÃ nh viÃªn WS]
+    P23[2.3\nXem danh sÃ¡ch\nWorkspace]
 
     DS1[(D1: Users)]
     DS2[(D2: Workspaces)]
     DS3[(D3: WorkspaceMembers)]
     DS5[(D5: Notifications)]
 
-    OW -- "Tên, mô tả" --> P21
+    OW -- "TÃªn, mÃ´ táº£" --> P21
     P21 -- "CRUD Workspace" --> DS2
-    P21 -- "Kết quả" --> OW
+    P21 -- "Káº¿t quáº£" --> OW
 
     OW -- "UserUId + Role" --> P22
-    P22 -- "Đọc User" --> DS1
+    P22 -- "Äá»c User" --> DS1
     P22 -- "INSERT / UPDATE / DELETE WorkspaceMember" --> DS3
-    P22 -- "INSERT Notification (mời/xoá)" --> DS5
-    P22 -- "Kết quả" --> OW
+    P22 -- "INSERT Notification (má»i/xoÃ¡)" --> DS5
+    P22 -- "Káº¿t quáº£" --> OW
 
     U -- "UserUId" --> P23
     P23 -- "SELECT Workspaces WHERE member" --> DS3
-    P23 -- "Đọc thông tin WS" --> DS2
-    P23 -- "Danh sách workspace" --> U
+    P23 -- "Äá»c thÃ´ng tin WS" --> DS2
+    P23 -- "Danh sÃ¡ch workspace" --> U
 ```
 
 ---
 
-### Mức 2 – Dưới Đỉnh: Tiến trình 3.0 – Quản lý Board
+### Má»©c 2 â€“ DÆ°á»›i Äá»‰nh: Tiáº¿n trÃ¬nh 3.0 â€“ Quáº£n lÃ½ Board
 
 ```mermaid
 graph TB
     OW((Owner\nBoard))
-    MB((Thành viên\nBoard))
+    MB((ThÃ nh viÃªn\nBoard))
     C((Cloudinary))
 
-    P31[3.1\nTạo / Sửa / Xóa\nBoard]
-    P32[3.2\nXem danh sách\nBoard]
-    P33[3.3\nThay đổi\nBackground]
-    P34[3.4\nChuyển Board\nsang Workspace]
-    P35[3.5\nQuản lý\nThành viên Board]
+    P31[3.1\nTáº¡o / Sá»­a / XÃ³a\nBoard]
+    P32[3.2\nXem danh sÃ¡ch\nBoard]
+    P33[3.3\nThay Ä‘á»•i\nBackground]
+    P34[3.4\nChuyá»ƒn Board\nsang Workspace]
+    P35[3.5\nQuáº£n lÃ½\nThÃ nh viÃªn Board]
 
     DS2[(D2: Workspaces\n& WsMembers)]
     DS3[(D3: Boards)]
@@ -314,132 +314,132 @@ graph TB
     DS6[(D6: UserRecentBoards)]
     DS5[(D5: Notifications)]
 
-    OW -- "Tên, visibility, workspace" --> P31
+    OW -- "TÃªn, visibility, workspace" --> P31
     P31 -- "CRUD Board" --> DS3
-    P31 -- "Kết quả" --> OW
+    P31 -- "Káº¿t quáº£" --> OW
 
     MB -- "UserUId" --> P32
-    P32 -- "SELECT cá nhân + workspace" --> DS3
-    P32 -- "Đọc RecentBoards" --> DS6
-    P32 -- "Danh sách Board" --> MB
+    P32 -- "SELECT cÃ¡ nhÃ¢n + workspace" --> DS3
+    P32 -- "Äá»c RecentBoards" --> DS6
+    P32 -- "Danh sÃ¡ch Board" --> MB
 
-    OW -- "File / URL ảnh" --> P33
+    OW -- "File / URL áº£nh" --> P33
     P33 -- "Upload" --> C
     C -- "BackgroundUrl" --> P33
     P33 -- "UPDATE Board.BackgroundUrl" --> DS3
-    P33 -- "URL mới" --> OW
+    P33 -- "URL má»›i" --> OW
 
-    OW -- "BoardId + WorkspaceId đích" --> P34
-    P34 -- "Kiểm tra quyền Owner" --> DS4
+    OW -- "BoardId + WorkspaceId Ä‘Ã­ch" --> P34
+    P34 -- "Kiá»ƒm tra quyá»n Owner" --> DS4
     P34 -- "UPDATE Board (WorkspaceUId / IsPersonal)" --> DS3
-    P34 -- "INSERT WsMembers (thành viên chưa có)" --> DS2
-    P34 -- "Kết quả" --> OW
+    P34 -- "INSERT WsMembers (thÃ nh viÃªn chÆ°a cÃ³)" --> DS2
+    P34 -- "Káº¿t quáº£" --> OW
 
     OW -- "UserUId + Role" --> P35
     P35 -- "INSERT / UPDATE / DELETE BoardMember" --> DS4
     P35 -- "INSERT Notification" --> DS5
-    P35 -- "Kết quả" --> OW
+    P35 -- "Káº¿t quáº£" --> OW
 ```
 
 ---
 
-### Mức 2 – Dưới Đỉnh: Tiến trình 5.0 – Thông báo & Hoạt động
+### Má»©c 2 â€“ DÆ°á»›i Äá»‰nh: Tiáº¿n trÃ¬nh 5.0 â€“ ThÃ´ng bÃ¡o & Hoáº¡t Ä‘á»™ng
 
 ```mermaid
 graph TB
-    U((Người dùng))
-    SYS((Hệ thống\n[tiến trình khác]))
+    U((NgÆ°á»i dÃ¹ng))
+    SYS((Há»‡ thá»‘ng\n[tiáº¿n trÃ¬nh khÃ¡c]))
 
-    P51[5.1\nTạo &\nGửi thông báo]
-    P52[5.2\nXem & Đọc\nthông báo]
-    P53[5.3\nGhi nhật ký\nhoạt động]
+    P51[5.1\nTáº¡o &\nGá»­i thÃ´ng bÃ¡o]
+    P52[5.2\nXem & Äá»c\nthÃ´ng bÃ¡o]
+    P53[5.3\nGhi nháº­t kÃ½\nhoáº¡t Ä‘á»™ng]
 
     DS5N[(D5a: Notifications)]
     DS5A[(D5b: Activities)]
     DS1[(D1: Users)]
 
-    SYS -- "Sự kiện (phân công, mời, cập nhật)" --> P51
-    P51 -- "Đọc thông tin recipient" --> DS1
+    SYS -- "Sá»± kiá»‡n (phÃ¢n cÃ´ng, má»i, cáº­p nháº­t)" --> P51
+    P51 -- "Äá»c thÃ´ng tin recipient" --> DS1
     P51 -- "INSERT Notification" --> DS5N
-    P51 -- "Thông báo realtime" --> U
+    P51 -- "ThÃ´ng bÃ¡o realtime" --> U
 
     U -- "UserUId" --> P52
     P52 -- "SELECT Notifications WHERE recipientId" --> DS5N
-    P52 -- "Danh sách thông báo" --> U
-    U -- "Đánh dấu đã đọc" --> P52
+    P52 -- "Danh sÃ¡ch thÃ´ng bÃ¡o" --> U
+    U -- "ÄÃ¡nh dáº¥u Ä‘Ã£ Ä‘á»c" --> P52
     P52 -- "UPDATE Notification.Read = true" --> DS5N
 
-    SYS -- "Hành động + Actor" --> P53
+    SYS -- "HÃ nh Ä‘á»™ng + Actor" --> P53
     P53 -- "INSERT Activity" --> DS5A
     U -- "UserUId" --> P53
     P53 -- "SELECT Activities" --> DS5A
-    P53 -- "Lịch sử hoạt động" --> U
+    P53 -- "Lá»‹ch sá»­ hoáº¡t Ä‘á»™ng" --> U
 ```
 
 ---
 
-### Mức 2 – Dưới Đỉnh: Tiến trình 6.0 – Hộp thư đến (Inbox)
+### Má»©c 2 â€“ DÆ°á»›i Äá»‰nh: Tiáº¿n trÃ¬nh 6.0 â€“ Há»™p thÆ° Ä‘áº¿n (Inbox)
 
 ```mermaid
 graph TB
-    U((Người dùng))
-    SYS(Hệ thống\n[CardMember])
+    U((NgÆ°á»i dÃ¹ng))
+    SYS(Há»‡ thá»‘ng\n[CardMember])
 
-    P61[6.1\nThêm Card\nvào Inbox]
-    P62[6.2\nXem danh sách\nInbox]
-    P63[6.3\nĐiều hướng\nđến Card]
+    P61[6.1\nThÃªm Card\nvÃ o Inbox]
+    P62[6.2\nXem danh sÃ¡ch\nInbox]
+    P63[6.3\nÄiá»u hÆ°á»›ng\nÄ‘áº¿n Card]
 
     DS_IC[(D7: UserInboxCards)]
     DS_C[(D4b: Cards\n& Lists)]
     DS_B[(D3: Boards)]
 
-    SYS -- "CardId + UserUId (được phân công)" --> P61
-    P61 -- "INSERT UserInboxCard (nếu chưa tồn tại)" --> DS_IC
-    P61 -- "Thêm vào inbox" --> U
+    SYS -- "CardId + UserUId (Ä‘Æ°á»£c phÃ¢n cÃ´ng)" --> P61
+    P61 -- "INSERT UserInboxCard (náº¿u chÆ°a tá»“n táº¡i)" --> DS_IC
+    P61 -- "ThÃªm vÃ o inbox" --> U
 
     U -- "UserUId" --> P62
     P62 -- "SELECT InboxCards JOIN Cards JOIN Lists JOIN Boards" --> DS_IC
-    P62 -- "Danh sách thẻ được phân công" --> U
+    P62 -- "Danh sÃ¡ch tháº» Ä‘Æ°á»£c phÃ¢n cÃ´ng" --> U
 
-    U -- "Chọn thẻ" --> P63
-    P63 -- "Đọc CardId + BoardId" --> DS_C
-    P63 -- "Điều hướng đến Board + Card" --> U
+    U -- "Chá»n tháº»" --> P63
+    P63 -- "Äá»c CardId + BoardId" --> DS_C
+    P63 -- "Äiá»u hÆ°á»›ng Ä‘áº¿n Board + Card" --> U
 ```
 
 ---
 
-### Mức 2 – Dưới Đỉnh: Tiến trình 4.0 – Quản lý List & Card
+### Má»©c 2 â€“ DÆ°á»›i Äá»‰nh: Tiáº¿n trÃ¬nh 4.0 â€“ Quáº£n lÃ½ List & Card
 
 
 ```mermaid
 graph TB
-    U((Người dùng))
+    U((NgÆ°á»i dÃ¹ng))
 
-    P41[4.1\nQuản lý\nDanh sách]
-    P42[4.2\nQuản lý\nThẻ]
-    P43[4.3\nQuản lý nội dung\nThẻ chi tiết]
-    P44[4.4\nDi chuyển\nThẻ/Danh sách]
+    P41[4.1\nQuáº£n lÃ½\nDanh sÃ¡ch]
+    P42[4.2\nQuáº£n lÃ½\nTháº»]
+    P43[4.3\nQuáº£n lÃ½ ná»™i dung\nTháº» chi tiáº¿t]
+    P44[4.4\nDi chuyá»ƒn\nTháº»/Danh sÃ¡ch]
 
     DS3[(D3: Boards)]
     DS4[(D4: Lists)]
     DS5[(D5: Cards)]
     DS6[(D6: Comments\nTodos\nLabels\nFiles)]
 
-    U -- "Tạo/Sửa/Xóa list" --> P41
+    U -- "Táº¡o/Sá»­a/XÃ³a list" --> P41
     P41 -- "CRUD List" --> DS4
-    P41 -- "Đọc Board" --> DS3
+    P41 -- "Äá»c Board" --> DS3
 
-    U -- "Tạo/Sửa/Xóa card" --> P42
+    U -- "Táº¡o/Sá»­a/XÃ³a card" --> P42
     P42 -- "CRUD Card" --> DS5
-    P42 -- "Đọc List" --> DS4
+    P42 -- "Äá»c List" --> DS4
 
-    U -- "Bình luận/Todo/Label/File" --> P43
-    P43 -- "CRUD nội dung" --> DS6
-    P43 -- "Đọc Card" --> DS5
+    U -- "BÃ¬nh luáº­n/Todo/Label/File" --> P43
+    P43 -- "CRUD ná»™i dung" --> DS6
+    P43 -- "Äá»c Card" --> DS5
 
-    U -- "Kéo-thả" --> P44
-    P44 -- "Cập nhật position/listId" --> DS5
-    P44 -- "Cập nhật position list" --> DS4
+    U -- "KÃ©o-tháº£" --> P44
+    P44 -- "Cáº­p nháº­t position/listId" --> DS5
+    P44 -- "Cáº­p nháº­t position list" --> DS4
 ```
 
 ---
@@ -449,49 +449,49 @@ graph TB
 ```mermaid
 graph TB
     subgraph Actors
-        A(( Người dùng\nmới))
-        B(( Thành viên\nBoard))
+        A(( NgÆ°á»i dÃ¹ng\nmá»›i))
+        B(( ThÃ nh viÃªn\nBoard))
         C(( Admin /\nOwner Board))
         D(( Admin\nWorkspace))
     end
 
-    subgraph "Xác thực & Tài khoản"
-        UC1[Đăng ký tài khoản]
-        UC2[Đăng nhập]
-        UC3[Xác thực 2FA]
-        UC4[Đặt lại mật khẩu]
-        UC5[Cập nhật hồ sơ]
+    subgraph "XÃ¡c thá»±c & TÃ i khoáº£n"
+        UC1[ÄÄƒng kÃ½ tÃ i khoáº£n]
+        UC2[ÄÄƒng nháº­p]
+        UC3[XÃ¡c thá»±c 2FA]
+        UC4[Äáº·t láº¡i máº­t kháº©u]
+        UC5[Cáº­p nháº­t há»“ sÆ¡]
     end
 
     subgraph "Workspace"
-        UC6[Tạo workspace]
-        UC7[Xem/Sửa workspace]
-        UC8[Quản lý thành viên WS]
+        UC6[Táº¡o workspace]
+        UC7[Xem/Sá»­a workspace]
+        UC8[Quáº£n lÃ½ thÃ nh viÃªn WS]
     end
 
     subgraph "Board"
-        UC9[Tạo board]
-        UC10[Xem danh sách board]
-        UC11[Đổi tên / Background board]
-        UC12[Thay đổi Visibility]
-        UC13[Chuyển Board sang WS khác]
-        UC14[Quản lý thành viên Board]
+        UC9[Táº¡o board]
+        UC10[Xem danh sÃ¡ch board]
+        UC11[Äá»•i tÃªn / Background board]
+        UC12[Thay Ä‘á»•i Visibility]
+        UC13[Chuyá»ƒn Board sang WS khÃ¡c]
+        UC14[Quáº£n lÃ½ thÃ nh viÃªn Board]
     end
 
     subgraph "List & Card"
-        UC15[Tạo / Sắp xếp List]
-        UC16[Tạo / Xem Card]
-        UC17[Chỉnh sửa Card]
-        UC18[Kéo-thả Card / List]
-        UC19[Phân công thành viên Card]
-        UC20[Gắn nhãn Label]
-        UC21[Thêm Checklist / Todo]
-        UC22[Bình luận]
-        UC23[Đính kèm tệp]
+        UC15[Táº¡o / Sáº¯p xáº¿p List]
+        UC16[Táº¡o / Xem Card]
+        UC17[Chá»‰nh sá»­a Card]
+        UC18[KÃ©o-tháº£ Card / List]
+        UC19[PhÃ¢n cÃ´ng thÃ nh viÃªn Card]
+        UC20[Gáº¯n nhÃ£n Label]
+        UC21[ThÃªm Checklist / Todo]
+        UC22[BÃ¬nh luáº­n]
+        UC23[ÄÃ­nh kÃ¨m tá»‡p]
     end
 
-    subgraph "Thông báo"
-        UC24[Nhận thông báo]
+    subgraph "ThÃ´ng bÃ¡o"
+        UC24[Nháº­n thÃ´ng bÃ¡o]
         UC25[Xem Inbox Card]
     end
 
@@ -523,22 +523,22 @@ graph TB
     D --> UC8
 ```
 
-### 1.4.1 Đặc tả chi tiết các Use Case
+### 1.4.1 Äáº·c táº£ chi tiáº¿t cÃ¡c Use Case
 
-#### Nhóm 1: Xác thực và Tài khoản
+#### NhÃ³m 1: XÃ¡c thá»±c vÃ  TÃ i khoáº£n
 
 ```mermaid
 graph TB
-    subgraph "Xác thực & Tài khoản"
-        UC1(UC1: Đăng ký)
-        UC2(UC2: Đăng nhập)
-        UC3(UC3: Xác thực 2FA)
-        UC4(UC4: Đặt lại mật khẩu)
-        UC5(UC5: Cập nhật hồ sơ)
-        UC1 -.->|include| UC1a(Xác minh Email)
+    subgraph "XÃ¡c thá»±c & TÃ i khoáº£n"
+        UC1(UC1: ÄÄƒng kÃ½)
+        UC2(UC2: ÄÄƒng nháº­p)
+        UC3(UC3: XÃ¡c thá»±c 2FA)
+        UC4(UC4: Äáº·t láº¡i máº­t kháº©u)
+        UC5(UC5: Cáº­p nháº­t há»“ sÆ¡)
+        UC1 -.->|include| UC1a(XÃ¡c minh Email)
         UC2 -.->|extend| UC3
     end
-    U((Người dùng))
+    U((NgÆ°á»i dÃ¹ng))
     E((Email Server))
     C((Cloudinary))
     
@@ -551,108 +551,108 @@ graph TB
     UC5 --- C
 ```
 
-**UC1: Đăng ký tài khoản**
-- **Tác nhân:** Người dùng mới.
-- **Tiền điều kiện:** Người dùng chưa có tài khoản hoặc email chưa được đăng ký.
-- **Hậu điều kiện:** Tài khoản được tạo và ở trạng thái "Chờ xác minh" hoặc "Đã kích hoạt".
-- **Luồng sự kiện:**
-  1. Người dùng chọn chức năng Đăng ký.
-  2. Hệ thống hiển thị form nhập: Tên, Email, Mật khẩu.
-  3. Người dùng nhập thông tin và nhấn "Đăng ký".
-  4. Hệ thống kiểm tra hợp lệ: Email đúng định dạng, chưa tồn tại, mật khẩu đủ độ mạnh.
-  5. Hệ thống gửi mã OTP xác nhận về email của người dùng.
-  6. Người dùng nhập mã OTP vào ứng dụng.
-  7. Hệ thống xác thực mã và kích hoạt tài khoản.
-- **Ngoại lệ:** Email đã tồn tại -> Hệ thống yêu cầu đăng nhập hoặc dùng email khác.
+**UC1: ÄÄƒng kÃ½ tÃ i khoáº£n**
+- **TÃ¡c nhÃ¢n:** NgÆ°á»i dÃ¹ng má»›i.
+- **Tiá»n Ä‘iá»u kiá»‡n:** NgÆ°á»i dÃ¹ng chÆ°a cÃ³ tÃ i khoáº£n hoáº·c email chÆ°a Ä‘Æ°á»£c Ä‘Äƒng kÃ½.
+- **Háº­u Ä‘iá»u kiá»‡n:** TÃ i khoáº£n Ä‘Æ°á»£c táº¡o vÃ  á»Ÿ tráº¡ng thÃ¡i "Chá» xÃ¡c minh" hoáº·c "ÄÃ£ kÃ­ch hoáº¡t".
+- **Luá»“ng sá»± kiá»‡n:**
+  1. NgÆ°á»i dÃ¹ng chá»n chá»©c nÄƒng ÄÄƒng kÃ½.
+  2. Há»‡ thá»‘ng hiá»ƒn thá»‹ form nháº­p: TÃªn, Email, Máº­t kháº©u.
+  3. NgÆ°á»i dÃ¹ng nháº­p thÃ´ng tin vÃ  nháº¥n "ÄÄƒng kÃ½".
+  4. Há»‡ thá»‘ng kiá»ƒm tra há»£p lá»‡: Email Ä‘Ãºng Ä‘á»‹nh dáº¡ng, chÆ°a tá»“n táº¡i, máº­t kháº©u Ä‘á»§ Ä‘á»™ máº¡nh.
+  5. Há»‡ thá»‘ng gá»­i mÃ£ OTP xÃ¡c nháº­n vá» email cá»§a ngÆ°á»i dÃ¹ng.
+  6. NgÆ°á»i dÃ¹ng nháº­p mÃ£ OTP vÃ o á»©ng dá»¥ng.
+  7. Há»‡ thá»‘ng xÃ¡c thá»±c mÃ£ vÃ  kÃ­ch hoáº¡t tÃ i khoáº£n.
+- **Ngoáº¡i lá»‡:** Email Ä‘Ã£ tá»“n táº¡i -> Há»‡ thá»‘ng yÃªu cáº§u Ä‘Äƒng nháº­p hoáº·c dÃ¹ng email khÃ¡c.
 
-**UC2: Đăng nhập**
-- **Tác nhân:** Người dùng.
-- **Luồng sự kiện:**
-  1. Người dùng nhập Email và Mật khẩu.
-  2. Hệ thống kiểm tra thông tin đăng nhập trong DB.
-  3. Nếu chính xác, hệ thống kiểm tra cài đặt 2FA.
-  4. Nếu không bật 2FA, hệ thống tạo mã JWT (AccessToken & RefreshToken) và trả về cho App.
-  5. Nếu bật 2FA, chuyển sang UC3.
-- **Ngoại lệ:** Sai mật khẩu quá 5 lần -> Khóa tài khoản tạm thời.
+**UC2: ÄÄƒng nháº­p**
+- **TÃ¡c nhÃ¢n:** NgÆ°á»i dÃ¹ng.
+- **Luá»“ng sá»± kiá»‡n:**
+  1. NgÆ°á»i dÃ¹ng nháº­p Email vÃ  Máº­t kháº©u.
+  2. Há»‡ thá»‘ng kiá»ƒm tra thÃ´ng tin Ä‘Äƒng nháº­p trong DB.
+  3. Náº¿u chÃ­nh xÃ¡c, há»‡ thá»‘ng kiá»ƒm tra cÃ i Ä‘áº·t 2FA.
+  4. Náº¿u khÃ´ng báº­t 2FA, há»‡ thá»‘ng táº¡o mÃ£ JWT (AccessToken & RefreshToken) vÃ  tráº£ vá» cho App.
+  5. Náº¿u báº­t 2FA, chuyá»ƒn sang UC3.
+- **Ngoáº¡i lá»‡:** Sai máº­t kháº©u quÃ¡ 5 láº§n -> KhÃ³a tÃ i khoáº£n táº¡m thá»i.
 
-**UC3: Xác thực 2FA**
-- **Tác nhân:** Người dùng.
-- **Luồng sự kiện:**
-  1. Sau khi nhập đúng email/mật khẩu, hệ thống yêu cầu mã xác thực.
-  2. Người dùng mở app xác thực (Google Authenticator) hoặc kiểm tra email lấy mã.
-  3. Người dùng nhập mã vào hệ thống.
-  4. Hệ thống kiểm tra mã hợp lệ và cấp quyền truy cập.
+**UC3: XÃ¡c thá»±c 2FA**
+- **TÃ¡c nhÃ¢n:** NgÆ°á»i dÃ¹ng.
+- **Luá»“ng sá»± kiá»‡n:**
+  1. Sau khi nháº­p Ä‘Ãºng email/máº­t kháº©u, há»‡ thá»‘ng yÃªu cáº§u mÃ£ xÃ¡c thá»±c.
+  2. NgÆ°á»i dÃ¹ng má»Ÿ app xÃ¡c thá»±c (Google Authenticator) hoáº·c kiá»ƒm tra email láº¥y mÃ£.
+  3. NgÆ°á»i dÃ¹ng nháº­p mÃ£ vÃ o há»‡ thá»‘ng.
+  4. Há»‡ thá»‘ng kiá»ƒm tra mÃ£ há»£p lá»‡ vÃ  cáº¥p quyá»n truy cáº­p.
 
-**UC4: Đặt lại mật khẩu**
-- **Tác nhân:** Người dùng.
-- **Luồng sự kiện:**
-  1. Người dùng chọn "Quên mật khẩu" tại màn hình đăng nhập.
-  2. Nhập email đăng ký.
-  3. Hệ thống kiểm tra sự tồn tại của email và gửi link/mã đặt lại mật khẩu.
-  4. Người dùng sử dụng link/mã để nhập mật khẩu mới.
-  5. Hệ thống cập nhật PasswordHash mới vào DB.
+**UC4: Äáº·t láº¡i máº­t kháº©u**
+- **TÃ¡c nhÃ¢n:** NgÆ°á»i dÃ¹ng.
+- **Luá»“ng sá»± kiá»‡n:**
+  1. NgÆ°á»i dÃ¹ng chá»n "QuÃªn máº­t kháº©u" táº¡i mÃ n hÃ¬nh Ä‘Äƒng nháº­p.
+  2. Nháº­p email Ä‘Äƒng kÃ½.
+  3. Há»‡ thá»‘ng kiá»ƒm tra sá»± tá»“n táº¡i cá»§a email vÃ  gá»­i link/mÃ£ Ä‘áº·t láº¡i máº­t kháº©u.
+  4. NgÆ°á»i dÃ¹ng sá»­ dá»¥ng link/mÃ£ Ä‘á»ƒ nháº­p máº­t kháº©u má»›i.
+  5. Há»‡ thá»‘ng cáº­p nháº­t PasswordHash má»›i vÃ o DB.
 
-**UC5: Cập nhật hồ sơ**
-- **Tác nhân:** Người dùng.
-- **Luồng sự kiện:**
-  1. Người dùng truy cập "Cài đặt tài khoản".
-  2. Thay đổi thông tin: Tên hiển thị, Bio, hoặc tải lên ảnh đại diện mới.
-  3. Hệ thống tải ảnh lên Cloudinary (nếu có) và lưu URL vào DB.
-  4. Phản hồi cập nhật thành công.
+**UC5: Cáº­p nháº­t há»“ sÆ¡**
+- **TÃ¡c nhÃ¢n:** NgÆ°á»i dÃ¹ng.
+- **Luá»“ng sá»± kiá»‡n:**
+  1. NgÆ°á»i dÃ¹ng truy cáº­p "CÃ i Ä‘áº·t tÃ i khoáº£n".
+  2. Thay Ä‘á»•i thÃ´ng tin: TÃªn hiá»ƒn thá»‹, Bio, hoáº·c táº£i lÃªn áº£nh Ä‘áº¡i diá»‡n má»›i.
+  3. Há»‡ thá»‘ng táº£i áº£nh lÃªn Cloudinary (náº¿u cÃ³) vÃ  lÆ°u URL vÃ o DB.
+  4. Pháº£n há»“i cáº­p nháº­t thÃ nh cÃ´ng.
 
-#### Nhóm 2: Quản lý Không gian làm việc (Workspace)
+#### NhÃ³m 2: Quáº£n lÃ½ KhÃ´ng gian lÃ m viá»‡c (Workspace)
 
 ```mermaid
 graph TB
     subgraph "Workspace"
-        UC6(UC6: Tạo Workspace)
-        UC7(UC7: Xem/Sửa Workspace)
-        UC8(UC8: Quản lý thành viên)
+        UC6(UC6: Táº¡o Workspace)
+        UC7(UC7: Xem/Sá»­a Workspace)
+        UC8(UC8: Quáº£n lÃ½ thÃ nh viÃªn)
     end
     A((Admin WS))
     O((Owner WS))
-    M((Thành viên))
+    M((ThÃ nh viÃªn))
     
     A --> UC6
     A --> UC7
     O --> UC8
-    UC8 -- "Mời/Xóa" --- M
+    UC8 -- "Má»i/XÃ³a" --- M
 ```
 
-**UC6: Tạo Workspace**
-- **Tác nhân:** Admin Workspace.
-- **Luồng sự kiện:**
-  1. Người dùng nhấn "Tạo Workspace mới".
-  2. Nhập tên Workspace, loại hình và mô tả.
-  3. Hệ thống tạo bản ghi Workspace và mặc định gán người tạo là "Owner".
-  4. Workspace hiển thị trên danh sách bên trái.
+**UC6: Táº¡o Workspace**
+- **TÃ¡c nhÃ¢n:** Admin Workspace.
+- **Luá»“ng sá»± kiá»‡n:**
+  1. NgÆ°á»i dÃ¹ng nháº¥n "Táº¡o Workspace má»›i".
+  2. Nháº­p tÃªn Workspace, loáº¡i hÃ¬nh vÃ  mÃ´ táº£.
+  3. Há»‡ thá»‘ng táº¡o báº£n ghi Workspace vÃ  máº·c Ä‘á»‹nh gÃ¡n ngÆ°á»i táº¡o lÃ  "Owner".
+  4. Workspace hiá»ƒn thá»‹ trÃªn danh sÃ¡ch bÃªn trÃ¡i.
 
-**UC7: Xem/Sửa Workspace**
-- **Tác nhân:** Thành viên (Xem), Admin (Sửa).
-- **Luồng sự kiện:**
-  1. Người dùng chọn một Workspace từ danh sách.
-  2. Hệ thống hiển thị thông tin chung và danh sách các bảng bên trong.
-  3. Admin có thể sửa tên hoặc xóa Workspace (chỉ dành cho Owner).
+**UC7: Xem/Sá»­a Workspace**
+- **TÃ¡c nhÃ¢n:** ThÃ nh viÃªn (Xem), Admin (Sá»­a).
+- **Luá»“ng sá»± kiá»‡n:**
+  1. NgÆ°á»i dÃ¹ng chá»n má»™t Workspace tá»« danh sÃ¡ch.
+  2. Há»‡ thá»‘ng hiá»ƒn thá»‹ thÃ´ng tin chung vÃ  danh sÃ¡ch cÃ¡c báº£ng bÃªn trong.
+  3. Admin cÃ³ thá»ƒ sá»­a tÃªn hoáº·c xÃ³a Workspace (chá»‰ dÃ nh cho Owner).
 
-**UC8: Quản lý thành viên Workspace**
-- **Tác nhân:** Admin Workspace.
-- **Luồng sự kiện:**
-  1. Admin mở tab "Members" trong Workspace.
-  2. Nhấn "Invite" và nhập Email của thành viên muốn mời.
-  3. Hệ thống kiểm tra User hiện có và gửi thông báo mời.
-  4. Admin có thể thay đổi vai trò (Admin/Member) hoặc xóa thành viên khỏi WS.
+**UC8: Quáº£n lÃ½ thÃ nh viÃªn Workspace**
+- **TÃ¡c nhÃ¢n:** Admin Workspace.
+- **Luá»“ng sá»± kiá»‡n:**
+  1. Admin má»Ÿ tab "Members" trong Workspace.
+  2. Nháº¥n "Invite" vÃ  nháº­p Email cá»§a thÃ nh viÃªn muá»‘n má»i.
+  3. Há»‡ thá»‘ng kiá»ƒm tra User hiá»‡n cÃ³ vÃ  gá»­i thÃ´ng bÃ¡o má»i.
+  4. Admin cÃ³ thá»ƒ thay Ä‘á»•i vai trÃ² (Admin/Member) hoáº·c xÃ³a thÃ nh viÃªn khá»i WS.
 
-#### Nhóm 3: Quản lý Bảng (Board)
+#### NhÃ³m 3: Quáº£n lÃ½ Báº£ng (Board)
 
 ```mermaid
 graph TB
     subgraph "Board Management"
-        UC9(UC9: Tạo Board)
-        UC10(UC10: Danh sách Board)
-        UC11(UC11: Chỉnh sửa Board)
+        UC9(UC9: Táº¡o Board)
+        UC10(UC10: Danh sÃ¡ch Board)
+        UC11(UC11: Chá»‰nh sá»­a Board)
         UC12(UC12: Visibility)
-        UC13(UC13: Chuyển Workspace)
-        UC14(UC14: Quản lý thành viên)
+        UC13(UC13: Chuyá»ƒn Workspace)
+        UC14(UC14: Quáº£n lÃ½ thÃ nh viÃªn)
     end
     A((Admin Board))
     O((Owner Board))
@@ -668,65 +668,65 @@ graph TB
     UC11 --- C
 ```
 
-**UC9: Tạo Board**
-- **Tác nhân:** Owner/Admin Board.
-- **Luồng sự kiện:**
-  1. Người dùng nhấn "Create Board".
-  2. Nhập tên Board, chọn Background (Màu hoặc Ảnh từ thư viện Cloudinary).
-  3. Chọn Workspace để chứa Board (hoặc chọn No Workspace cho Board cá nhân).
-  4. Chọn quyền hiển thị (Private, Workspace, Public).
-  5. Hệ thống khởi tạo Board và 3 List mặc định (To Do, Doing, Done).
+**UC9: Táº¡o Board**
+- **TÃ¡c nhÃ¢n:** Owner/Admin Board.
+- **Luá»“ng sá»± kiá»‡n:**
+  1. NgÆ°á»i dÃ¹ng nháº¥n "Create Board".
+  2. Nháº­p tÃªn Board, chá»n Background (MÃ u hoáº·c áº¢nh tá»« thÆ° viá»‡n Cloudinary).
+  3. Chá»n Workspace Ä‘á»ƒ chá»©a Board (hoáº·c chá»n No Workspace cho Board cÃ¡ nhÃ¢n).
+  4. Chá»n quyá»n hiá»ƒn thá»‹ (Private, Workspace, Public).
+  5. Há»‡ thá»‘ng khá»Ÿi táº¡o Board vÃ  3 List máº·c Ä‘á»‹nh (To Do, Doing, Done).
 
-**UC10: Xem danh sách Board**
-- **Tác nhân:** Người dùng.
-- **Luồng sự kiện:**
-  1. Hệ thống tự động tải danh sách Board người dùng có quyền truy cập.
-  2. Phân loại theo: Board gần đây, Starred Boards, và Board theo từng Workspace.
+**UC10: Xem danh sÃ¡ch Board**
+- **TÃ¡c nhÃ¢n:** NgÆ°á»i dÃ¹ng.
+- **Luá»“ng sá»± kiá»‡n:**
+  1. Há»‡ thá»‘ng tá»± Ä‘á»™ng táº£i danh sÃ¡ch Board ngÆ°á»i dÃ¹ng cÃ³ quyá»n truy cáº­p.
+  2. PhÃ¢n loáº¡i theo: Board gáº§n Ä‘Ã¢y, Starred Boards, vÃ  Board theo tá»«ng Workspace.
 
-**UC11: Chỉnh sửa trang trí Board**
-- **Tác nhân:** Admin Board.
-- **Luồng sự kiện:**
-  1. Truy cập cài đặt Board.
-  2. Thay đổi tên Board hoặc chọn Background mới.
-  3. Hệ thống cập nhật giao diện ngay lập tức cho tất cả người dùng đang xem.
+**UC11: Chá»‰nh sá»­a trang trÃ­ Board**
+- **TÃ¡c nhÃ¢n:** Admin Board.
+- **Luá»“ng sá»± kiá»‡n:**
+  1. Truy cáº­p cÃ i Ä‘áº·t Board.
+  2. Thay Ä‘á»•i tÃªn Board hoáº·c chá»n Background má»›i.
+  3. Há»‡ thá»‘ng cáº­p nháº­t giao diá»‡n ngay láº­p tá»©c cho táº¥t cáº£ ngÆ°á»i dÃ¹ng Ä‘ang xem.
 
-**UC12: Thay đổi Visibility**
-- **Tác nhân:** Admin Board.
-- **Luồng sự kiện:**
-  1. Admin thay đổi trạng thái từ Private sang Workspace hoặc Public.
-  2. Hệ thống cập nhật quyền truy cập: Public cho phép mọi người xem, Workspace cho phép thành viên WS xem.
+**UC12: Thay Ä‘á»•i Visibility**
+- **TÃ¡c nhÃ¢n:** Admin Board.
+- **Luá»“ng sá»± kiá»‡n:**
+  1. Admin thay Ä‘á»•i tráº¡ng thÃ¡i tá»« Private sang Workspace hoáº·c Public.
+  2. Há»‡ thá»‘ng cáº­p nháº­t quyá»n truy cáº­p: Public cho phÃ©p má»i ngÆ°á»i xem, Workspace cho phÃ©p thÃ nh viÃªn WS xem.
 
-**UC13: Chuyển Board sang Workspace khác**
-- **Tác nhân:** Owner Board.
-- **Luồng sự kiện:**
-  1. Chọn chức năng "Move Board".
-  2. Chọn Workspace đích.
-  3. Hệ thống cập nhật WorkspaceUId của Board và thông báo cho các thành viên liên quan.
+**UC13: Chuyá»ƒn Board sang Workspace khÃ¡c**
+- **TÃ¡c nhÃ¢n:** Owner Board.
+- **Luá»“ng sá»± kiá»‡n:**
+  1. Chá»n chá»©c nÄƒng "Move Board".
+  2. Chá»n Workspace Ä‘Ã­ch.
+  3. Há»‡ thá»‘ng cáº­p nháº­t WorkspaceUId cá»§a Board vÃ  thÃ´ng bÃ¡o cho cÃ¡c thÃ nh viÃªn liÃªn quan.
 
-**UC14: Quản lý thành viên Board**
-- **Tác nhân:** Admin Board.
-- **Luồng sự kiện:**
-  1. Chọn "Members" trong Board.
-  2. Tìm kiếm thành viên theo tên hoặc email.
-  3. Thêm thành viên vào Board và gán vai trò.
-  4. Hệ thống tạo thông báo mời tham gia Board.
+**UC14: Quáº£n lÃ½ thÃ nh viÃªn Board**
+- **TÃ¡c nhÃ¢n:** Admin Board.
+- **Luá»“ng sá»± kiá»‡n:**
+  1. Chá»n "Members" trong Board.
+  2. TÃ¬m kiáº¿m thÃ nh viÃªn theo tÃªn hoáº·c email.
+  3. ThÃªm thÃ nh viÃªn vÃ o Board vÃ  gÃ¡n vai trÃ².
+  4. Há»‡ thá»‘ng táº¡o thÃ´ng bÃ¡o má»i tham gia Board.
 
-#### Nhóm 4: Quản lý List & Card
+#### NhÃ³m 4: Quáº£n lÃ½ List & Card
 
 ```mermaid
 graph TB
     subgraph "List & Card"
-        UC15(UC15: Quản lý List)
-        UC16(UC16: Tạo/Xem Card)
-        UC17(UC17: Chỉnh sửa Card)
-        UC18(UC18: Di chuyển Card)
-        UC19(UC19: Phân công)
-        UC20(UC20: Gắn nhãn)
+        UC15(UC15: Quáº£n lÃ½ List)
+        UC16(UC16: Táº¡o/Xem Card)
+        UC17(UC17: Chá»‰nh sá»­a Card)
+        UC18(UC18: Di chuyá»ƒn Card)
+        UC19(UC19: PhÃ¢n cÃ´ng)
+        UC20(UC20: Gáº¯n nhÃ£n)
         UC21(UC21: Checklist/Todo)
-        UC22(UC22: Bình luận)
-        UC23(UC23: Đính kèm)
+        UC22(UC22: BÃ¬nh luáº­n)
+        UC23(UC23: ÄÃ­nh kÃ¨m)
     end
-    M((Thành viên))
+    M((ThÃ nh viÃªn))
     C((Cloudinary))
     S((Server API))
     
@@ -743,78 +743,78 @@ graph TB
     UC23 --- C
 ```
 
-**UC15: Tạo / Sắp xếp List**
-- **Tác nhân:** Thành viên Board.
-- **Luồng sự kiện:**
-  1. Nhấn "Add List" ở cuối danh sách các cột.
-  2. Nhập tên List và Enter.
-  3. Người dùng có thể kéo thả List để thay đổi thứ tự ưu tiên các cột.
+**UC15: Táº¡o / Sáº¯p xáº¿p List**
+- **TÃ¡c nhÃ¢n:** ThÃ nh viÃªn Board.
+- **Luá»“ng sá»± kiá»‡n:**
+  1. Nháº¥n "Add List" á»Ÿ cuá»‘i danh sÃ¡ch cÃ¡c cá»™t.
+  2. Nháº­p tÃªn List vÃ  Enter.
+  3. NgÆ°á»i dÃ¹ng cÃ³ thá»ƒ kÃ©o tháº£ List Ä‘á»ƒ thay Ä‘á»•i thá»© tá»± Æ°u tiÃªn cÃ¡c cá»™t.
 
-**UC16: Tạo / Xem Card**
-- **Tác nhân:** Thành viên Board.
-- **Luồng sự kiện:**
-  1. Nhấn "Add Card" trong một List cụ thể.
-  2. Nhập tiêu đề nhanh.
-  3. Nhấn vào Card đã tạo để mở màn hình "Card Detail" hiển thị đầy đủ thông tin.
+**UC16: Táº¡o / Xem Card**
+- **TÃ¡c nhÃ¢n:** ThÃ nh viÃªn Board.
+- **Luá»“ng sá»± kiá»‡n:**
+  1. Nháº¥n "Add Card" trong má»™t List cá»¥ thá»ƒ.
+  2. Nháº­p tiÃªu Ä‘á» nhanh.
+  3. Nháº¥n vÃ o Card Ä‘Ã£ táº¡o Ä‘á»ƒ má»Ÿ mÃ n hÃ¬nh "Card Detail" hiá»ƒn thá»‹ Ä‘áº§y Ä‘á»§ thÃ´ng tin.
 
-**UC17: Chỉnh sửa Card**
-- **Tác nhân:** Thành viên Board.
-- **Luồng sự kiện:**
-  1. Tại màn hình Card Detail, người dùng sửa tiêu đề hoặc thêm mô tả (Markdown support).
-  2. Chọn "Due Date" để đặt ngày hoàn thành công việc.
-  3. Hệ thống tự động lưu các thay đổi nhỏ.
+**UC17: Chá»‰nh sá»­a Card**
+- **TÃ¡c nhÃ¢n:** ThÃ nh viÃªn Board.
+- **Luá»“ng sá»± kiá»‡n:**
+  1. Táº¡i mÃ n hÃ¬nh Card Detail, ngÆ°á»i dÃ¹ng sá»­a tiÃªu Ä‘á» hoáº·c thÃªm mÃ´ táº£ (Markdown support).
+  2. Chá»n "Due Date" Ä‘á»ƒ Ä‘áº·t ngÃ y hoÃ n thÃ nh cÃ´ng viá»‡c.
+  3. Há»‡ thá»‘ng tá»± Ä‘á»™ng lÆ°u cÃ¡c thay Ä‘á»•i nhá».
 
-**UC18: Kéo-thả Card (Di chuyển)**
-- **Tác nhân:** Thành viên Board.
-- **Luồng sự kiện:**
-  1. Người dùng kéo Card từ List A sang List B.
-  2. Hoặc kéo Card lên/xuống trong cùng List A để đổi vị trí.
-  3. Hệ thống lưu position mới và cập nhật ListId tương ứng trong DB.
+**UC18: KÃ©o-tháº£ Card (Di chuyá»ƒn)**
+- **TÃ¡c nhÃ¢n:** ThÃ nh viÃªn Board.
+- **Luá»“ng sá»± kiá»‡n:**
+  1. NgÆ°á»i dÃ¹ng kÃ©o Card tá»« List A sang List B.
+  2. Hoáº·c kÃ©o Card lÃªn/xuá»‘ng trong cÃ¹ng List A Ä‘á»ƒ Ä‘á»•i vá»‹ trÃ­.
+  3. Há»‡ thá»‘ng lÆ°u position má»›i vÃ  cáº­p nháº­t ListId tÆ°Æ¡ng á»©ng trong DB.
 
-**UC19: Phân công thành viên Card**
-- **Tác nhân:** Thành viên Board.
-- **Luồng sự kiện:**
-  1. Trong Card Detail, chọn mục "Members".
-  2. Tick chọn các thành viên trong Board tham gia thẻ này.
-  3. Hệ thống tạo bản ghi `CardMember` và gửi thông báo cho người được phân công.
+**UC19: PhÃ¢n cÃ´ng thÃ nh viÃªn Card**
+- **TÃ¡c nhÃ¢n:** ThÃ nh viÃªn Board.
+- **Luá»“ng sá»± kiá»‡n:**
+  1. Trong Card Detail, chá»n má»¥c "Members".
+  2. Tick chá»n cÃ¡c thÃ nh viÃªn trong Board tham gia tháº» nÃ y.
+  3. Há»‡ thá»‘ng táº¡o báº£n ghi `CardMember` vÃ  gá»­i thÃ´ng bÃ¡o cho ngÆ°á»i Ä‘Æ°á»£c phÃ¢n cÃ´ng.
 
-**UC20: Gắn nhãn Label**
-- **Tác nhân:** Thành viên Board.
-- **Luồng sự kiện:**
-  1. Chọn "Labels".
-  2. Chọn các nhãn màu có sẵn hoặc tạo nhãn mới với màu sắc tùy chỉnh.
-  3. Nhãn hiển thị ngay trên mặt trước của Card.
+**UC20: Gáº¯n nhÃ£n Label**
+- **TÃ¡c nhÃ¢n:** ThÃ nh viÃªn Board.
+- **Luá»“ng sá»± kiá»‡n:**
+  1. Chá»n "Labels".
+  2. Chá»n cÃ¡c nhÃ£n mÃ u cÃ³ sáºµn hoáº·c táº¡o nhÃ£n má»›i vá»›i mÃ u sáº¯c tÃ¹y chá»‰nh.
+  3. NhÃ£n hiá»ƒn thá»‹ ngay trÃªn máº·t trÆ°á»›c cá»§a Card.
 
-**UC21: Thêm Checklist/Todo**
-- **Tác nhân:** Thành viên Board.
-- **Luồng sự kiện:**
-  1. Chọn "Checklist", nhập tên checklist.
-  2. Thêm các đầu việc (Todo items).
-  3. Khi người dùng tick hoàn thành, hệ thống cập nhật thanh tiến độ (%) của Card.
+**UC21: ThÃªm Checklist/Todo**
+- **TÃ¡c nhÃ¢n:** ThÃ nh viÃªn Board.
+- **Luá»“ng sá»± kiá»‡n:**
+  1. Chá»n "Checklist", nháº­p tÃªn checklist.
+  2. ThÃªm cÃ¡c Ä‘áº§u viá»‡c (Todo items).
+  3. Khi ngÆ°á»i dÃ¹ng tick hoÃ n thÃ nh, há»‡ thá»‘ng cáº­p nháº­t thanh tiáº¿n Ä‘á»™ (%) cá»§a Card.
 
-**UC22: Bình luận (Comment)**
-- **Tác nhân:** Thành viên Board.
-- **Luồng sự kiện:**
-  1. Nhập nội dung vào ô Comment phía dưới Card Detail.
-  2. Hệ thống lưu bình luận kèm thời gian và thông tin người viết.
-  3. Các thành viên khác theo dõi thẻ này sẽ nhận được thông báo.
+**UC22: BÃ¬nh luáº­n (Comment)**
+- **TÃ¡c nhÃ¢n:** ThÃ nh viÃªn Board.
+- **Luá»“ng sá»± kiá»‡n:**
+  1. Nháº­p ná»™i dung vÃ o Ã´ Comment phÃ­a dÆ°á»›i Card Detail.
+  2. Há»‡ thá»‘ng lÆ°u bÃ¬nh luáº­n kÃ¨m thá»i gian vÃ  thÃ´ng tin ngÆ°á»i viáº¿t.
+  3. CÃ¡c thÃ nh viÃªn khÃ¡c theo dÃµi tháº» nÃ y sáº½ nháº­n Ä‘Æ°á»£c thÃ´ng bÃ¡o.
 
-**UC23: Đính kèm tệp**
-- **Tác nhân:** Thành viên Board.
-- **Luồng sự kiện:**
-  1. Chọn "Attachments" -> "Computer".
-  2. Chọn tệp tin.
-  3. Hệ thống upload lên Cloudinary, lưu URL và hiển thị danh sách tệp đính kèm trong Card.
+**UC23: ÄÃ­nh kÃ¨m tá»‡p**
+- **TÃ¡c nhÃ¢n:** ThÃ nh viÃªn Board.
+- **Luá»“ng sá»± kiá»‡n:**
+  1. Chá»n "Attachments" -> "Computer".
+  2. Chá»n tá»‡p tin.
+  3. Há»‡ thá»‘ng upload lÃªn Cloudinary, lÆ°u URL vÃ  hiá»ƒn thá»‹ danh sÃ¡ch tá»‡p Ä‘Ã­nh kÃ¨m trong Card.
 
-#### Nhóm 5: Thông báo & Hộp thư
+#### NhÃ³m 5: ThÃ´ng bÃ¡o & Há»™p thÆ°
 
 ```mermaid
 graph TB
     subgraph "Notification & Inbox"
-        UC24(UC24: Nhận thông báo)
+        UC24(UC24: Nháº­n thÃ´ng bÃ¡o)
         UC25(UC25: Xem Inbox Card)
     end
-    U((Người dùng))
+    U((NgÆ°á»i dÃ¹ng))
     S((Server API))
     
     S -- "Push" --> UC24
@@ -822,155 +822,155 @@ graph TB
     U --> UC25
 ```
 
-**UC24: Nhận thông báo**
-- **Tác nhân:** Người dùng.
-- **Luồng sự kiện:**
-  1. Khi có sự kiện: Được mời vào Board/WS, được phân công Card, hoặc có comment mới.
-  2. Hệ thống tạo bản ghi Notification.
-  3. Người dùng thấy chấm đỏ tại Icon thông báo và có thể xem danh sách.
+**UC24: Nháº­n thÃ´ng bÃ¡o**
+- **TÃ¡c nhÃ¢n:** NgÆ°á»i dÃ¹ng.
+- **Luá»“ng sá»± kiá»‡n:**
+  1. Khi cÃ³ sá»± kiá»‡n: ÄÆ°á»£c má»i vÃ o Board/WS, Ä‘Æ°á»£c phÃ¢n cÃ´ng Card, hoáº·c cÃ³ comment má»›i.
+  2. Há»‡ thá»‘ng táº¡o báº£n ghi Notification.
+  3. NgÆ°á»i dÃ¹ng tháº¥y cháº¥m Ä‘á» táº¡i Icon thÃ´ng bÃ¡o vÃ  cÃ³ thá»ƒ xem danh sÃ¡ch.
 
 **UC25: Xem Inbox Card**
-- **Tác nhân:** Người dùng.
-- **Luồng sự kiện:**
-  1. Người dùng truy cập tab "Inbox".
-  2. Hệ thống hiển thị tất cả các Card mà người dùng được phân công trên toàn bộ hệ thống.
-  3. Người dùng nhấn vào Card để nhảy trực tiếp đến Board chứa Card đó.
+- **TÃ¡c nhÃ¢n:** NgÆ°á»i dÃ¹ng.
+- **Luá»“ng sá»± kiá»‡n:**
+  1. NgÆ°á»i dÃ¹ng truy cáº­p tab "Inbox".
+  2. Há»‡ thá»‘ng hiá»ƒn thá»‹ táº¥t cáº£ cÃ¡c Card mÃ  ngÆ°á»i dÃ¹ng Ä‘Æ°á»£c phÃ¢n cÃ´ng trÃªn toÃ n bá»™ há»‡ thá»‘ng.
+  3. NgÆ°á»i dÃ¹ng nháº¥n vÃ o Card Ä‘á»ƒ nháº£y trá»±c tiáº¿p Ä‘áº¿n Board chá»©a Card Ä‘Ã³.
 
 ---
 
-## 1.5 Activity Diagram – Quy trình tạo và xử lý thẻ công việc
+## 1.5 Activity Diagram â€“ Quy trÃ¬nh táº¡o vÃ  xá»­ lÃ½ tháº» cÃ´ng viá»‡c
 
 ```mermaid
 flowchart TD
-    Start([Bắt đầu]) --> Login[Đăng nhập hệ thống]
-    Login --> Auth{Xác thực\nthành công?}
-    Auth -- Không --> Login
-    Auth -- Có --> ViewBoard[Mở Board]
-    ViewBoard --> SelectList[Chọn Danh sách]
-    SelectList --> CreateCard[Nhấn Tạo thẻ mới]
-    CreateCard --> EnterTitle[Nhập tiêu đề thẻ]
-    EnterTitle --> SaveCard[Lưu thẻ]
-    SaveCard --> CardDetail{Mở Chi tiết\nthẻ?}
-    CardDetail -- Không --> ViewBoard
-    CardDetail -- Có --> AddInfo[Thêm thông tin]
-    AddInfo --> ParallelActions{Thao tác}
-    ParallelActions --> SetDue[Đặt Due Date]
-    ParallelActions --> AssignMember[Phân công\nthành viên]
-    ParallelActions --> AddLabel[Gắn nhãn]
-    ParallelActions --> AddTodo[Thêm Checklist]
-    ParallelActions --> WriteComment[Viết bình luận]
-    SetDue --> Notify[Hệ thống gửi\nthông báo]
+    Start([Báº¯t Ä‘áº§u]) --> Login[ÄÄƒng nháº­p há»‡ thá»‘ng]
+    Login --> Auth{XÃ¡c thá»±c\nthÃ nh cÃ´ng?}
+    Auth -- KhÃ´ng --> Login
+    Auth -- CÃ³ --> ViewBoard[Má»Ÿ Board]
+    ViewBoard --> SelectList[Chá»n Danh sÃ¡ch]
+    SelectList --> CreateCard[Nháº¥n Táº¡o tháº» má»›i]
+    CreateCard --> EnterTitle[Nháº­p tiÃªu Ä‘á» tháº»]
+    EnterTitle --> SaveCard[LÆ°u tháº»]
+    SaveCard --> CardDetail{Má»Ÿ Chi tiáº¿t\ntháº»?}
+    CardDetail -- KhÃ´ng --> ViewBoard
+    CardDetail -- CÃ³ --> AddInfo[ThÃªm thÃ´ng tin]
+    AddInfo --> ParallelActions{Thao tÃ¡c}
+    ParallelActions --> SetDue[Äáº·t Due Date]
+    ParallelActions --> AssignMember[PhÃ¢n cÃ´ng\nthÃ nh viÃªn]
+    ParallelActions --> AddLabel[Gáº¯n nhÃ£n]
+    ParallelActions --> AddTodo[ThÃªm Checklist]
+    ParallelActions --> WriteComment[Viáº¿t bÃ¬nh luáº­n]
+    SetDue --> Notify[Há»‡ thá»‘ng gá»­i\nthÃ´ng bÃ¡o]
     AssignMember --> Notify
-    Notify --> UpdateStatus{Cập nhật\ntrạng thái?}
+    Notify --> UpdateStatus{Cáº­p nháº­t\ntráº¡ng thÃ¡i?}
     AddLabel --> UpdateStatus
     AddTodo --> UpdateStatus
     WriteComment --> UpdateStatus
-    UpdateStatus -- Drag & Drop --> MoveCard[Di chuyển thẻ\ngiữa các list]
-    MoveCard --> LogActivity[Ghi nhật ký\nhoạt động]
+    UpdateStatus -- Drag & Drop --> MoveCard[Di chuyá»ƒn tháº»\ngiá»¯a cÃ¡c list]
+    MoveCard --> LogActivity[Ghi nháº­t kÃ½\nhoáº¡t Ä‘á»™ng]
     UpdateStatus -- Xong --> LogActivity
-    LogActivity --> End([Kết thúc])
+    LogActivity --> End([Káº¿t thÃºc])
 ```
 
 ---
 
-## 1.6 Sơ đồ Trạng thái (State Diagram)
+## 1.6 SÆ¡ Ä‘á»“ Tráº¡ng thÃ¡i (State Diagram)
 
-### 1.6.1 Trạng thái Tài khoản Người dùng
-Mô tả vòng đời của một tài khoản từ khi đăng ký đến khi hoạt động hoặc bị khóa.
+### 1.6.1 Tráº¡ng thÃ¡i TÃ i khoáº£n NgÆ°á»i dÃ¹ng
+MÃ´ táº£ vÃ²ng Ä‘á»i cá»§a má»™t tÃ i khoáº£n tá»« khi Ä‘Äƒng kÃ½ Ä‘áº¿n khi hoáº¡t Ä‘á»™ng hoáº·c bá»‹ khÃ³a.
 
 ```mermaid
 stateDiagram-v2
-    [*] --> Unverified: Đăng ký thành công
-    Unverified --> Verified: Xác minh Email (OTP)
-    Unverified --> [*]: Quá hạn xác minh
-    Verified --> Active: Đăng nhập lần đầu
-    Active --> Locked: Nhập sai mật khẩu > 5 lần
-    Locked --> Active: Admin mở khóa hoặc Reset Pass
-    Active --> Deactivated: Người dùng tự đóng tài khoản
+    [*] --> Unverified: ÄÄƒng kÃ½ thÃ nh cÃ´ng
+    Unverified --> Verified: XÃ¡c minh Email (OTP)
+    Unverified --> [*]: QuÃ¡ háº¡n xÃ¡c minh
+    Verified --> Active: ÄÄƒng nháº­p láº§n Ä‘áº§u
+    Active --> Locked: Nháº­p sai máº­t kháº©u > 5 láº§n
+    Locked --> Active: Admin má»Ÿ khÃ³a hoáº·c Reset Pass
+    Active --> Deactivated: NgÆ°á»i dÃ¹ng tá»± Ä‘Ã³ng tÃ i khoáº£n
     Deactivated --> [*]
 ```
 
-### 1.6.2 Trạng thái Thẻ công việc (Card)
-Mô tả sự luân chuyển của một thẻ công việc thông qua các trạng thái xử lý.
+### 1.6.2 Tráº¡ng thÃ¡i Tháº» cÃ´ng viá»‡c (Card)
+MÃ´ táº£ sá»± luÃ¢n chuyá»ƒn cá»§a má»™t tháº» cÃ´ng viá»‡c thÃ´ng qua cÃ¡c tráº¡ng thÃ¡i xá»­ lÃ½.
 
 ```mermaid
 stateDiagram-v2
     direction LR
-    [*] --> Created: Tạo thẻ mới
-    Created --> ToDo: Thêm vào danh sách chờ
-    ToDo --> InProgress: Bắt đầu thực hiện
-    InProgress --> InReview: Gửi yêu cầu kiểm tra
-    InReview --> Done: Admin phê duyệt
-    InReview --> ToDo: Cần sửa đổi
-    Done --> Archived: Lưu trữ (sau khi hoàn thành)
-    Archived --> ToDo: Khôi phục
-    Archived --> [*]: Xóa vĩnh viễn
+    [*] --> Created: Táº¡o tháº» má»›i
+    Created --> ToDo: ThÃªm vÃ o danh sÃ¡ch chá»
+    ToDo --> InProgress: Báº¯t Ä‘áº§u thá»±c hiá»‡n
+    InProgress --> InReview: Gá»­i yÃªu cáº§u kiá»ƒm tra
+    InReview --> Done: Admin phÃª duyá»‡t
+    InReview --> ToDo: Cáº§n sá»­a Ä‘á»•i
+    Done --> Archived: LÆ°u trá»¯ (sau khi hoÃ n thÃ nh)
+    Archived --> ToDo: KhÃ´i phá»¥c
+    Archived --> [*]: XÃ³a vÄ©nh viá»…n
 ```
 
 ---
 
-## 1.7 Sơ đồ BPMN (Business Process Model and Notation)
+## 1.7 SÆ¡ Ä‘á»“ BPMN (Business Process Model and Notation)
 
-### 1.7.1 Quy trình xử lý và hoàn thành thẻ công việc
-Dưới đây là sơ đồ quy trình nghiệp vụ phối hợp giữa các vai trò trong một Board.
+### 1.7.1 Quy trÃ¬nh xá»­ lÃ½ vÃ  hoÃ n thÃ nh tháº» cÃ´ng viá»‡c
+DÆ°á»›i Ä‘Ã¢y lÃ  sÆ¡ Ä‘á»“ quy trÃ¬nh nghiá»‡p vá»¥ phá»‘i há»£p giá»¯a cÃ¡c vai trÃ² trong má»™t Board.
 
 ```mermaid
 graph TB
-    subgraph Member["Thành viên thực hiện (Member)"]
+    subgraph Member["ThÃ nh viÃªn thá»±c hiá»‡n (Member)"]
         direction TB
-        M_Start([Bắt đầu]) --> M_Create[Nhận việc / Tạo Card]
-        M_Create --> M_Work[Thực hiện công việc]
-        M_Work --> M_Update[Cập nhật Checklist/Tệp đính kèm]
-        M_Update --> M_Submit[Chuyển trạng thái sang Review]
+        M_Start([Báº¯t Ä‘áº§u]) --> M_Create[Nháº­n viá»‡c / Táº¡o Card]
+        M_Create --> M_Work[Thá»±c hiá»‡n cÃ´ng viá»‡c]
+        M_Work --> M_Update[Cáº­p nháº­t Checklist/Tá»‡p Ä‘Ã­nh kÃ¨m]
+        M_Update --> M_Submit[Chuyá»ƒn tráº¡ng thÃ¡i sang Review]
     end
 
-    subgraph Admin["Quản lý / Người duyệt (Admin/Owner)"]
+    subgraph Admin["Quáº£n lÃ½ / NgÆ°á»i duyá»‡t (Admin/Owner)"]
         direction TB
-        M_Submit --> A_Review{Kiểm tra kết quả}
-        A_Review -- "Không đạt" --> A_Comment[Viết bình luận phản hồi]
+        M_Submit --> A_Review{Kiá»ƒm tra káº¿t quáº£}
+        A_Review -- "KhÃ´ng Ä‘áº¡t" --> A_Comment[Viáº¿t bÃ¬nh luáº­n pháº£n há»“i]
         A_Comment --> M_Work
-        A_Review -- "Đạt" --> A_Close[Chuyển thẻ sang Done]
+        A_Review -- "Äáº¡t" --> A_Close[Chuyá»ƒn tháº» sang Done]
     end
 
-    subgraph System["Hệ thống (TrellOn)"]
+    subgraph System["Há»‡ thá»‘ng (Kabo)"]
         direction TB
-        A_Close --> S_Noti[Gửi thông báo hoàn thành]
-        S_Noti --> S_Log[Ghi nhật ký hoạt động Activity]
-        S_Log --> S_End([Kết thúc quy trình])
+        A_Close --> S_Noti[Gá»­i thÃ´ng bÃ¡o hoÃ n thÃ nh]
+        S_Noti --> S_Log[Ghi nháº­t kÃ½ hoáº¡t Ä‘á»™ng Activity]
+        S_Log --> S_End([Káº¿t thÃºc quy trÃ¬nh])
     end
 ```
 
-### 1.7.2 Quy trình mời và phân quyền thành viên
-Quy trình nghiệp vụ khi một Admin mời người dùng mới vào hệ thống làm việc.
+### 1.7.2 Quy trÃ¬nh má»i vÃ  phÃ¢n quyá»n thÃ nh viÃªn
+Quy trÃ¬nh nghiá»‡p vá»¥ khi má»™t Admin má»i ngÆ°á»i dÃ¹ng má»›i vÃ o há»‡ thá»‘ng lÃ m viá»‡c.
 
 ```mermaid
 graph LR
-    subgraph "Admin (Trình gửi)"
-        Start_I([Bắt đầu]) --> Invite[Gửi lời mời qua Email]
+    subgraph "Admin (TrÃ¬nh gá»­i)"
+        Start_I([Báº¯t Ä‘áº§u]) --> Invite[Gá»­i lá»i má»i qua Email]
     end
 
-    subgraph "System (Xử lý)"
-        Invite --> Check_U{User đã có<br/>tài khoản?}
-        Check_U -- "Chưa" --> Send_E[Gửi link đăng ký + mời]
-        Check_U -- "Rồi" --> Add_WS[Gán vào danh sách chờ]
-        Send_E --> Reg[Người dùng đăng ký]
+    subgraph "System (Xá»­ lÃ½)"
+        Invite --> Check_U{User Ä‘Ã£ cÃ³<br/>tÃ i khoáº£n?}
+        Check_U -- "ChÆ°a" --> Send_E[Gá»­i link Ä‘Äƒng kÃ½ + má»i]
+        Check_U -- "Rá»“i" --> Add_WS[GÃ¡n vÃ o danh sÃ¡ch chá»]
+        Send_E --> Reg[NgÆ°á»i dÃ¹ng Ä‘Äƒng kÃ½]
         Reg --> Add_WS
     end
 
-    subgraph "Member (Trình nhận)"
-        Add_WS --> Accept[Chấp nhận lời mời]
-        Accept --> Access[Truy cập Workspace/Board]
-        Access --> End_I([Kết thúc])
+    subgraph "Member (TrÃ¬nh nháº­n)"
+        Add_WS --> Accept[Cháº¥p nháº­n lá»i má»i]
+        Accept --> Access[Truy cáº­p Workspace/Board]
+        Access --> End_I([Káº¿t thÃºc])
     end
 ```
 
 ---
 
-# PHẦN 2: THIẾT KẾ HỆ THỐNG
+# PHáº¦N 2: THIáº¾T Káº¾ Há»† THá»NG
 
 ---
 
-## 2.1 Class Diagram (Biểu Đồ Lớp)
+## 2.1 Class Diagram (Biá»ƒu Äá»“ Lá»›p)
 
 ```mermaid
 classDiagram
@@ -1140,98 +1140,98 @@ classDiagram
 
 ---
 
-### 2.1.1 Bảng Mô Tả Thực Thể
+### 2.1.1 Báº£ng MÃ´ Táº£ Thá»±c Thá»ƒ
 
-| Thực thể | Thuộc tính chính | Khóa chính | Khóa ngoại | Mục đích |
+| Thá»±c thá»ƒ | Thuá»™c tÃ­nh chÃ­nh | KhÃ³a chÃ­nh | KhÃ³a ngoáº¡i | Má»¥c Ä‘Ã­ch |
 |---------|----------------|-----------|-----------|---------|
-| **User** | UserName, Email, PasswordHash, AvatarUrl, IsTwoFactorEnabled | UserUId | RoleId | Lưu thông tin tài khoản và xác thực |
-| **Workspace** | Name, Description, Status | WorkspaceUId | OwnerUId (→User) | Không gian làm việc nhóm |
-| **WorkspaceMembers** | Role, JoinedAt | WorkspaceMemberUId | WorkspaceUId, UserUId | Quản lý thành viên workspace với phân quyền |
-| **Board** | BoardName, IsPersonal, Visibility, BackgroundUrl | BoardUId | UserUId (→User), WorkspaceUId (→Workspace) | Bảng kanban, cốt lõi của hệ thống |
-| **BoardMember** | BoardRole, JoinedAt | BoardMemberUId | BoardUId, UserUId | Phân quyền thành viên trong board |
-| **List** | ListName, Position, Status | ListUId | BoardUId (→Board) | Cột trong bảng kanban (To Do, In Progress...) |
-| **Card** | Title, Description, DueDate, Position, Status | CardUId | ListUId (→List), UserUId | Đơn vị công việc cụ thể |
-| **CardMember** | AssignedAt | CardMemberUId | CardUId, UserUId | Phân công người thực hiện thẻ |
-| **CardLabel** | LabelName, Color | CardLabelUId | CardUId (→Card) | Nhãn màu phân loại thẻ |
-| **Comment** | Content, CreatedAt | CommentUId | CardUId, UserUId | Thảo luận trên thẻ |
-| **TodoItem** | Content, IsCompleted | TodoItemUId | CardUId (→Card) | Checklist công việc nhỏ trong thẻ |
-| **FileUrl** | Url, FileName | FileId | CardUId (→Card) | Tệp đính kèm trên thẻ (lưu qua Cloudinary) |
-| **Notification** | Type, Title, Message, Read | NotiId | RecipientId, ActorId (→User) | Thông báo sự kiện trong hệ thống |
-| **Activity** | Description, CreatedAt | ActivityId | UserUId (→User) | Nhật ký hoạt động người dùng |
-| **UserRecentBoard** | LastVisitedAt | UserRecentBoardUId | UserUId, BoardUId | Lịch sử truy cập board gần đây (tối đa 4) |
-| **UserInboxCard** | — | InboxCardUId | UserUId, CardUId | Hộp thư: thẻ được phân công cho user |
+| **User** | UserName, Email, PasswordHash, AvatarUrl, IsTwoFactorEnabled | UserUId | RoleId | LÆ°u thÃ´ng tin tÃ i khoáº£n vÃ  xÃ¡c thá»±c |
+| **Workspace** | Name, Description, Status | WorkspaceUId | OwnerUId (â†’User) | KhÃ´ng gian lÃ m viá»‡c nhÃ³m |
+| **WorkspaceMembers** | Role, JoinedAt | WorkspaceMemberUId | WorkspaceUId, UserUId | Quáº£n lÃ½ thÃ nh viÃªn workspace vá»›i phÃ¢n quyá»n |
+| **Board** | BoardName, IsPersonal, Visibility, BackgroundUrl | BoardUId | UserUId (â†’User), WorkspaceUId (â†’Workspace) | Báº£ng kanban, cá»‘t lÃµi cá»§a há»‡ thá»‘ng |
+| **BoardMember** | BoardRole, JoinedAt | BoardMemberUId | BoardUId, UserUId | PhÃ¢n quyá»n thÃ nh viÃªn trong board |
+| **List** | ListName, Position, Status | ListUId | BoardUId (â†’Board) | Cá»™t trong báº£ng kanban (To Do, In Progress...) |
+| **Card** | Title, Description, DueDate, Position, Status | CardUId | ListUId (â†’List), UserUId | ÄÆ¡n vá»‹ cÃ´ng viá»‡c cá»¥ thá»ƒ |
+| **CardMember** | AssignedAt | CardMemberUId | CardUId, UserUId | PhÃ¢n cÃ´ng ngÆ°á»i thá»±c hiá»‡n tháº» |
+| **CardLabel** | LabelName, Color | CardLabelUId | CardUId (â†’Card) | NhÃ£n mÃ u phÃ¢n loáº¡i tháº» |
+| **Comment** | Content, CreatedAt | CommentUId | CardUId, UserUId | Tháº£o luáº­n trÃªn tháº» |
+| **TodoItem** | Content, IsCompleted | TodoItemUId | CardUId (â†’Card) | Checklist cÃ´ng viá»‡c nhá» trong tháº» |
+| **FileUrl** | Url, FileName | FileId | CardUId (â†’Card) | Tá»‡p Ä‘Ã­nh kÃ¨m trÃªn tháº» (lÆ°u qua Cloudinary) |
+| **Notification** | Type, Title, Message, Read | NotiId | RecipientId, ActorId (â†’User) | ThÃ´ng bÃ¡o sá»± kiá»‡n trong há»‡ thá»‘ng |
+| **Activity** | Description, CreatedAt | ActivityId | UserUId (â†’User) | Nháº­t kÃ½ hoáº¡t Ä‘á»™ng ngÆ°á»i dÃ¹ng |
+| **UserRecentBoard** | LastVisitedAt | UserRecentBoardUId | UserUId, BoardUId | Lá»‹ch sá»­ truy cáº­p board gáº§n Ä‘Ã¢y (tá»‘i Ä‘a 4) |
+| **UserInboxCard** | â€” | InboxCardUId | UserUId, CardUId | Há»™p thÆ°: tháº» Ä‘Æ°á»£c phÃ¢n cÃ´ng cho user |
 
 ---
 
 ## 2.2 Sequence Diagram
 
-### 2.2.1 Đăng nhập và lấy danh sách Board
+### 2.2.1 ÄÄƒng nháº­p vÃ  láº¥y danh sÃ¡ch Board
 
 ```mermaid
 sequenceDiagram
-    actor U as Người dùng
+    actor U as NgÆ°á»i dÃ¹ng
     participant App as Flutter App
     participant API as ASP.NET Core API
     participant DB as SQL Server
     participant Cache as Local Storage
 
-    U->>App: Nhập email + mật khẩu
+    U->>App: Nháº­p email + máº­t kháº©u
     App->>API: POST /v1/api/auth/login
     API->>DB: SELECT User WHERE Email = ?
     DB-->>API: User record
     API->>API: Verify PasswordHash (BCrypt)
-    alt 2FA bật
-        API-->>App: Yêu cầu OTP
-        App->>U: Hiển thị màn hình OTP
-        U->>App: Nhập OTP
+    alt 2FA báº­t
+        API-->>App: YÃªu cáº§u OTP
+        App->>U: Hiá»ƒn thá»‹ mÃ n hÃ¬nh OTP
+        U->>App: Nháº­p OTP
         App->>API: POST /v1/api/auth/verify-2fa
     end
-    API->>API: Tạo JWT AccessToken
+    API->>API: Táº¡o JWT AccessToken
     API-->>App: { accessToken, refreshToken }
-    App->>Cache: Lưu token + userId
+    App->>Cache: LÆ°u token + userId
     App->>API: GET /v1/api/board?userUId=...
     API->>DB: SELECT Boards (personal + workspace)
     DB-->>API: Board list + recent boards
     API-->>App: JSON Board list
-    App->>U: Hiển thị trang chủ
+    App->>U: Hiá»ƒn thá»‹ trang chá»§
 ```
 
 ---
 
-### 2.2.2 Kéo-thả thẻ giữa các danh sách (Optimistic Update)
+### 2.2.2 KÃ©o-tháº£ tháº» giá»¯a cÃ¡c danh sÃ¡ch (Optimistic Update)
 
 ```mermaid
 sequenceDiagram
-    actor U as Người dùng
+    actor U as NgÆ°á»i dÃ¹ng
     participant App as Flutter App
     participant Cubit as BoardDetailCubit
     participant API as ASP.NET Core API
     participant DB as SQL Server
 
-    U->>App: Kéo Card từ List A sang List B (vị trí X)
+    U->>App: KÃ©o Card tá»« List A sang List B (vá»‹ trÃ­ X)
     App->>Cubit: moveCard(card, sourceListId, targetListId, insertIndex)
-    Cubit->>Cubit: Lưu _previousLists (rollback snapshot)
-    Cubit->>Cubit: Optimistic update: cập nhật UI ngay lập tức
-    Cubit-->>App: emit BoardDetailLoaded (lists mới)
-    App->>U: UI ngay lập tức phản hồi
+    Cubit->>Cubit: LÆ°u _previousLists (rollback snapshot)
+    Cubit->>Cubit: Optimistic update: cáº­p nháº­t UI ngay láº­p tá»©c
+    Cubit-->>App: emit BoardDetailLoaded (lists má»›i)
+    App->>U: UI ngay láº­p tá»©c pháº£n há»“i
 
     Cubit->>API: PUT /v1/api/cards/{cardId}/move?newListId=...
     API->>DB: UPDATE Card SET ListUId = ?, Position = ?
     DB-->>API: Success
 
-    alt Thành công
+    alt ThÃ nh cÃ´ng
         API-->>Cubit: 200 OK
-    else Thất bại
+    else Tháº¥t báº¡i
         API-->>Cubit: 4xx/5xx Error
-        Cubit->>Cubit: Rollback về _previousLists
-        Cubit-->>App: emit BoardDetailLoaded (lists cũ + transientError)
-        App->>U: Hiển thị SnackBar lỗi
+        Cubit->>Cubit: Rollback vá» _previousLists
+        Cubit-->>App: emit BoardDetailLoaded (lists cÅ© + transientError)
+        App->>U: Hiá»ƒn thá»‹ SnackBar lá»—i
     end
 ```
 
 ---
 
-### 2.2.3 Chuyển Board sang Workspace khác
+### 2.2.3 Chuyá»ƒn Board sang Workspace khÃ¡c
 
 ```mermaid
 sequenceDiagram
@@ -1242,142 +1242,142 @@ sequenceDiagram
     participant API as ASP.NET Core API
     participant DB as SQL Server
 
-    OW->>App: Mở Board Settings → Chọn "Không gian làm việc"
-    App->>Sheet: Hiển thị TransferWorkspaceSheet
+    OW->>App: Má»Ÿ Board Settings â†’ Chá»n "KhÃ´ng gian lÃ m viá»‡c"
+    App->>Sheet: Hiá»ƒn thá»‹ TransferWorkspaceSheet
     Sheet->>API: GET /v1/api/workspace?userUId=...
     API->>DB: SELECT Workspaces WHERE UserUId = ?
-    DB-->>API: Danh sách workspace
-    API-->>Sheet: Workspace list (có dấu tích WS hiện tại)
-    OW->>Sheet: Chọn Workspace đích / Không gian cá nhân
-    Sheet->>Sheet: Hiển thị Dialog xác nhận
-    OW->>Sheet: Xác nhận chuyển
+    DB-->>API: Danh sÃ¡ch workspace
+    API-->>Sheet: Workspace list (cÃ³ dáº¥u tÃ­ch WS hiá»‡n táº¡i)
+    OW->>Sheet: Chá»n Workspace Ä‘Ã­ch / KhÃ´ng gian cÃ¡ nhÃ¢n
+    Sheet->>Sheet: Hiá»ƒn thá»‹ Dialog xÃ¡c nháº­n
+    OW->>Sheet: XÃ¡c nháº­n chuyá»ƒn
     Sheet->>Cubit: transferBoardWorkspace(newWorkspaceId, name)
     Cubit->>API: POST /v1/api/boardMember/{boardId}/transfer-workspace?newWorkspaceUId=...
-    API->>API: Kiểm tra requester là Owner
-    alt Chuyển về Personal
+    API->>API: Kiá»ƒm tra requester lÃ  Owner
+    alt Chuyá»ƒn vá» Personal
         API->>DB: UPDATE Board SET WorkspaceUId = NULL, IsPersonal = true
-    else Chuyển sang Workspace mới
+    else Chuyá»ƒn sang Workspace má»›i
         API->>DB: UPDATE Board SET WorkspaceUId = ?, IsPersonal = false
-        API->>DB: INSERT WorkspaceMembers (các thành viên board chưa có)
+        API->>DB: INSERT WorkspaceMembers (cÃ¡c thÃ nh viÃªn board chÆ°a cÃ³)
     end
     DB-->>API: Success
     API-->>Cubit: 200 OK { message }
-    Cubit->>Cubit: emit state mới với workspaceId mới
-    Cubit-->>App: SnackBar " Đã chuyển bảng thành công"
+    Cubit->>Cubit: emit state má»›i vá»›i workspaceId má»›i
+    Cubit-->>App: SnackBar " ÄÃ£ chuyá»ƒn báº£ng thÃ nh cÃ´ng"
 ```
 
 ---
 
-### 2.2.4 Phân công thành viên thẻ và gửi thông báo
+### 2.2.4 PhÃ¢n cÃ´ng thÃ nh viÃªn tháº» vÃ  gá»­i thÃ´ng bÃ¡o
 
 ```mermaid
 sequenceDiagram
-    actor A as Thành viên Board
+    actor A as ThÃ nh viÃªn Board
     participant App as Flutter App
     participant API as ASP.NET Core API
     participant DB as SQL Server
 
-    A->>App: Mở Card → Tab Thành viên
+    A->>App: Má»Ÿ Card â†’ Tab ThÃ nh viÃªn
     App->>API: GET /v1/api/boardMember/{boardId}/members
     API->>DB: SELECT BoardMembers JOIN Users
-    DB-->>API: Danh sách thành viên board
+    DB-->>API: Danh sÃ¡ch thÃ nh viÃªn board
     API-->>App: Member list
 
-    A->>App: Chọn thêm thành viên vào card
+    A->>App: Chá»n thÃªm thÃ nh viÃªn vÃ o card
     App->>API: POST /v1/api/cardMember/{cardId}/add?userUId=...
     API->>DB: INSERT CardMember
-    API->>DB: INSERT UserInboxCard (nếu chưa có)
+    API->>DB: INSERT UserInboxCard (náº¿u chÆ°a cÃ³)
     API->>DB: INSERT Notification (type=CardAssigned, recipientId=userUId)
     DB-->>API: Success
     API-->>App: 200 OK
-    App->>A: UI cập nhật danh sách thành viên card
+    App->>A: UI cáº­p nháº­t danh sÃ¡ch thÃ nh viÃªn card
 
-    Note over DB,App: Thành viên được phân công nhận thông báo<br/>khi mở app lần tiếp theo
+    Note over DB,App: ThÃ nh viÃªn Ä‘Æ°á»£c phÃ¢n cÃ´ng nháº­n thÃ´ng bÃ¡o<br/>khi má»Ÿ app láº§n tiáº¿p theo
 ```
 
 ---
 
-## 2.3 Activity Diagram (Mức Thiết Kế)
+## 2.3 Activity Diagram (Má»©c Thiáº¿t Káº¿)
 
-### 2.3.1 Thuật toán xử lý Đăng nhập + 2FA
+### 2.3.1 Thuáº­t toÃ¡n xá»­ lÃ½ ÄÄƒng nháº­p + 2FA
 
 ```mermaid
 flowchart TD
-    S([Start]) --> Input[Nhận email + password]
-    Input --> FindUser{Tìm User\ntrong DB?}
-    FindUser -- Không tìm thấy --> ErrUser[Trả về 401\nUser không tồn tại]
+    S([Start]) --> Input[Nháº­n email + password]
+    Input --> FindUser{TÃ¬m User\ntrong DB?}
+    FindUser -- KhÃ´ng tÃ¬m tháº¥y --> ErrUser[Tráº£ vá» 401\nUser khÃ´ng tá»“n táº¡i]
     ErrUser --> End1([End])
 
-    FindUser -- Tìm thấy --> CheckPwd{BCrypt.Verify\n(password, hash)?}
-    CheckPwd -- Sai --> ErrPwd[Trả về 401\nSai mật khẩu]
+    FindUser -- TÃ¬m tháº¥y --> CheckPwd{BCrypt.Verify\n(password, hash)?}
+    CheckPwd -- Sai --> ErrPwd[Tráº£ vá» 401\nSai máº­t kháº©u]
     ErrPwd --> End2([End])
 
-    CheckPwd -- Đúng --> CheckEmail{IsEmailVerified?}
-    CheckEmail -- Không --> ErrEmail[Trả về 403\nEmail chưa xác minh]
+    CheckPwd -- ÄÃºng --> CheckEmail{IsEmailVerified?}
+    CheckEmail -- KhÃ´ng --> ErrEmail[Tráº£ vá» 403\nEmail chÆ°a xÃ¡c minh]
     ErrEmail --> End3([End])
 
-    CheckEmail -- Có --> Check2FA{IsTwoFactorEnabled?}
-    Check2FA -- Không --> GenToken[Tạo JWT AccessToken\n+ RefreshToken]
-    Check2FA -- Có --> Return2FA[Trả về 200\n+ flag require2FA]
-    Return2FA --> Wait[Client gửi OTP code]
+    CheckEmail -- CÃ³ --> Check2FA{IsTwoFactorEnabled?}
+    Check2FA -- KhÃ´ng --> GenToken[Táº¡o JWT AccessToken\n+ RefreshToken]
+    Check2FA -- CÃ³ --> Return2FA[Tráº£ vá» 200\n+ flag require2FA]
+    Return2FA --> Wait[Client gá»­i OTP code]
     Wait --> VerifyOTP{TOTP.Verify\n(secret, code)?}
-    VerifyOTP -- Sai --> CheckBackup{Backup Code\nhợp lệ?}
-    CheckBackup -- Không --> ErrOTP[Trả về 401\nSai OTP]
+    VerifyOTP -- Sai --> CheckBackup{Backup Code\nhá»£p lá»‡?}
+    CheckBackup -- KhÃ´ng --> ErrOTP[Tráº£ vá» 401\nSai OTP]
     ErrOTP --> End4([End])
-    CheckBackup -- Có --> GenToken
-    VerifyOTP -- Đúng --> GenToken
+    CheckBackup -- CÃ³ --> GenToken
+    VerifyOTP -- ÄÃºng --> GenToken
 
-    GenToken --> SaveSession[Lưu UserSession\nvào DB]
+    GenToken --> SaveSession[LÆ°u UserSession\nvÃ o DB]
     SaveSession --> LogActivity[Ghi Activity\n'User signed in']
-    LogActivity --> Response[Trả về 200\n{ accessToken, refreshToken }]
+    LogActivity --> Response[Tráº£ vá» 200\n{ accessToken, refreshToken }]
     Response --> End5([End])
 ```
 
 ---
 
-### 2.3.2 Thuật toán xử lý di chuyển thẻ (Move Card)
+### 2.3.2 Thuáº­t toÃ¡n xá»­ lÃ½ di chuyá»ƒn tháº» (Move Card)
 
 ```mermaid
 flowchart TD
-    S([Start]) --> CheckAuth{User là thành viên\nBoard?}
-    CheckAuth -- Không --> Err403[Trả về 403]
+    S([Start]) --> CheckAuth{User lÃ  thÃ nh viÃªn\nBoard?}
+    CheckAuth -- KhÃ´ng --> Err403[Tráº£ vá» 403]
     Err403 --> End1([End])
 
-    CheckAuth -- Có --> GetCard{Tìm Card\ntrong DB?}
-    GetCard -- Không --> Err404[Trả về 404]
+    CheckAuth -- CÃ³ --> GetCard{TÃ¬m Card\ntrong DB?}
+    GetCard -- KhÃ´ng --> Err404[Tráº£ vá» 404]
     Err404 --> End2([End])
 
-    GetCard -- Có --> GetTargetList{Tìm List đích\ntrong cùng Board?}
-    GetTargetList -- Không --> Err400[Trả về 400\nList không hợp lệ]
+    GetCard -- CÃ³ --> GetTargetList{TÃ¬m List Ä‘Ã­ch\ntrong cÃ¹ng Board?}
+    GetTargetList -- KhÃ´ng --> Err400[Tráº£ vá» 400\nList khÃ´ng há»£p lá»‡]
     Err400 --> End3([End])
 
-    GetTargetList -- Có --> UpdateCard[UPDATE Card:\nListUId = target\nPosition = insertIndex]
-    UpdateCard --> ShiftPositions[Cập nhật Position\ncác card còn lại trong\ncả 2 list]
+    GetTargetList -- CÃ³ --> UpdateCard[UPDATE Card:\nListUId = target\nPosition = insertIndex]
+    UpdateCard --> ShiftPositions[Cáº­p nháº­t Position\ncÃ¡c card cÃ²n láº¡i trong\ncáº£ 2 list]
     ShiftPositions --> SaveDB[SaveChangesAsync]
     SaveDB --> LogActivity[Ghi Activity]
-    LogActivity --> Response[Trả về 200 OK]
+    LogActivity --> Response[Tráº£ vá» 200 OK]
     Response --> End4([End])
 ```
 
 ---
 
-### 2.3.3 Thuật toán lưu Board gần đây (Recent Board)
+### 2.3.3 Thuáº­t toÃ¡n lÆ°u Board gáº§n Ä‘Ã¢y (Recent Board)
 
 ```mermaid
 flowchart TD
-    S([Start: User mở Board]) --> LoadBoard[loadBoard được gọi]
+    S([Start: User má»Ÿ Board]) --> LoadBoard[loadBoard Ä‘Æ°á»£c gá»i]
     LoadBoard --> SaveRecent[saveRecentBoardUseCase\n(userUId, boardId)]
 
-    SaveRecent --> CheckExist{UserRecentBoard\ntồn tại?}
-    CheckExist -- Có --> UpdateTime[UPDATE LastVisitedAt = Now]
-    CheckExist -- Không --> InsertNew[INSERT UserRecentBoard mới]
+    SaveRecent --> CheckExist{UserRecentBoard\ntá»“n táº¡i?}
+    CheckExist -- CÃ³ --> UpdateTime[UPDATE LastVisitedAt = Now]
+    CheckExist -- KhÃ´ng --> InsertNew[INSERT UserRecentBoard má»›i]
 
-    UpdateTime --> CountAll[Đếm tổng record\ncủa userUId]
+    UpdateTime --> CountAll[Äáº¿m tá»•ng record\ncá»§a userUId]
     InsertNew --> CountAll
 
     CountAll --> CheckLimit{Count > 4?}
-    CheckLimit -- Không --> SaveDB[SaveChangesAsync]
-    CheckLimit -- Có --> DeleteOld[Xóa các record cũ\n vượt quá 4 mục\norderd by LastVisitedAt DESC]
+    CheckLimit -- KhÃ´ng --> SaveDB[SaveChangesAsync]
+    CheckLimit -- CÃ³ --> DeleteOld[XÃ³a cÃ¡c record cÅ©\n vÆ°á»£t quÃ¡ 4 má»¥c\norderd by LastVisitedAt DESC]
     DeleteOld --> SaveDB
 
     SaveDB --> End([End])
@@ -1385,5 +1385,5 @@ flowchart TD
 
 ---
 
-*Tài liệu được tạo tự động dựa trên phân tích mã nguồn thực tế của dự án TrellOn.*
-*Cập nhật lần cuối: 2026-05-10*
+*TÃ i liá»‡u Ä‘Æ°á»£c táº¡o tá»± Ä‘á»™ng dá»±a trÃªn phÃ¢n tÃ­ch mÃ£ nguá»“n thá»±c táº¿ cá»§a dá»± Ã¡n Kabo.*
+*Cáº­p nháº­t láº§n cuá»‘i: 2026-05-10*

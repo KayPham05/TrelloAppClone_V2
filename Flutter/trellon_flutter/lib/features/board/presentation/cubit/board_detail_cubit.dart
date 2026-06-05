@@ -32,7 +32,7 @@ class BoardDetailCubit extends Cubit<BoardDetailState> {
   // ─── Load Board (Real API) ─────────────────────────────────────────────────
 
   /// Loads lists and cards from backend in parallel, then groups cards into lists.
-  Future<void> loadBoard(String boardId, String boardName, {String? backgroundUrl, String? workspaceId, String? workspaceName, String? visibility}) async {
+  Future<void> loadBoard(String boardId, String boardName, {String? backgroundUrl, String? workspaceId, String? workspaceName, String? visibility, bool isPersonal = false}) async {
     emit(BoardDetailLoading());
     try {
       // Fetch lists, cards, and board role in parallel
@@ -85,10 +85,24 @@ class BoardDetailCubit extends Cubit<BoardDetailState> {
         boardVisibility: visibility,
         workspaceId: workspaceId,
         workspaceName: workspaceName,
+        isPersonal: isPersonal,
       ));
     } catch (e) {
       emit(BoardDetailError(e.toString()));
     }
+  }
+
+  Future<void> reload() async {
+    final current = state;
+    if (current is! BoardDetailLoaded) return;
+    await loadBoard(
+      current.boardId,
+      current.boardName,
+      backgroundUrl: current.backgroundUrl,
+      workspaceId: current.workspaceId,
+      workspaceName: current.workspaceName,
+      visibility: current.boardVisibility,
+    );
   }
 
   // ─── Create List ───────────────────────────────────────────────────────────
@@ -424,6 +438,18 @@ class BoardDetailCubit extends Cubit<BoardDetailState> {
       emit(current.copyWith(boardVisibility: visibility));
     } catch (_) {
       emit(current.copyWith(transientError: 'Không thể cập nhật hiển thị.'));
+    }
+  }
+
+  Future<void> deleteBoard(String boardId) async {
+    final userUId = await userLocalDataSource.getUserId() ?? '';
+    try {
+      await dataSource.deleteBoard(boardId: boardId, userUId: userUId);
+    } catch (_) {
+      final current = state;
+      if (current is BoardDetailLoaded) {
+        emit(current.copyWith(transientError: 'Không thể xóa bảng.'));
+      }
     }
   }
 

@@ -1,12 +1,12 @@
-import 'package:apptreolon/core/constants/app_colors.dart';
+﻿import 'package:apptreolon/core/constants/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// Bước 6: Hiển thị 8 mã dự phòng sau khi bật 2FA thành công.
-/// - Nút Copy / Tải xuống
-/// - Checkbox xác nhận đã lưu
-/// - Nút Hoàn tất chỉ enable khi đã tick checkbox
+/// BÆ°á»›c 6: Hiá»ƒn thá»‹ 8 mÃ£ dá»± phÃ²ng sau khi báº­t 2FA thÃ nh cÃ´ng.
+/// - NÃºt Copy / Táº£i xuá»‘ng
+/// - Checkbox xÃ¡c nháº­n Ä‘Ã£ lÆ°u
+/// - NÃºt HoÃ n táº¥t chá»‰ enable khi Ä‘Ã£ tick checkbox
 class BackupCodesPage extends StatefulWidget {
   final List<String> backupCodes;
 
@@ -26,10 +26,10 @@ class _BackupCodesPageState extends State<BackupCodesPage> {
         .map((e) => '${e.key + 1}. ${e.value}')
         .join('\n');
 
-    final fullText = '═══ Trellon - Mã dự phòng 2FA ═══\n\n'
+    final fullText = 'â•â•â• Kabo - MÃ£ dá»± phÃ²ng 2FA â•â•â•\n\n'
         '$codesText\n\n'
-        'Lưu ý: Mỗi mã chỉ dùng được một lần.\n'
-        'Hãy giữ các mã này ở nơi an toàn.';
+        'LÆ°u Ã½: Má»—i mÃ£ chá»‰ dÃ¹ng Ä‘Æ°á»£c má»™t láº§n.\n'
+        'HÃ£y giá»¯ cÃ¡c mÃ£ nÃ y á»Ÿ nÆ¡i an toÃ n.';
 
     Clipboard.setData(ClipboardData(text: fullText));
     ScaffoldMessenger.of(context).showSnackBar(
@@ -38,7 +38,7 @@ class _BackupCodesPageState extends State<BackupCodesPage> {
           children: [
             const Icon(Icons.check_circle_outline, color: Colors.white, size: 20),
             const SizedBox(width: 8),
-            const Text('Đã sao chép tất cả mã dự phòng'),
+            const Text('ÄÃ£ sao chÃ©p táº¥t cáº£ mÃ£ dá»± phÃ²ng'),
           ],
         ),
         backgroundColor: AppColors.success,
@@ -50,7 +50,7 @@ class _BackupCodesPageState extends State<BackupCodesPage> {
   }
 
   void _handleDone() {
-    // Pop tất cả các trang 2FA và quay về Security page
+    // Pop táº¥t cáº£ cÃ¡c trang 2FA vÃ  quay vá» Security page
     Navigator.of(context).popUntil((route) {
       return route.settings.name == '/security' || route.isFirst;
     });
@@ -59,13 +59,13 @@ class _BackupCodesPageState extends State<BackupCodesPage> {
   @override
   Widget build(BuildContext context) {
     return PopScope(
-      canPop: false, // Chặn back để user phải bấm Hoàn tất
+      canPop: false, // Cháº·n back Ä‘á»ƒ user pháº£i báº¥m HoÃ n táº¥t
       child: Scaffold(
         appBar: AppBar(
           backgroundColor: const Color(0xFFF1F2F4),
           automaticallyImplyLeading: false,
           title: Text(
-            'Mã dự phòng',
+            'MÃ£ dá»± phÃ²ng',
             style: GoogleFonts.inter(
               fontSize: 20,
               fontWeight: FontWeight.w700,
@@ -97,7 +97,7 @@ class _BackupCodesPageState extends State<BackupCodesPage> {
                 const SizedBox(height: 16),
 
                 Text(
-                  'Xác thực 2 yếu tố đã được bật!',
+                  'XÃ¡c thá»±c 2 yáº¿u tá»‘ Ä‘Ã£ Ä‘Æ°á»£c báº­t!',
                   textAlign: TextAlign.center,
                   style: GoogleFonts.inter(
                     fontSize: 18,
@@ -108,8 +108,8 @@ class _BackupCodesPageState extends State<BackupCodesPage> {
                 const SizedBox(height: 8),
 
                 Text(
-                  'Lưu lại các mã dự phòng bên dưới ở nơi an toàn. '
-                  'Bạn có thể sử dụng chúng để đăng nhập nếu không thể truy cập Google Authenticator.',
+                  'LÆ°u láº¡i cÃ¡c mÃ£ dá»± phÃ²ng bÃªn dÆ°á»›i á»Ÿ nÆ¡i an toÃ n. '
+                  'Báº¡n cÃ³ thá»ƒ sá»­ dá»¥ng chÃºng Ä‘á»ƒ Ä‘Äƒng nháº­p náº¿u khÃ´ng thá»ƒ truy cáº­p Google Authenticator.',
                   textAlign: TextAlign.center,
                   style: GoogleFonts.inter(
                     fontSize: 13,
@@ -135,7 +135,7 @@ class _BackupCodesPageState extends State<BackupCodesPage> {
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
-                          'Mỗi mã chỉ sử dụng được một lần. Sau khi đóng trang này, bạn sẽ không thể xem lại các mã này.',
+                          'Má»—i mÃ£ chá»‰ sá»­ dá»¥ng Ä‘Æ°á»£c má»™t láº§n. Sau khi Ä‘Ã³ng trang nÃ y, báº¡n sáº½ khÃ´ng thá»ƒ xem láº¡i cÃ¡c mÃ£ nÃ y.',
                           style: GoogleFonts.inter(
                             fontSize: 12,
                             height: 1.5,
@@ -160,7 +160,7 @@ class _BackupCodesPageState extends State<BackupCodesPage> {
                   child: Column(
                     children: [
                       Text(
-                        'MÃ DỰ PHÒNG',
+                        'MÃƒ Dá»° PHÃ’NG',
                         style: GoogleFonts.inter(
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
@@ -183,7 +183,7 @@ class _BackupCodesPageState extends State<BackupCodesPage> {
                     onPressed: _copyAllCodes,
                     icon: const Icon(Icons.copy_rounded, size: 18),
                     label: Text(
-                      'Sao chép tất cả mã',
+                      'Sao chÃ©p táº¥t cáº£ mÃ£',
                       style: GoogleFonts.inter(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -200,7 +200,7 @@ class _BackupCodesPageState extends State<BackupCodesPage> {
                 ),
                 const SizedBox(height: 24),
 
-                // Checkbox xác nhận
+                // Checkbox xÃ¡c nháº­n
                 Container(
                   decoration: BoxDecoration(
                     color: AppColors.surfaceContainerLowest,
@@ -215,7 +215,7 @@ class _BackupCodesPageState extends State<BackupCodesPage> {
                     value: _hasSavedCodes,
                     onChanged: (val) => setState(() => _hasSavedCodes = val ?? false),
                     title: Text(
-                      'Tôi đã lưu các mã dự phòng này ở nơi an toàn',
+                      'TÃ´i Ä‘Ã£ lÆ°u cÃ¡c mÃ£ dá»± phÃ²ng nÃ y á»Ÿ nÆ¡i an toÃ n',
                       style: GoogleFonts.inter(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
@@ -232,7 +232,7 @@ class _BackupCodesPageState extends State<BackupCodesPage> {
                 ),
                 const SizedBox(height: 20),
 
-                // Button Hoàn tất - chỉ enable khi đã tick checkbox
+                // Button HoÃ n táº¥t - chá»‰ enable khi Ä‘Ã£ tick checkbox
                 SizedBox(
                   width: double.infinity,
                   height: 50,
@@ -249,7 +249,7 @@ class _BackupCodesPageState extends State<BackupCodesPage> {
                       elevation: 0,
                     ),
                     child: Text(
-                      'Hoàn tất',
+                      'HoÃ n táº¥t',
                       style: GoogleFonts.inter(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,

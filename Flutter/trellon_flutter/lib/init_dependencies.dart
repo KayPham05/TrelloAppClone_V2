@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:get_it/get_it.dart';
 import 'package:dio/dio.dart';
 import 'package:cookie_jar/cookie_jar.dart';
@@ -40,6 +41,7 @@ import 'features/board/domain/usecases/get_recent_boards_usecase.dart';
 import 'features/board/domain/usecases/create_board_usecase.dart';
 import 'features/board/domain/usecases/get_personal_boards_usecase.dart';
 import 'features/board/domain/usecases/save_recent_board_usecase.dart';
+import 'features/board/domain/usecases/delete_board_usecase.dart';
 import 'features/board/presentation/cubit/board_cubit.dart';
 import 'features/board/presentation/cubit/board_detail_cubit.dart';
 import 'features/board/data/services/board_realtime_service.dart';
@@ -70,13 +72,8 @@ import 'features/activity/domain/usecases/mark_as_read_usecase.dart';
 import 'features/activity/presentation/cubit/notification_cubit.dart';
 
 final serviceLocator = GetIt.instance;
-
 Future<void> initDependencies() async {
-  // Core — khởi tạo PersistCookieJar để cookie refreshToken tồn tại qua restart
-  final appDir = await getApplicationDocumentsDirectory();
-  final cookieJar = PersistCookieJar(
-    storage: FileStorage('${appDir.path}/.cookies/'),
-  );
+  CookieJar cookieJar = CookieJar();
   serviceLocator.registerLazySingleton<CookieJar>(() => cookieJar);
   final dioClient = DioClient(persistentCookieJar: cookieJar);
 
@@ -119,6 +116,7 @@ void _initWorkspace() {
     deleteWorkspaceUseCase: serviceLocator(),
     addWorkspaceMemberUseCase: serviceLocator(),
     createBoardUseCase: serviceLocator(),
+    deleteBoardUseCase: serviceLocator(),
     userLocalDataSource: serviceLocator(),
   ));
 }
@@ -139,6 +137,7 @@ void _initBoard() {
   serviceLocator.registerLazySingleton(() => CreateBoardUseCase(serviceLocator()));
   serviceLocator.registerLazySingleton(() => GetPersonalBoardsUseCase(serviceLocator()));
   serviceLocator.registerLazySingleton(() => SaveRecentBoardUseCase(serviceLocator()));
+  serviceLocator.registerLazySingleton(() => DeleteBoardUseCase(serviceLocator()));
 
   // BoardCubit
   serviceLocator.registerFactory(() => BoardCubit(

@@ -126,6 +126,7 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
     String? workspaceId;
     String? workspaceName;
     String? visibility;
+    bool isPersonal = false;
 
     if (arguments is Map<String, dynamic>) {
       boardId = arguments['boardId'] as String? ?? '';
@@ -133,6 +134,7 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
       backgroundUrl = arguments['backgroundUrl'] as String?;
       workspaceId = arguments['workspaceId'] as String?;
       workspaceName = arguments['workspaceName'] as String?;
+      isPersonal = arguments['isPersonal'] as bool? ?? false;
     } else if (arguments is BoardEntity) {
       boardId = arguments.id;
       boardName = arguments.name;
@@ -140,6 +142,7 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
       workspaceId = arguments.workspaceId;
       workspaceName = arguments.workspaceName;
       visibility = arguments.visibility;
+      isPersonal = arguments.isPersonal;
     }
 
     return BlocProvider(
@@ -152,7 +155,8 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
             workspaceId: workspaceId,
             workspaceName: workspaceName,
             visibility: visibility,
-        );
+            isPersonal: isPersonal,
+          );
         // Start Join Board Realtime
         _joinedBoardId = boardId;
         serviceLocator<BoardRealtimeService>().joinBoard(boardId);
@@ -511,6 +515,9 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
                                         arguments: {
                                           'card': card,
                                           'boardId': state.boardId,
+                                          'boardName': state.boardName,
+                                          'listName': list.name,
+                                          'boardBackgroundUrl': state.backgroundUrl,
                                         },
                                       );
                                       _cubit?.loadBoard(

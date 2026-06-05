@@ -7,6 +7,7 @@ import '../../domain/usecases/delete_workspace_usecase.dart';
 import '../../domain/usecases/add_workspace_member_usecase.dart';
 import '../../../../core/data_sources/user_local_data_source.dart';
 import '../../../board/domain/usecases/create_board_usecase.dart';
+import '../../../board/domain/usecases/delete_board_usecase.dart';
 import '../../../../core/services/authorization_service.dart';
 
 abstract class WorkspaceState {}
@@ -30,6 +31,7 @@ class WorkspaceCubit extends Cubit<WorkspaceState> {
   final DeleteWorkspaceUseCase deleteWorkspaceUseCase;
   final AddWorkspaceMemberUseCase addWorkspaceMemberUseCase;
   final CreateBoardUseCase createBoardUseCase;
+  final DeleteBoardUseCase deleteBoardUseCase;
   final UserLocalDataSource userLocalDataSource;
 
   WorkspaceCubit({
@@ -39,6 +41,7 @@ class WorkspaceCubit extends Cubit<WorkspaceState> {
     required this.deleteWorkspaceUseCase,
     required this.addWorkspaceMemberUseCase,
     required this.createBoardUseCase,
+    required this.deleteBoardUseCase,
     required this.userLocalDataSource,
   }) : super(WorkspaceInitial());
 
@@ -155,6 +158,17 @@ class WorkspaceCubit extends Cubit<WorkspaceState> {
       await loadWorkspaces();
     } catch (e) {
       emit(WorkspaceError(e.toString()));
+    }
+  }
+
+  Future<void> deleteBoard(String boardId) async {
+    try {
+      final userUid = await userLocalDataSource.getUserId() ?? '';
+      await deleteBoardUseCase(boardId: boardId, userUId: userUid);
+      // Let SignalR handle the UI update or manually refresh:
+      await loadWorkspaces();
+    } catch (e) {
+      emit(WorkspaceError('Không thể xóa bảng. Cần quyền Owner. ${e.toString()}'));
     }
   }
 

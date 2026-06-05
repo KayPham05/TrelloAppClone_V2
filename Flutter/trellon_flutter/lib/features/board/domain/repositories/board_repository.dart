@@ -14,6 +14,7 @@ abstract class BoardRepository {
     String? visibility,
   });
   Future<void> saveRecentBoard(String userUid, String boardId);
+  Future<void> deleteBoard(String boardId, String userUId);
   Future<List<dynamic>> getLists(String boardId);
   Future<String?> getUserRoleInBoard(String boardId, String userUId);
 }

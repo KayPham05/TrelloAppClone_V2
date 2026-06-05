@@ -40,7 +40,7 @@ namespace TodoAppAPI.Services
                 if (exists)
                     return false;
 
-                // Thêm thành viên mới
+                // Thêm thành viên mới vào Board
                 var newMember = new BoardMember
                 {
                     BoardUId = boardUId,
@@ -50,20 +50,39 @@ namespace TodoAppAPI.Services
                 };
 
                 _context.BoardMembers.Add(newMember);
+
+                // Auto thêm vào Workspace nếu board thuộc workspace và user chưa có trong workspace
+                var boardInfo = await _context.Boards.AsNoTracking().FirstOrDefaultAsync(b => b.BoardUId == boardUId);
+                if (boardInfo != null && !string.IsNullOrEmpty(boardInfo.WorkspaceUId))
+                {
+                    bool alreadyInWorkspace = await _context.WorkspaceMembers
+                        .AnyAsync(wm => wm.WorkspaceUId == boardInfo.WorkspaceUId && wm.UserUId == userUId);
+
+                    if (!alreadyInWorkspace)
+                    {
+                        _context.WorkspaceMembers.Add(new WorkspaceMembers
+                        {
+                            WorkspaceUId = boardInfo.WorkspaceUId,
+                            UserUId = userUId,
+                            Role = "Member",
+                            JoinedAt = DateTime.UtcNow
+                        });
+                    }
+                }
+
                 await _context.SaveChangesAsync();
 
                 await _authService.LogPermissionChangeAsync(boardUId, "Board", userUId, requesterUId, "AddMember", null, role);
 
                 if (userUId != requesterUId)
                 {
-                    var board = await _context.Boards.AsNoTracking().FirstOrDefaultAsync(b => b.BoardUId == boardUId);
                     await _notificationService.TryCreateInternalAsync(new NotificationDTO
                     {
                         RecipientId = userUId,
                         ActorId = requesterUId,
                         Type = NotificationType.BoardMemberAdded,
                         Title = "You were added to a board",
-                        Message = $"You were added to board '{board?.BoardName ?? boardUId}' as {role}.",
+                        Message = $"You were added to board '{boardInfo?.BoardName ?? boardUId}' as {role}.",
                         BoardId = boardUId,
                         Link = $"/board-detail/{boardUId}"
                     }, "board member add");
@@ -146,6 +165,22 @@ namespace TodoAppAPI.Services
 
                 var oldRole = target.BoardRole;
                 _context.BoardMembers.Remove(target);
+
+                // Xóa tất cả CardMember của user này trong board
+                var cardUidsInBoard = await _context.Todos
+                    .Where(c => c.List != null && c.List.BoardUId == boardUId)
+                    .Select(c => c.CardUId)
+                    .ToListAsync();
+
+                var cardMembersToRemove = await _context.CardMembers
+                    .Where(cm => cm.UserUId == userUId && cardUidsInBoard.Contains(cm.CardUId))
+                    .ToListAsync();
+
+                if (cardMembersToRemove.Any())
+                {
+                    _context.CardMembers.RemoveRange(cardMembersToRemove);
+                }
+
                 await _context.SaveChangesAsync();
 
                 await _authService.LogPermissionChangeAsync(boardUId, "Board", userUId, requesterUId, "RemoveMember", oldRole, null);

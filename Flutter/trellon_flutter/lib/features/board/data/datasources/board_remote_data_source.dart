@@ -10,6 +10,7 @@ abstract class BoardRemoteDataSource {
   Future<void> saveRecentBoard(String userUid, String boardId);
   Future<List<BoardModel>> getAllBoards(String userUid);
   Future<BoardModel?> getBoardById(String boardId);
+  Future<void> deleteBoard({required String boardId, required String userUId});
   Future<void> createBoard({
     required String name,
     required String userUid,
@@ -47,7 +48,7 @@ abstract class BoardRemoteDataSource {
   // Board Detail (Lists & Cards)
   Future<List<ListModel>> getLists(String boardId);
   Future<List<CardModel>> getCardsByBoard(String boardId);
-  Future<List<CardModel>> getArchivedCards(String boardId);
+  Future<List<CardModel>> getArchivedCards(String boardId, String userUId);
   Future<void> restoreCard({required String cardId, required String userUId});
   Future<int> archiveAllCompleted({required String boardId, required String userUId});
   Future<ListModel> createList({
@@ -174,6 +175,18 @@ class BoardRemoteDataSourceImpl implements BoardRemoteDataSource {
       return null;
     } catch (e) {
       throw Exception('Failed to load board: $e');
+    }
+  }
+
+  @override
+  Future<void> deleteBoard({required String boardId, required String userUId}) async {
+    try {
+      await client.delete(
+        '${ApiEndpoints.boards}/$boardId',
+        queryParameters: {'userUId': userUId},
+      );
+    } catch (e) {
+      throw Exception('Failed to delete board: $e');
     }
   }
 
@@ -312,11 +325,14 @@ class BoardRemoteDataSourceImpl implements BoardRemoteDataSource {
   }
 
   @override
-  Future<List<CardModel>> getArchivedCards(String boardId) async {
+  Future<List<CardModel>> getArchivedCards(String boardId, String userUId) async {
     try {
       final response = await client.get(
         '${ApiEndpoints.card}/archived',
-        queryParameters: {'boardUId': boardId},
+        queryParameters: {
+          'boardUId': boardId,
+          'userUId': userUId,
+        },
       );
       if (response.statusCode == 200) {
         final List data = response.data;

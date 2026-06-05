@@ -115,11 +115,14 @@ export default function Board({ refresh, setRefresh, lists, setLists }) {
 
   const handleAddCard = async (listId, cardTitle) => {
     if (!cardTitle.trim()) return;
+    const user = JSON.parse(localStorage.getItem("user"));
     try {
       const newCard = await addCardAPI({
-        cardName: cardTitle,
+        title: cardTitle,
         listUId: listId,
         status: "todo",
+        position: 0,
+        userUId: user?.userUId || "",
       });
       if (newCard) setCards((prev) => [...prev, newCard]);
     } catch (err) {

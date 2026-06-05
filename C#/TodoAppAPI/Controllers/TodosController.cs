@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
+using TodoAppAPI.Hubs;
 using TodoAppAPI.DTOs;
 using TodoAppAPI.Interfaces;
 using TodoAppAPI.Models;
@@ -65,6 +67,11 @@ namespace TodoAppAPI.Controllers
                         await _boardHubContext.Clients.Group(BoardHub.BoardGroup(list.BoardUId)).SendAsync("CardAdded", card);
                     }
                 }
+
+                // Gửi thông báo cho Planner của chính người tạo
+                await _notificationHubContext.Clients.Group(NotificationHub.UserGroup(card.UserUId))
+                    .SendAsync("CardAdded", card);
+
                 return Ok(card);
             }
                 
@@ -104,6 +111,11 @@ namespace TodoAppAPI.Controllers
                         await _boardHubContext.Clients.Group(BoardHub.BoardGroup(list.BoardUId)).SendAsync("CardUpdated", existingCard);
                     }
                 }
+
+                // Thông báo cho Planner
+                await _notificationHubContext.Clients.Group(NotificationHub.UserGroup(userUId))
+                    .SendAsync("CardUpdated", existingCard);
+
                 return Ok("Cập nhật card thành công");
             }
                 
@@ -116,6 +128,11 @@ namespace TodoAppAPI.Controllers
             if (await _userInboxCardService.UpdateInboxCardAsync(id, userUId, card))
             {
                 _ = _activity.AddActivity(userUId, $"updated card '{card.Title}' in inbox");
+                
+                // Thông báo cho Planner
+                await _notificationHubContext.Clients.Group(NotificationHub.UserGroup(userUId))
+                    .SendAsync("CardUpdated", card);
+
                 return Ok("Cập nhật card inbox thành công");
             }
             return NotFound("Card không tồn tại trong inbox hoặc bạn không có quyền");
@@ -142,6 +159,11 @@ namespace TodoAppAPI.Controllers
                         await _boardHubContext.Clients.Group(BoardHub.BoardGroup(list.BoardUId)).SendAsync("CardDeleted", new { cardUId = id, boardUId = list.BoardUId });
                     }
                 }
+
+                // Thông báo cho Planner
+                await _notificationHubContext.Clients.Group(NotificationHub.UserGroup(userUId))
+                    .SendAsync("CardDeleted", new { cardUId = id });
+
                 return Ok("Xóa card thành công");
             }
                 
@@ -184,6 +206,10 @@ namespace TodoAppAPI.Controllers
                 }
             }
 
+            // Thông báo cho Planner
+            await _notificationHubContext.Clients.Group(NotificationHub.UserGroup(body.UserUId))
+                .SendAsync("CardMoved", new { cardUId = CardUId, newListUId = body.ListUId, position = body.Position });
+
             return Ok(new { message = "Cập nhật ListUId cho Card thành công." });
         }
 
@@ -209,6 +235,11 @@ namespace TodoAppAPI.Controllers
                         .SendAsync("CardStatusUpdated", new { cardUId = CardUId, newStatus = newStatus, boardUId = list.BoardUId });
                 }
             }
+
+            // Thông báo cho Planner
+            await _notificationHubContext.Clients.Group(NotificationHub.UserGroup(userUId))
+                .SendAsync("CardStatusUpdated", new { cardUId = CardUId, newStatus = newStatus });
+
             return Ok(new { message = "Cập nhật status cho Card thành công." });
         }
 
@@ -231,11 +262,17 @@ namespace TodoAppAPI.Controllers
                 var list = await _listService.GetListByIdAsync(card.ListUId);
                 if (list != null)
                 {
+                    // Gửi cho BoardHub để cập nhật UI board
                     await _boardHubContext.Clients.Group(BoardHub.BoardGroup(list.BoardUId))
                         .SendAsync("CardDueDateUpdated", new { cardUId = cardUId, dueDate = request.DueDate, boardUId = list.BoardUId });
+                    
+                    // Gửi cho NotificationHub Group Board để cập nhật Planner cho tất cả thành viên trong board đó
+                    await _notificationHubContext.Clients.Group($"Board_{list.BoardUId}")
+                        .SendAsync("CardDueDateUpdated", new { cardUId = cardUId, dueDate = request.DueDate });
                 }
             }
 
+            // Gửi riêng cho chính user (để chắc chắn)
             await _notificationHubContext.Clients.Group(NotificationHub.UserGroup(request.UserUId))
                 .SendAsync("CardDueDateUpdated", new { cardUId = cardUId, dueDate = request.DueDate });
 
@@ -356,6 +393,10 @@ namespace TodoAppAPI.Controllers
                 }
             }
 
+            // Thông báo cho Planner
+            await _notificationHubContext.Clients.Group(NotificationHub.UserGroup(userUId))
+                .SendAsync("CardArchived", new { cardUId = id });
+
             return Ok(new { message = "Thẻ đã được lưu trữ." });
         }
 
@@ -366,6 +407,11 @@ namespace TodoAppAPI.Controllers
             var success = await _cardService.UnarchiveCardAsync(id, userUId);
             if (!success) return StatusCode(403, new { message = "Không thể khôi phục thẻ hoặc bạn không có quyền." });
             _ = _activity.AddActivity(userUId, $"unarchived card '{id}'");
+
+            // Thông báo cho Planner
+            await _notificationHubContext.Clients.Group(NotificationHub.UserGroup(userUId))
+                .SendAsync("CardUnarchived", new { cardUId = id });
+
             return Ok(new { message = "Thẻ đã được khôi phục." });
         }
 

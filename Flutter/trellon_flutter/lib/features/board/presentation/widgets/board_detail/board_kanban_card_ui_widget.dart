@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../card/domain/entities/card_entity.dart';
 import '../../../../../core/constants/app_colors.dart';
+
 class KanbanCardUiWidget extends StatelessWidget {
   final CardEntity card;
   final String boardId;
@@ -23,6 +24,9 @@ class KanbanCardUiWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final statusLower = card.status.toLowerCase();
+    final isCompleted = statusLower == 'hoan_thanh' || statusLower == 'hoàn thành' || statusLower == 'completed';
+
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
@@ -48,9 +52,7 @@ class KanbanCardUiWidget extends StatelessWidget {
                 ],
         ),
         padding: EdgeInsets.all(12 * scale),
-        constraints: BoxConstraints(
-          minHeight: 100 * scale,
-        ),
+        constraints: BoxConstraints(minHeight: 100 * scale),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
@@ -80,15 +82,25 @@ class KanbanCardUiWidget extends StatelessWidget {
                     Color color;
                     if (l.colorCode.isNotEmpty) {
                       final buffer = StringBuffer();
-                      if (l.colorCode.length == 6 || l.colorCode.length == 7) buffer.write('ff');
+                      if (l.colorCode.length == 6 || l.colorCode.length == 7)
+                        buffer.write('ff');
                       buffer.write(l.colorCode.replaceFirst('#', ''));
-                      color = Color(int.tryParse(buffer.toString(), radix: 16) ?? 0xFF9E9E9E);
+                      color = Color(
+                        int.tryParse(buffer.toString(), radix: 16) ??
+                            0xFF9E9E9E,
+                      );
                     } else {
                       color = Colors.grey;
                     }
                     return Container(
-                      padding: EdgeInsets.symmetric(horizontal: 6 * scale, vertical: 2 * scale),
-                      constraints: BoxConstraints(minWidth: 32 * scale, minHeight: 8 * scale),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 6 * scale,
+                        vertical: 2 * scale,
+                      ),
+                      constraints: BoxConstraints(
+                        minWidth: 32 * scale,
+                        minHeight: 8 * scale,
+                      ),
                       decoration: BoxDecoration(
                         color: color,
                         borderRadius: BorderRadius.circular(4 * scale),
@@ -110,21 +122,32 @@ class KanbanCardUiWidget extends StatelessWidget {
               children: [
                 if (onToggleComplete != null) ...[
                   GestureDetector(
-                    onTap: () => onToggleComplete!(card.status != 'Completed'),
+                    onTap: () => onToggleComplete!(!isCompleted),
                     child: Container(
-                      margin: EdgeInsets.only(right: 10 * scale, top: 1 * scale),
+                      margin: EdgeInsets.only(
+                        right: 10 * scale,
+                        top: 1 * scale,
+                      ),
                       width: 20 * scale,
                       height: 20 * scale,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: card.status == 'Completed' ? const Color(0xFF1D4ED8) : AppColors.outlineVariant,
+                          color: isCompleted
+                              ? const Color(0xFF1D4ED8)
+                              : AppColors.outlineVariant,
                           width: 2 * scale,
                         ),
-                        color: card.status == 'Completed' ? const Color(0xFF1D4ED8) : Colors.transparent,
+                        color: isCompleted
+                            ? const Color(0xFF1D4ED8)
+                            : Colors.transparent,
                       ),
-                      child: card.status == 'Completed'
-                          ? Icon(Icons.check, color: Colors.white, size: 12 * scale)
+                      child: isCompleted
+                          ? Icon(
+                              Icons.check,
+                              color: Colors.white,
+                              size: 12 * scale,
+                            )
                           : null,
                     ),
                   ),
@@ -137,8 +160,12 @@ class KanbanCardUiWidget extends StatelessWidget {
                     style: GoogleFonts.inter(
                       fontSize: 14.0 * scale,
                       fontWeight: FontWeight.w500,
-                      color: card.status == 'Completed' ? AppColors.onSurfaceVariant : AppColors.onSurface,
-                      decoration: card.status == 'Completed' ? TextDecoration.lineThrough : null,
+                      color: isCompleted
+                          ? AppColors.onSurfaceVariant
+                          : AppColors.onSurface,
+                      decoration: isCompleted
+                          ? TextDecoration.lineThrough
+                          : null,
                       height: 1.35,
                     ),
                   ),
@@ -164,43 +191,83 @@ class KanbanCardUiWidget extends StatelessWidget {
                           Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.schedule_rounded, size: 12 * scale, color: AppColors.onSurfaceVariant),
+                              Icon(
+                                Icons.schedule_rounded,
+                                size: 12 * scale,
+                                color: AppColors.onSurfaceVariant,
+                              ),
                               SizedBox(width: 4 * scale),
-                              Text('${card.dueDate!.day}/${card.dueDate!.month}',
-                                  style: GoogleFonts.inter(fontSize: 11 * scale, color: AppColors.onSurfaceVariant)),
+                              Text(
+                                '${card.dueDate!.day}/${card.dueDate!.month}',
+                                style: GoogleFonts.inter(
+                                  fontSize: 11 * scale,
+                                  color: AppColors.onSurfaceVariant,
+                                ),
+                              ),
                             ],
                           ),
-                        if (card.description != null && card.description!.isNotEmpty)
-                          Icon(Icons.subject_rounded, size: 12 * scale, color: AppColors.onSurfaceVariant),
+                        if (card.description != null &&
+                            card.description!.isNotEmpty)
+                          Icon(
+                            Icons.subject_rounded,
+                            size: 12 * scale,
+                            color: AppColors.onSurfaceVariant,
+                          ),
                         if (card.comments.isNotEmpty)
                           Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.chat_bubble_outline_rounded, size: 12 * scale, color: AppColors.onSurfaceVariant),
+                              Icon(
+                                Icons.chat_bubble_outline_rounded,
+                                size: 12 * scale,
+                                color: AppColors.onSurfaceVariant,
+                              ),
                               SizedBox(width: 3 * scale),
-                              Text('${card.comments.length}',
-                                  style: GoogleFonts.inter(fontSize: 11 * scale, color: AppColors.onSurfaceVariant)),
+                              Text(
+                                '${card.comments.length}',
+                                style: GoogleFonts.inter(
+                                  fontSize: 11 * scale,
+                                  color: AppColors.onSurfaceVariant,
+                                ),
+                              ),
                             ],
                           ),
                         if (card.fileUrls.isNotEmpty)
                           Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.attach_file_rounded, size: 12 * scale, color: AppColors.onSurfaceVariant),
+                              Icon(
+                                Icons.attach_file_rounded,
+                                size: 12 * scale,
+                                color: AppColors.onSurfaceVariant,
+                              ),
                               SizedBox(width: 3 * scale),
-                              Text('${card.fileUrls.length}',
-                                  style: GoogleFonts.inter(fontSize: 11 * scale, color: AppColors.onSurfaceVariant)),
+                              Text(
+                                '${card.fileUrls.length}',
+                                style: GoogleFonts.inter(
+                                  fontSize: 11 * scale,
+                                  color: AppColors.onSurfaceVariant,
+                                ),
+                              ),
                             ],
                           ),
                         if (card.todoItems.isNotEmpty)
                           Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.check_box_outlined, size: 12 * scale, color: AppColors.onSurfaceVariant),
+                              Icon(
+                                Icons.check_box_outlined,
+                                size: 12 * scale,
+                                color: AppColors.onSurfaceVariant,
+                              ),
                               SizedBox(width: 3 * scale),
                               Text(
-                                  '${card.todoItems.where((t) => t.isCompleted).length}/${card.todoItems.length}',
-                                  style: GoogleFonts.inter(fontSize: 11 * scale, color: AppColors.onSurfaceVariant)),
+                                '${card.todoItems.where((t) => t.isCompleted).length}/${card.todoItems.length}',
+                                style: GoogleFonts.inter(
+                                  fontSize: 11 * scale,
+                                  color: AppColors.onSurfaceVariant,
+                                ),
+                              ),
                             ],
                           ),
                       ],
@@ -211,13 +278,28 @@ class KanbanCardUiWidget extends StatelessWidget {
                           return Padding(
                             padding: EdgeInsets.only(left: 4 * scale),
                             child: CircleAvatar(
-                              radius: 10 * scale,
-                              backgroundColor: AppColors.primary.withValues(alpha: 0.2),
-                              child: Text(
-                                (m.userName ?? 'U').substring(0, 1),
-                                style: GoogleFonts.inter(
-                                    fontSize: 9 * scale, color: AppColors.primary, fontWeight: FontWeight.bold),
+                              radius: 18 * scale,
+                              backgroundColor: AppColors.primary.withValues(
+                                alpha: 0.2,
                               ),
+                              backgroundImage:
+                                  (m.avatarUrl != null &&
+                                      m.avatarUrl!.isNotEmpty)
+                                  ? CachedNetworkImageProvider(m.avatarUrl!)
+                                  : null,
+                              child:
+                                  (m.avatarUrl == null || m.avatarUrl!.isEmpty)
+                                  ? Text(
+                                      (m.userName.isNotEmpty ? m.userName : 'U')
+                                          .substring(0, 1)
+                                          .toUpperCase(),
+                                      style: GoogleFonts.inter(
+                                        fontSize: 18 * scale,
+                                        color: AppColors.primary,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    )
+                                  : null,
                             ),
                           );
                         }).toList(),
@@ -248,14 +330,21 @@ class AddCardButtonWidget extends StatelessWidget {
       onTap: onTap,
       child: Container(
         margin: EdgeInsets.fromLTRB(8 * scale, 4 * scale, 8 * scale, 8 * scale),
-        padding: EdgeInsets.symmetric(horizontal: 10 * scale, vertical: 8 * scale),
+        padding: EdgeInsets.symmetric(
+          horizontal: 10 * scale,
+          vertical: 8 * scale,
+        ),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(8 * scale),
           color: Colors.transparent,
         ),
         child: Row(
           children: [
-            Icon(Icons.add_rounded, size: 18 * scale, color: AppColors.onSurfaceVariant),
+            Icon(
+              Icons.add_rounded,
+              size: 18 * scale,
+              color: AppColors.onSurfaceVariant,
+            ),
             SizedBox(width: 6 * scale),
             Text(
               'Thêm thẻ',
