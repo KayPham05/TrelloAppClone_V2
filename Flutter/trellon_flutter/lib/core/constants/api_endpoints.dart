@@ -9,7 +9,7 @@ class ApiEndpoints {
   static const String verifyCode = 'users/verify-code';
   static const String resendCode = 'users/resend-code';
   static const String checkOtpStatus = 'users/get-verification-status';
-  static const String userInbox='user-inbox';
+  static const String userInbox = 'user-inbox';
   static const String card = 'cards';
   static const String comments = 'comments';
   static const String cardMember = 'CardMember';
@@ -25,6 +25,7 @@ class ApiEndpoints {
   static const String googleLogin = 'auth/Google-login';
   static const String forgotPassword = 'auth/forgot-password';
   static const String resetPassword = 'auth/reset-password';
+  static const String analysis = 'analysis';
   // 2FA TOTP
   static const String twoFASetup = '/auth/2fa/setup';
   static const String twoFAEnable = '/auth/2fa/enable';

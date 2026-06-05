@@ -214,7 +214,7 @@ class KanbanCardUiWidget extends StatelessWidget {
                               radius: 10 * scale,
                               backgroundColor: AppColors.primary.withValues(alpha: 0.2),
                               child: Text(
-                                (m.userName ?? 'U').substring(0, 1),
+                                (m.userName.isNotEmpty ? m.userName.substring(0, 1) : 'U'),
                                 style: GoogleFonts.inter(
                                     fontSize: 9 * scale, color: AppColors.primary, fontWeight: FontWeight.bold),
                               ),

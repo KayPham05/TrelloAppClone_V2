@@ -108,7 +108,7 @@ class _ListPickerSheetState extends State<ListPickerSheet> {
                     ? const Center(child: Text('Không có danh sách nào'))
                     : ListView.separated(
                         itemCount: _lists!.length,
-                        separatorBuilder: (_, __) => const Divider(height: 1, indent: 16),
+                        separatorBuilder: (_, _) => const Divider(height: 1, indent: 16),
                         itemBuilder: (_, i) {
                           final list = _lists![i];
                           final isCurrent = list.id == widget.currentListId;

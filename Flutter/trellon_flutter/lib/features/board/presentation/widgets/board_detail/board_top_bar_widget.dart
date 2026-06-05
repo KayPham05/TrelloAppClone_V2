@@ -29,7 +29,7 @@ class BoardTopBarWidget extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           Text(
-            'Workspace',
+            'Không gian làm việc',
             style: GoogleFonts.inter(
               fontSize: 18,
               fontWeight: FontWeight.w700,
@@ -41,7 +41,8 @@ class BoardTopBarWidget extends StatelessWidget {
             icon: const Icon(Icons.search_rounded, color: Color(0xFF64748B)),
             onPressed: () async {
               final uid = await serviceLocator<UserLocalDataSource>().getUserId();
-              print('Search tapped in BoardTopBar. UID: $uid');
+              if (!context.mounted) return;
+              debugPrint('Search tapped in BoardTopBar. UID: $uid');
               if (uid != null) {
                 showSearch(context: context, delegate: GlobalSearchDelegate(userUId: uid));
               } else {

@@ -8,6 +8,7 @@ using TodoAppAPI.Models;
 using TodoAppAPI.Service;
 using TodoAppAPI.Service.JWT;
 using TodoAppAPI.Service.Cloudinary;
+using TodoAppAPI.Service.Gemini;
 using TodoAppAPI.Services;
 using TodoAppAPI.Hubs;
 
@@ -38,6 +39,12 @@ builder.Services.AddScoped<ICardDueDateReminderService, CardDueDateReminderServi
 builder.Services.AddScoped<ITwoFactorService, TwoFactorService>();
 builder.Services.AddScoped<ISearchService, SearchService>();
 builder.Services.AddScoped<IPlannerService, PlannerService>();
+builder.Services.AddScoped<IGeminiAnalysisService, GeminiAnalysisService>();
+builder.Services.AddHttpClient<IGeminiClient, GeminiClient>((serviceProvider, client) =>
+{
+    var settings = serviceProvider.GetRequiredService<Microsoft.Extensions.Options.IOptions<GeminiSettings>>().Value;
+    client.Timeout = TimeSpan.FromSeconds(Math.Max(1, settings.TimeoutSeconds));
+});
 builder.Services.AddHostedService<CardDueDateReminderHostedService>();
 builder.Services.AddScoped<IPlannerService, PlannerService>();
 
@@ -48,6 +55,9 @@ builder.Services.AddScoped<IAuthorizationService, AuthorizationService>();
 // Cloudinary
 builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection("CloudinarySettings"));
 builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
+
+// Gemini project analysis
+builder.Services.Configure<GeminiSettings>(builder.Configuration.GetSection("GeminiSettings"));
 
 // 1. JWT Security Validation
 var jwtKey = builder.Configuration["Jwt:Key"];
@@ -135,19 +145,12 @@ builder.Services.AddDbContext<TodoDbContext>(option =>
 // ================== CORS ==================
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowFrontend", policy =>
+    options.AddPolicy("AllowAllWeb", policy =>
     {
-        policy.WithOrigins("http://localhost:5173")
+        policy.SetIsOriginAllowed(origin => true)
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();
-    });
-
-    options.AddPolicy("AllowAllMobile", policy =>
-    {
-        policy.AllowAnyOrigin()
-              .AllowAnyHeader()
-              .AllowAnyMethod();
     });
 });
 
@@ -165,7 +168,7 @@ var app = builder.Build();
 
 
 // 3. Sử dụng CORS
-app.UseCors("AllowFrontend");
+app.UseCors("AllowAllWeb");
 
 
 //app.UseHttpsRedirection();

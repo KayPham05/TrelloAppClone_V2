@@ -121,7 +121,7 @@ class _WorkspaceMembersView extends StatelessWidget {
             return ListView.separated(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),
               itemCount: state.members.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 8),
+              separatorBuilder: (_, _) => const SizedBox(height: 8),
               itemBuilder: (context, index) {
                 final member = state.members[index];
                 final canManage =
@@ -178,16 +178,16 @@ class _WorkspaceMembersView extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
-                value: selectedRole,
+                initialValue: selectedRole,
                 decoration: InputDecoration(
-                  labelText: 'Role',
+                  labelText: 'Vai trò',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
                 items: MemberRoleHelper.rolesForScope(MemberScope.workspace)
                     .where((r) => r != 'Owner')
-                    .map((r) => DropdownMenuItem(value: r, child: Text(r)))
+                    .map((r) => DropdownMenuItem(value: r, child: Text(MemberRoleHelper.translateRole(r))))
                     .toList(),
                 onChanged: (v) => setDState(() => selectedRole = v ?? selectedRole),
               ),
@@ -245,17 +245,17 @@ class _WorkspaceMembersView extends StatelessWidget {
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDState) => AlertDialog(
           title: Text(
-            'Đổi role — ${member.userName}',
+            'Đổi vai trò — ${member.userName}',
             style: GoogleFonts.inter(fontWeight: FontWeight.w700),
           ),
           content: DropdownButtonFormField<String>(
-            value: selectedRole,
+            initialValue: selectedRole,
             decoration: InputDecoration(
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
             ),
             items: MemberRoleHelper.rolesForScope(MemberScope.workspace)
                 .where((r) => r != 'Owner')
-                .map((r) => DropdownMenuItem(value: r, child: Text(r)))
+                .map((r) => DropdownMenuItem(value: r, child: Text(MemberRoleHelper.translateRole(r))))
                 .toList(),
             onChanged: (v) => setDState(() => selectedRole = v ?? selectedRole),
           ),
@@ -275,7 +275,7 @@ class _WorkspaceMembersView extends StatelessWidget {
                 );
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                    content: Text(ok ? 'Đã cập nhật role' : 'Không thể cập nhật role'),
+                    content: Text(ok ? 'Đã cập nhật vai trò' : 'Không thể cập nhật vai trò'),
                   ));
                 }
               },
@@ -370,7 +370,7 @@ class _MemberCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
               decoration: BoxDecoration(
-                color: roleColor.withOpacity(0.12),
+                color: roleColor.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Row(
@@ -379,7 +379,7 @@ class _MemberCard extends StatelessWidget {
                   Icon(roleIcon, size: 11, color: roleColor),
                   const SizedBox(width: 4),
                   Text(
-                    member.role,
+                    MemberRoleHelper.translateRole(member.role),
                     style: GoogleFonts.inter(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
@@ -403,7 +403,7 @@ class _MemberCard extends StatelessWidget {
                       child: ListTile(
                         dense: true,
                         leading: Icon(Icons.swap_horiz_rounded, size: 16),
-                        title: Text('Đổi role'),
+                        title: Text('Đổi vai trò'),
                         contentPadding: EdgeInsets.zero,
                       ),
                     ),

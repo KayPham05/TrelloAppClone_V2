@@ -74,7 +74,7 @@ class _BoardMenuSheetViewState extends State<_BoardMenuSheetView> {
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: Colors.grey.withOpacity(0.5),
+              color: Colors.grey.withValues(alpha: 0.5),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -333,7 +333,7 @@ class _BoardMenuSheetViewState extends State<_BoardMenuSheetView> {
         Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey.withOpacity(0.3)),
+            border: Border.all(color: Colors.grey.withValues(alpha: 0.3)),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Icon(icon, color: Colors.black87),

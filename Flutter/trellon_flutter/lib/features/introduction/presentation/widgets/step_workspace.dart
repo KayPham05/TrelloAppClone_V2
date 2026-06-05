@@ -6,11 +6,13 @@ import 'introduction_common.dart';
 class StepWorkspace extends StatefulWidget {
   final VoidCallback onBack;
   final void Function(String name, String visibility) onFinish;
+  final VoidCallback onSkip;
 
   const StepWorkspace({
     super.key,
     required this.onBack,
     required this.onFinish,
+    required this.onSkip,
   });
 
   @override
@@ -36,8 +38,9 @@ class _StepWorkspaceState extends State<StepWorkspace> {
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
             child: IntroductionAppBar(
               title: 'Step 5 of 5',
-              actionText: 'LUCID',
+              actionText: 'Bỏ qua',
               onBack: widget.onBack,
+              onSkip: widget.onSkip,
               isActionText: true,
             ),
           ),

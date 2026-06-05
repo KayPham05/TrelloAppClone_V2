@@ -53,7 +53,7 @@ class _HomeAppBarWidgetState extends State<HomeAppBarWidget> {
               color: Color(0xFF1D4ED8),
               size: 24,
             ),
-            tooltip: 'Workspace menu',
+            tooltip: 'Trình đơn không gian làm việc',
             visualDensity: VisualDensity.compact,
             splashRadius: 20,
           ),
@@ -61,7 +61,7 @@ class _HomeAppBarWidgetState extends State<HomeAppBarWidget> {
           GestureDetector(
             onTap: () => Navigator.pushNamed(context, '/workspace-menu'),
             child: Text(
-              'Workspace',
+              'Không gian làm việc',
               style: GoogleFonts.inter(
                 fontSize: 20,
                 fontWeight: FontWeight.w700,

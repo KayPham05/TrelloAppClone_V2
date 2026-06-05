@@ -161,7 +161,7 @@ class InboxRemoteDataSourceImpl implements InboxRemoteDataSource {
     String fileName = filePath.split('/').last;
     FormData formData = FormData.fromMap({
       "file": await MultipartFile.fromFile(filePath, filename: fileName),
-      if (description != null) "description": description,
+      "description":? description,
     });
     final response = await dio.post(
       '${ApiEndpoints.card}/$cardId/attachments?userUId=$userUId',

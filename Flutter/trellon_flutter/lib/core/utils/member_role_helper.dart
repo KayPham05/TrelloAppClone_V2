@@ -7,6 +7,19 @@ class MemberRoleHelper {
   static const _boardRoles     = ['Owner', 'Admin', 'Editor', 'Viewer'];
   static const _cardRoles      = ['Assignee', 'Observer'];
 
+  static String translateRole(String role) {
+    switch (role) {
+      case 'Owner': return 'Chủ sở hữu';
+      case 'Admin': return 'Quản trị viên';
+      case 'Member': return 'Thành viên';
+      case 'Viewer': return 'Người xem';
+      case 'Editor': return 'Biên tập viên';
+      case 'Assignee': return 'Người thực hiện';
+      case 'Observer': return 'Người theo dõi';
+      default: return role;
+    }
+  }
+
   static Color colorForRole(String role) {
     switch (role) {
       case 'Owner':    return const Color(0xFFD97706); // amber-600

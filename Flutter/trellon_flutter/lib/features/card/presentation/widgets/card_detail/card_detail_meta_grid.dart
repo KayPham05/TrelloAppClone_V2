@@ -292,7 +292,7 @@ class _MemberAvatar extends StatelessWidget {
           child: CachedNetworkImage(
             imageUrl: member.resolvedAvatarUrl,
             fit: BoxFit.cover,
-            placeholder: (_, __) => Container(color: roleColor),
+            placeholder: (_, _) => Container(color: roleColor),
           ),
         ),
       ),

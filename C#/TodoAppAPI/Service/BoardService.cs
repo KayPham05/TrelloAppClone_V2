@@ -38,12 +38,17 @@ namespace TodoAppAPI.Service
 
                 var membersList = board.Members?.ToList();
                 board.Members = null; // Tránh EF tracking conflict
+                board.Lists = null;
 
                 _context.Boards.Add(board);
 
                 //  Thêm members
                 var membersToAdd = await BuildBoardMembersAsync(board, membersList);
                 _context.BoardMembers.AddRange(membersToAdd);
+
+                var (defaultLists, sampleCards) = BuildDefaultBoardTemplate(board);
+                _context.Lists.AddRange(defaultLists);
+                _context.Todos.AddRange(sampleCards);
 
                 //  Lưu
                 await _context.SaveChangesAsync();
@@ -60,6 +65,51 @@ namespace TodoAppAPI.Service
 
 
 
+
+        private static (IReadOnlyCollection<TodoAppAPI.Models.List> Lists, IReadOnlyCollection<Card> Cards) BuildDefaultBoardTemplate(Board board)
+        {
+            var createdAt = DateTime.UtcNow;
+            var todoList = CreateDefaultList(board.BoardUId, "Chưa làm", 0, createdAt);
+            var doingList = CreateDefaultList(board.BoardUId, "Đang làm", 1, createdAt);
+            var doneList = CreateDefaultList(board.BoardUId, "Hoàn thành", 2, createdAt);
+
+            var cards = new[]
+            {
+                CreateSampleCard(todoList.ListUId, board.UserUId, "Tạo thẻ đầu tiên của bạn", "Viết một việc cần làm rồi kéo thẻ qua các cột khi tiến độ thay đổi.", "todo", 0, createdAt),
+                CreateSampleCard(doingList.ListUId, board.UserUId, "Kéo thẻ này sang cột Đang làm", "Dùng cột này cho những việc bạn đang xử lý.", "inProgress", 0, createdAt),
+                CreateSampleCard(doneList.ListUId, board.UserUId, "Chuyển thẻ đã xong vào đây", "Các việc hoàn thành sẽ nằm ở cột này để bạn dễ theo dõi tiến độ.", "completed", 0, createdAt)
+            };
+
+            return (new[] { todoList, doingList, doneList }, cards);
+        }
+
+        private static TodoAppAPI.Models.List CreateDefaultList(string boardUId, string name, int position, DateTime createdAt)
+        {
+            return new TodoAppAPI.Models.List
+            {
+                ListUId = Guid.NewGuid().ToString(),
+                ListName = name,
+                Position = position,
+                Status = "Active",
+                CreatedAt = createdAt,
+                BoardUId = boardUId
+            };
+        }
+
+        private static Card CreateSampleCard(string listUId, string userUId, string title, string description, string status, int position, DateTime createdAt)
+        {
+            return new Card
+            {
+                CardUId = Guid.NewGuid().ToString(),
+                Title = title,
+                Description = description,
+                Position = position,
+                CreatedAt = createdAt,
+                Status = status,
+                UserUId = userUId,
+                ListUId = listUId
+            };
+        }
 
         private async Task<List<BoardMember>> BuildBoardMembersAsync(Board board, List<BoardMember>? selectedMembers)
         {

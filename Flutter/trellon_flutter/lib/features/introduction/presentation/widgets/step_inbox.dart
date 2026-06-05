@@ -23,7 +23,7 @@ class StepInbox extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
             child: IntroductionAppBar(
-              title: 'Step 1 of 5',
+              title: 'Bước 1 / 5',
               actionText: '',
               onSkip: onSkip,
               onBack: onBack,
@@ -62,7 +62,7 @@ class StepInbox extends StatelessWidget {
                   ),
                   const SizedBox(height: 60),
                   Text(
-                    'Inbox to Action',
+                    'Từ hộp thư đến hành động',
                     textAlign: TextAlign.center,
                     style: GoogleFonts.manrope(
                       fontSize: 36,
@@ -73,7 +73,7 @@ class StepInbox extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'Forward emails or messages directly to your workspace as actionable tasks.',
+                    'Chuyển tiếp email hoặc tin nhắn trực tiếp đến không gian làm việc của bạn thành các tác vụ thực tế.',
                     textAlign: TextAlign.center,
                     style: GoogleFonts.inter(
                       fontSize: 16,
@@ -86,7 +86,7 @@ class StepInbox extends StatelessWidget {
           ),
           Padding(
             padding: const EdgeInsets.all(24),
-            child: IntroductionPrimaryButton(text: 'Continue', onPressed: onNext),
+            child: IntroductionPrimaryButton(text: 'Tiếp tục', onPressed: onNext),
           ),
         ],
       ),

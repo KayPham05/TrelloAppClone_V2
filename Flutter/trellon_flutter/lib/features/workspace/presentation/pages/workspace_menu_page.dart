@@ -284,7 +284,7 @@ class _WorkspaceMenuPageState extends State<WorkspaceMenuPage> {
             color: AppColors.primary,
           ),
           Text(
-            'Workspace Menu',
+            'Trình đơn không gian',
             style: GoogleFonts.inter(
               fontSize: 16,
               fontWeight: FontWeight.w700,
@@ -423,7 +423,7 @@ class _WorkspaceMenuPageState extends State<WorkspaceMenuPage> {
       controller: _searchController,
       readOnly: true,
       onTap: () {
-        print('Search tapped in WorkspaceMenuPage. UID: $_currentUserUId');
+        debugPrint('Search tapped in WorkspaceMenuPage. UID: $_currentUserUId');
         if (_currentUserUId != null) {
           showSearch(context: context, delegate: GlobalSearchDelegate(userUId: _currentUserUId!));
         } else {
@@ -436,7 +436,7 @@ class _WorkspaceMenuPageState extends State<WorkspaceMenuPage> {
         color: AppColors.onSurface,
       ),
       decoration: InputDecoration(
-        hintText: 'Search boards...',
+        hintText: 'Tìm kiếm bảng...',
         prefixIcon: const Icon(
           Icons.search_rounded,
           color: AppColors.outline,
@@ -479,7 +479,7 @@ class _WorkspaceMenuPageState extends State<WorkspaceMenuPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Members',
+                      'Thành viên',
                       style: GoogleFonts.inter(
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
@@ -489,8 +489,8 @@ class _WorkspaceMenuPageState extends State<WorkspaceMenuPage> {
                     const SizedBox(height: 2),
                     Text(
                       memberCount > 0
-                          ? '$memberCount thảnh viên'
-                          : '0 active collaborators',
+                          ? '$memberCount thành viên'
+                          : '0 cộng tác viên tích cực',
                       style: GoogleFonts.inter(
                         fontSize: 11,
                         fontWeight: FontWeight.w500,
@@ -541,7 +541,7 @@ class _WorkspaceMenuPageState extends State<WorkspaceMenuPage> {
           children: [
             Expanded(
               child: Text(
-                'Your Boards',
+                'Các bảng của bạn',
                 style: GoogleFonts.inter(
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
@@ -552,7 +552,7 @@ class _WorkspaceMenuPageState extends State<WorkspaceMenuPage> {
             TextButton(
               onPressed: () => Navigator.pushNamed(context, '/board-list'),
               child: Text(
-                'View all',
+                'Xem tất cả',
                 style: GoogleFonts.inter(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
