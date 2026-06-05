@@ -33,7 +33,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Trello Clone',
+      title: 'Kabo',
       debugShowCheckedModeBanner: false,
       navigatorKey: navigatorKey,
       theme: AppTheme.light,
@@ -41,7 +41,7 @@ class MyApp extends StatelessWidget {
       builder: (context, child) {
         return _AppWarmup(child: child ?? const SizedBox.shrink());
       },
-      initialRoute: isLogged ? AppRoutes.home : AppRoutes.login,
+      initialRoute: isLogged ? AppRoutes.home : AppRoutes.landing,
     );
   }
 }

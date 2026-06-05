@@ -42,8 +42,10 @@ import 'features/board/domain/usecases/get_recent_boards_usecase.dart';
 import 'features/board/domain/usecases/create_board_usecase.dart';
 import 'features/board/domain/usecases/get_personal_boards_usecase.dart';
 import 'features/board/domain/usecases/save_recent_board_usecase.dart';
+import 'features/board/domain/usecases/delete_board_usecase.dart';
 import 'features/board/presentation/cubit/board_cubit.dart';
 import 'features/board/presentation/cubit/board_detail_cubit.dart';
+import 'features/board/data/services/board_realtime_service.dart';
 import 'features/workspace/data/datasources/workspace_remote_data_source.dart';
 import 'features/workspace/data/repositories/workspace_repository_impl.dart';
 import 'features/workspace/domain/repositories/workspace_repository.dart';
@@ -152,6 +154,7 @@ void _initWorkspace() {
       deleteWorkspaceUseCase: serviceLocator(),
       addWorkspaceMemberUseCase: serviceLocator(),
       createBoardUseCase: serviceLocator(),
+      deleteBoardUseCase: serviceLocator(),
       userLocalDataSource: serviceLocator(),
     ),
   );
@@ -183,6 +186,9 @@ void _initBoard() {
   serviceLocator.registerLazySingleton(
     () => SaveRecentBoardUseCase(serviceLocator()),
   );
+  serviceLocator.registerLazySingleton(
+    () => DeleteBoardUseCase(serviceLocator()),
+  );
 
   // BoardCubit
   serviceLocator.registerFactory(
@@ -205,6 +211,10 @@ void _initBoard() {
       saveRecentBoardUseCase: serviceLocator<SaveRecentBoardUseCase>(),
     ),
   );
+
+  serviceLocator.registerLazySingleton(
+    () => BoardRealtimeService(),
+  );
 }
 
 void _initCard() {
@@ -214,16 +224,36 @@ void _initCard() {
   );
 
   // UseCases
-  serviceLocator.registerLazySingleton(() => DeleteCardUseCase(serviceLocator()));
-  serviceLocator.registerLazySingleton(() => UpdateCardStatusUseCase(serviceLocator()));
-  serviceLocator.registerLazySingleton(() => AddCardCommentUseCase(serviceLocator()));
-  serviceLocator.registerLazySingleton(() => UploadAttachmentUseCase(serviceLocator()));
-  serviceLocator.registerLazySingleton(() => GetAttachmentsUseCase(serviceLocator()));
-  serviceLocator.registerLazySingleton(() => DeleteAttachmentUseCase(serviceLocator()));
-  serviceLocator.registerLazySingleton(() => UpdateAttachmentDescriptionUseCase(serviceLocator()));
-  serviceLocator.registerLazySingleton(() => UploadCardCoverUseCase(serviceLocator()));
-  serviceLocator.registerLazySingleton(() => UpdateCardDueDateUseCase(serviceLocator()));
-  serviceLocator.registerLazySingleton(() => UpdateListUIdUseCase(serviceLocator()));
+  serviceLocator.registerLazySingleton(
+    () => DeleteCardUseCase(serviceLocator()),
+  );
+  serviceLocator.registerLazySingleton(
+    () => UpdateCardStatusUseCase(serviceLocator()),
+  );
+  serviceLocator.registerLazySingleton(
+    () => AddCardCommentUseCase(serviceLocator()),
+  );
+  serviceLocator.registerLazySingleton(
+    () => UploadAttachmentUseCase(serviceLocator()),
+  );
+  serviceLocator.registerLazySingleton(
+    () => GetAttachmentsUseCase(serviceLocator()),
+  );
+  serviceLocator.registerLazySingleton(
+    () => DeleteAttachmentUseCase(serviceLocator()),
+  );
+  serviceLocator.registerLazySingleton(
+    () => UpdateAttachmentDescriptionUseCase(serviceLocator()),
+  );
+  serviceLocator.registerLazySingleton(
+    () => UploadCardCoverUseCase(serviceLocator()),
+  );
+  serviceLocator.registerLazySingleton(
+    () => UpdateCardDueDateUseCase(serviceLocator()),
+  );
+  serviceLocator.registerLazySingleton(
+    () => UpdateListUIdUseCase(serviceLocator()),
+  );
 
   // Cubit
   serviceLocator.registerFactory(
@@ -345,11 +375,13 @@ void _initPlanner() {
   );
 
   // Cubit
-  serviceLocator.registerFactory(() => PlannerCubit(
-    getPlannerCardsUseCase: serviceLocator(),
-    updateCardDueDateUseCase: serviceLocator(),
-    userLocalDataSource: serviceLocator(),
-  ));
+  serviceLocator.registerFactory(
+    () => PlannerCubit(
+      getPlannerCardsUseCase: serviceLocator(),
+      updateCardDueDateUseCase: serviceLocator(),
+      userLocalDataSource: serviceLocator(),
+    ),
+  );
 }
 
 void _initNotification() {
@@ -389,25 +421,28 @@ void _initNotification() {
   );
 
   serviceLocator.registerLazySingleton(
-    () =>
-        NotificationRealtimeService(cubit: serviceLocator<NotificationCubit>()),
+    () => NotificationRealtimeService(
+      cubit: serviceLocator<NotificationCubit>(),
+      workspaceCubit: serviceLocator<WorkspaceCubit>(),
+      plannerCubit: serviceLocator<PlannerCubit>(),
+    ),
   );
 }
 
 void _initAiAnalysis() {
+  // Data Source
   serviceLocator.registerLazySingleton<AiAnalysisRemoteDataSource>(
     () => AiAnalysisRemoteDataSourceImpl(client: serviceLocator<Dio>()),
   );
 
+  // Repository
   serviceLocator.registerLazySingleton<IAiAnalysisRepository>(
     () => AiAnalysisRepositoryImpl(
       remoteDataSource: serviceLocator<AiAnalysisRemoteDataSource>(),
     ),
   );
 
-  serviceLocator.registerLazySingleton(
-    () => AnalyzeWorkspaceUseCase(serviceLocator()),
-  );
+  // UseCases
   serviceLocator.registerLazySingleton(
     () => AnalyzeBoardUseCase(serviceLocator()),
   );
@@ -415,22 +450,26 @@ void _initAiAnalysis() {
     () => AnalyzeCardUseCase(serviceLocator()),
   );
   serviceLocator.registerLazySingleton(
-    () => GetReportHistoryUseCase(serviceLocator()),
+    () => AnalyzeWorkspaceUseCase(serviceLocator()),
   );
   serviceLocator.registerLazySingleton(
     () => GetReportByIdUseCase(serviceLocator()),
   );
   serviceLocator.registerLazySingleton(
+    () => GetReportHistoryUseCase(serviceLocator()),
+  );
+  serviceLocator.registerLazySingleton(
     () => SaveCurrentReportUseCase(serviceLocator()),
   );
 
+  // Cubit
   serviceLocator.registerFactory(
     () => AiAnalysisCubit(
-      analyzeWorkspaceUseCase: serviceLocator(),
       analyzeBoardUseCase: serviceLocator(),
       analyzeCardUseCase: serviceLocator(),
-      getReportHistoryUseCase: serviceLocator(),
+      analyzeWorkspaceUseCase: serviceLocator(),
       getReportByIdUseCase: serviceLocator(),
+      getReportHistoryUseCase: serviceLocator(),
       saveCurrentReportUseCase: serviceLocator(),
     ),
   );

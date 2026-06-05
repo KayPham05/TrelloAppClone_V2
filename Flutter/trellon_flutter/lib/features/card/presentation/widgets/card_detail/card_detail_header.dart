@@ -316,6 +316,8 @@ class CardDetailTitle extends StatelessWidget {
   final String? boardId;
   final CardDetailCubit? cubit;
   final ValueChanged<String>? onStatusToggle;
+  final bool isArchived;
+  final VoidCallback? onUnarchive;
 
   const CardDetailTitle({
     super.key,
@@ -327,6 +329,8 @@ class CardDetailTitle extends StatelessWidget {
     this.boardId,
     this.cubit,
     this.onStatusToggle,
+    this.isArchived = false,
+    this.onUnarchive,
   });
 
   @override
@@ -422,15 +426,22 @@ class CardDetailTitle extends StatelessWidget {
             GestureDetector(
               onTap: (boardId != null && cubit != null)
                   ? () {
-                      final s = cubit!.state;
-                      if (s is CardDetailLoaded) {
-                        MoveCardSheet.show(
-                          context,
-                          card: s.card,
-                          currentBoardId: boardId!,
-                          boardDataSource: serviceLocator<BoardRemoteDataSource>(),
-                          cubit: cubit!,
-                        );
+                      if (isArchived) {
+                        cubit!.unarchiveCard();
+                        if (onUnarchive != null) {
+                          onUnarchive!();
+                        }
+                      } else {
+                        final s = cubit!.state;
+                        if (s is CardDetailLoaded) {
+                          MoveCardSheet.show(
+                            context,
+                            card: s.card,
+                            currentBoardId: boardId!,
+                            boardDataSource: serviceLocator<BoardRemoteDataSource>(),
+                            cubit: cubit!,
+                          );
+                        }
                       }
                     }
                   : null,
@@ -481,13 +492,13 @@ class CardDetailTitle extends StatelessWidget {
                       ],
                     ),
                   ),
-                  // "Di chuyển" link
+                  // "Di chuyển" or "Khôi phục" link
                   if (boardId != null && cubit != null)
                     Text(
-                      'Di chuyển',
+                      isArchived ? 'Khôi phục' : 'Di chuyển',
                       style: GoogleFonts.inter(
                         fontSize: 14,
-                        color: const Color(0xFF1565C0),
+                        color: isArchived ? Colors.green : const Color(0xFF1565C0),
                         fontWeight: FontWeight.w500,
                       ),
                     ),

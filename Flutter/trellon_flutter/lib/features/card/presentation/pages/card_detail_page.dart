@@ -24,6 +24,7 @@ class CardDetailPage extends StatefulWidget {
   final String? boardName;
   final String? listName;
   final String? boardBackgroundUrl;
+  final bool isArchived;
   const CardDetailPage({
     super.key,
     required this.card,
@@ -32,6 +33,7 @@ class CardDetailPage extends StatefulWidget {
     this.boardName,
     this.listName,
     this.boardBackgroundUrl,
+    this.isArchived = false,
   });
 
   @override
@@ -41,10 +43,12 @@ class CardDetailPage extends StatefulWidget {
 class _CardDetailPageState extends State<CardDetailPage> {
   late CardDetailCubit _cubit;
   bool _quickActionsExpanded = true;
+  late bool _isArchived;
 
   @override
   void initState() {
     super.initState();
+    _isArchived = widget.isArchived;
     _cubit = serviceLocator<CardDetailCubit>()
       ..loadCardDetails(
         widget.card,
@@ -62,8 +66,8 @@ class _CardDetailPageState extends State<CardDetailPage> {
 
   @override
   Widget build(BuildContext context) {
-    final args =
-        ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+    final rawArgs = ModalRoute.of(context)?.settings.arguments;
+    final args = rawArgs is Map ? rawArgs : null;
     final boardRole = args?['boardRole'] as String?;
     final workspaceRole = args?['workspaceRole'] as String?;
     final boardName = args?['boardName'] as String?;
@@ -178,6 +182,12 @@ class _CardDetailPageState extends State<CardDetailPage> {
                                     widget.boardBackgroundUrl ?? boardBackgroundUrl ?? state.card.boardBackgroundUrl,
                                 boardId: widget.boardId ?? state.card.boardId,
                                 cubit: _cubit,
+                                isArchived: _isArchived,
+                                onUnarchive: () {
+                                  setState(() {
+                                    _isArchived = false;
+                                  });
+                                },
                                 onStatusToggle: (s) => _cubit.updateStatus(s),
                               ),
 

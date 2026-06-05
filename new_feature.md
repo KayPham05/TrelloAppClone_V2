@@ -1,4 +1,4 @@
-# TrellOn Workflow Intelligence System
+﻿# Kabo Workflow Intelligence System
 ## idea.plan
 
 ---
@@ -7,12 +7,12 @@
 
 ## Current System
 
-TrellOn hiện tại là:
+Kabo hiá»‡n táº¡i lÃ :
 - Kanban board management system
-- Workspace → Board → List → Card
+- Workspace â†’ Board â†’ List â†’ Card
 - task collaboration platform
 
-Kiến trúc hiện tại phù hợp với:
+Kiáº¿n trÃºc hiá»‡n táº¡i phÃ¹ há»£p vá»›i:
 - Agile
 - Scrum
 - Kanban
@@ -24,13 +24,13 @@ Kiến trúc hiện tại phù hợp với:
 
 ## Goal
 
-Mở rộng TrellOn thành:
+Má»Ÿ rá»™ng Kabo thÃ nh:
 
 Visual Workflow Intelligence Platform
 
-Không chỉ quản lý task,
-mà còn:
-- quản lý quy trình
+KhÃ´ng chá»‰ quáº£n lÃ½ task,
+mÃ  cÃ²n:
+- quáº£n lÃ½ quy trÃ¬nh
 - workflow dependency
 - process orchestration
 - workflow visualization
@@ -43,24 +43,24 @@ mà còn:
 
 ## Workflow Graph System
 
-Cho phép tạo:
-- dependency giữa các board
-- dependency giữa workflow
-- trực quan hóa process bằng graph
+Cho phÃ©p táº¡o:
+- dependency giá»¯a cÃ¡c board
+- dependency giá»¯a workflow
+- trá»±c quan hÃ³a process báº±ng graph
 
-Ví dụ:
+VÃ­ dá»¥:
 
 [Design]
-    ↓
+    â†“
 [Frontend]
-    ↓
+    â†“
 [Testing]
 
-hoặc:
+hoáº·c:
 
-[A] ──► [C]
-[B] ──► [C]
-[C] ──► [D]
+[A] â”€â”€â–º [C]
+[B] â”€â”€â–º [C]
+[C] â”€â”€â–º [D]
 
 ---
 
@@ -68,7 +68,7 @@ hoặc:
 
 ## Board = Node
 
-Mỗi board sẽ được render thành:
+Má»—i board sáº½ Ä‘Æ°á»£c render thÃ nh:
 - visual node
 - interactive component
 
@@ -76,7 +76,7 @@ Mỗi board sẽ được render thành:
 
 ## Workflow Link = Edge
 
-Mỗi dependency sẽ là:
+Má»—i dependency sáº½ lÃ :
 - edge
 - connection
 - process relation
@@ -87,16 +87,16 @@ Mỗi dependency sẽ là:
 
 ## IMPORTANT
 
-Workflow KHÔNG bắt buộc.
+Workflow KHÃ”NG báº¯t buá»™c.
 
 Boards trong workspace:
-- không cần liên kết với nhau
-- chỉ liên kết khi user muốn
+- khÃ´ng cáº§n liÃªn káº¿t vá»›i nhau
+- chá»‰ liÃªn káº¿t khi user muá»‘n
 
-Điều này đảm bảo:
-- giữ được tính đơn giản của Trello
-- workflow là optional layer
-- tránh UX phức tạp
+Äiá»u nÃ y Ä‘áº£m báº£o:
+- giá»¯ Ä‘Æ°á»£c tÃ­nh Ä‘Æ¡n giáº£n cá»§a Trello
+- workflow lÃ  optional layer
+- trÃ¡nh UX phá»©c táº¡p
 
 ---
 
@@ -105,14 +105,14 @@ Boards trong workspace:
 ## Normal Mode
 
 Trello-like:
-- boards độc lập
-- quản lý task truyền thống
+- boards Ä‘á»™c láº­p
+- quáº£n lÃ½ task truyá»n thá»‘ng
 
 ---
 
 ## Workflow Mode
 
-Cho phép:
+Cho phÃ©p:
 - graph view
 - dependency management
 - workflow orchestration
@@ -123,7 +123,7 @@ Cho phép:
 
 ## Dedicated Workflow Design Interface
 
-Workspace sẽ có thêm:
+Workspace sáº½ cÃ³ thÃªm:
 
 - Boards
 - Calendar
@@ -136,17 +136,17 @@ Workspace sẽ có thêm:
 
 ## Main Layout
 
-┌────────────────────────────────────┐
-│ Toolbar                            │
-├─────────────┬──────────────────────┤
-│ Left Panel  │                      │
-│             │                      │
-│ Components  │      Canvas          │
-│             │                      │
-│             │                      │
-├─────────────┴──────────────────────┤
-│ Bottom Info / Status               │
-└────────────────────────────────────┘
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚ Toolbar                            â”‚
+â”œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¤
+â”‚ Left Panel  â”‚                      â”‚
+â”‚             â”‚                      â”‚
+â”‚ Components  â”‚      Canvas          â”‚
+â”‚             â”‚                      â”‚
+â”‚             â”‚                      â”‚
+â”œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¤
+â”‚ Bottom Info / Status               â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 
 ---
 
@@ -154,7 +154,7 @@ Workspace sẽ có thêm:
 
 ## Workflow Elements
 
-Toolbar sẽ chứa:
+Toolbar sáº½ chá»©a:
 
 - Board Node
 - List Node
@@ -170,10 +170,10 @@ Toolbar sẽ chứa:
 
 ## Visual-first creation
 
-Ví dụ:
-- kéo Board Node ra canvas
-- popup config xuất hiện
-- nhập:
+VÃ­ dá»¥:
+- kÃ©o Board Node ra canvas
+- popup config xuáº¥t hiá»‡n
+- nháº­p:
   - board name
   - description
   - members
@@ -181,7 +181,7 @@ Ví dụ:
   - status
 - click Create
 
-=> board thật được tạo ngay lập tức
+=> board tháº­t Ä‘Æ°á»£c táº¡o ngay láº­p tá»©c
 
 ---
 
@@ -189,7 +189,7 @@ Ví dụ:
 
 ## Main Features
 
-Canvas hỗ trợ:
+Canvas há»— trá»£:
 - drag node
 - connect edge
 - delete edge
@@ -212,7 +212,7 @@ https://reactflow.dev
 
 ## Reason for choosing
 
-React Flow hỗ trợ:
+React Flow há»— trá»£:
 - node editor
 - edge system
 - drag/drop
@@ -282,7 +282,7 @@ Alternative:
 
 # 15. Backend Responsibilities
 
-Backend xử lý:
+Backend xá»­ lÃ½:
 - workflow validation
 - dependency management
 - unlock conditions
@@ -298,18 +298,18 @@ Backend xử lý:
 # 16.1 Existing Core
 
 Workspace
- └── Boards
-      └── Lists
-           └── Cards
+ â””â”€â”€ Boards
+      â””â”€â”€ Lists
+           â””â”€â”€ Cards
 
 ---
 
 # 16.2 New Workflow Layer
 
 WorkflowDesign
- ├── WorkflowNodes
- ├── WorkflowEdges
- └── WorkflowStates
+ â”œâ”€â”€ WorkflowNodes
+ â”œâ”€â”€ WorkflowEdges
+ â””â”€â”€ WorkflowStates
 
 ---
 
@@ -403,30 +403,30 @@ CUSTOM_RULE
 21. Optional Workflow Locking
 IMPORTANT FEATURE
 
-Workflow locking có thể:
+Workflow locking cÃ³ thá»ƒ:
 
-bật
-tắt
+báº­t
+táº¯t
 If disabled
 
-Dependency chỉ dùng cho:
+Dependency chá»‰ dÃ¹ng cho:
 
 visualization
 tracking
 reference
 If enabled
 
-Workflow được enforce:
+Workflow Ä‘Æ°á»£c enforce:
 
-board bị lock
-workflow state bị kiểm soát
-dependency được validate
+board bá»‹ lock
+workflow state bá»‹ kiá»ƒm soÃ¡t
+dependency Ä‘Æ°á»£c validate
 22. Frontend Workflow Mapping
 React Flow Node
 
-Board → Node
+Board â†’ Node
 
-Ví dụ:
+VÃ­ dá»¥:
 
 {
   "id": "boardA",
@@ -441,7 +441,7 @@ Ví dụ:
 }
 React Flow Edge
 
-WorkflowEdge → Edge
+WorkflowEdge â†’ Edge
 
 {
   "id": "edge_A_B",
@@ -470,9 +470,9 @@ PATCH /api/workflow/status
 24.1 Circular Dependency
 Problem
 
-A → B → C → A
+A â†’ B â†’ C â†’ A
 
-gây loop workflow.
+gÃ¢y loop workflow.
 
 Solution
 
@@ -481,17 +481,17 @@ Backend validation:
 detect cycle
 reject invalid edge
 
-Workflow graph phải là:
+Workflow graph pháº£i lÃ :
 Directed Acyclic Graph (DAG)
 
 24.2 Massive Graph
 Problem
 
-Workflow quá lớn:
+Workflow quÃ¡ lá»›n:
 
 lag
-khó nhìn
-UX rối
+khÃ³ nhÃ¬n
+UX rá»‘i
 Solution
 minimap
 zoom level
@@ -502,7 +502,7 @@ graph virtualization
 24.3 Concurrent Editing
 Problem
 
-Nhiều user chỉnh workflow cùng lúc.
+Nhiá»u user chá»‰nh workflow cÃ¹ng lÃºc.
 
 Solution
 SignalR realtime sync
@@ -512,19 +512,19 @@ version tracking
 24.4 Deleted Board
 Problem
 
-Board bị xóa nhưng workflow edge vẫn tồn tại.
+Board bá»‹ xÃ³a nhÆ°ng workflow edge váº«n tá»“n táº¡i.
 
 Solution
 cascade cleanup
-hoặc:
+hoáº·c:
 soft delete
 orphan validation
 24.5 Invalid Dependency
 Problem
 
-User tạo dependency vô nghĩa.
+User táº¡o dependency vÃ´ nghÄ©a.
 
-Ví dụ:
+VÃ­ dá»¥:
 
 self reference
 duplicate edge
@@ -538,7 +538,7 @@ validate workflow rules
 24.6 Workflow Complexity Explosion
 Problem
 
-Quá nhiều node type khiến UX phức tạp.
+QuÃ¡ nhiá»u node type khiáº¿n UX phá»©c táº¡p.
 
 Solution
 Phase strategy
@@ -558,7 +558,7 @@ advanced node system
 24.7 Mobile UX
 Problem
 
-Graph editor khó dùng trên mobile.
+Graph editor khÃ³ dÃ¹ng trÃªn mobile.
 
 Solution
 
@@ -571,7 +571,7 @@ Mobile:
 workflow viewer
 lightweight interaction
 25. Recommended Development Phases
-Phase 1 — Workflow Visualization
+Phase 1 â€” Workflow Visualization
 
 Features:
 
@@ -580,7 +580,7 @@ board node
 edge rendering
 zoom/pan
 minimap
-Phase 2 — Interactive Workflow Editing
+Phase 2 â€” Interactive Workflow Editing
 
 Features:
 
@@ -589,7 +589,7 @@ delete edge
 node dragging
 save position
 context menu
-Phase 3 — Workflow Logic
+Phase 3 â€” Workflow Logic
 
 Features:
 
@@ -597,7 +597,7 @@ workflow states
 unlock conditions
 dependency validation
 blocking system
-Phase 4 — Workflow Automation
+Phase 4 â€” Workflow Automation
 
 Features:
 
@@ -605,7 +605,7 @@ auto unlock
 auto notification
 automation trigger
 workflow rules
-Phase 5 — Advanced Workflow Intelligence
+Phase 5 â€” Advanced Workflow Intelligence
 
 Features:
 
@@ -615,14 +615,14 @@ AI assistant
 workflow simulation
 26. Product Identity
 
-TrellOn sẽ không còn là:
-“Trello Clone”
+Kabo sáº½ khÃ´ng cÃ²n lÃ :
+â€œTrello Cloneâ€
 
-Mà trở thành:
+MÃ  trá»Ÿ thÃ nh:
 
 Visual Workflow Orchestration Platform
 
-kết hợp:
+káº¿t há»£p:
 
 Kanban
 Workflow Graph

@@ -104,8 +104,10 @@ export default function CardModal({ card, onClose, onSave }) {
 
   const fetchCardMembers = async (id) => {
     setIsLoadingMembers(true);
-    try { setCardMembers(Array.isArray(await getCardMembersAPI(id)) ? await getCardMembersAPI(id) : []); }
-    catch { setCardMembers([]); }
+    try {
+      const data = await getCardMembersAPI(id);
+      setCardMembers(Array.isArray(data) ? data : []);
+    } catch { setCardMembers([]); }
     finally { setIsLoadingMembers(false); }
   };
 
@@ -163,7 +165,7 @@ export default function CardModal({ card, onClose, onSave }) {
 
   const handleDeleteAttachment = async (uid) => {
     try {
-      await deleteAttachmentAPI(uid, storedUser?.userUId);
+      await deleteAttachmentAPI(card.cardUId, uid, storedUser?.userUId);
       setAttachments((p) => p.filter((a) => a.attachmentUId !== uid));
     } catch {}
   };

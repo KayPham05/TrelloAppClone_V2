@@ -17,12 +17,14 @@ class NotificationLoaded extends NotificationState {
   final bool hasReachedMax;
   final int unreadCount;
   final NotificationTab tab;
+  final bool isLogoutRequested; 
 
   const NotificationLoaded({
     required this.notifications,
     this.hasReachedMax = false,
     this.unreadCount = 0,
     this.tab = NotificationTab.all,
+    this.isLogoutRequested = false,
   });
 
   NotificationLoaded copyWith({
@@ -30,17 +32,19 @@ class NotificationLoaded extends NotificationState {
     bool? hasReachedMax,
     int? unreadCount,
     NotificationTab? tab,
+    bool? isLogoutRequested,
   }) {
     return NotificationLoaded(
       notifications: notifications ?? this.notifications,
       hasReachedMax: hasReachedMax ?? this.hasReachedMax,
       unreadCount: unreadCount ?? this.unreadCount,
       tab: tab ?? this.tab,
+      isLogoutRequested: isLogoutRequested ?? this.isLogoutRequested,
     );
   }
 
   @override
-  List<Object?> get props => [notifications, hasReachedMax, unreadCount, tab];
+  List<Object?> get props => [notifications, hasReachedMax, unreadCount, tab, isLogoutRequested];
 }
 
 class NotificationError extends NotificationState {

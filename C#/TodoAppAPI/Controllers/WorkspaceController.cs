@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using TodoAppAPI.DTOs;
+using TodoAppAPI.Hubs;
 using TodoAppAPI.Interfaces;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
@@ -15,11 +17,13 @@ namespace TodoAppAPI.Controllers
         private readonly IWorkspaceService _workspaceService;
         private readonly IActivity _activity;
         private readonly ICloudinaryService _cloudinaryService;
-        public WorkspaceController(IWorkspaceService workspaceService, IActivity activity, ICloudinaryService cloudinaryService)
+        private readonly IHubContext<NotificationHub> _notificationHubContext;
+        public WorkspaceController(IWorkspaceService workspaceService, IActivity activity, ICloudinaryService cloudinaryService, IHubContext<NotificationHub> notificationHubContext)
         {
             _workspaceService = workspaceService;
             _activity = activity;
             _cloudinaryService = cloudinaryService;
+            _notificationHubContext = notificationHubContext;
         }
         [HttpPost("create")]
         public async Task<IActionResult> CreateWorkspace([FromQuery] string creatorUserId, [FromQuery] string name, [FromQuery] string? description = null)
@@ -30,6 +34,10 @@ namespace TodoAppAPI.Controllers
             if (!result)
                 return StatusCode(500, new { message = "Error creating workspace." });
             _ = _activity.AddActivity(creatorUserId, $"created workspace '{name}'");
+
+            await _notificationHubContext.Clients.Group(NotificationHub.UserGroup(creatorUserId))
+                .SendAsync("WorkspaceCreated", new { name, description });
+
             return Ok(new { message = "Workspace created successfully." });
         }
         [HttpDelete("delete")]
@@ -41,6 +49,10 @@ namespace TodoAppAPI.Controllers
             if (!result)
                 return Ok(new { message = "Không có quyền" });
             _ = _activity.AddActivity(requestUserId, $"deleted workspace '{workspaceId}'");
+
+            await _notificationHubContext.Clients.Group(NotificationHub.UserGroup(requestUserId))
+                .SendAsync("WorkspaceDeleted", new { workspaceId });
+
             return Ok(new { message = "Workspace deleted successfully." });
         }
 
@@ -57,6 +69,10 @@ namespace TodoAppAPI.Controllers
             if (!result)
                 return StatusCode(403, new { message = "Bạn không có quyền chỉnh sửa workspace này." });
             _ = _activity.AddActivity(dto.RequesterUId, $"updated workspace '{dto.WorkspaceId}'");
+
+            await _notificationHubContext.Clients.Group(NotificationHub.UserGroup(dto.RequesterUId))
+                .SendAsync("WorkspaceUpdated", new { workspaceId = dto.WorkspaceId, name = dto.Name, description = dto.Description });
+
             return Ok(new { message = "Workspace updated successfully." });
         }
 

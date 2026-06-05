@@ -1,4 +1,4 @@
-import React from "react";
+﻿import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Bell, Search, UserCircle, Grid3x3, Plus } from "lucide-react";
 import Profile from "./AccountMenu";
@@ -13,7 +13,7 @@ export default function Header({ className = "" }) {
 
   React.useEffect(() => {
     const onDocPointer = (e) => {
-      // 1) Nếu click nằm trong bất kỳ node có data-profile-keepopen thì bỏ qua
+      // 1) Náº¿u click náº±m trong báº¥t ká»³ node cÃ³ data-profile-keepopen thÃ¬ bá» qua
       const path = (e.composedPath && e.composedPath()) || [];
       if (
         path.some(
@@ -23,7 +23,7 @@ export default function Header({ className = "" }) {
         return;
       }
 
-      // 2) Nếu click không nằm trong wrap của profile thì mới đóng
+      // 2) Náº¿u click khÃ´ng náº±m trong wrap cá»§a profile thÃ¬ má»›i Ä‘Ã³ng
       if (!profileWrapRef.current) return;
       if (!profileWrapRef.current.contains(e.target)) {
         setIsProfileOpen(false);
@@ -34,7 +34,7 @@ export default function Header({ className = "" }) {
       if (e.key === "Escape") setIsProfileOpen(false);
     };
 
-    // dùng pointerdown ổn hơn mousedown/click cho case menu
+    // dÃ¹ng pointerdown á»•n hÆ¡n mousedown/click cho case menu
     document.addEventListener("pointerdown", onDocPointer);
     document.addEventListener("keydown", onKey);
     return () => {
@@ -87,7 +87,7 @@ export default function Header({ className = "" }) {
             group-hover:tracking-wider transition-all select-none
           "
           >
-            Trellon
+            Kabo
           </span>
         </div>
 

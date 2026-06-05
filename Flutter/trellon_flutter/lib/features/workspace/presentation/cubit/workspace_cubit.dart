@@ -7,6 +7,7 @@ import '../../domain/usecases/delete_workspace_usecase.dart';
 import '../../domain/usecases/add_workspace_member_usecase.dart';
 import '../../../../core/data_sources/user_local_data_source.dart';
 import '../../../board/domain/usecases/create_board_usecase.dart';
+import '../../../board/domain/usecases/delete_board_usecase.dart';
 import '../../../../core/services/authorization_service.dart';
 
 abstract class WorkspaceState {}
@@ -30,6 +31,7 @@ class WorkspaceCubit extends Cubit<WorkspaceState> {
   final DeleteWorkspaceUseCase deleteWorkspaceUseCase;
   final AddWorkspaceMemberUseCase addWorkspaceMemberUseCase;
   final CreateBoardUseCase createBoardUseCase;
+  final DeleteBoardUseCase deleteBoardUseCase;
   final UserLocalDataSource userLocalDataSource;
 
   WorkspaceCubit({
@@ -39,6 +41,7 @@ class WorkspaceCubit extends Cubit<WorkspaceState> {
     required this.deleteWorkspaceUseCase,
     required this.addWorkspaceMemberUseCase,
     required this.createBoardUseCase,
+    required this.deleteBoardUseCase,
     required this.userLocalDataSource,
   }) : super(WorkspaceInitial());
 
@@ -158,7 +161,54 @@ class WorkspaceCubit extends Cubit<WorkspaceState> {
     }
   }
 
+  Future<void> deleteBoard(String boardId) async {
+    try {
+      final userUid = await userLocalDataSource.getUserId() ?? '';
+      await deleteBoardUseCase(boardId: boardId, userUId: userUid);
+      // Let SignalR handle the UI update or manually refresh:
+      await loadWorkspaces();
+    } catch (e) {
+      emit(WorkspaceError('Không thể xóa bảng. Cần quyền Owner. ${e.toString()}'));
+    }
+  }
+
   void reset() {
     emit(WorkspaceInitial());
+  }
+
+  void applyRealtimeWorkspaceUpdated(Map<String, dynamic> payload) {
+    final currentState = state;
+    if (currentState is WorkspaceLoaded) {
+      final updatedPersonal = currentState.personal.map((w) {
+        if (w.id == payload['workspaceId']) {
+          return w.copyWith(
+            name: payload['name'],
+            description: payload['description'],
+          );
+        }
+        return w;
+      }).toList();
+
+      final updatedTeam = currentState.team.map((w) {
+        if (w.id == payload['workspaceId']) {
+          return w.copyWith(
+            name: payload['name'],
+            description: payload['description'],
+          );
+        }
+        return w;
+      }).toList();
+
+      emit(WorkspaceLoaded(personal: updatedPersonal, team: updatedTeam));
+    }
+  }
+
+  void applyRealtimeWorkspaceDeleted(String workspaceId) {
+    final currentState = state;
+    if (currentState is WorkspaceLoaded) {
+      final updatedPersonal = currentState.personal.where((w) => w.id != workspaceId).toList();
+      final updatedTeam = currentState.team.where((w) => w.id != workspaceId).toList();
+      emit(WorkspaceLoaded(personal: updatedPersonal, team: updatedTeam));
+    }
   }
 }

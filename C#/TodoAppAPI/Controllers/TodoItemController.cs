@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
+using TodoAppAPI.Hubs;
 using TodoAppAPI.DTOs;
 using TodoAppAPI.Interfaces;
 using TodoAppAPI.Models;
@@ -14,9 +16,16 @@ namespace TodoAppAPI.Controllers
     public class TodoItemController : ControllerBase
     {
         private readonly ITodoItemService _todoItemService;
-        public TodoItemController(ITodoItemService todoItemService)
+        private readonly IHubContext<BoardHub> _boardHubContext;
+        private readonly ICardsService _cardService;
+        private readonly IListService _listService;
+
+        public TodoItemController(ITodoItemService todoItemService, IHubContext<BoardHub> boardHubContext, ICardsService cardService, IListService listService)
         {
             _todoItemService = todoItemService;
+            _boardHubContext = boardHubContext;
+            _cardService = cardService;
+            _listService = listService;
         }
         [HttpPost("add")]
         public async Task<IActionResult> AddTodoItem([FromBody] AddTodoItemRequest request)
@@ -26,7 +35,19 @@ namespace TodoAppAPI.Controllers
 
             var success = await _todoItemService.AddTodoItem(request.CardUId, request.Content);
             if (success)
+            {
+                var card = _cardService.GetById(request.CardUId);
+                if (card != null && !string.IsNullOrEmpty(card.ListUId))
+                {
+                    var list = await _listService.GetListByIdAsync(card.ListUId);
+                    if (list != null)
+                    {
+                        await _boardHubContext.Clients.Group(BoardHub.BoardGroup(list.BoardUId))
+                            .SendAsync("TodoItemAdded", new { cardUId = request.CardUId, content = request.Content, boardUId = list.BoardUId });
+                    }
+                }
                 return Ok(new { message = "Thêm todo item thành công" });
+            }
             
             return StatusCode(500, "Lỗi khi thêm todo item.");
         }
@@ -48,7 +69,23 @@ namespace TodoAppAPI.Controllers
 
             var success = await _todoItemService.UpdateStatusTodoItem(todoItemUId, status);
             if (success)
+            {
+                var item = await _todoItemService.GetTodoItemById(todoItemUId);
+                if (item != null)
+                {
+                    var card = _cardService.GetById(item.CardUId);
+                    if (card != null && !string.IsNullOrEmpty(card.ListUId))
+                    {
+                        var list = await _listService.GetListByIdAsync(card.ListUId);
+                        if (list != null)
+                        {
+                            await _boardHubContext.Clients.Group(BoardHub.BoardGroup(list.BoardUId))
+                                .SendAsync("TodoItemStatusUpdated", new { todoItemUId, status, cardUId = item.CardUId, boardUId = list.BoardUId });
+                        }
+                    }
+                }
                 return Ok("Cập nhật trạng thái thành công.");
+            }
 
             return NotFound(" Không tìm thấy todo item để cập nhật.");
         }
@@ -56,9 +93,25 @@ namespace TodoAppAPI.Controllers
         [HttpDelete("{todoItemUId}")]
         public async Task<IActionResult> DeleteTodoItem(string todoItemUId)
         {
+            var item = await _todoItemService.GetTodoItemById(todoItemUId);
             var success = await _todoItemService.DeleteTodoItem(todoItemUId);
             if (success)
+            {
+                if (item != null)
+                {
+                    var card = _cardService.GetById(item.CardUId);
+                    if (card != null && !string.IsNullOrEmpty(card.ListUId))
+                    {
+                        var list = await _listService.GetListByIdAsync(card.ListUId);
+                        if (list != null)
+                        {
+                            await _boardHubContext.Clients.Group(BoardHub.BoardGroup(list.BoardUId))
+                                .SendAsync("TodoItemDeleted", new { todoItemUId, cardUId = item.CardUId, boardUId = list.BoardUId });
+                        }
+                    }
+                }
                 return Ok("Xóa todo item thành công.");
+            }
 
             return NotFound("Không tìm thấy todo item để xóa.");
         }

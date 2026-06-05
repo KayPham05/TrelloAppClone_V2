@@ -25,13 +25,6 @@
     "SenderEmail": "REPLACE_WITH_YOUR_SENDER_EMAIL",
     "SenderPassword": "REPLACE_WITH_YOUR_APP_PASSWORD"
   },
-  "GeminiSettings": {
-    "ApiKey": "",
-    "Model": "gemini-3.5-flash",
-    "TimeoutSeconds": 30,
-    "CacheMinutes": 5,
-    "MaxRisks": 5,
-    "MaxSuggestions": 5
-  },
+
   "AllowedHosts": "*"
 }

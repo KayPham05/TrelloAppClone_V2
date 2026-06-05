@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
+using TodoAppAPI.Hubs;
 using TodoAppAPI.Interfaces;
 using TodoAppAPI.Models;
 
@@ -12,10 +14,12 @@ namespace TodoAppAPI.Controllers
     {
         private readonly ICardMemberService _cardMemberService;
         private readonly IActivity _activity;
-        public CardMemberController(ICardMemberService cardMemberService, IActivity activity)
+        private readonly IHubContext<BoardHub> _boardHubContext;
+        public CardMemberController(ICardMemberService cardMemberService, IActivity activity, IHubContext<BoardHub> boardHubContext)
         {
             _cardMemberService = cardMemberService;
             _activity = activity;
+            _boardHubContext = boardHubContext;
         }
 
         [HttpGet("{cardUId}")]
@@ -40,6 +44,10 @@ namespace TodoAppAPI.Controllers
             if (!result)
                 return StatusCode(403, new { message = "Không thể thêm thành viên (không có quyền hoặc dữ liệu không hợp lệ)." });
             _ = _activity.AddActivity(requesterUId, $"added user '{userUId}' to card '{cardUId}'");
+
+            await _boardHubContext.Clients.Group(BoardHub.BoardGroup(boardUId))
+                .SendAsync("CardMemberAdded", new { cardUId, userUId, boardUId });
+
             return Ok(new { message = "Thêm thành viên vào card thành công." });
         }
 
@@ -55,6 +63,10 @@ namespace TodoAppAPI.Controllers
             if (!result)
                 return StatusCode(403, new { message = "Không thể xóa thành viên (không có quyền hoặc không tồn tại)." });
             _ = _activity.AddActivity(requesterUId, $"removed user '{userUId}' from card '{cardUId}'");
+
+            await _boardHubContext.Clients.Group(BoardHub.BoardGroup(boardUId))
+                .SendAsync("CardMemberRemoved", new { cardUId, userUId, boardUId });
+
             return Ok(new { message = "Xóa thành viên khỏi card thành công." });
         }
 

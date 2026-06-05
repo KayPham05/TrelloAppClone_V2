@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations.Schema;
+
 namespace TodoAppAPI.Models
 {
     public class Card
@@ -12,6 +14,15 @@ namespace TodoAppAPI.Models
         public string? BackgroundUrl { get; set; }
         public string UserUId { get; set; } = string.Empty;
         public bool IsArchived { get; set; } = false;
+
+        [NotMapped]
+        public string? BoardName { get; set; }
+
+        [NotMapped]
+        public string? BoardBackgroundUrl { get; set; }
+
+        [NotMapped]
+        public string? ListName { get; set; }
 
         // FK - List (nullable for inbox cards)
         public string? ListUId { get; set; } // ← Changed to nullable, removed default value

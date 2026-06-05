@@ -103,6 +103,32 @@ class _BoardSettingsSheetState extends State<BoardSettingsSheet> {
     );
   }
 
+  void _confirmDeleteBoard(BuildContext ctx, BoardDetailLoaded state) {
+    showDialog(
+      context: ctx,
+      builder: (dialogCtx) => AlertDialog(
+        title: const Text('Xóa bảng'),
+        content: const Text('Bạn có chắc chắn muốn xóa bảng này không? Hành động này không thể hoàn tác.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogCtx),
+            child: const Text('Hủy'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
+            onPressed: () {
+              Navigator.pop(dialogCtx);
+              Navigator.pop(ctx);
+              ctx.read<BoardDetailCubit>().deleteBoard(state.boardId);
+              Navigator.pop(ctx); // Use ctx to pop the board detail page
+            },
+            child: const Text('Xóa'),
+          ),
+        ],
+      ),
+    );
+  }
+
   String _visibilityLabel(String? v) {
     switch (v) {
       case 'Public': return 'Công khai';
@@ -326,6 +352,16 @@ class _BoardSettingsSheetState extends State<BoardSettingsSheet> {
                       trailing: const Icon(Icons.chevron_right, color: Colors.grey),
                       onTap: _showComingSoon,
                     ),
+
+                    if (isOwner) ...[
+                      const Divider(),
+                      ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: Text('Xóa bảng', style: GoogleFonts.inter(color: Colors.red.shade400, fontWeight: FontWeight.w600)),
+                        trailing: const Icon(Icons.delete_outline_rounded, color: Colors.red),
+                        onTap: () => _confirmDeleteBoard(ctx, state),
+                      ),
+                    ],
 
                     SizedBox(height: MediaQuery.of(context).padding.bottom + 16),
                   ],

@@ -1,4 +1,4 @@
-name: SonarCloud Analysis
+﻿name: SonarCloud Analysis
 
 on:
   push:
@@ -64,12 +64,17 @@ jobs:
           channel: "stable"
 
       - name: Get Flutter dependencies
+<<<<<<< HEAD
+        working-directory: Flutter/kabo_flutter
+        run: flutter pub get
+=======
         working-directory: Flutter/trellon_flutter
         run: flutter pub get --enforce-lockfile
+>>>>>>> b99a997132fbff90878e7a87c25feac790e238f9
         continue-on-error: false
 
       - name: Prepare Flutter env for CI
-        working-directory: Flutter/trellon_flutter
+        working-directory: Flutter/kabo_flutter
         env:
           FLUTTER_API_URL: ${{ secrets.FLUTTER_API_URL }}
         run: |
@@ -81,11 +86,11 @@ jobs:
         continue-on-error: false
 
       - name: Run Flutter tests with coverage
-        working-directory: Flutter/trellon_flutter
+        working-directory: Flutter/kabo_flutter
         run: |
           if [ -d "test" ]; then
             flutter test --coverage
-            # Di chuyển coverage report về root (2 cấp lên)
+            # Di chuyá»ƒn coverage report vá» root (2 cáº¥p lÃªn)
             mkdir -p ../../coverage
             cp coverage/lcov.info ../../coverage/
           else

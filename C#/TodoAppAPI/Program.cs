@@ -178,4 +178,5 @@ app.UseMiddleware<TodoAppAPI.Middlewares.AccountLockMiddleware>();
 
 app.MapControllers();
 app.MapHub<NotificationHub>("/hubs/notifications");
+app.MapHub<BoardHub>("/hubs/board");
 app.Run();

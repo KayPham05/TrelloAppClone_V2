@@ -87,7 +87,7 @@ export default function BoardHeader({ board, boardMembers, onBoardUpdated, onFil
         {/* LEFT: Board name */}
         <div className="flex items-center gap-2">
           <h2 className="text-lg font-bold truncate dark:text-[#E8EAED]">
-            {board?.boardName || "Bảng Trello của tôi"}
+            {board?.boardName || "Bảng Kabo của tôi"}
           </h2>
           <ChevronDown
             size={18}

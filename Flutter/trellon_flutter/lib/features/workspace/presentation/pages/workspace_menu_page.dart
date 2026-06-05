@@ -177,7 +177,7 @@ class _WorkspaceMenuPageState extends State<WorkspaceMenuPage> {
       ),
     );
     if (confirm == true && mounted) {
-      _showSnack('Tính năng xóa board sẽ có trong phiên bản tiếp theo');
+      context.read<WorkspaceCubit>().deleteBoard(board.id);
     }
   }
 

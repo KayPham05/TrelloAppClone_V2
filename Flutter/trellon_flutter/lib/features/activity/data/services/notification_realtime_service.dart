@@ -4,16 +4,22 @@ import 'package:signalr_netcore/signalr_client.dart';
 import '../../../../core/constants/api_endpoints.dart';
 import '../models/notification_model.dart';
 import '../../presentation/cubit/notification_cubit.dart';
+import '../../../workspace/presentation/cubit/workspace_cubit.dart';
+import '../../../planner/presentation/cubit/planner_cubit.dart';
 import 'notification_hub_url_builder.dart';
 
 class NotificationRealtimeService {
   final NotificationCubit cubit;
+  final WorkspaceCubit workspaceCubit;
+  final PlannerCubit plannerCubit;
   final FlutterSecureStorage secureStorage;
 
   HubConnection? _connection;
 
   NotificationRealtimeService({
     required this.cubit,
+    required this.workspaceCubit,
+    required this.plannerCubit,
     this.secureStorage = const FlutterSecureStorage(),
   });
 
@@ -28,7 +34,8 @@ class NotificationRealtimeService {
         .withUrl(
           hubUrl,
           options: HttpConnectionOptions(
-            accessTokenFactory: () async => await secureStorage.read(key: 'access_token') ?? '',
+            accessTokenFactory: () async =>
+                await secureStorage.read(key: 'access_token') ?? '',
           ),
         )
         .withAutomaticReconnect()
@@ -37,7 +44,9 @@ class NotificationRealtimeService {
     connection.on('NotificationCreated', (args) {
       final payload = _firstMapArg(args);
       if (payload == null) return;
-      cubit.applyRealtimeNotification(NotificationModel.fromJson(payload).toEntity());
+      cubit.applyRealtimeNotification(
+        NotificationModel.fromJson(payload).toEntity(),
+      );
     });
 
     connection.on('UnreadCountChanged', (args) {
@@ -63,6 +72,67 @@ class NotificationRealtimeService {
 
     connection.on('NotificationReadAll', (_) {
       cubit.applyNotificationReadAll();
+    });
+
+    // Workspace Events
+    connection.on('WorkspaceCreated', (_) {
+      workspaceCubit.loadWorkspaces();
+    });
+
+    connection.on('WorkspaceUpdated', (args) {
+      final payload = _firstMapArg(args);
+      if (payload == null) return;
+      workspaceCubit.applyRealtimeWorkspaceUpdated(payload);
+    });
+
+    connection.on('WorkspaceDeleted', (args) {
+      final payload = _firstMapArg(args);
+      if (payload == null) return;
+      workspaceCubit.applyRealtimeWorkspaceDeleted(payload['workspaceId']);
+    });
+
+    // Profile Events
+    connection.on('ProfileUpdated', (args) {
+      final payload = _firstMapArg(args);
+      if (payload == null) return;
+      cubit.applyRealtimeProfileUpdated(payload);
+    });
+
+    // Planner Events
+    connection.on('CardDueDateUpdated', (_) {
+      plannerCubit.applyRealtimeCardDueDateUpdated();
+    });
+
+    connection.on('CardAdded', (_) {
+      plannerCubit.applyRealtimeCardDueDateUpdated();
+    });
+
+    connection.on('CardDeleted', (_) {
+      plannerCubit.applyRealtimeCardDueDateUpdated();
+    });
+
+    connection.on('CardUpdated', (_) {
+      plannerCubit.applyRealtimeCardDueDateUpdated();
+    });
+
+    connection.on('CardMoved', (_) {
+      plannerCubit.applyRealtimeCardDueDateUpdated();
+    });
+
+    connection.on('CardStatusUpdated', (_) {
+      plannerCubit.applyRealtimeCardDueDateUpdated();
+    });
+
+    connection.on('CardArchived', (_) {
+      plannerCubit.applyRealtimeCardDueDateUpdated();
+    });
+
+    connection.on('CardUnarchived', (_) {
+      plannerCubit.applyRealtimeCardDueDateUpdated();
+    });
+
+    connection.on('AccountLocked', (_) {
+      cubit.applyAccountLocked();
     });
 
     _connection = connection;

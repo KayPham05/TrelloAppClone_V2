@@ -14,7 +14,9 @@ import '../widgets/board_detail/board_kanban_add_list.dart';
 import '../widgets/board_detail/board_kanban_card_ui_widget.dart';
 import '../widgets/board_detail/board_kanban_card_wrapper.dart';
 import '../widgets/board_detail/board_kanban_column_widget.dart';
+import '../widgets/board_detail/board_filter_sheet.dart';
 import '../models/drag_data_models.dart';
+import '../../data/services/board_realtime_service.dart';
 
 class BoardDetailPage extends StatefulWidget {
   const BoardDetailPage({super.key});
@@ -40,13 +42,22 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
   List<ListEntity>? _localLists;
   BoardDetailCubit? _cubit;
 
+  // ── Filter state ─────────────────────────────────────────────────────────
+  /// When non-null, the board shows only the cards that passed the filter.
+  List<ListEntity>? _filteredLists;
+  bool get _isFilterActive => _filteredLists != null;
+
   bool _isDragging = false;
   final TextEditingController _addListController = TextEditingController();
+  String? _joinedBoardId;
 
   @override
   void dispose() {
     _addListController.dispose();
     _pageController?.dispose();
+    if (_joinedBoardId != null) {
+      serviceLocator<BoardRealtimeService>().leaveBoard(_joinedBoardId!);
+    }
     super.dispose();
   }
 
@@ -142,6 +153,7 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
     String? workspaceId;
     String? workspaceName;
     String? visibility;
+    bool isPersonal = false;
 
     if (arguments is Map<String, dynamic>) {
       boardId = arguments['boardId'] as String? ?? '';
@@ -149,6 +161,7 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
       backgroundUrl = arguments['backgroundUrl'] as String?;
       workspaceId = arguments['workspaceId'] as String?;
       workspaceName = arguments['workspaceName'] as String?;
+      isPersonal = arguments['isPersonal'] as bool? ?? false;
     } else if (arguments is BoardEntity) {
       boardId = arguments.id;
       boardName = arguments.name;
@@ -156,6 +169,7 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
       workspaceId = arguments.workspaceId;
       workspaceName = arguments.workspaceName;
       visibility = arguments.visibility;
+      isPersonal = arguments.isPersonal;
     }
 
     return BlocProvider(
@@ -168,7 +182,11 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
             workspaceId: workspaceId,
             workspaceName: workspaceName,
             visibility: visibility,
+            isPersonal: isPersonal,
           );
+        // Start Join Board Realtime
+        _joinedBoardId = boardId;
+        serviceLocator<BoardRealtimeService>().joinBoard(boardId);
         return _cubit!;
       },
       child: BlocConsumer<BoardDetailCubit, BoardDetailState>(
@@ -278,19 +296,7 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              IconButton(
-                                icon: const Icon(
-                                  Icons.filter_list,
-                                  color: Colors.white,
-                                ),
-                                onPressed: () {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('Comming soon'),
-                                    ),
-                                  );
-                                },
-                              ),
+                              _buildFilterButton(loadedState),
                               const SizedBox(width: 8),
                               IconButton(
                                 icon: const Icon(
@@ -365,6 +371,58 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
     );
   }
 
+  // ── Filter icon button with active indicator ─────────────────────────────
+  Widget _buildFilterButton(BoardDetailLoaded? loadedState) {
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        IconButton(
+          icon: Icon(
+            Icons.filter_list,
+            color: _isFilterActive ? AppColors.blueLight : Colors.white,
+          ),
+          onPressed: () async {
+            if (loadedState == null) return;
+            final lists = _localLists ?? loadedState.lists;
+            final result = await BoardFilterSheet.show(
+              context,
+              boardId: loadedState.boardId,
+              lists: lists,
+            );
+            if (!mounted) return;
+            // null means dismissed without applying (user closed)
+            // An empty result means "show nothing" (legitimate 0-match state)
+            setState(() {
+              if (result == null) {
+                // No change — keep existing filter
+              } else {
+                // Check if the result is a full-clear (all cards == original)
+                final totalOriginal = lists.fold<int>(0, (s, l) => s + l.cards.length);
+                final totalResult = result.fold<int>(0, (s, l) => s + l.cards.length);
+                _filteredLists = (totalResult == totalOriginal && result.length == lists.length)
+                    ? null
+                    : result;
+              }
+            });
+          },
+        ),
+        if (_isFilterActive)
+          Positioned(
+            right: 8,
+            top: 8,
+            child: Container(
+              width: 8,
+              height: 8,
+              decoration: const BoxDecoration(
+                color: AppColors.blueLight,
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
   Widget _buildBoardArea(BuildContext context, BoardDetailState state) {
     if (state is BoardDetailLoading || state is BoardDetailInitial) {
       return const Center(
@@ -385,7 +443,7 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
 
   // ── Zoom / Swipe view ────────────────────────────────────────────────────
   Widget _buildZoomSwipeView(BoardDetailLoaded state) {
-    final lists = _localLists ?? state.lists;
+    final lists = _filteredLists ?? _localLists ?? state.lists;
     if (lists.isEmpty) {
       return const Center(
         child: Text('Chưa có cột nào.', style: TextStyle(color: Colors.white)),
@@ -546,6 +604,10 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
                                         arguments: {
                                           'card': card,
                                           'boardId': state.boardId,
+                                          'boardName': state.boardName,
+                                          'listName': list.name,
+                                          'boardBackgroundUrl':
+                                              state.backgroundUrl,
                                         },
                                       );
                                       _cubit?.loadBoard(
@@ -584,7 +646,7 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
   }
 
   Widget _buildKanban(BoardDetailLoaded state) {
-    final listsToRender = _localLists ?? state.lists;
+    final listsToRender = _filteredLists ?? _localLists ?? state.lists;
     return ReorderableListView.builder(
       scrollDirection: Axis.horizontal,
       padding: EdgeInsets.fromLTRB(16 * _s, 100, 16 * _s, 120),
@@ -716,8 +778,9 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
           },
         ),
       ),
-      onReorderItem: (oldIndex, newIndex) {
-        final targetIdx = newIndex;
+      onReorder: (oldIndex, newIndex) {
+        // ReorderableListView calls onReorder with newIndex adjusted
+        final targetIdx = newIndex > oldIndex ? newIndex - 1 : newIndex;
         final list = listsToRender[oldIndex];
 
         setState(() {

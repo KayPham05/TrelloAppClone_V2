@@ -12,6 +12,16 @@ import CardMemberPopup from "./CardMemberPopup";
 import { getCardMembersAPI } from "../services/CardMemberAPI";
 import "./css/Card.css";
 
+/** Chuẩn hóa mảng nhãn */
+function normalizeLabels(raw) {
+  if (!Array.isArray(raw)) return [];
+  return raw.map((l) => ({
+    cardLabelUId: l.cardLabelUId || l.id || "",
+    title: l.title ?? l.name ?? "",
+    colorCode: l.colorCode ?? l.color ?? l.hex ?? "#888",
+  }));
+}
+
 export default function Card({
   card,
   boardMembers,
@@ -35,7 +45,7 @@ export default function Card({
   const [isCompleted, setIsCompleted] = useState(
     card.status?.toLowerCase() === "completed"
   );
-  const [statusError, setStatusError] = useState(false);
+  const [, setStatusError] = useState(false);
   const [cardMembers, setCardMembers] = useState([]);
   const [isLoadingMembers, setIsLoadingMembers] = useState(false);
 
@@ -53,7 +63,7 @@ export default function Card({
     document.addEventListener("click", handleClickOutside);
     return () => document.removeEventListener("click", handleClickOutside);
   }, []);
-  // Load card members khi card thay đổi hoặc sau khi refresh
+
   useEffect(() => {
     const fetchCardMembers = async () => {
       setIsLoadingMembers(true);
@@ -69,18 +79,15 @@ export default function Card({
     };
 
     fetchCardMembers();
-  }, [card.cardUId, card]); // Thêm card để reload khi có thay đổi
+  }, [card.cardUId, card]);
 
-  // Cập nhật trạng thái completed khi card thay đổi
   useEffect(() => {
     setIsCompleted(card.status?.toLowerCase() === "completed");
     setStatusError(false);
   }, [card.status]);
 
   const handleCardMembersChange = async (members) => {
-    console.log("Thành viên thẻ nhận từ popup:", members);
     setCardMembers(members);
-    // Reload lại members sau khi thay đổi
     try {
       const res = await getCardMembersAPI(card.cardUId);
       setCardMembers(Array.isArray(res) ? res : []);
@@ -89,24 +96,23 @@ export default function Card({
     }
   };
 
-  // Toggle trạng thái hoàn thành
   const handleToggleComplete = async () => {
     const next = !isCompleted;
-    setIsCompleted(next); // optimistic update
+    setIsCompleted(next);
+    const user = JSON.parse(localStorage.getItem("user"));
     try {
-      // API nhận giá trị: "todo" hoặc "completed" (lowercase)
       const newStatus = next ? "completed" : "todo";
-      await updateCardStatus(card.cardUId, newStatus);
+      await updateCardStatus(card.cardUId, newStatus, user?.userUId);
       onRefresh();
     } catch (err) {
       console.error("Lỗi khi cập nhật trạng thái card:", err);
-      setIsCompleted(!next); // rollback on error
+      setIsCompleted(!next);
     }
   };
 
-  // Xóa card
   const handleDelete = async () => {
-    await deleteCardAPI(card.cardUId);
+    const user = JSON.parse(localStorage.getItem("user"));
+    await deleteCardAPI(card.cardUId, user?.userUId);
     onRefresh();
   };
 
@@ -115,7 +121,6 @@ export default function Card({
     setMemberPopup({ open: true, position: pos });
   };
 
-  // Mở menu
   const handleOpenMenu = (e) => {
     e.stopPropagation();
     const rect = e.currentTarget.getBoundingClientRect();
@@ -144,7 +149,6 @@ export default function Card({
     }
   };
 
-  // Mở modal chi tiết
   const handleOpenCard = () => {
     setShowModal(true);
   };
@@ -153,18 +157,11 @@ export default function Card({
     setShowModal(false);
   };
 
-  // Lưu chỉnh sửa trong modal
-  const handleSaveModal = async (updatedCard) => {
-    try {
-      await updateCardAPI(updatedCard);
-      setShowModal(false);
-      onRefresh();
-    } catch (err) {
-      console.error("Lỗi khi cập nhật card:", err);
-    }
+  const handleSaveModal = (updatedCard) => {
+    setShowModal(false);
+    onRefresh();
   };
 
-  // Tính trạng thái ngày hết hạn
   const getDueStatus = () => {
     if (!card.dueDate) return null;
     const now = new Date();
@@ -176,192 +173,163 @@ export default function Card({
   };
   const dueStatus = getDueStatus();
 
-  // Màu theo trạng thái ngày đến hạn
   const dueColor =
     dueStatus === "overdue"
-      ? "#F87171" // đỏ
+      ? "#F87171"
       : dueStatus === "soon"
-      ? "#FACC15" // vàng
-      : "#86EFAC"; // xanh
+      ? "#FACC15"
+      : "#86EFAC";
 
   return (
-  <>
-    <div
-      ref={provided.innerRef}
-      {...provided.draggableProps}
-      {...provided.dragHandleProps}
-      className={`
-        card-item transition-all duration-300 rounded-lg
-        border border-gray-200 bg-white
-        dark:bg-[#1E1F22] dark:border-[#2C2D30]
-        px-3 py-2 shadow-sm
-        hover:shadow-md cursor-pointer
-        ${snapshot.isDragging ? "rotate-2 scale-[1.02] shadow-lg" : ""}
-        ${isCompleted ? "opacity-80" : ""}
-      `}
-    >
-      {/* ROW */}
-      <div className="flex items-start gap-2">
-        {/* COMPLETE BUTTON */}
-        <button
-          className="mt-0.5"
-          onClick={handleToggleComplete}
-        >
-          {isCompleted ? (
-            <i className="bi bi-check-circle-fill text-green-500 text-lg"></i>
-          ) : (
-            <i className="bi bi-circle text-gray-400 text-lg"></i>
+    <>
+      <div
+        ref={provided.innerRef}
+        {...provided.draggableProps}
+        {...provided.dragHandleProps}
+        className={`
+          card-item transition-all duration-300 rounded-lg
+          border border-gray-200 bg-white
+          dark:bg-[#1E1F22] dark:border-[#2C2D30]
+          shadow-sm hover:shadow-md cursor-pointer
+          ${snapshot.isDragging ? "rotate-2 scale-[1.02] shadow-lg" : ""}
+          ${isCompleted ? "opacity-80" : ""}
+        `}
+      >
+        {/* COVER IMAGE */}
+        {card.backgroundUrl && (
+          <div className="card-cover mb-2 -mx-3 -mt-2 h-32 overflow-hidden rounded-t-lg">
+            <img
+              src={card.backgroundUrl}
+              alt="Cover"
+              className="w-full h-full object-cover"
+            />
+          </div>
+        )}
+
+        <div className="px-3 py-2">
+          {/* LABELS */}
+          {card.labels && card.labels.length > 0 && (
+            <div className="flex flex-wrap gap-1 mb-2">
+              {normalizeLabels(card.labels).map((label) => (
+                <div
+                  key={label.cardLabelUId}
+                  className="h-2 w-10 rounded-full"
+                  style={{ backgroundColor: label.colorCode }}
+                  title={label.title}
+                />
+              ))}
+            </div>
           )}
-        </button>
 
-        {/* TITLE */}
-        <div
-          className={`
-            flex-1 text-sm leading-snug
-            ${isCompleted ? "line-through text-gray-500 dark:text-gray-400" : "text-gray-800 dark:text-gray-200"}
-          `}
-          onClick={handleOpenCard}
-        >
-          {card.title}
-        </div>
+          {/* ROW */}
+          <div className="flex items-start gap-2">
+            <button className="mt-0.5" onClick={handleToggleComplete}>
+              {isCompleted ? (
+                <i className="bi bi-check-circle-fill text-green-500 text-lg"></i>
+              ) : (
+                <i className="bi bi-circle text-gray-400 text-lg"></i>
+              )}
+            </button>
 
-        {/* EDIT BUTTON */}
-        <button
-          onClick={handleOpenMenu}
-          className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-        >
-          <i className="bi bi-pencil-square"></i>
-        </button>
+            <div
+              className={`
+                flex-1 text-sm leading-snug
+                ${isCompleted ? "line-through text-gray-500 dark:text-gray-400" : "text-gray-800 dark:text-gray-200"}
+              `}
+              onClick={handleOpenCard}
+            >
+              {card.title}
+            </div>
 
-        {/* MENU */}
-        {menuState.open &&
-          createPortal(
-            <>
-              <div
-                className="menu-overlay fixed inset-0"
-                onClick={handleCloseMenu}
-              ></div>
-              <CardMenu
-                position={menuState.position}
-                onOpenCard={() => {
-                  handleOpenCard();
-                  handleCloseMenu();
-                }}
-                onEdit={() => {
-                  handleOpenCard();
-                  handleCloseMenu();
-                }}
-                onDelete={handleDelete}
-                onManageMembers={handleManageMembers}
-                onMoveCard={handleMoveCard}
-                onClose={handleCloseMenu}
-                listUId={card.listUId}
-                lists={lists}
-              />
-            </>,
-            document.body
+            <button
+              onClick={handleOpenMenu}
+              className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+            >
+              <i className="bi bi-pencil-square"></i>
+            </button>
+
+            {menuState.open &&
+              createPortal(
+                <>
+                  <div className="menu-overlay fixed inset-0" onClick={handleCloseMenu}></div>
+                  <CardMenu
+                    position={menuState.position}
+                    onOpenCard={() => { handleOpenCard(); handleCloseMenu(); }}
+                    onEdit={() => { handleOpenCard(); handleCloseMenu(); }}
+                    onDelete={handleDelete}
+                    onManageMembers={handleManageMembers}
+                    onMoveCard={handleMoveCard}
+                    onClose={handleCloseMenu}
+                    listUId={card.listUId}
+                    lists={lists}
+                  />
+                </>,
+                document.body
+              )}
+          </div>
+
+          {/* MEMBERS */}
+          {!isLoadingMembers && cardMembers.length > 0 && (
+            <div className="flex items-center gap-1 mt-2">
+              {cardMembers.slice(0, 3).map((member, index) => {
+                const colors = [
+                  "bg-blue-700", "bg-yellow-600", "bg-orange-600", "bg-emerald-600",
+                  "bg-green-600", "bg-violet-600", "bg-rose-600", "bg-teal-600", "bg-indigo-600",
+                ];
+                const color = colors[index % colors.length];
+                const displayName = member.user?.userName || member.userName || "";
+                const initials = displayName.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
+                return (
+                  <div
+                    key={member.userUId}
+                    className={`w-6 h-6 ${color} text-white text-[10px] flex items-center justify-center rounded-full font-bold`}
+                    title={displayName}
+                  >
+                    {initials || "?"}
+                  </div>
+                );
+              })}
+              {cardMembers.length > 3 && (
+                <div className="w-6 h-6 bg-gray-400 dark:bg-gray-600 text-white text-xs flex items-center justify-center rounded-full">
+                  +{cardMembers.length - 3}
+                </div>
+              )}
+            </div>
           )}
-      </div>
 
-      {/* MEMBERS */}
-      {!isLoadingMembers && cardMembers.length > 0 && (
-        <div className="flex items-center gap-1 mt-2">
-          {cardMembers.slice(0, 3).map((member, index) => {
-            const colors = [
-              "bg-blue-700",
-              "bg-yellow-600",
-              "bg-orange-600",
-              "bg-emerald-600",
-              "bg-green-600",
-              "bg-violet-600",
-              "bg-rose-600",
-              "bg-teal-600",
-              "bg-indigo-600",
-            ];
-            const color = colors[index % colors.length];
-            // Handle both flat { userName } and nested { user: { userName } } shapes
-            const displayName = member.user?.userName || member.userName || "";
-            const initials = displayName
-              .split(" ")
-              .map((n) => n[0])
-              .join("")
-              .toUpperCase()
-              .slice(0, 2);
-
-            return (
-              <div
-                key={member.userUId}
-                className={`w-6 h-6 ${color} text-white text-[10px] flex items-center justify-center rounded-full font-bold`}
-                title={displayName}
-              >
-                {initials || "?"}
-              </div>
-            );
-          })}
-
-          {cardMembers.length > 3 && (
-            <div className="w-6 h-6 bg-gray-400 dark:bg-gray-600 text-white text-xs flex items-center justify-center rounded-full">
-              +{cardMembers.length - 3}
+          {/* DUE DATE */}
+          {card.dueDate && (
+            <div
+              className={`flex items-center gap-1 mt-2 text-xs font-medium w-fit px-2 py-0.5 rounded-full ${isCompleted ? "bg-green-500 text-white" : ""}`}
+              style={!isCompleted ? { backgroundColor: dueColor, color: "#1E293B" } : {}}
+            >
+              <i className="bi bi-clock me-1"></i>
+              {new Date(card.dueDate).toLocaleDateString("vi-VN", { day: "numeric", month: "short" })}
             </div>
           )}
         </div>
-      )}
+      </div>
 
-      {/* DUE DATE */}
-      {card.dueDate && (
-        <div
-          className={`
-            flex items-center gap-1 mt-2 text-xs font-medium w-fit px-2 py-0.5 rounded-full
-            ${isCompleted ? "bg-green-500 text-white" : ""}
-          `}
-          style={
-            !isCompleted
-              ? {
-                  backgroundColor: dueColor,
-                  color: "#1E293B",
-                }
-              : {}
-          }
-        >
-          <i className="bi bi-clock me-1"></i>
-          {new Date(card.dueDate).toLocaleDateString("vi-VN", {
-            day: "numeric",
-            month: "short",
-          })}
-        </div>
-      )}
-    </div>
+      {showModal &&
+        createPortal(
+          <CardModal card={card} cardMembers={cardMembers} onClose={handleCloseModal} onSave={handleSaveModal} />,
+          document.body
+        )}
 
-    {/* MODAL */}
-    {showModal &&
-      createPortal(
-        <CardModal
-          card={card}
-          cardMembers={cardMembers}
-          onClose={handleCloseModal}
-          onSave={handleSaveModal}
-        />,
-        document.body
-      )}
-
-    {/* MEMBERS POPUP */}
-    {memberPopup.open &&
-      createPortal(
-        <CardMemberPopup
-          card={card}
-          requester={JSON.parse(localStorage.getItem("user"))}
-          onClose={() =>
-            setMemberPopup({ open: false, position: { top: 0, left: 0 } })
-          }
-          position={memberPopup.position}
-          boardMembers={boardMembers}
-          board={board}
-          list={list}
-          onChangeCard={handleCardMembersChange}
-        />,
-        document.body
-      )}
-  </>
-);
-
+      {memberPopup.open &&
+        createPortal(
+          <CardMemberPopup
+            card={card}
+            requester={JSON.parse(localStorage.getItem("user"))}
+            onClose={() => setMemberPopup({ open: false, position: { top: 0, left: 0 } })}
+            position={memberPopup.position}
+            boardMembers={boardMembers}
+            board={board}
+            list={list}
+            onChangeCard={handleCardMembersChange}
+          />,
+          document.body
+        )}
+    </>
+  );
 }

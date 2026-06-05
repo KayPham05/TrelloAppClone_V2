@@ -4,11 +4,16 @@ const END_POINT = {
   NOTIFICATIONS: "notifications",
 };
 
-// Lấy danh sách thông báo
-export const getNotificationsAPI = (userId, page, pageSize) => {
+// Lấy danh sách thông báo (Backend tự lấy userId từ Token)
+export const getNotificationsAPI = (page = 1, pageSize = 20, tab = "all") => {
   return axiosClient.get(`${END_POINT.NOTIFICATIONS}`, {
-    params: { userId, page, pageSize },
+    params: { page, pageSize, tab },
   });
+};
+
+// Lấy số lượng thông báo chưa đọc
+export const getUnreadCountAPI = () => {
+  return axiosClient.get(`${END_POINT.NOTIFICATIONS}/unread-count`);
 };
 
 // Đánh dấu đã đọc 1 thông báo
@@ -17,10 +22,8 @@ export const markAsReadAPI = (notiId) => {
 };
 
 // Đánh dấu tất cả đã đọc
-export const markAllAsReadAPI = (userId) => {
-  return axiosClient.patch(`${END_POINT.NOTIFICATIONS}/read-all`, null, {
-    params: { userId },
-  });
+export const markAllAsReadAPI = () => {
+  return axiosClient.patch(`${END_POINT.NOTIFICATIONS}/read-all`);
 };
 
 // === Dành cho trường hợp muốn tạo notification thủ công ===

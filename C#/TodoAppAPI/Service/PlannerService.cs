@@ -17,7 +17,7 @@ namespace TodoAppAPI.Service
         public async Task<Dictionary<string, List<CardDTO>>> GetPlannerCardsAsync(string userUId, DateTime from, DateTime to)
         {
             var cards = await _dbContext.Todos
-                .Where(c => c.DueDate != null && c.DueDate >= from && c.DueDate <= to && c.Status != "Deleted")
+                .Where(c => c.DueDate != null && c.DueDate >= from && c.DueDate <= to && c.Status != "Deleted" && !c.IsArchived)
                 .Where(c => 
                     c.UserUId == userUId || 
                     _dbContext.CardMembers.Any(cm => cm.CardUId == c.CardUId && cm.UserUId == userUId) ||

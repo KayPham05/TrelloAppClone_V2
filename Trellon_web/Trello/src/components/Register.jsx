@@ -60,7 +60,7 @@ const handleSubmit = async (e) => {
                 </i>
               </div>
               <span className="text-2xl font-bold text-gray-800 logo-text">
-                Trello
+                Kabo
               </span>
             </div>
           </div>
@@ -194,7 +194,7 @@ const handleSubmit = async (e) => {
               </span>
             </div>
             <p className="footer-text text-gray-500 text-center mb-2">
-              One account for Trello, Jira, Confluence and{" "}
+              One account for Kabo, Jira, Confluence and{" "}
               <a href="#" className="text-blue-600 hover:underline">
                 more
               </a>

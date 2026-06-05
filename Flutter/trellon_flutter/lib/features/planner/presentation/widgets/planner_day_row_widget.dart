@@ -97,9 +97,9 @@ class PlannerDayRowWidget extends StatelessWidget {
                     final isHovering = candidateData.isNotEmpty;
                     return Container(
                       decoration: BoxDecoration(
-                        color: isHovering ? Colors.blue.withOpacity(0.05) : Colors.transparent,
+                        color: isHovering ? Colors.blue.withValues(alpha: 0.05) : Colors.transparent,
                         borderRadius: BorderRadius.circular(8),
-                        border: isHovering ? Border.all(color: Colors.blue.withOpacity(0.3)) : null,
+                        border: isHovering ? Border.all(color: Colors.blue.withValues(alpha: 0.3)) : null,
                       ),
                       padding: EdgeInsets.all(isHovering ? 4 : 0),
                       child: Column(
@@ -122,10 +122,10 @@ class PlannerDayRowWidget extends StatelessWidget {
                                   decoration: BoxDecoration(
                                     color: _getCardColor(card.id),
                                     borderRadius: BorderRadius.circular(8),
-                                    border: Border.all(color: Colors.black.withOpacity(0.05)),
+                                    border: Border.all(color: Colors.black.withValues(alpha: 0.05)),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: Colors.black.withOpacity(0.02),
+                                        color: Colors.black.withValues(alpha: 0.02),
                                         blurRadius: 4,
                                         offset: const Offset(0, 2),
                                       )
@@ -170,7 +170,7 @@ class PlannerDayRowWidget extends StatelessWidget {
                               child: Text(
                                 'Chưa lên kế hoạch nào',
                                 style: TextStyle(
-                                  color: const Color(0xFF6B6D76).withOpacity(0.6), // Slate
+                                  color: const Color(0xFF6B6D76).withValues(alpha: 0.6), // Slate
                                   fontSize: 14,
                                 ),
                               ),

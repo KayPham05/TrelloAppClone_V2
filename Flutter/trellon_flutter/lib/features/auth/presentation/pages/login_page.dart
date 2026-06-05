@@ -208,21 +208,30 @@ class _LoginViewState extends State<LoginView> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: [
-                    SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: Checkbox(
-                        value: false,
-                        onChanged: (v) {},
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                Expanded(
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: Checkbox(
+                          value: false,
+                          onChanged: (v) {},
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text('Ghi nhớ đăng nhập trong 30 ngày', style: AzureAuthTheme.bodyLg),
-                  ],
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Ghi nhớ đăng nhập trong 30 ngày',
+                          style: AzureAuthTheme.bodyLg,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
+                const SizedBox(width: 16),
                 TextButton(
                   onPressed: () => Navigator.pushNamed(context, '/forgot-password'),
                   style: TextButton.styleFrom(
