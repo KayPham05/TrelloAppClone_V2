@@ -1,3 +1,4 @@
+import 'package:apptreolon/features/profile/presentation/widgets/account_switcher_sheet.dart';
 import 'package:apptreolon/features/profile/presentation/widgets/setting_item_widget.dart';
 import 'package:apptreolon/routes.dart';
 import 'package:flutter/material.dart';
@@ -470,12 +471,29 @@ class _ProfilePageState extends State<ProfilePage> {
           child: Column(
             children: [
               SettingItem(
+                icon: Icons.switch_account_rounded,
+                title: 'Chuyển tài khoản',
+                subtitle: 'Quản lý & đăng nhập nhanh',
+                iconBgColor: const Color(0xFFE0F2FE),
+                iconColor: const Color(0xFF0284C7),
+                onTap: () {
+                  showModalBottomSheet(
+                    context: context,
+                    isScrollControlled: true,
+                    backgroundColor: Colors.transparent,
+                    builder: (_) => const AccountSwitcherSheet(),
+                  );
+                },
+              ),
+              _buildDivider(),
+              SettingItem(
                 icon: Icons.help_rounded,
                 title: 'Trung tâm trợ giúp',
                 iconBgColor: AppColors.surfaceContainerHigh,
                 iconColor: AppColors.onSurfaceVariant,
                 onTap: () {},
               ),
+              _buildDivider(),
               SettingItem(
                 icon: Icons.logout_rounded,
                 title: 'Đăng xuất',

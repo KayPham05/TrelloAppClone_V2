@@ -14,6 +14,7 @@ using TodoAppAPI.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.WebHost.UseUrls("http://0.0.0.0:8080");
 // Add services to the container.
 
 builder.Services.AddControllers();
@@ -179,4 +180,12 @@ app.UseMiddleware<TodoAppAPI.Middlewares.AccountLockMiddleware>();
 app.MapControllers();
 app.MapHub<NotificationHub>("/hubs/notifications");
 app.MapHub<BoardHub>("/hubs/board");
+
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    var context = services.GetRequiredService<TodoDbContext>(); // Thay bằng tên DbContext của bạn
+    context.Database.Migrate(); // Ép EF tự tạo DB và chạy Migration lên SQL Server
+}
+
 app.Run();

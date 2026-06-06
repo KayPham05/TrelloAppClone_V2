@@ -85,7 +85,13 @@ class _OtpVerificationViewState extends State<OtpVerificationView> {
               }
             },
           ),
-          title: Text('Kabo', style: AzureAuthTheme.headlineLg.copyWith(color: AzureAuthTheme.azureBlue)),
+          // Logo nhỏ ở AppBar cũng không để trong khung tròn
+          title: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Image.asset('lib/core/asset/logo_kabo.png', height: 30),
+            ],
+          ),
           centerTitle: true,
         ),
         body: SafeArea(
@@ -107,15 +113,13 @@ class _OtpVerificationViewState extends State<OtpVerificationView> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          // Thay thế icon lock trong hình tròn bằng logo tự nhiên
           Align(
             alignment: Alignment.center,
-            child: Container(
-              padding: const EdgeInsets.all(24),
-              decoration: const BoxDecoration(
-                color: AzureAuthTheme.azureTint,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.lock_outline, size: 40, color: AzureAuthTheme.azureBlue),
+            child: Image.asset(
+              'lib/core/asset/logo_kabo.png',
+              height: 80,
+              fit: BoxFit.contain,
             ),
           ),
           const SizedBox(height: 32),
@@ -142,8 +146,6 @@ class _OtpVerificationViewState extends State<OtpVerificationView> {
           _buildOtpRow(),
           const SizedBox(height: 48),
           BlocBuilder<VerifyCubit, VerifyState>(
-            buildWhen: (previous, current) => 
-                current is VerifyLoading || current is VerifyError || current is VerifyInitial,
             builder: (context, state) {
               final isLoading = state is VerifyLoading;
               return SizedBox(
@@ -173,8 +175,6 @@ class _OtpVerificationViewState extends State<OtpVerificationView> {
           ),
           const SizedBox(height: 32),
           BlocBuilder<VerifyCubit, VerifyState>(
-            buildWhen: (previous, current) => 
-                current is VerifyCountdown || current is VerifyCountdownDone || current is ResendLoading || current is ResendSuccess,
             builder: (context, state) {
               int seconds = 0;
               if (state is VerifyCountdown) {
@@ -192,12 +192,6 @@ class _OtpVerificationViewState extends State<OtpVerificationView> {
                   if (seconds == 0)
                     TextButton(
                       onPressed: isResending ? null : () => context.read<VerifyCubit>().resend(email: widget.email),
-                      style: TextButton.styleFrom(
-                        foregroundColor: AzureAuthTheme.azureBlue,
-                        padding: const EdgeInsets.symmetric(horizontal: 4),
-                        minimumSize: Size.zero,
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      ),
                       child: Text(
                         isResending ? 'Đang gửi lại...' : 'Gửi lại',
                         style: AzureAuthTheme.labelMd.copyWith(color: AzureAuthTheme.azureBlue),
@@ -224,7 +218,6 @@ class _OtpVerificationViewState extends State<OtpVerificationView> {
             child: TextFormField(
               controller: _controllers[i],
               focusNode: _focusNodes[i],
-              autofocus: i == 0,
               textAlign: TextAlign.center,
               keyboardType: TextInputType.number,
               maxLength: 1,
@@ -233,19 +226,19 @@ class _OtpVerificationViewState extends State<OtpVerificationView> {
               decoration: InputDecoration(
                 counterText: '',
                 filled: true,
-                fillColor: Colors.white,
+                fillColor: AzureAuthTheme.surfaceContainerLow,
                 contentPadding: EdgeInsets.zero,
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(100), 
-                  borderSide: const BorderSide(color: AzureAuthTheme.outlineVariant, width: 1),
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
                 ),
                 enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(100),
-                  borderSide: const BorderSide(color: AzureAuthTheme.outlineVariant, width: 1),
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(100),
-                  borderSide: const BorderSide(color: AzureAuthTheme.azureBlue, width: 1),
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: AzureAuthTheme.azureBlue, width: 2),
                 ),
               ),
               onChanged: (v) {
