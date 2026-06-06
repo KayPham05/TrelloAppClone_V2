@@ -181,6 +181,41 @@ class CardDetailCubit extends Cubit<CardDetailState> {
     }
   }
 
+  Future<void> updateTitle(String newTitle) async {
+    final currentState = state;
+    if (currentState is CardDetailLoaded) {
+      if (newTitle.trim().isEmpty || newTitle == currentState.card.title) return;
+      try {
+        final userUId = await UserLocalDataSource().getUserId() ?? '';
+        if (_isInboxCard) {
+          await inboxRepository.updateInboxCard(
+            cardId: currentState.card.id,
+            userUId: userUId,
+            title: newTitle,
+            description: currentState.card.description,
+            backgroundUrl: currentState.card.backgroundUrl,
+            dueDate: currentState.card.dueDate,
+            status: currentState.card.status,
+          );
+        } else {
+          await repository.updateCard(
+            cardId: currentState.card.id,
+            title: newTitle,
+            userUId: userUId,
+            description: currentState.card.description,
+            dueDate: currentState.card.dueDate,
+            backgroundUrl: currentState.card.backgroundUrl,
+            position: currentState.card.position,
+            listId: currentState.card.listId,
+          );
+        }
+        emit(currentState.copyWith(card: currentState.card.copyWith(title: newTitle)));
+      } catch (e) {
+        // Handle error silently or surface
+      }
+    }
+  }
+
   Future<void> updateBackgroundUrl(String newBackgroundUrl) async {
     final currentState = state;
     if (currentState is CardDetailLoaded) {

@@ -5,6 +5,7 @@ import 'package:dio/dio.dart';
 import 'package:cookie_jar/cookie_jar.dart';
 import 'core/network/dio_client.dart';
 import 'core/data_sources/user_local_data_source.dart';
+import 'core/services/session_manager.dart';
 import 'features/auth/data/repositories/auth_repository_impl.dart';
 import 'features/auth/domain/repositories/i_auth_repository.dart';
 import 'features/auth/domain/usecases/login_usecase.dart';
@@ -100,6 +101,9 @@ Future<void> initDependencies() async {
   serviceLocator.registerLazySingleton<Dio>(() => dioClient.instance);
   serviceLocator.registerLazySingleton<UserLocalDataSource>(
     () => UserLocalDataSource(),
+  );
+  serviceLocator.registerLazySingleton<SessionManager>(
+    () => SessionManager(),
   );
 
   _initAuth();

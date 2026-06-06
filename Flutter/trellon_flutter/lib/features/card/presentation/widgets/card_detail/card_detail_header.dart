@@ -307,7 +307,7 @@ class CardDetailCoverSection extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 // CardDetailTitle  –  Circle checkbox LEFT · title text · status chip below
 // ─────────────────────────────────────────────────────────────────────────────
-class CardDetailTitle extends StatelessWidget {
+class CardDetailTitle extends StatefulWidget {
   final String title;
   final String status;
   final String? boardName;
@@ -334,10 +334,47 @@ class CardDetailTitle extends StatelessWidget {
   });
 
   @override
+  State<CardDetailTitle> createState() => _CardDetailTitleState();
+}
+
+class _CardDetailTitleState extends State<CardDetailTitle> {
+  late TextEditingController _controller;
+  late FocusNode _focusNode;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.title);
+    _focusNode = FocusNode();
+    _focusNode.addListener(() {
+      if (!_focusNode.hasFocus) {
+        if (_controller.text != widget.title) {
+          widget.cubit?.updateTitle(_controller.text);
+        }
+      }
+    });
+  }
+
+  @override
+  void didUpdateWidget(covariant CardDetailTitle oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.title != widget.title && !_focusNode.hasFocus) {
+      _controller.text = widget.title;
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final isCompleted = status.toLowerCase() == 'hoan_thanh' ||
-        status.toLowerCase() == 'hoàn thành' ||
-        status.toLowerCase() == 'completed';
+    final isCompleted = widget.status.toLowerCase() == 'hoan_thanh' ||
+        widget.status.toLowerCase() == 'hoàn thành' ||
+        widget.status.toLowerCase() == 'completed';
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
@@ -350,8 +387,8 @@ class CardDetailTitle extends StatelessWidget {
             children: [
               // Circular completion checkbox (LEFT side)
               GestureDetector(
-                onTap: onStatusToggle != null
-                    ? () => onStatusToggle!(isCompleted ? 'dang_lam' : 'hoan_thanh')
+                onTap: widget.onStatusToggle != null
+                    ? () => widget.onStatusToggle!(isCompleted ? 'dang_lam' : 'hoan_thanh')
                     : null,
                 child: Container(
                   margin: const EdgeInsets.only(top: 4, right: 12),
@@ -372,8 +409,15 @@ class CardDetailTitle extends StatelessWidget {
               ),
               // Title text
               Expanded(
-                child: Text(
-                  title,
+                child: TextField(
+                  controller: _controller,
+                  focusNode: _focusNode,
+                  maxLines: null,
+                  minLines: 1,
+                  textInputAction: TextInputAction.done,
+                  onSubmitted: (_) {
+                    _focusNode.unfocus();
+                  },
                   style: GoogleFonts.manrope(
                     fontSize: 26,
                     fontWeight: FontWeight.w800,
@@ -381,6 +425,11 @@ class CardDetailTitle extends StatelessWidget {
                     height: 1.25,
                     decoration: isCompleted ? TextDecoration.lineThrough : null,
                     decorationColor: Colors.grey,
+                  ),
+                  decoration: const InputDecoration(
+                    border: InputBorder.none,
+                    isDense: true,
+                    contentPadding: EdgeInsets.zero,
                   ),
                 ),
               ),
@@ -390,8 +439,8 @@ class CardDetailTitle extends StatelessWidget {
 
           // Status chip
           GestureDetector(
-            onTap: onStatusToggle != null
-                ? () => onStatusToggle!(isCompleted ? 'dang_lam' : 'hoan_thanh')
+            onTap: widget.onStatusToggle != null
+                ? () => widget.onStatusToggle!(isCompleted ? 'dang_lam' : 'hoan_thanh')
                 : null,
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
@@ -407,7 +456,7 @@ class CardDetailTitle extends StatelessWidget {
                     const SizedBox(width: 4),
                   ],
                   Text(
-                    isCompleted ? 'HOÀN THÀNH' : status.toUpperCase(),
+                    isCompleted ? 'HOÀN THÀNH' : widget.status.toUpperCase(),
                     style: GoogleFonts.inter(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
@@ -421,25 +470,25 @@ class CardDetailTitle extends StatelessWidget {
           ),
 
           // Board row: thumbnail + board/workspace name · "Di chuyển"
-          if (boardId != null || boardName != null) ...[
+          if (widget.boardId != null || widget.boardName != null) ...[
             const SizedBox(height: 12),
             GestureDetector(
-              onTap: (boardId != null && cubit != null)
+              onTap: (widget.boardId != null && widget.cubit != null)
                   ? () {
-                      if (isArchived) {
-                        cubit!.unarchiveCard();
-                        if (onUnarchive != null) {
-                          onUnarchive!();
+                      if (widget.isArchived) {
+                        widget.cubit!.unarchiveCard();
+                        if (widget.onUnarchive != null) {
+                          widget.onUnarchive!();
                         }
                       } else {
-                        final s = cubit!.state;
+                        final s = widget.cubit!.state;
                         if (s is CardDetailLoaded) {
                           MoveCardSheet.show(
                             context,
                             card: s.card,
-                            currentBoardId: boardId!,
+                            currentBoardId: widget.boardId!,
                             boardDataSource: serviceLocator<BoardRemoteDataSource>(),
-                            cubit: cubit!,
+                            cubit: widget.cubit!,
                           );
                         }
                       }
@@ -447,15 +496,15 @@ class CardDetailTitle extends StatelessWidget {
                   : null,
               child: Row(
                 children: [
-                  // Board background thumbnail
+                   // Board background thumbnail
                   ClipRRect(
                     borderRadius: BorderRadius.circular(6),
                     child: SizedBox(
                       width: 40,
                       height: 32,
-                      child: (boardBackgroundUrl != null && boardBackgroundUrl!.isNotEmpty)
+                      child: (widget.boardBackgroundUrl != null && widget.boardBackgroundUrl!.isNotEmpty)
                           ? Image.network(
-                              boardBackgroundUrl!,
+                              widget.boardBackgroundUrl!,
                               fit: BoxFit.cover,
                               errorBuilder: (_, _, _) => _colorPlaceholder(),
                             )
@@ -470,7 +519,7 @@ class CardDetailTitle extends StatelessWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          boardName ?? 'Đang tải...',
+                          widget.boardName ?? 'Đang tải...',
                           style: GoogleFonts.inter(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
@@ -479,9 +528,9 @@ class CardDetailTitle extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        if (listName != null)
+                        if (widget.listName != null)
                           Text(
-                            listName!,
+                            widget.listName!,
                             style: GoogleFonts.inter(
                               fontSize: 12,
                               color: Colors.grey.shade600,
@@ -493,12 +542,12 @@ class CardDetailTitle extends StatelessWidget {
                     ),
                   ),
                   // "Di chuyển" or "Khôi phục" link
-                  if (boardId != null && cubit != null)
+                  if (widget.boardId != null && widget.cubit != null)
                     Text(
-                      isArchived ? 'Khôi phục' : 'Di chuyển',
+                      widget.isArchived ? 'Khôi phục' : 'Di chuyển',
                       style: GoogleFonts.inter(
                         fontSize: 14,
-                        color: isArchived ? Colors.green : const Color(0xFF1565C0),
+                        color: widget.isArchived ? Colors.green : const Color(0xFF1565C0),
                         fontWeight: FontWeight.w500,
                       ),
                     ),
