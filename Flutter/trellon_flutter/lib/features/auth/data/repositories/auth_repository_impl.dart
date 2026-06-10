@@ -213,7 +213,6 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<UserEntity> signInWithGoogle() async {
     try {
       final GoogleSignIn googleSignIn = GoogleSignIn(
-        clientId: '371567831919-a3nug3ihqc5bj0e9f79odbrimj1ipui3.apps.googleusercontent.com',
         scopes: ['email', 'profile'],
       );
       final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
