@@ -13,15 +13,29 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  print("DEBUG: Starting dotenv load...");
   await dotenv.load(fileName: ".env");
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  
+  print("DEBUG: Starting Firebase init...");
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  } catch (e) {
+    if (!e.toString().contains('duplicate-app')) {
+      print("Firebase initialization error: $e");
+    }
+  }
+  
+  print("DEBUG: Starting initDependencies...");
   await initDependencies();
   
+  print("DEBUG: Getting SharedPreferences...");
   final prefs = await SharedPreferences.getInstance();
   final isLogged = prefs.getBool('isLogged') ?? false;
 
+  print("DEBUG: Running App with isLogged=$isLogged...");
   runApp(MyApp(isLogged: isLogged));
 }
 

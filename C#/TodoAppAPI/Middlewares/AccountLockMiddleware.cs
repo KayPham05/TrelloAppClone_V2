@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
+using System;
+using System.Linq;
 using System.Security.Claims;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -33,6 +35,7 @@ namespace TodoAppAPI.Middlewares
                 if (!string.IsNullOrEmpty(userId))
                 {
                     var cacheKey = $"AccountLock_{userId}";
+                    
 
                     if (!_cache.TryGetValue(cacheKey, out CachedUserStatus? userStatus))
                     {

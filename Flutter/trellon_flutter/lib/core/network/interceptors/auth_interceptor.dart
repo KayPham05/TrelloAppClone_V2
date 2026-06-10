@@ -31,7 +31,9 @@ class AuthInterceptor extends Interceptor {
       return handler.next(options);
     }
 
-    final secureStorage = const FlutterSecureStorage();
+    const secureStorage = FlutterSecureStorage(
+      aOptions: AndroidOptions(encryptedSharedPreferences: true),
+    );
     final token = await secureStorage.read(key: 'access_token');
 
     if (token != null && token.isNotEmpty) {
@@ -84,7 +86,9 @@ class AuthInterceptor extends Interceptor {
         final newAccessToken = await _refreshToken();
 
         if (newAccessToken != null) {
-          final secureStorage = const FlutterSecureStorage();
+          const secureStorage = FlutterSecureStorage(
+            aOptions: AndroidOptions(encryptedSharedPreferences: true),
+          );
           await secureStorage.write(
             key: 'access_token',
             value: newAccessToken,
@@ -134,7 +138,9 @@ class AuthInterceptor extends Interceptor {
 
   Future<String?> _refreshToken() async {
     try {
-      final secureStorage = const FlutterSecureStorage();
+      const secureStorage = FlutterSecureStorage(
+        aOptions: AndroidOptions(encryptedSharedPreferences: true),
+      );
       final oldRefreshToken = await secureStorage.read(key: 'refresh_token');
 
       final response = await dio.post(
@@ -173,7 +179,9 @@ class AuthInterceptor extends Interceptor {
     await prefs.remove('user_uid');
     await prefs.setBool('isLogged', false);
 
-    const secureStorage = FlutterSecureStorage();
+    const secureStorage = FlutterSecureStorage(
+      aOptions: AndroidOptions(encryptedSharedPreferences: true),
+    );
     await secureStorage.deleteAll();
 
     await cookieJar.deleteAll();

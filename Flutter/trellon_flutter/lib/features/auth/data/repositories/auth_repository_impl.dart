@@ -26,6 +26,7 @@ class AuthRepositoryImpl implements AuthRepository {
       final response = await dio.post(
         ApiEndpoints.register,
         data: requestModel.toJson(),
+        options: Options(extra: {'skipAuthInterceptor': true}),
       );
       if (response.statusCode == 200 || response.statusCode == 201) {
         final data = response.data;
@@ -66,6 +67,7 @@ class AuthRepositoryImpl implements AuthRepository {
       final response = await dio.post(
         ApiEndpoints.login,
         data: requestModel.toJson(),
+        options: Options(extra: {'skipAuthInterceptor': true}),
       );
       if (response.statusCode == 200) {
         final data = response.data;
@@ -116,7 +118,10 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<void> logout({required String userUId}) async {
     try {
-      await dio.post('${ApiEndpoints.logout}?userUId=$userUId');
+      await dio.post(
+        '${ApiEndpoints.logout}?userUId=$userUId',
+        options: Options(extra: {'skipAuthInterceptor': true}),
+      );
     } on DioException {
       // Vẫn tiếp tục logout cục bộ dù API thất bại
     }
@@ -131,6 +136,7 @@ class AuthRepositoryImpl implements AuthRepository {
       final response = await dio.post(
         ApiEndpoints.verifyCode,
         data: {'email': email, 'code': code},
+        options: Options(extra: {'skipAuthInterceptor': true}),
       );
       if (response.statusCode == 200) {
         final data = response.data;
@@ -207,7 +213,6 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<UserEntity> signInWithGoogle() async {
     try {
       final GoogleSignIn googleSignIn = GoogleSignIn(
-        clientId: '371567831919-a3nug3ihqc5bj0e9f79odbrimj1ipui3.apps.googleusercontent.com',
         scopes: ['email', 'profile'],
       );
       final GoogleSignInAccount? googleUser = await googleSignIn.signIn();

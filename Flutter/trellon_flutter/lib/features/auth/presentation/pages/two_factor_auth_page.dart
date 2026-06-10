@@ -6,6 +6,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../../../core/constants/api_endpoints.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/data_sources/user_local_data_source.dart';
 import '../../../../init_dependencies.dart';
 import '../../../../routes.dart';
 
@@ -60,6 +61,7 @@ class _TwoFactorAuthPageState extends State<TwoFactorAuthPage> {
           'email': _email,
           'otp': _codeController.text.trim()
         },
+        options: Options(extra: {'skipAuthInterceptor': true}),
       );
 
       if (response.statusCode == 200) {
@@ -68,12 +70,22 @@ class _TwoFactorAuthPageState extends State<TwoFactorAuthPage> {
         final token = data['token'] as String?;
         final refreshToken = data['refreshToken'] as String?;
         final userName = data['userName'] as String? ?? 'Khách';
+
+        // Backend trả 200 nhưng token null → OTP không hợp lệ
+        if (token == null || token.isEmpty) {
+          final msg = data['message'] as String? ?? 'Mã xác thực không đúng hoặc đã hết hạn.';
+          setState(() {
+            _errorMessage = msg;
+            _isVerifying = false;
+          });
+          return;
+        }
         
         // Save auth data
-        final secureStorage = const FlutterSecureStorage();
-        if (token != null) {
-          await secureStorage.write(key: 'access_token', value: token);
-        }
+        const secureStorage = FlutterSecureStorage(
+          aOptions: AndroidOptions(encryptedSharedPreferences: true),
+        );
+        await secureStorage.write(key: 'access_token', value: token);
         if (refreshToken != null) {
           await secureStorage.write(key: 'refresh_token', value: refreshToken);
         }
@@ -87,7 +99,16 @@ class _TwoFactorAuthPageState extends State<TwoFactorAuthPage> {
         await prefs.setBool('is_two_factor_enabled', true);
         
         if (!mounted) return;
-        Navigator.pushReplacementNamed(context, AppRoutes.home);
+
+        // Kiểm tra introduction trước khi vào home
+        final localDataSource = serviceLocator<UserLocalDataSource>();
+        final hasSeen = await localDataSource.getHasSeenIntroduction();
+        if (!mounted) return;
+        if (!hasSeen) {
+          Navigator.pushReplacementNamed(context, AppRoutes.introduction);
+        } else {
+          Navigator.pushReplacementNamed(context, AppRoutes.home);
+        }
       }
     } on DioException catch (e) {
       final msg = e.response?.data is Map
