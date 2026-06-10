@@ -30,7 +30,6 @@ class WorkspaceBoardItemWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = ColorUtils.hexToColor(board.coverColor ?? '#0079BF');
-    const bool isStarred = false;
 
     return Material(
       color: AppColors.surfaceContainerLowest,
@@ -72,7 +71,7 @@ class WorkspaceBoardItemWidget extends StatelessWidget {
                       width: 60,
                       height: 32,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => _buildFallbackColor(color),
+                      errorBuilder: (_, _, _) => _buildFallbackColor(color),
                     )
                   : _buildFallbackColor(color),
               ),
@@ -191,8 +190,8 @@ class WorkspaceBoardItemWidget extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            color.withOpacity(0.95),
-            color.withOpacity(0.45),
+            color.withValues(alpha: 0.95),
+            color.withValues(alpha: 0.45),
           ],
         ),
       ),

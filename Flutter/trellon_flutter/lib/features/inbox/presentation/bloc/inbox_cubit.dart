@@ -48,7 +48,7 @@ class InboxCubit extends Cubit<InboxState> {
     }
   }
 
-  Future<void> addCardToInbox(String title) async {
+  Future<void> addCardToInbox(String title, {DateTime? dueDate}) async {
     final currentState = state;
 
     if (currentState is! InboxLoaded) {
@@ -68,6 +68,7 @@ class InboxCubit extends Cubit<InboxState> {
       await addInboxCardUseCase.call(
         userUId: userUId,
         cardTitle: title,
+        dueDate: dueDate,
       );
 
       await fetchInboxCards(showLoading: false);

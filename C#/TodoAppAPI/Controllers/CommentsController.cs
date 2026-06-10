@@ -1,5 +1,7 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
+using TodoAppAPI.Hubs;
 using TodoAppAPI.Interfaces;
 using TodoAppAPI.Models;
 
@@ -14,10 +16,16 @@ namespace TodoAppAPI.Controllers
     {
         private readonly ICommentService _service;
         private readonly IActivity _activity;
-        public CommentsController(ICommentService service, IActivity activity)
+        private readonly IHubContext<BoardHub> _boardHubContext;
+        private readonly ICardsService _cardService;
+        private readonly IListService _listService;
+        public CommentsController(ICommentService service, IActivity activity, IHubContext<BoardHub> boardHubContext, ICardsService cardService, IListService listService)
         {
             _service = service;
             _activity = activity;
+            _boardHubContext = boardHubContext;
+            _cardService = cardService;
+            _listService = listService;
         }
 
         // GET: api/<CommentController>
@@ -44,6 +52,16 @@ namespace TodoAppAPI.Controllers
             var added = await _service.AddCommentAsync(comment);
             if (added == null) return BadRequest("Không thể thêm comment");
             _ = _activity.AddActivity(comment.UserUId, $"added a comment to card '{comment.CardUId}'");
+
+            var card = _cardService.GetById(comment.CardUId);
+            if (card != null && !string.IsNullOrEmpty(card.ListUId))
+            {
+                var list = await _listService.GetListByIdAsync(card.ListUId);
+                if (list != null)
+                {
+                    await _boardHubContext.Clients.Group(BoardHub.BoardGroup(list.BoardUId)).SendAsync("CommentAdded", added);
+                }
+            }
             return Ok(added);
         }
 
@@ -57,7 +75,17 @@ namespace TodoAppAPI.Controllers
             if (!ok)
                 return NotFound("Không tìm thấy comment hoặc cập nhật thất bại");
             _ = _activity.AddActivity(comment.UserUId, $"updated a comment in card '{comment.CardUId}'");
-            return ok ? Ok(comment) : NotFound();
+
+            var card = _cardService.GetById(comment.CardUId);
+            if (card != null && !string.IsNullOrEmpty(card.ListUId))
+            {
+                var list = await _listService.GetListByIdAsync(card.ListUId);
+                if (list != null)
+                {
+                    await _boardHubContext.Clients.Group(BoardHub.BoardGroup(list.BoardUId)).SendAsync("CommentUpdated", comment);
+                }
+            }
+            return Ok(comment);
         }
 
         // Xóa comment
@@ -75,6 +103,17 @@ namespace TodoAppAPI.Controllers
                 return BadRequest("Không thể xóa comment");
 
             _ = _activity.AddActivity(userUId, "deleted a comment");
+
+            var card = _cardService.GetById(comment.CardUId);
+            if (card != null && !string.IsNullOrEmpty(card.ListUId))
+            {
+                var list = await _listService.GetListByIdAsync(card.ListUId);
+                if (list != null)
+                {
+                    await _boardHubContext.Clients.Group(BoardHub.BoardGroup(list.BoardUId))
+                        .SendAsync("CommentDeleted", new { commentUId = id, cardUId = comment.CardUId, boardUId = list.BoardUId });
+                }
+            }
 
             return Ok(new { message = "Xóa comment thành công" });
         }

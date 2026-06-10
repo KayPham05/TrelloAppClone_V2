@@ -562,11 +562,15 @@ class _Enable2FAScreenState extends State<Enable2FAScreen> {
                 contentPadding: const EdgeInsets.symmetric(vertical: 18),
               ),
               validator: (value) {
-                if (value == null || value.isEmpty)
+                if (value == null || value.isEmpty) {
                   return 'Vui lòng nhập mã xác thực';
-                if (value.length != 6) return 'Mã phải đủ 6 chữ số';
-                if (!RegExp(r'^\d{6}$').hasMatch(value))
+                }
+                if (value.length != 6) {
+                  return 'Mã phải đủ 6 chữ số';
+                }
+                if (!RegExp(r'^\d{6}$').hasMatch(value)) {
                   return 'Mã chỉ chứa các chữ số';
+                }
                 return null;
               },
             ),

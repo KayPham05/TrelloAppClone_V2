@@ -2,9 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../../core/constants/app_colors.dart';
 import '../../../../../core/data_sources/user_local_data_source.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../cubit/board_detail_cubit.dart';
+import '../../cubit/board_detail_state.dart';
 import '../../../../../init_dependencies.dart';
 import '../../../data/datasources/board_remote_data_source.dart';
 import '../../../../../features/card/data/models/card_model.dart';
+import 'board_kanban_card_ui_widget.dart';
 
 class BoardArchiveSheet extends StatefulWidget {
   final String boardId;
@@ -40,7 +44,9 @@ class _BoardArchiveSheetState extends State<BoardArchiveSheet>
 
   Future<void> _load() async {
     final ds = serviceLocator<BoardRemoteDataSource>();
-    final cards = await ds.getArchivedCards(widget.boardId);
+    final userDs = serviceLocator<UserLocalDataSource>();
+    final userUId = await userDs.getUserId() ?? '';
+    final cards = await ds.getArchivedCards(widget.boardId, userUId);
     if (mounted) {
       setState(() {
         _allCards = cards;
@@ -59,35 +65,7 @@ class _BoardArchiveSheetState extends State<BoardArchiveSheet>
     });
   }
 
-  Future<void> _restore(CardModel card) async {
-    final ds = serviceLocator<BoardRemoteDataSource>();
-    final userDs = serviceLocator<UserLocalDataSource>();
-    final userUId = await userDs.getUserId() ?? '';
-    try {
-      await ds.restoreCard(cardId: card.id, userUId: userUId);
-      setState(() {
-        _allCards.removeWhere((c) => c.id == card.id);
-        _filtered.removeWhere((c) => c.id == card.id);
-      });
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(' Đã khôi phục thẻ "${card.title}"'),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-    } catch (_) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('❌ Khôi phục thất bại'),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-    }
-  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -108,7 +86,7 @@ class _BoardArchiveSheetState extends State<BoardArchiveSheet>
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: Colors.grey.withOpacity(0.5),
+              color: Colors.grey.withValues(alpha: 0.5),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -188,19 +166,35 @@ class _BoardArchiveSheetState extends State<BoardArchiveSheet>
                         itemCount: _filtered.length,
                         itemBuilder: (_, i) {
                           final c = _filtered[i];
-                          return ListTile(
-                            title: Text(
-                              c.title,
-                              style: GoogleFonts.inter(fontSize: 14),
-                            ),
-                            trailing: TextButton(
-                              onPressed: () => _restore(c),
-                              child: const Text(
-                                'Khôi phục',
-                                style: TextStyle(
-                                  color: AppColors.primaryContainer,
-                                ),
-                              ),
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 4),
+                            child: KanbanCardUiWidget(
+                              card: c.toEntity(),
+                              boardId: widget.boardId,
+                              scale: 1.0,
+                              onTap: () async {
+                                
+                                String? boardName;
+                                String? boardBackgroundUrl;
+                                final state = context.read<BoardDetailCubit>().state;
+                                if (state is BoardDetailLoaded) {
+                                  boardName = state.boardName;
+                                  boardBackgroundUrl = state.backgroundUrl;
+                                }
+
+                                await Navigator.pushNamed(
+                                  context,
+                                  '/card-detail',
+                                  arguments: {
+                                    'card': c.toEntity(),
+                                    'boardId': widget.boardId,
+                                    'boardName': boardName,
+                                    'boardBackgroundUrl': boardBackgroundUrl,
+                                    'isArchived': true,
+                                  },
+                                );
+                                _load(); // Reload archived cards just in case
+                              },
                             ),
                           );
                         },

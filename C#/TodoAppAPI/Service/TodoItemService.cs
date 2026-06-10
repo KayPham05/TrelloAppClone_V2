@@ -94,5 +94,21 @@ namespace TodoAppAPI.Service
             }
         }
 
+        public async Task<TodoItemDTO?> GetTodoItemById(string todoItemUId)
+        {
+            var item = await _dbContext.TodoItems
+                .Where(t => t.TodoItemUId == todoItemUId)
+                .Select(t => new TodoItemDTO
+                {
+                    TodoItemUId = t.TodoItemUId,
+                    Content = t.Content,
+                    IsCompleted = t.IsCompleted,
+                    CreatedAt = t.CreatedAt,
+                    CardUId = t.CardUId
+                })
+                .FirstOrDefaultAsync();
+
+            return item;
+        }
     }
 }

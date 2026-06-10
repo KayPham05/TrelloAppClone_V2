@@ -168,7 +168,10 @@ class _BoardMembersManageSheetViewState extends State<_BoardMembersManageSheetVi
 
                             return ListTile(
                               leading: CircleAvatar(
-                                backgroundImage: CachedNetworkImageProvider(member.resolvedAvatarUrl),
+                                backgroundImage: CachedNetworkImageProvider(
+                                  member.resolvedAvatarUrl,
+                                  cacheKey: 'avatar_${member.userUId}',
+                                ),
                               ),
                               title: Text(member.userName, style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
                               subtitle: Text(member.email, style: const TextStyle(color: Colors.grey, fontSize: 12)),

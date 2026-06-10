@@ -14,7 +14,7 @@ class SettingItem extends StatelessWidget{
   final VoidCallback? onTap;
 
   const SettingItem({
-    Key? key,
+    super.key,
     required this.icon,
     required this.title,
     this.subtitle,
@@ -23,7 +23,7 @@ class SettingItem extends StatelessWidget{
     this.trailing,
     this.showChevron = true,
     this.onTap,
-  }): super(key: key);
+  });
 
   @override
   Widget build(BuildContext context){

@@ -16,8 +16,9 @@ class InboxRepositoriesImpl extends InboxRepositories {
   Future<CardEntity> addInboxCard({
     required String userUId,
     required String cardTitle,
+    DateTime? dueDate,
   }) async {
-    return await remoteDataSource.addInboxCard(userUId, cardTitle);
+    return await remoteDataSource.addInboxCard(userUId, cardTitle, dueDate: dueDate);
   }
 
   @override

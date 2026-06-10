@@ -212,7 +212,10 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<UserEntity> signInWithGoogle() async {
     try {
-      final GoogleSignIn googleSignIn = GoogleSignIn(scopes: ['email', 'profile']);
+      final GoogleSignIn googleSignIn = GoogleSignIn(
+        clientId: '371567831919-a3nug3ihqc5bj0e9f79odbrimj1ipui3.apps.googleusercontent.com',
+        scopes: ['email', 'profile'],
+      );
       final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
       if (googleUser == null) {
         throw Exception("Đăng nhập Google bị hủy");

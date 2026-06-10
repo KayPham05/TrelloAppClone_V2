@@ -9,5 +9,6 @@ namespace TodoAppAPI.Interfaces
         Task<bool> DeleteTodoItem(string todoItemUId);
         Task<bool> UpdateStatusTodoItem(string todoItemUId, string status);
         Task<List<TodoItemDTO>> GetTodoItemByCardUId(string cardUId);
+        Task<TodoItemDTO?> GetTodoItemById(string todoItemUId);
     }
 }

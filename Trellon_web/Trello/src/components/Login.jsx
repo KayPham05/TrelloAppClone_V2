@@ -18,7 +18,7 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const [loading, setLoading] = useState(false); // thêm state loading ở đầu
+  const [loading, setLoading] = useState(false); // thÃªm state loading á»Ÿ Ä‘áº§u
 
   // ---- Effects: sticky header, typewriter, tabs, slider ----
   useEffect(() => {
@@ -82,7 +82,7 @@ export default function Login() {
       const preview = document.getElementById(`${tabName}-preview`);
       if (preview) {
         preview.classList.remove("hidden");
-        // ép browser render lại animation
+        // Ã©p browser render láº¡i animation
         void preview.offsetWidth;
         preview.classList.add("active");
       }
@@ -110,8 +110,8 @@ export default function Login() {
 
       indicators.forEach((el, i) => {
         el.classList.remove("active", "w-16", "h-1", "w-2", "h-2", "mt-[-2px]");
-        if (i === index) el.classList.add("active", "w-16", "h-1"); // thanh dài
-        else el.classList.add("w-2", "h-2", "mt-[-2px]"); // chấm tròn
+        if (i === index) el.classList.add("active", "w-16", "h-1"); // thanh dÃ i
+        else el.classList.add("w-2", "h-2", "mt-[-2px]"); // cháº¥m trÃ²n
       });
     };
 
@@ -156,21 +156,21 @@ export default function Login() {
       const res = await loginAPI({ email, password });
       const data = res.data || res;
 
-      //  QUAN TRỌNG: Kiểm tra verify email TRƯỚC
+      //  QUAN TRá»ŒNG: Kiá»ƒm tra verify email TRÆ¯á»šC
       if (data.requiresVerification) {
         toast.info("Unvalidated account, Please validate your email!");
         navigate("/VerifyCode", { state: { email } });
         return;
       }
 
-      //  Sau đó mới kiểm tra 2FA
+      //  Sau Ä‘Ã³ má»›i kiá»ƒm tra 2FA
       if (data.requires2FA) {
         toast.info("Please verify the OTP to complete your login.");
         navigate("/verify-2fa", { state: { email } });
         return;
       }
 
-      //  Đăng nhập thành công
+      //  ÄÄƒng nháº­p thÃ nh cÃ´ng
       if (data.token) {
         localStorage.setItem("token", data.token);
         localStorage.setItem("user", JSON.stringify(data));
@@ -241,7 +241,7 @@ export default function Login() {
                   <img src={icon} alt="icon" width="30" height="30" />
                 </div>
                 <span className="text-2xl font-bold text-gray-800 logo-text">
-                  Trellon
+                  Kabo
                 </span>
               </div>
 
@@ -271,7 +271,7 @@ export default function Login() {
                 onClick={() => navigate("/register")}
                 className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm font-medium transition-all"
               >
-                Get Trellon for free
+                Get Kabo for free
               </button>
             </div>
           </div>
@@ -290,8 +290,8 @@ export default function Login() {
                 </h1>
 
                 <p className="text-base sm:text-lg md:text-xl mb-8">
-                  Escape the clutter and chaos—unleash your productivity with
-                  Trellon.
+                  Escape the clutter and chaosâ€”unleash your productivity with
+                  Kabo.
                 </p>
 
                 <div className="bg-white rounded-xl p-6 shadow-lg mx-auto w-full max-w-md lg:max-w-none">
@@ -393,7 +393,7 @@ export default function Login() {
             <div className="lg:col-span-6 flex justify-center relative">
               <img
                 src={theme}
-                alt="Trello App"
+                alt="Kabo App"
                 className="w-full max-w-sm sm:max-w-md md:max-w-lg lg:max-w-none object-contain select-none pointer-events-none"
               />
             </div>
@@ -405,13 +405,13 @@ export default function Login() {
       <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-left mb-16">
-            <p className="text-blue-600 font-semibold mb-2">Trellon 101</p>
+            <p className="text-blue-600 font-semibold mb-2">Kabo 101</p>
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
               Your productivity powerhouse
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl">
               Stay organized and efficient with Inbox, Boards, and Planner.
-              Every to-do, idea, or responsibility—no matter how small—finds its
+              Every to-do, idea, or responsibilityâ€”no matter how smallâ€”finds its
               place, keeping you at the top of your game.
             </p>
           </div>
@@ -517,7 +517,7 @@ export default function Login() {
                 <h3 className="text-xl font-semibold mb-2">Email Magic</h3>
                 <p className="text-sm">
                   Easily turn your emails into to-dos! Just forward them to your
-                  Trellon Inbox, and they’ll be transformed by Atlassian
+                  Kabo Inbox, and theyâ€™ll be transformed by Atlassian
                   Intelligence (AI) into organized to-dos with all the links you
                   need.
                 </p>
@@ -532,8 +532,8 @@ export default function Login() {
                 </h3>
                 <p className="text-sm">
                   Need to follow up on a message from Slack or Microsoft Teams?
-                  Send it directly to your Trellon board! Your favorite app
-                  interface lets you save messages that appear in your Trellon
+                  Send it directly to your Kabo board! Your favorite app
+                  interface lets you save messages that appear in your Kabo
                   Inbox with AI-generated summaries and links.
                 </p>
               </div>
@@ -546,9 +546,9 @@ export default function Login() {
                   Calender Wizardry
                 </h3>
                 <p className="text-sm">
-                  Send calendar events like “Client Review – April 15 @ 3:00 PM”
-                  to Trellon, and AI instantly creates a task: “Prep client
-                  review materials”—complete with links, notes, and reminders.
+                  Send calendar events like â€œClient Review â€“ April 15 @ 3:00 PMâ€
+                  to Kabo, and AI instantly creates a task: â€œPrep client
+                  review materialsâ€â€”complete with links, notes, and reminders.
                 </p>
               </div>
             </div>
@@ -602,7 +602,7 @@ export default function Login() {
           <div className="text-center mb-16">
             <p className="text-blue-600 font-semibold mb-2">WORK SMARTER</p>
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
-              Do more with Trellon
+              Do more with Kabo
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
               Customize the way you organize with easy integrations, automation,
@@ -625,7 +625,7 @@ export default function Login() {
               </div>
               <h3 className="text-3xl font-bold text-gray-900 mb-4">
                 Join a community of millions of users globally who are using
-                Trellon to get more done.
+                Kabo to get more done.
               </h3>
               <button
                 onClick={() => navigate("/register")}
@@ -643,7 +643,7 @@ export default function Login() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 md:grid-cols-5 gap-8 mb-8">
             <div>
-              <h4 className="text-white font-semibold mb-4">About Trellon</h4>
+              <h4 className="text-white font-semibold mb-4">About Kabo</h4>
               <ul className="space-y-2 text-sm">
                 <li>
                   <a href="#!" className="hover:text-white">
@@ -761,7 +761,7 @@ export default function Login() {
           <div className="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center">
             <div className="flex items-center space-x-4 mb-4 md:mb-0">
               <span className="text-sm">
-                Copyright © 2024 Atlassian. All rights reserved.
+                Copyright Â© 2024 Atlassian. All rights reserved.
               </span>
             </div>
             <div className="flex space-x-6 text-sm">

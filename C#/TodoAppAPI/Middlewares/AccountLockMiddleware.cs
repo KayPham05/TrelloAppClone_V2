@@ -36,6 +36,7 @@ namespace TodoAppAPI.Middlewares
                 {
                     var cacheKey = $"AccountLock_{userId}";
                     
+
                     if (!_cache.TryGetValue(cacheKey, out CachedUserStatus? userStatus))
                     {
                         // Project only the needed columns, don't load the whole entity

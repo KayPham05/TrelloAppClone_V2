@@ -42,7 +42,14 @@ class CardDetailCubit extends Cubit<CardDetailState> {
       CardEntity latestCard = card;
       if (!isInboxCard) {
         // Refresh the card from the server to get the latest backgroundUrl etc.
-        latestCard = await repository.getCard(card.id);
+        final fetched = await repository.getCard(card.id);
+        // API does not return boardName/listName/boardBackgroundUrl — preserve them from original card
+        latestCard = fetched.copyWith(
+          boardName: fetched.boardName ?? card.boardName,
+          listName: fetched.listName ?? card.listName,
+          boardBackgroundUrl: fetched.boardBackgroundUrl ?? card.boardBackgroundUrl,
+          boardId: fetched.boardId ?? card.boardId,
+        );
       }
       
       final futures = await Future.wait([
@@ -174,6 +181,41 @@ class CardDetailCubit extends Cubit<CardDetailState> {
     }
   }
 
+  Future<void> updateTitle(String newTitle) async {
+    final currentState = state;
+    if (currentState is CardDetailLoaded) {
+      if (newTitle.trim().isEmpty || newTitle == currentState.card.title) return;
+      try {
+        final userUId = await UserLocalDataSource().getUserId() ?? '';
+        if (_isInboxCard) {
+          await inboxRepository.updateInboxCard(
+            cardId: currentState.card.id,
+            userUId: userUId,
+            title: newTitle,
+            description: currentState.card.description,
+            backgroundUrl: currentState.card.backgroundUrl,
+            dueDate: currentState.card.dueDate,
+            status: currentState.card.status,
+          );
+        } else {
+          await repository.updateCard(
+            cardId: currentState.card.id,
+            title: newTitle,
+            userUId: userUId,
+            description: currentState.card.description,
+            dueDate: currentState.card.dueDate,
+            backgroundUrl: currentState.card.backgroundUrl,
+            position: currentState.card.position,
+            listId: currentState.card.listId,
+          );
+        }
+        emit(currentState.copyWith(card: currentState.card.copyWith(title: newTitle)));
+      } catch (e) {
+        // Handle error silently or surface
+      }
+    }
+  }
+
   Future<void> updateBackgroundUrl(String newBackgroundUrl) async {
     final currentState = state;
     if (currentState is CardDetailLoaded) {
@@ -242,8 +284,8 @@ class CardDetailCubit extends Cubit<CardDetailState> {
           );
           emit(currentState.copyWith(card: currentState.card.copyWith(status: newStatus)));
         } else {
-          final updatedCard = await repository.updateStatus(cardId: currentState.card.id, newStatus: newStatus, userUId: userUId);
-          emit(currentState.copyWith(card: updatedCard));
+          await repository.updateStatus(cardId: currentState.card.id, newStatus: newStatus, userUId: userUId);
+          emit(currentState.copyWith(card: currentState.card.copyWith(status: newStatus)));
         }
       } catch (e) {
         // Handle error silently or surface
@@ -506,7 +548,7 @@ class CardDetailCubit extends Cubit<CardDetailState> {
       emit(CardDetailMoved());
     } catch (e) {
       emit(CardDetailError('Không thể di chuyển card: ${e.toString()}'));
-      if (currentState is CardDetailLoaded) emit(currentState);
+      emit(currentState);
     }
   }
 
@@ -524,7 +566,7 @@ class CardDetailCubit extends Cubit<CardDetailState> {
       emit(CardDetailMoved());
     } catch (e) {
       emit(CardDetailError('Không thể di chuyển card: ${e.toString()}'));
-      if (currentState is CardDetailLoaded) emit(currentState);
+      emit(currentState);
     }
   }
 
@@ -544,6 +586,19 @@ class CardDetailCubit extends Cubit<CardDetailState> {
       emit(CardDetailArchived());
     } catch (e) {
       emit(CardDetailError('Không thể lưu trữ thẻ: ${e.toString()}'));
+      emit(currentState);
+    }
+  }
+
+  Future<void> unarchiveCard() async {
+    final currentState = state;
+    if (currentState is! CardDetailLoaded) return;
+    try {
+      final userUId = await UserLocalDataSource().getUserId() ?? '';
+      await repository.unarchiveCard(cardId: currentState.card.id, userUId: userUId);
+      // Stay on the same state, just UI will be updated via boolean callback in UI layer
+    } catch (e) {
+      emit(CardDetailError('Không thể khôi phục thẻ: ${e.toString()}'));
       emit(currentState);
     }
   }

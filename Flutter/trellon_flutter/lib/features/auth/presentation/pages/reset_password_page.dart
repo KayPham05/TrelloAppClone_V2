@@ -106,13 +106,13 @@ class _ResetPasswordViewState extends State<ResetPasswordView> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                'Reset Password',
+                'Đặt lại mật khẩu',
                 textAlign: TextAlign.center,
                 style: AzureAuthTheme.headlineLg,
               ),
               const SizedBox(height: 16),
               Text(
-                'Enter the 6-digit confirmation code from your email and your new password.',
+                'Nhập mã xác nhận gồm 6 chữ số từ email và mật khẩu mới của bạn.',
                 textAlign: TextAlign.center,
                 style: AzureAuthTheme.bodyLg,
               ),
@@ -120,17 +120,17 @@ class _ResetPasswordViewState extends State<ResetPasswordView> {
               
               AuthTextField(
                 controller: _otpController,
-                labelText: 'Confirmation Code (OTP)',
-                hintText: 'Enter 6-digit code',
+                labelText: 'Mã xác nhận (OTP)',
+                hintText: 'Nhập mã 6 chữ số',
                 keyboardType: TextInputType.number,
-                validator: (v) => (v == null || v.isEmpty) ? 'Please enter code' : null,
+                validator: (v) => (v == null || v.isEmpty) ? 'Vui lòng nhập mã xác nhận' : null,
               ),
               const SizedBox(height: 24),
               
               AuthTextField(
                 controller: _passwordController,
-                labelText: 'New Password',
-                hintText: 'Enter your new password',
+                labelText: 'Mật khẩu mới',
+                hintText: 'Nhập mật khẩu mới',
                 obscureText: _obscurePassword,
                 suffixIcon: IconButton(
                   icon: Icon(
@@ -139,7 +139,7 @@ class _ResetPasswordViewState extends State<ResetPasswordView> {
                   ),
                   onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                 ),
-                validator: (v) => (v == null || v.length < 6) ? 'Password must be at least 6 characters' : null,
+                validator: (v) => (v == null || v.length < 6) ? 'Mật khẩu phải chứa ít nhất 6 ký tự' : null,
               ),
               
               const SizedBox(height: 32),
@@ -157,7 +157,7 @@ class _ResetPasswordViewState extends State<ResetPasswordView> {
                   ),
                   child: isLoading
                       ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                      : Text('CONFIRM PASSWORD', style: AzureAuthTheme.buttonText),
+                      : Text('XÁC NHẬN MẬT KHẨU', style: AzureAuthTheme.buttonText),
                 ),
               ),
               
@@ -166,7 +166,7 @@ class _ResetPasswordViewState extends State<ResetPasswordView> {
               TextButton(
                 onPressed: () => Navigator.pushReplacementNamed(context, '/login'),
                 style: TextButton.styleFrom(foregroundColor: AzureAuthTheme.azureBlue),
-                child: Text('BACK TO LOGIN', style: AzureAuthTheme.buttonText.copyWith(color: AzureAuthTheme.azureBlue)),
+                child: Text('QUAY LẠI ĐĂNG NHẬP', style: AzureAuthTheme.buttonText.copyWith(color: AzureAuthTheme.azureBlue)),
               ),
             ],
           ),

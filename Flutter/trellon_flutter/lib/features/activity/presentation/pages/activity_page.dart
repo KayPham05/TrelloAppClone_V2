@@ -91,7 +91,7 @@ class _ActivityPageViewState extends State<ActivityPageView> {
           const Icon(Icons.grid_view_rounded, color: Color(0xFF1D4ED8), size: 24),
           const SizedBox(width: 10),
           Text(
-            'Workspace',
+            'Không gian làm việc',
             style: GoogleFonts.inter(
               fontSize: 20,
               fontWeight: FontWeight.w700,
@@ -475,6 +475,13 @@ class _NotificationListTabState extends State<NotificationListTab> {
     }
     if (!context.mounted) return;
 
+    // Thông báo loại "bị xóa" → hiển thị dialog, không navigate
+    if (notif.type == NotificationTypeEnum.boardMemberRemoved ||
+        notif.type == NotificationTypeEnum.workspaceMemberRemoved) {
+      _showRemovalDialog(context, notif);
+      return;
+    }
+
     final target = await _notificationNavigationService().resolve(notif);
     if (!context.mounted) return;
 
@@ -486,6 +493,71 @@ class _NotificationListTabState extends State<NotificationListTab> {
     }
 
     await Navigator.pushNamed(context, target.routeName, arguments: target.arguments);
+  }
+
+  void _showRemovalDialog(BuildContext context, NotificationEntity notif) {
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Bell icon
+              Container(
+                width: 64,
+                height: 64,
+                decoration: const BoxDecoration(
+                  color: Color(0xFFE8EAFF),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.notifications_outlined, size: 32, color: Color(0xFF1D3A8A)),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Thông báo hệ thống',
+                style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w700, color: const Color(0xFF1E293B)),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                notif.message.isNotEmpty ? notif.message : notif.title,
+                textAlign: TextAlign.center,
+                style: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF64748B), height: 1.5),
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF1D4ED8),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                  child: Text('Đồng ý', style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 15)),
+                ),
+              ),
+              const SizedBox(height: 10),
+              SizedBox(
+                width: double.infinity,
+                child: TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  style: TextButton.styleFrom(
+                    backgroundColor: const Color(0xFFEEEEEE),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                  child: Text('Đóng', style: GoogleFonts.inter(fontWeight: FontWeight.w500, fontSize: 15, color: const Color(0xFF1E293B))),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   NotificationNavigationService _notificationNavigationService() {

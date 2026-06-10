@@ -70,7 +70,7 @@ class PositionPickerSheet extends StatelessWidget {
           Expanded(
             child: ListView.separated(
               itemCount: totalPositions,
-              separatorBuilder: (_, __) => const Divider(height: 1, indent: 16),
+              separatorBuilder: (_, _) => const Divider(height: 1, indent: 16),
               itemBuilder: (_, i) {
                 final pos = i + 1;
                 final isSelected = pos == currentPosition;

@@ -1,6 +1,8 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
+using TodoAppAPI.Hubs;
 using TodoAppAPI.DTOs;
 using TodoAppAPI.Interfaces;
 
@@ -14,13 +16,15 @@ namespace TodoAppAPI.Controllers
         private readonly IAuthService _authService;
         private readonly ICloudinaryService _cloudinaryService;
         private readonly ILogger<UserController> _logger;
+        private readonly IHubContext<NotificationHub> _notificationHubContext;
 
-        public UserController(IUserService userService, IAuthService authService, ICloudinaryService cloudinaryService, ILogger<UserController> logger)
+        public UserController(IUserService userService, IAuthService authService, ICloudinaryService cloudinaryService, ILogger<UserController> logger, IHubContext<NotificationHub> notificationHubContext)
         {
             _userService = userService;
             _authService = authService;
             _cloudinaryService = cloudinaryService;
             _logger = logger;
+            _notificationHubContext = notificationHubContext;
         }
 
 
@@ -53,6 +57,7 @@ namespace TodoAppAPI.Controllers
             {
                 return BadRequest("Thêm không thành công");
             }
+            await _notificationHubContext.Clients.Group(NotificationHub.UserGroup(userUId)).SendAsync("ProfileUpdated", new { userUId, bio = Bio });
             return Ok("Thêm thành công");
         }
         [HttpPost("AddUsername")]
@@ -64,6 +69,7 @@ namespace TodoAppAPI.Controllers
             {
                 return BadRequest("Thêm không thành công");
             }
+            await _notificationHubContext.Clients.Group(NotificationHub.UserGroup(userUId)).SendAsync("ProfileUpdated", new { userUId, userName = username });
             return Ok("Thêm thành công");
         }
         [HttpGet("GetBio")]
@@ -274,6 +280,9 @@ namespace TodoAppAPI.Controllers
             }
 
             await _userService.UpdateAsync(user);
+
+            await _notificationHubContext.Clients.Group(NotificationHub.UserGroup(userUId))
+                .SendAsync("ProfileUpdated", new { userUId, userName = user.UserName, avatarUrl = user.AvatarUrl, bio = user.Bio });
 
             return Ok(new
             {

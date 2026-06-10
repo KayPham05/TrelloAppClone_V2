@@ -74,7 +74,7 @@ class _BoardMenuSheetViewState extends State<_BoardMenuSheetView> {
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: Colors.grey.withOpacity(0.5),
+              color: Colors.grey.withValues(alpha: 0.5),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -141,7 +141,10 @@ class _BoardMenuSheetViewState extends State<_BoardMenuSheetView> {
                             padding: const EdgeInsets.only(right: 8),
                             child: CircleAvatar(
                               radius: 16,
-                              backgroundImage: CachedNetworkImageProvider(member.resolvedAvatarUrl),
+                              backgroundImage: CachedNetworkImageProvider(
+                                member.resolvedAvatarUrl,
+                                cacheKey: 'avatar_${member.userUId}',
+                              ),
                             ),
                           ),
                         );
@@ -187,27 +190,34 @@ class _BoardMenuSheetViewState extends State<_BoardMenuSheetView> {
                   },
                 ),
                 const SizedBox(height: 12),
-                Padding(
-                  padding: const EdgeInsets.only(left: 40),
-                  child: ElevatedButton(
-                    onPressed: () {
-                        // Open direct invite logic if needed, or open member sheet
-                        Navigator.pop(context);
-                        showModalBottomSheet(
-                          context: context,
-                          isScrollControlled: true,
-                          backgroundColor: Colors.transparent,
-                          builder: (_) => BoardMembersManageSheet(boardId: boardId, boardName: boardName),
-                        );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                      minimumSize: const Size(double.infinity, 40),
-                    ),
-                    child: const Text('Mời...'),
-                  ),
+                BlocBuilder<BoardDetailCubit, BoardDetailState>(
+                  builder: (context, boardState) {
+                    final isPersonal = boardState is BoardDetailLoaded
+                        ? boardState.isPersonal
+                        : false;
+                    if (isPersonal) return const SizedBox.shrink();
+                    return Padding(
+                      padding: const EdgeInsets.only(left: 40),
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          showModalBottomSheet(
+                            context: context,
+                            isScrollControlled: true,
+                            backgroundColor: Colors.transparent,
+                            builder: (_) => BoardMembersManageSheet(boardId: boardId, boardName: boardName),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blue,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          minimumSize: const Size(double.infinity, 40),
+                        ),
+                        child: const Text('Mời...'),
+                      ),
+                    );
+                  },
                 ),
                 const SizedBox(height: 16),
                 const Divider(),
@@ -333,7 +343,7 @@ class _BoardMenuSheetViewState extends State<_BoardMenuSheetView> {
         Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey.withOpacity(0.3)),
+            border: Border.all(color: Colors.grey.withValues(alpha: 0.3)),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Icon(icon, color: Colors.black87),

@@ -61,6 +61,15 @@ class BoardRepositoryImpl implements BoardRepository {
   }
 
   @override
+  Future<void> deleteBoard(String boardId, String userUId) async {
+    try {
+      await remoteDataSource.deleteBoard(boardId: boardId, userUId: userUId);
+    } catch (e) {
+      throw Exception('Repository error: $e');
+    }
+  }
+
+  @override
   Future<void> saveRecentBoard(String userUid, String boardId) async {
     try {
       await remoteDataSource.saveRecentBoard(userUid, boardId);

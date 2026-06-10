@@ -1,3 +1,4 @@
+import 'package:apptreolon/features/profile/presentation/widgets/account_switcher_sheet.dart';
 import 'package:apptreolon/features/profile/presentation/widgets/setting_item_widget.dart';
 import 'package:apptreolon/routes.dart';
 import 'package:flutter/material.dart';
@@ -11,13 +12,10 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../init_dependencies.dart';
 import '../../../../core/constants/api_endpoints.dart';
 import '../../../activity/presentation/cubit/notification_cubit.dart';
-import '../../../../core/data_sources/user_local_data_source.dart';
-import '../../../../features/auth/domain/repositories/i_auth_repository.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../workspace/presentation/cubit/workspace_cubit.dart';
 import '../../../workspace/domain/entities/workspace_entity.dart';
 import '../../../board/presentation/widgets/board_list/create_workspace_sheet.dart';
-import 'dart:io';
 import '../../../../core/utils/image_picker_helper.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -109,7 +107,7 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
           const SizedBox(width: 10),
           Text(
-            'Workspace',
+            'Không gian làm việc',
             style: GoogleFonts.inter(
               fontSize: 20,
               fontWeight: FontWeight.w700,
@@ -473,12 +471,29 @@ class _ProfilePageState extends State<ProfilePage> {
           child: Column(
             children: [
               SettingItem(
+                icon: Icons.switch_account_rounded,
+                title: 'Chuyển tài khoản',
+                subtitle: 'Quản lý & đăng nhập nhanh',
+                iconBgColor: const Color(0xFFE0F2FE),
+                iconColor: const Color(0xFF0284C7),
+                onTap: () {
+                  showModalBottomSheet(
+                    context: context,
+                    isScrollControlled: true,
+                    backgroundColor: Colors.transparent,
+                    builder: (_) => const AccountSwitcherSheet(),
+                  );
+                },
+              ),
+              _buildDivider(),
+              SettingItem(
                 icon: Icons.help_rounded,
                 title: 'Trung tâm trợ giúp',
                 iconBgColor: AppColors.surfaceContainerHigh,
                 iconColor: AppColors.onSurfaceVariant,
                 onTap: () {},
               ),
+              _buildDivider(),
               SettingItem(
                 icon: Icons.logout_rounded,
                 title: 'Đăng xuất',

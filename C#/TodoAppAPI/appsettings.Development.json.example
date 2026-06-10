@@ -25,5 +25,6 @@
     "SenderEmail": "REPLACE_WITH_YOUR_SENDER_EMAIL",
     "SenderPassword": "REPLACE_WITH_YOUR_APP_PASSWORD"
   },
+
   "AllowedHosts": "*"
 }

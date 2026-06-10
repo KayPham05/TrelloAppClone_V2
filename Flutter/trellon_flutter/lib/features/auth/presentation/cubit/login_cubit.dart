@@ -2,6 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
+import '../../../../core/services/session_manager.dart';
 import '../../domain/entities/user_entity.dart';
 import '../../domain/usecases/login_usecase.dart';
 import '../../domain/usecases/sign_in_with_google_usecase.dart';
@@ -53,6 +54,16 @@ class LoginCubit extends Cubit<LoginState> {
       // 2FA: Khi login thành công mà không qua 2FA → user chưa bật 2FA
       await prefs.setBool('is_two_factor_enabled', false);
 
+      // Save session for multi-account switching
+      await SessionManager().saveCurrentSession(
+        userUId: user.userUId ?? '',
+        userName: user.userName,
+        email: user.email,
+        avatarUrl: prefs.getString('user_avatar') ?? '',
+        accessToken: user.token ?? '',
+        refreshToken: user.refreshToken ?? '',
+      );
+
       emit(LoginSuccess(user));
     } catch (e) {
       if (e.toString().contains('ACCOUNT_LOCKED|')) {
@@ -82,6 +93,16 @@ class LoginCubit extends Cubit<LoginState> {
       await prefs.setString('user_name', user.userName);
       await prefs.setString('user_email', user.email);
       await prefs.setBool('is_two_factor_enabled', false);
+
+      // Save session for multi-account switching
+      await SessionManager().saveCurrentSession(
+        userUId: user.userUId ?? '',
+        userName: user.userName,
+        email: user.email,
+        avatarUrl: prefs.getString('user_avatar') ?? '',
+        accessToken: user.token ?? '',
+        refreshToken: user.refreshToken ?? '',
+      );
 
       emit(LoginSuccess(user));
     } catch (e) {

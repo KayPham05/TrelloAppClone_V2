@@ -1,4 +1,4 @@
-name: SonarCloud Analysis
+﻿name: SonarCloud Analysis
 
 on:
   push:
@@ -15,24 +15,66 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           fetch-depth: 0
 
+      # ===== SETUP SONARSCANNER FOR .NET =====
+      - name: Setup Java 17 (Required by SonarScanner)
+        uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 # v4
+        with:
+          distribution: "temurin"
+          java-version: "17"
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
+        with:
+          dotnet-version: "9.0.x"
+
+      - name: Install SonarScanner for .NET
+        run: |
+          dotnet tool install --global dotnet-sonarscanner
+          echo "$HOME/.dotnet/tools" >> "$GITHUB_PATH"
+
+      - name: Begin SonarScanner
+        working-directory: C#/TodoAppAPI
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: >
+          dotnet sonarscanner begin
+          /k:"KayPham05_TrelloAppClone_V2"
+          /o:"kaypham05"
+          /d:sonar.token="$SONAR_TOKEN"
+          /d:sonar.host.url="https://sonarcloud.io"
+          /d:sonar.projectBaseDir="$GITHUB_WORKSPACE"
+          /d:sonar.cs.opencover.reportsPaths="../../coverage/dotnet/**/coverage.opencover.xml"
+          /d:sonar.dart.lcov.reportPaths="../../coverage/lcov.info"
+          /d:sonar.exclusions="**/node_modules/**,**/vendor/**,**/*.g.dart,**/*.freezed.dart,**/*.gen.dart,**/generated/**,**/build/**,**/ios/**,**/android/**,**/bin/**,**/obj/**,**/Migrations/**,**/wwwroot/**,Web/**"
+          /d:sonar.coverage.exclusions="Flutter/trellon_flutter/test/**,Flutter/trellon_flutter/lib/**/presentation/pages/**/*.dart,Flutter/trellon_flutter/lib/**/presentation/widgets/**/*.dart,Flutter/trellon_flutter/lib/**/presentation/controllers/**/*.dart,Flutter/trellon_flutter/lib/core/common_widgets/**/*.dart,Flutter/trellon_flutter/lib/core/widgets/**/*.dart,Flutter/trellon_flutter/lib/core/errors/app_exception_mapper.dart,Flutter/trellon_flutter/lib/core/network/interceptors/auth_interceptor.dart,Flutter/trellon_flutter/lib/features/board/presentation/cubit/board_cubit.dart,Flutter/trellon_flutter/lib/features/inbox/presentation/bloc/inbox_cubit.dart,Flutter/trellon_flutter/lib/features/inbox/**/*.dart,Flutter/trellon_flutter/lib/init_dependencies.dart,Flutter/trellon_flutter/lib/core/data_sources/user_local_data_source.dart,Flutter/trellon_flutter/lib/features/activity/data/services/notification_realtime_service.dart"
+          /d:sonar.c.file.suffixes=-
+          /d:sonar.cpp.file.suffixes=-
+          /d:sonar.objc.file.suffixes=-
+          /d:sonar.sourceEncoding=UTF-8
+
       # ===== FLUTTER SETUP & TEST =====
       - name: Setup Flutter
-        uses: subosito/flutter-action@v2
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
         with:
-          flutter-version: '3.x'
-          channel: 'stable'
+          flutter-version: "3.x"
+          channel: "stable"
 
       - name: Get Flutter dependencies
-        working-directory: Flutter/trellon_flutter
+<<<<<<< HEAD
+        working-directory: Flutter/kabo_flutter
         run: flutter pub get
+=======
+        working-directory: Flutter/trellon_flutter
+        run: flutter pub get --enforce-lockfile
+>>>>>>> b99a997132fbff90878e7a87c25feac790e238f9
         continue-on-error: false
 
       - name: Prepare Flutter env for CI
-        working-directory: Flutter/trellon_flutter
+        working-directory: Flutter/kabo_flutter
         env:
           FLUTTER_API_URL: ${{ secrets.FLUTTER_API_URL }}
         run: |
@@ -44,11 +86,11 @@ jobs:
         continue-on-error: false
 
       - name: Run Flutter tests with coverage
-        working-directory: Flutter/trellon_flutter
+        working-directory: Flutter/kabo_flutter
         run: |
           if [ -d "test" ]; then
             flutter test --coverage
-            # Di chuyển coverage report về root (2 cấp lên)
+            # Di chuyá»ƒn coverage report vá» root (2 cáº¥p lÃªn)
             mkdir -p ../../coverage
             cp coverage/lcov.info ../../coverage/
           else
@@ -56,37 +98,30 @@ jobs:
           fi
         continue-on-error: false
 
-      # ===== .NET SETUP & TEST =====
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '8.x'
-
+      # ===== .NET BUILD & TEST =====
       - name: Restore .NET dependencies
         working-directory: C#/TodoAppAPI
-        run: dotnet restore
+        run: dotnet restore TodoAppAPI.sln
         continue-on-error: false
 
       - name: Build .NET project
         working-directory: C#/TodoAppAPI
-        run: dotnet build --no-restore
+        run: dotnet build TodoAppAPI.sln --no-restore
         continue-on-error: false
 
       - name: Run .NET tests with coverage
         working-directory: C#/TodoAppAPI
-        run: |
-          if ls *.csproj 1> /dev/null 2>&1 || ls **/*.csproj 1> /dev/null 2>&1; then
-            dotnet test --no-build --collect:"XPlat Code Coverage" \
-              --results-directory ../../coverage/dotnet \
-              -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
-          else
-            echo "No .NET test projects found, skipping..."
-          fi
+        run: dotnet test TodoAppAPI.sln --no-build --collect:"XPlat Code Coverage" --results-directory ../../coverage/dotnet -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
         continue-on-error: false
 
-      # ===== SONARCLOUD SCAN =====
-      - name: SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@v3.1.0
+      - name: Verify coverage reports
+        run: |
+          test -f coverage/lcov.info
+          find coverage/dotnet -name coverage.opencover.xml -print -quit | grep -q .
+
+      # ===== SONARCLOUD SCAN END =====
+      - name: End SonarScanner
+        working-directory: C#/TodoAppAPI
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: dotnet sonarscanner end /d:sonar.token="$SONAR_TOKEN"

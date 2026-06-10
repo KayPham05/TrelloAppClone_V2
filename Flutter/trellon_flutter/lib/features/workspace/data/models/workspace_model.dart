@@ -22,9 +22,9 @@ class WorkspaceModel extends WorkspaceEntity {
         : [];
 
     var membersJson = json['members'] as List?;
-    List<WorkspaceMember>? membersList = membersJson != null
-        ? membersJson.map((e) => WorkspaceMember.fromJson(e)).toList()
-        : null;
+    List<WorkspaceMember>? membersList = membersJson
+        ?.map((e) => WorkspaceMember.fromJson(e))
+        .toList();
 
     return WorkspaceModel(
       id: json['workspaceUId'] ?? json['id'] ?? '',

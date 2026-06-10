@@ -1,8 +1,9 @@
+import 'package:flutter/foundation.dart';
 import 'package:apptreolon/core/constants/api_endpoints.dart';
 import 'package:cookie_jar/cookie_jar.dart';
 import 'package:dio/dio.dart';
 import 'package:dio_cookie_manager/dio_cookie_manager.dart';
-
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'interceptors/auth_interceptor.dart';
 
 class DioClient {
@@ -22,8 +23,10 @@ class DioClient {
     );
 
     // Thêm các Interceptors theo thứ tự
+    if (!kIsWeb) {
+      _dio.interceptors.add(CookieManager(cookieJar)); // Tự động lưu & gửi cookie (refreshToken)
+    }
     _dio.interceptors.addAll([
-      CookieManager(cookieJar), // Tự động lưu & gửi cookie (refreshToken)
       AuthInterceptor(dio: _dio, cookieJar: cookieJar), // Xử lý Token & Auto-Refresh
       LogInterceptor(responseBody: true),
     ]);

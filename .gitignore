@@ -30,7 +30,7 @@ $RECYCLE.BIN/
 *.suo
 *.userosscache
 *.sln.docstates
-# .vscode/
+.vscode/
 
 # -----------------------------
 # Environment / secrets
@@ -59,6 +59,7 @@ appsettings.*.local.json
 .agent/
 .agents/
 .agent
+.codegraph/
 
 # -----------------------------
 # Common dependencies / bundles
@@ -80,12 +81,6 @@ dist/
 [Oo]bj/
 
 # -----------------------------
-# Entity Framework Migrations
-# -----------------------------
-**/Migrations/*
-!**/Migrations/.gitkeep
-
-# -----------------------------
 # Flutter / Dart Build Artifacts
 # -----------------------------
 .dart_tool/
@@ -103,3 +98,18 @@ ephemeral/
 AGENT.md
 Docs/Plans/
 Docs/Reviews/
+
+# -----------------------------
+# Test Results & Coverage
+# -----------------------------
+[Tt]est[Rr]esult*/
+coverage.cobertura.xml
+coverage.opencover.xml
+coverage/
+
+# -----------------------------
+# SonarQube
+# -----------------------------
+.sonarqube/
+SonarQube.Analysis.xml
+.sonar/

@@ -4,6 +4,8 @@ using Microsoft.EntityFrameworkCore;
 using TodoAppAPI.Data;
 using TodoAppAPI.DTOs;
 using TodoAppAPI.Models;
+using Microsoft.AspNetCore.SignalR;
+using TodoAppAPI.Hubs;
 
 namespace TodoAppAPI.Controllers
 {
@@ -13,10 +15,12 @@ namespace TodoAppAPI.Controllers
     public class WorkflowController : ControllerBase
     {
         private readonly TodoDbContext _context;
+        private readonly IHubContext<NotificationHub> _notificationHubContext;
 
-        public WorkflowController(TodoDbContext context)
+        public WorkflowController(TodoDbContext context, IHubContext<NotificationHub> notificationHubContext)
         {
             _context = context;
+            _notificationHubContext = notificationHubContext;
         }
 
         // GET v1/api/workflow/{workspaceId}
@@ -125,6 +129,8 @@ namespace TodoAppAPI.Controllers
             _context.WorkflowNodes.Add(node);
             await _context.SaveChangesAsync();
 
+            await _notificationHubContext.Clients.All.SendAsync("WorkspaceWorkflowUpdated", new { workspaceId = design.WorkspaceUId });
+
             return CreatedAtAction(nameof(GetWorkflow),
                 new { workspaceId = design.WorkspaceUId },
                 new { node.WorkflowNodeUId });
@@ -141,6 +147,12 @@ namespace TodoAppAPI.Controllers
             node.PositionX = request.PositionX;
             node.PositionY = request.PositionY;
             await _context.SaveChangesAsync();
+
+            var design = await _context.WorkflowDesigns.FindAsync(node.WorkflowDesignUId);
+            if (design != null)
+            {
+                await _notificationHubContext.Clients.All.SendAsync("WorkspaceWorkflowUpdated", new { workspaceId = design.WorkspaceUId });
+            }
 
             return Ok(new { message = "Position updated." });
         }

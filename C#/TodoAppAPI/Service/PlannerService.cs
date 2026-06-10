@@ -16,11 +16,16 @@ namespace TodoAppAPI.Service
 
         public async Task<Dictionary<string, List<CardDTO>>> GetPlannerCardsAsync(string userUId, DateTime from, DateTime to)
         {
-            var cards = await _dbContext.CardMembers
-                .Where(cm => cm.UserUId == userUId && cm.Card.DueDate != null && cm.Card.DueDate >= from && cm.Card.DueDate <= to && cm.Card.Status != "Deleted")
-                .Include(cm => cm.Card)
-                .ThenInclude(c => c.CardLabels)
-                .Select(cm => cm.Card)
+            var cards = await _dbContext.Todos
+                .Where(c => c.DueDate != null && c.DueDate >= from && c.DueDate <= to && c.Status != "Deleted" && !c.IsArchived)
+                .Where(c => 
+                    c.UserUId == userUId || 
+                    _dbContext.CardMembers.Any(cm => cm.CardUId == c.CardUId && cm.UserUId == userUId) ||
+                    _dbContext.UserInboxCards.Any(uic => uic.CardUId == c.CardUId && uic.UserUId == userUId)
+                )
+                .Include(c => c.CardLabels)
+                .Include(c => c.CardMembers!)
+                    .ThenInclude(cm => cm.User)
                 .ToListAsync();
 
             var result = cards
@@ -44,7 +49,21 @@ namespace TodoAppAPI.Service
                             CardLabelUId = cl.CardLabelUId,
                             Title = cl.Title,
                             ColorCode = cl.ColorCode
-                        }).ToList() : new List<CardLabelDto>()
+                        }).ToList() : new List<CardLabelDto>(),
+                        Members = c.CardMembers != null ? c.CardMembers.Select(cm => new CardMemberDto
+                        {
+                            CardMemberUId = cm.CardMemberUId,
+                            CardUId = cm.CardUId,
+                            UserUId = cm.UserUId,
+                            Role = cm.Role,
+                            AssignedAt = cm.AssignedAt,
+                            User = cm.User != null ? new UserDto
+                            {
+                                UserUId = cm.User.UserUId,
+                                Name = cm.User.UserName,
+                                Email = cm.User.Email
+                            } : null
+                        }).ToList() : new List<CardMemberDto>()
                     }).ToList()
                 );
 

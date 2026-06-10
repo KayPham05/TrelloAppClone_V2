@@ -29,7 +29,7 @@ class _StepPrivacyState extends State<StepPrivacy> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
             child: IntroductionAppBar(
-              title: 'Step 4 of 5',
+              title: 'Bước 4 / 5',
               actionText: '',
               onBack: widget.onBack,
             ),
@@ -42,7 +42,7 @@ class _StepPrivacyState extends State<StepPrivacy> {
                 children: [
                   const SizedBox(height: 24),
                   Text(
-                    'Your Privacy\nMatters',
+                    'Quyền riêng tư\ncủa bạn',
                     style: GoogleFonts.manrope(
                       fontSize: 36,
                       fontWeight: FontWeight.w800,
@@ -53,7 +53,7 @@ class _StepPrivacyState extends State<StepPrivacy> {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'Review our Terms of Service and Privacy Policy to understand how we protect your data.',
+                    'Xem lại Điều khoản dịch vụ và Chính sách quyền riêng tư để hiểu cách chúng tôi bảo vệ dữ liệu của bạn.',
                     style: GoogleFonts.inter(
                       fontSize: 16,
                       color: AppColors.onSurfaceVariant,
@@ -76,10 +76,10 @@ class _StepPrivacyState extends State<StepPrivacy> {
                   ),
                   const SizedBox(height: 32),
                   _buildCheckboxRow(
-                      'I agree to the Terms of Service', _agreedTerms, (v) => setState(() => _agreedTerms = v!)),
+                      'Tôi đồng ý với Điều khoản dịch vụ', _agreedTerms, (v) => setState(() => _agreedTerms = v!)),
                   const SizedBox(height: 12),
                   _buildCheckboxRow(
-                      'I agree to the Privacy Policy', _agreedPrivacy, (v) => setState(() => _agreedPrivacy = v!)),
+                      'Tôi đồng ý với Chính sách quyền riêng tư', _agreedPrivacy, (v) => setState(() => _agreedPrivacy = v!)),
                   const SizedBox(height: 24),
                 ],
               ),
@@ -88,7 +88,7 @@ class _StepPrivacyState extends State<StepPrivacy> {
           Padding(
             padding: const EdgeInsets.all(24),
             child: IntroductionPrimaryButton(
-              text: 'Continue',
+              text: 'Tiếp tục',
               onPressed: (_agreedTerms && _agreedPrivacy) ? widget.onNext : null,
             ),
           ),

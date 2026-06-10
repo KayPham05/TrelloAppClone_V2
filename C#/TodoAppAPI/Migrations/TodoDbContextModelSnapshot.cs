@@ -52,6 +52,56 @@ namespace TodoAppAPI.Migrations
                     b.ToTable("Activities", (string)null);
                 });
 
+            modelBuilder.Entity("TodoAppAPI.Models.AnalysisReport", b =>
+                {
+                    b.Property<string>("ReportUId")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<DateTime>("GeneratedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("GeneratedByUId")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<string>("ModelUsed")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int>("OverallProgress")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ReportData")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ScopeType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("ScopeUId")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.HasKey("ReportUId");
+
+                    b.HasIndex("GeneratedByUId");
+
+                    b.HasIndex("ScopeType", "ScopeUId", "GeneratedAt");
+
+                    b.ToTable("AnalysisReports", (string)null);
+                });
+
             modelBuilder.Entity("TodoAppAPI.Models.Board", b =>
                 {
                     b.Property<string>("BoardUId")
@@ -1034,6 +1084,17 @@ namespace TodoAppAPI.Migrations
                         .OnDelete(DeleteBehavior.NoAction);
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("TodoAppAPI.Models.AnalysisReport", b =>
+                {
+                    b.HasOne("TodoAppAPI.Models.User", "GeneratedBy")
+                        .WithMany()
+                        .HasForeignKey("GeneratedByUId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("GeneratedBy");
                 });
 
             modelBuilder.Entity("TodoAppAPI.Models.Board", b =>

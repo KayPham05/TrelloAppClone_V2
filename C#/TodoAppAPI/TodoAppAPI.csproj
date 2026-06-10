@@ -14,7 +14,7 @@
     <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
     <PackageReference Include="CloudinaryDotNet" Version="1.28.0" />
     <PackageReference Include="MailKit" Version="4.16.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.2" />  
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.8" />  
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.8" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.8">
       <PrivateAssets>all</PrivateAssets>
@@ -33,6 +33,12 @@
     <PackageReference Include="Otp.NET" Version="1.4.0" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.0.1" />
+  </ItemGroup>
+
+  <!-- Include Flutter source and test files for SonarCloud Mono-repo Analysis -->
+  <ItemGroup>
+    <Content Include="..\..\Flutter\trellon_flutter\lib\**\*.dart" />
+    <Content Include="..\..\Flutter\trellon_flutter\test\**\*.dart" />
   </ItemGroup>
 
 </Project>

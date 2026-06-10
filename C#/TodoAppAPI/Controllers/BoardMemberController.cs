@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
+using TodoAppAPI.Hubs;
 using TodoAppAPI.Interfaces;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
@@ -13,10 +15,12 @@ namespace TodoAppAPI.Controllers
     {
         private readonly IBoardMemberService _boardMemberService;
         private readonly IActivity _activity;
-        public BoardMemberController(IBoardMemberService boardMemberService, IActivity activity)
+        private readonly IHubContext<BoardHub> _boardHubContext;
+        public BoardMemberController(IBoardMemberService boardMemberService, IActivity activity, IHubContext<BoardHub> boardHubContext)
         {
             _boardMemberService = boardMemberService;
             _activity = activity;
+            _boardHubContext = boardHubContext;
         }
 
         // Thêm thành viên vào board
@@ -30,6 +34,10 @@ namespace TodoAppAPI.Controllers
             if (!success)
                 return StatusCode(403, new { message = "Không thể thêm thành viên. Kiểm tra quyền hoặc dữ liệu." });
             _ = _activity.AddActivity(requesterUId, $"added user '{userUId}' to board '{boardUId}' with role '{role}'");
+            
+            await _boardHubContext.Clients.Group(BoardHub.BoardGroup(boardUId))
+                .SendAsync("BoardMemberAdded", new { boardUId, userUId, role });
+
             return Ok(new { message = $"Đã thêm thành viên vào board với quyền {role}." });
         }
 
@@ -44,6 +52,10 @@ namespace TodoAppAPI.Controllers
             if (!success)
                 return StatusCode(403, new { message = "Không thể cập nhật quyền thành viên này." });
             _ = _activity.AddActivity(requesterUId, $"updated role of user '{userUId}' in board '{boardUId}' to '{newRole}'");
+            
+            await _boardHubContext.Clients.Group(BoardHub.BoardGroup(boardUId))
+                .SendAsync("BoardMemberRoleUpdated", new { boardUId, userUId, newRole });
+
             return Ok(new { message = $"Đã cập nhật quyền thành viên thành {newRole}." });
         }
 
@@ -58,6 +70,10 @@ namespace TodoAppAPI.Controllers
             if (!success)
                 return StatusCode(403, new { message = "Không thể xóa thành viên. Kiểm tra quyền hoặc dữ liệu." });
             _ = _activity.AddActivity(requesterUId, $"removed user '{userUId}' from board '{boardUId}'");
+            
+            await _boardHubContext.Clients.Group(BoardHub.BoardGroup(boardUId))
+                .SendAsync("BoardMemberRemoved", new { boardUId, userUId });
+
             return Ok(new { message = "Đã xóa thành viên khỏi board thành công." });
         }
 

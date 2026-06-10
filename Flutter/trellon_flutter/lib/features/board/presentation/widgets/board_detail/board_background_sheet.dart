@@ -52,6 +52,7 @@ class _BoardBackgroundSheetState extends State<BoardBackgroundSheet>
     final picker = ImagePicker();
     final XFile? file = await picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
     if (file == null) return;
+    if (!mounted) return;
     setState(() => _uploading = true);
     try {
       await context.read<BoardDetailCubit>().uploadAndSetBackground(file.path);
@@ -63,8 +64,8 @@ class _BoardBackgroundSheetState extends State<BoardBackgroundSheet>
 
   Future<void> _applyGradient(List<Color> colors) async {
     // Encode as special URL: gradient://<hexStart>:<hexEnd>
-    final start = colors[0].value.toRadixString(16).padLeft(8, '0');
-    final end = colors[1].value.toRadixString(16).padLeft(8, '0');
+    final start = colors[0].toARGB32().toRadixString(16).padLeft(8, '0');
+    final end = colors[1].toARGB32().toRadixString(16).padLeft(8, '0');
     await context.read<BoardDetailCubit>().updateBoardBackground('gradient://$start:$end');
     if (mounted) Navigator.pop(context);
   }
@@ -91,7 +92,7 @@ class _BoardBackgroundSheetState extends State<BoardBackgroundSheet>
           const SizedBox(height: 12),
           Container(
             width: 40, height: 4,
-            decoration: BoxDecoration(color: Colors.grey.withOpacity(0.5), borderRadius: BorderRadius.circular(2)),
+            decoration: BoxDecoration(color: Colors.grey.withValues(alpha: 0.5), borderRadius: BorderRadius.circular(2)),
           ),
           const SizedBox(height: 12),
           // Header

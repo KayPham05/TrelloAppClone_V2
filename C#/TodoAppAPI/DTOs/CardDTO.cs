@@ -13,5 +13,6 @@ namespace TodoAppAPI.DTOs
 
         public string? ListUId { get; set; }
         public List<CardLabelDto> CardLabels { get; set; } = new();
+        public List<CardMemberDto>? Members { get; set; }
     }
 }

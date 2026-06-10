@@ -16,9 +16,20 @@ class UserLocalDataSource {
     await prefs.setBool('has_seen_introduction', value);
   }
 
+  Future<String?> getUserName() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('user_name');
+  }
+
+  Future<void> setUserName(String name) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('user_name', name);
+  }
+
   Future<void> clearUserData() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('user_uid');
     await prefs.remove('access_token');
+    await prefs.remove('user_name');
   }
 }

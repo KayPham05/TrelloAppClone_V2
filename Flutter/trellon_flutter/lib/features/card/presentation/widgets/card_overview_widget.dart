@@ -17,7 +17,9 @@ class CardOverviewWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool isCompleted = card.status == 'Completed';
+    final bool isCompleted = card.status.toLowerCase() == 'hoan_thanh' ||
+        card.status.toLowerCase() == 'hoàn thành' ||
+        card.status.toLowerCase() == 'completed';
 
     return GestureDetector(
       onTap: onTap,

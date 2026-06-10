@@ -184,7 +184,7 @@ class _InboxViewState extends State<InboxView> {
                         onReorder: (oldIndex, newIndex) {
                           context.read<InboxCubit>().reorderCards(
                             oldIndex,
-                            newIndex,
+                            newIndex > oldIndex ? newIndex : newIndex,
                           );
                         },
                         proxyDecorator: (child, index, animation) => Material(
