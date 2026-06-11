@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import '../../../../../core/constants/card_status_values.dart';
 import '../../../../card/domain/entities/card_entity.dart';
 import '../../../../../core/constants/app_colors.dart';
 
@@ -24,11 +25,13 @@ class KanbanCardUiWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final statusLower = card.status.toLowerCase();
-    final isCompleted =
-        statusLower == 'hoan_thanh' ||
-        statusLower == 'hoàn thành' ||
-        statusLower == 'completed';
+    final displayStatus = CardStatusValues.calculate(card.status, card.dueDate);
+    final isCompleted = CardStatusValues.isCompleted(displayStatus);
+    final dueStatusColor = CardStatusValues.isOverdue(displayStatus)
+        ? Colors.red
+        : CardStatusValues.isDueSoon(displayStatus)
+            ? Colors.amber
+            : null;
 
     return GestureDetector(
       onTap: onTap,
@@ -192,23 +195,33 @@ class KanbanCardUiWidget extends StatelessWidget {
                       crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
                         if (card.dueDate != null)
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.schedule_rounded,
-                                size: 12 * scale,
-                                color: AppColors.onSurfaceVariant,
-                              ),
-                              SizedBox(width: 4 * scale),
-                              Text(
-                                '${card.dueDate!.day}/${card.dueDate!.month}',
-                                style: GoogleFonts.inter(
-                                  fontSize: 11 * scale,
-                                  color: AppColors.onSurfaceVariant,
+                          Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 6 * scale,
+                              vertical: 3 * scale,
+                            ),
+                            decoration: BoxDecoration(
+                              color: dueStatusColor?.withValues(alpha: 0.14),
+                              borderRadius: BorderRadius.circular(4 * scale),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.schedule_rounded,
+                                  size: 12 * scale,
+                                  color: dueStatusColor ?? AppColors.onSurfaceVariant,
                                 ),
-                              ),
-                            ],
+                                SizedBox(width: 4 * scale),
+                                Text(
+                                  '${card.dueDate!.day}/${card.dueDate!.month}',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 11 * scale,
+                                    color: dueStatusColor ?? AppColors.onSurfaceVariant,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         if (card.description != null &&
                             card.description!.isNotEmpty)

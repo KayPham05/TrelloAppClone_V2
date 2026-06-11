@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/card_status_values.dart';
 import '../../../card/domain/entities/card_entity.dart';
 
 class CardItemWidget extends StatelessWidget {
@@ -9,6 +10,13 @@ class CardItemWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final displayStatus = CardStatusValues.calculate(card.status, card.dueDate);
+    final dueStatusColor = CardStatusValues.isOverdue(displayStatus)
+        ? Colors.red
+        : CardStatusValues.isDueSoon(displayStatus)
+            ? AppColors.warning
+            : AppColors.textSecondary;
+
     return GestureDetector(
       onTap: () => _showCardDetail(context, card),
       child: Container(
@@ -33,11 +41,11 @@ class CardItemWidget extends StatelessWidget {
               const SizedBox(height: 6),
               Row(
                 children: [
-                  const Icon(Icons.schedule, color: AppColors.warning, size: 12),
+                  Icon(Icons.schedule, color: dueStatusColor, size: 12),
                   const SizedBox(width: 4),
                   Text(
                     _formatDate(card.dueDate!),
-                    style: const TextStyle(color: AppColors.warning, fontSize: 11),
+                    style: TextStyle(color: dueStatusColor, fontSize: 11),
                   ),
                 ],
               ),
@@ -49,6 +57,13 @@ class CardItemWidget extends StatelessWidget {
   }
 
   void _showCardDetail(BuildContext context, CardEntity card) {
+    final displayStatus = CardStatusValues.calculate(card.status, card.dueDate);
+    final dueStatusColor = CardStatusValues.isOverdue(displayStatus)
+        ? Colors.red
+        : CardStatusValues.isDueSoon(displayStatus)
+            ? AppColors.warning
+            : AppColors.textSecondary;
+
     showModalBottomSheet(
       context: context,
       backgroundColor: AppColors.surface,
@@ -83,14 +98,14 @@ class CardItemWidget extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: AppColors.warning.withValues(alpha: 0.15),
+                      color: dueStatusColor.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.schedule, color: AppColors.warning, size: 14),
+                        Icon(Icons.schedule, color: dueStatusColor, size: 14),
                         const SizedBox(width: 4),
-                        Text(_formatDate(card.dueDate!), style: const TextStyle(color: AppColors.warning, fontSize: 12)),
+                        Text(_formatDate(card.dueDate!), style: TextStyle(color: dueStatusColor, fontSize: 12)),
                       ],
                     ),
                   ),
@@ -105,20 +120,21 @@ class CardItemWidget extends StatelessWidget {
   }
 
   Widget _statusChip(String status) {
-    Color color;
-    switch (status) {
-      case 'In Progress': color = AppColors.warning; break;
-      case 'Done': color = AppColors.success; break;
-      case 'Review': color = AppColors.accent; break;
-      default: color = AppColors.textSecondary;
-    }
+    final normalizedStatus = CardStatusValues.normalize(status);
+    final color = CardStatusValues.color(
+      normalizedStatus,
+      defaultColor: AppColors.textSecondary,
+    );
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(6),
       ),
-      child: Text(status, style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w500)),
+      child: Text(
+        CardStatusValues.label(normalizedStatus),
+        style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w500),
+      ),
     );
   }
 

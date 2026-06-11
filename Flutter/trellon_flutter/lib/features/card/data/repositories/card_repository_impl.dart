@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import '../../../../core/constants/api_endpoints.dart';
+import '../../../../core/constants/card_status_values.dart';
 import '../../domain/entities/card_entity.dart';
 import '../../domain/repositories/i_card_repository.dart';
 import '../models/card_model.dart';
@@ -105,7 +106,10 @@ class CardRepositoryImpl implements ICardRepository {
   @override
   Future<CardEntity> updateStatus({required String cardId, required String newStatus, required String userUId}) async {
     try {
-      final response = await dio.put('${ApiEndpoints.card}/$cardId/update-status?newStatus=$newStatus&userUId=$userUId');
+      final normalizedStatus = CardStatusValues.normalize(newStatus);
+      final response = await dio.put(
+        '${ApiEndpoints.card}/$cardId/update-status?newStatus=$normalizedStatus&userUId=$userUId',
+      );
       if (response.statusCode == 200) {
         return const CardEntity(id: '', title: '', position: 0);
       }
@@ -147,6 +151,10 @@ class CardRepositoryImpl implements ICardRepository {
   @override
   Future<CardEntity> updateDueDate({required String cardId, required DateTime dueDate, required String userUId}) async {
     try {
+      if (CardStatusValues.isDueDateInPast(dueDate)) {
+        throw Exception(CardStatusValues.dueDateInPastMessage);
+      }
+
       final response = await dio.put('${ApiEndpoints.card}/$cardId/duedate', data: {
         'dueDate': dueDate.toIso8601String(),
         'userUId': userUId,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/card_status_values.dart';
 import 'package:apptreolon/features/card/domain/entities/card_entity.dart';
 
 class InboxItemWidget extends StatelessWidget {
@@ -18,7 +19,13 @@ class InboxItemWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool isCompleted = item.status == 'Completed';
+    final status = CardStatusValues.calculate(item.status, item.dueDate);
+    final bool isCompleted = CardStatusValues.isCompleted(status);
+    final dueStatusColor = CardStatusValues.isOverdue(status)
+        ? Colors.red
+        : CardStatusValues.isDueSoon(status)
+            ? AppColors.warning
+            : AppColors.textSecondary;
 
     return Container(
       decoration: BoxDecoration(
@@ -61,11 +68,11 @@ class InboxItemWidget extends StatelessWidget {
             ? Row(
                 children: [
                   if (item.dueDate != null) ...[
-                    const Icon(Icons.schedule, size: 12, color: AppColors.warning),
+                    Icon(Icons.schedule, size: 12, color: dueStatusColor),
                     const SizedBox(width: 4),
                     Text(
                       '${item.dueDate!.day}/${item.dueDate!.month}',
-                      style: const TextStyle(fontSize: 12, color: AppColors.warning),
+                      style: TextStyle(fontSize: 12, color: dueStatusColor),
                     ),
                     const SizedBox(width: 8),
                   ],

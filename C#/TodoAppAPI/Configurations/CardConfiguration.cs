@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using TodoAppAPI.Constants;
 using TodoAppAPI.Models;
 
 namespace TodoAppAPI.Configurations
@@ -31,7 +32,7 @@ namespace TodoAppAPI.Configurations
             builder.Property(x => x.Status)
                    .IsRequired()
                    .HasMaxLength(50)
-                   .HasDefaultValue("To Do");
+                   .HasDefaultValue(CardStatusValues.ToDo);
 
             builder.Property(x => x.BackgroundUrl);
 
