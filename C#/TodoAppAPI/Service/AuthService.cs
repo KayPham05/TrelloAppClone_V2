@@ -80,11 +80,11 @@ namespace TodoAppAPI.Service
             if (user == null)
                 return new AuthResponse { Message = "Account not found!" };
 
-            if (!BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
-                return new AuthResponse { Message = "Incorrect password!" };
-
             if (user.Provider == "Google")
                 return new AuthResponse { Message = "Tài khoản này được đăng nhập bằng Google. Vui lòng sử dụng nút 'Sign in with Google'" };
+
+            if (!BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
+                return new AuthResponse { Message = "Incorrect password!" };
 
             // Check if account is locked
             if (user.StatusAccount == "Locked")
