@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/constants/card_status_values.dart';
 import '../../../../core/data_sources/user_local_data_source.dart';
 import '../../../card/data/models/card_model.dart';
 import '../../../card/domain/entities/card_entity.dart';
@@ -158,7 +159,12 @@ class BoardDetailCubit extends Cubit<BoardDetailState> {
     if (current is! BoardDetailLoaded) return;
     try {
       final userUId = await userLocalDataSource.getUserId() ?? '';
-      final newStatus = isCompleted ? 'Completed' : 'To Do';
+      final card = current.lists
+          .expand((l) => l.cards)
+          .firstWhere((c) => c.id == cardId);
+      final newStatus = isCompleted
+          ? CardStatusValues.completed
+          : CardStatusValues.calculate(CardStatusValues.toDo, card.dueDate);
       
       // Optimistic upate
       final newLists = List<ListEntity>.from(current.lists);

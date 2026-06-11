@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../../core/constants/app_colors.dart';
+import '../../../../../core/constants/card_status_values.dart';
 import '../../../../../init_dependencies.dart';
 import '../../../../board/data/datasources/board_remote_data_source.dart';
 import '../../cubit/card_detail_cubit.dart';
@@ -372,9 +373,17 @@ class _CardDetailTitleState extends State<CardDetailTitle> {
 
   @override
   Widget build(BuildContext context) {
-    final isCompleted = widget.status.toLowerCase() == 'hoan_thanh' ||
-        widget.status.toLowerCase() == 'hoàn thành' ||
-        widget.status.toLowerCase() == 'completed';
+    final normalizedStatus = CardStatusValues.normalize(widget.status);
+    final isCompleted = CardStatusValues.isCompleted(normalizedStatus);
+    final statusColor = CardStatusValues.color(
+      normalizedStatus,
+      defaultColor: AppColors.surfaceContainerLow,
+    );
+    final statusTextColor = isCompleted ||
+            CardStatusValues.isOverdue(normalizedStatus) ||
+            CardStatusValues.isDueSoon(normalizedStatus)
+        ? Colors.white
+        : AppColors.onSurfaceVariant;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
@@ -388,7 +397,9 @@ class _CardDetailTitleState extends State<CardDetailTitle> {
               // Circular completion checkbox (LEFT side)
               GestureDetector(
                 onTap: widget.onStatusToggle != null
-                    ? () => widget.onStatusToggle!(isCompleted ? 'dang_lam' : 'hoan_thanh')
+                    ? () => widget.onStatusToggle!(isCompleted
+                        ? CardStatusValues.toDo
+                        : CardStatusValues.completed)
                     : null,
                 child: Container(
                   margin: const EdgeInsets.only(top: 4, right: 12),
@@ -440,12 +451,14 @@ class _CardDetailTitleState extends State<CardDetailTitle> {
           // Status chip
           GestureDetector(
             onTap: widget.onStatusToggle != null
-                ? () => widget.onStatusToggle!(isCompleted ? 'dang_lam' : 'hoan_thanh')
+                ? () => widget.onStatusToggle!(isCompleted
+                    ? CardStatusValues.toDo
+                    : CardStatusValues.completed)
                 : null,
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               decoration: BoxDecoration(
-                color: isCompleted ? Colors.green : AppColors.surfaceContainerLow,
+                color: statusColor,
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Row(
@@ -456,11 +469,11 @@ class _CardDetailTitleState extends State<CardDetailTitle> {
                     const SizedBox(width: 4),
                   ],
                   Text(
-                    isCompleted ? 'HOÀN THÀNH' : widget.status.toUpperCase(),
+                    CardStatusValues.label(normalizedStatus).toUpperCase(),
                     style: GoogleFonts.inter(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
-                      color: isCompleted ? Colors.white : AppColors.onSurfaceVariant,
+                      color: statusTextColor,
                       letterSpacing: 0.3,
                     ),
                   ),

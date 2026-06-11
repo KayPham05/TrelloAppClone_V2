@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using TodoAppAPI.Constants;
 using TodoAppAPI.Data;
 using TodoAppAPI.Interfaces;
 using TodoAppAPI.Models;
@@ -75,9 +76,9 @@ namespace TodoAppAPI.Service
 
             var cards = new[]
             {
-                CreateSampleCard(todoList.ListUId, board.UserUId, "Tạo thẻ đầu tiên của bạn", "Viết một việc cần làm rồi kéo thẻ qua các cột khi tiến độ thay đổi.", "todo", 0, createdAt),
-                CreateSampleCard(doingList.ListUId, board.UserUId, "Kéo thẻ này sang cột Đang làm", "Dùng cột này cho những việc bạn đang xử lý.", "inProgress", 0, createdAt),
-                CreateSampleCard(doneList.ListUId, board.UserUId, "Chuyển thẻ đã xong vào đây", "Các việc hoàn thành sẽ nằm ở cột này để bạn dễ theo dõi tiến độ.", "completed", 0, createdAt)
+                CreateSampleCard(todoList.ListUId, board.UserUId, "Tạo thẻ đầu tiên của bạn", "Viết một việc cần làm rồi kéo thẻ qua các cột khi tiến độ thay đổi.", CardStatusValues.ToDo, 0, createdAt),
+                CreateSampleCard(doingList.ListUId, board.UserUId, "Kéo thẻ này sang cột Đang làm", "Dùng cột này cho những việc bạn đang xử lý.", CardStatusValues.ToDo, 0, createdAt),
+                CreateSampleCard(doneList.ListUId, board.UserUId, "Chuyển thẻ đã xong vào đây", "Các việc hoàn thành sẽ nằm ở cột này để bạn dễ theo dõi tiến độ.", CardStatusValues.Completed, 0, createdAt)
             };
 
             return (new[] { todoList, doingList, doneList }, cards);

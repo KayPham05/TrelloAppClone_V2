@@ -9,6 +9,7 @@ import '../../domain/usecases/delete_attachment_usecase.dart';
 import '../../domain/usecases/update_attachment_description_usecase.dart';
 import '../../domain/usecases/upload_card_cover_usecase.dart';
 import '../../../../core/data_sources/user_local_data_source.dart';
+import '../../../../core/constants/card_status_values.dart';
 
 import 'package:apptreolon/features/inbox/domain/repositories/i_inbox_repositories.dart';
 
@@ -272,20 +273,25 @@ class CardDetailCubit extends Cubit<CardDetailState> {
     if (currentState is CardDetailLoaded) {
       try {
         final userUId = await UserLocalDataSource().getUserId() ?? '';
+        final normalizedStatus = CardStatusValues.normalize(newStatus);
+        final statusToSave = CardStatusValues.isCompleted(normalizedStatus)
+            ? CardStatusValues.completed
+            : CardStatusValues.calculate(CardStatusValues.toDo, currentState.card.dueDate);
+
         if (_isInboxCard) {
           await inboxRepository.updateInboxCard(
             cardId: currentState.card.id, 
             userUId: userUId,
-            status: newStatus,
+            status: statusToSave,
             title: currentState.card.title,
             description: currentState.card.description,
             dueDate: currentState.card.dueDate,
             backgroundUrl: currentState.card.backgroundUrl,
           );
-          emit(currentState.copyWith(card: currentState.card.copyWith(status: newStatus)));
+          emit(currentState.copyWith(card: currentState.card.copyWith(status: statusToSave)));
         } else {
-          await repository.updateStatus(cardId: currentState.card.id, newStatus: newStatus, userUId: userUId);
-          emit(currentState.copyWith(card: currentState.card.copyWith(status: newStatus)));
+          await repository.updateStatus(cardId: currentState.card.id, newStatus: statusToSave, userUId: userUId);
+          emit(currentState.copyWith(card: currentState.card.copyWith(status: statusToSave)));
         }
       } catch (e) {
         // Handle error silently or surface
@@ -504,6 +510,12 @@ class CardDetailCubit extends Cubit<CardDetailState> {
     final currentState = state;
     if (currentState is CardDetailLoaded) {
       try {
+        if (CardStatusValues.isDueDateInPast(dueDate)) {
+          emit(CardDetailError(CardStatusValues.dueDateInPastMessage));
+          emit(currentState);
+          return;
+        }
+
         final userUId = await UserLocalDataSource().getUserId() ?? '';
         if (_isInboxCard) {
           await inboxRepository.updateInboxCard(

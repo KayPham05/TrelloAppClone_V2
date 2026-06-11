@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/constants/card_status_values.dart';
 import '../../../../core/data_sources/user_local_data_source.dart';
 import '../../../../core/errors/app_exception_mapper.dart';
 import '../../../card/domain/usecases/delete_card_usecase.dart';
@@ -119,7 +120,9 @@ class InboxCubit extends Cubit<InboxState> {
       }
 
       final card = currentState.cards.firstWhere((c) => c.id == cardId);
-      final newStatus = isCompleted ? 'Completed' : 'To Do';
+      final newStatus = isCompleted
+          ? CardStatusValues.completed
+          : CardStatusValues.calculate(CardStatusValues.toDo, card.dueDate);
 
       await inboxRepositories.updateInboxCard(
         cardId: cardId,
