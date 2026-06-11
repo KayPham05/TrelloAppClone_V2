@@ -15,7 +15,16 @@ void main() {
   });
 
   test('login throws ACCOUNT_LOCKED exception when account is locked', () async {
-    when(() => mockDio.post(any(), data: any(named: 'data'))).thenAnswer(
+    registerFallbackValue(Options());
+    when(() => mockDio.post(
+      any(),
+      data: any(named: 'data'),
+      queryParameters: any(named: 'queryParameters'),
+      options: any(named: 'options'),
+      cancelToken: any(named: 'cancelToken'),
+      onSendProgress: any(named: 'onSendProgress'),
+      onReceiveProgress: any(named: 'onReceiveProgress'),
+    )).thenAnswer(
       (_) async => Response(
         requestOptions: RequestOptions(path: ''),
         statusCode: 200,
