@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using TodoAppAPI.Constants;
 using TodoAppAPI.Data;
 using TodoAppAPI.DTOs;
 using TodoAppAPI.Interfaces;
@@ -17,7 +18,7 @@ namespace TodoAppAPI.Service
         public async Task<Dictionary<string, List<CardDTO>>> GetPlannerCardsAsync(string userUId, DateTime from, DateTime to)
         {
             var cards = await _dbContext.Todos
-                .Where(c => c.DueDate != null && c.DueDate >= from && c.DueDate <= to && c.Status != "Deleted" && !c.IsArchived)
+                .Where(c => c.DueDate != null && c.DueDate >= from && c.DueDate <= to && !c.IsArchived)
                 .Where(c => 
                     c.UserUId == userUId || 
                     _dbContext.CardMembers.Any(cm => cm.CardUId == c.CardUId && cm.UserUId == userUId) ||
@@ -41,7 +42,7 @@ namespace TodoAppAPI.Service
                         DueDate = c.DueDate,
                         Position = c.Position,
                         CreatedAt = c.CreatedAt,
-                        Status = c.Status ?? "",
+                        Status = CardStatusValues.CalculateStatus(c.Status, c.DueDate),
                         BackgroundUrl = c.BackgroundUrl,
                         ListUId = c.ListUId,
                         CardLabels = c.CardLabels != null ? c.CardLabels.Select(cl => new CardLabelDto 

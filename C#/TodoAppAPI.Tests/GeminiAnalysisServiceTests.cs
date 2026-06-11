@@ -50,7 +50,7 @@ public class GeminiAnalysisServiceTests
         Assert.Equal("board-1", result.Analysis.ScopeUId);
         Assert.Equal(2, result.Analysis.Metrics.TotalCards);
         Assert.Equal(1, result.Analysis.Metrics.CompletedCards);
-        Assert.Equal(1, result.Analysis.Metrics.InProgressCards);
+        Assert.Equal(0, result.Analysis.Metrics.InProgressCards);
         Assert.Equal(1, result.Analysis.Metrics.OverdueCards);
         var risk = Assert.Single(result.Analysis.Risks);
         Assert.Equal(new[] { "card-active" }, risk.RelatedCardUIds);
@@ -482,7 +482,7 @@ public class GeminiAnalysisServiceTests
                 UserUId = "owner",
                 ListUId = "list-active",
                 DueDate = today.AddDays(-1),
-                Status = "Active",
+                Status = CardStatusValues.ToDo,
                 Position = 1
             },
             new Card
@@ -492,7 +492,7 @@ public class GeminiAnalysisServiceTests
                 UserUId = "owner",
                 ListUId = "list-done",
                 DueDate = today.AddDays(-2),
-                Status = "Completed",
+                Status = CardStatusValues.Completed,
                 Position = 1
             });
         context.TodoItems.AddRange(

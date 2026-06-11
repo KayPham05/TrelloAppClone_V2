@@ -6,6 +6,7 @@ using TodoAppAPI.Hubs;
 using TodoAppAPI.Interfaces;
 using TodoAppAPI.Models;
 using TodoAppAPI.Service;
+using TodoAppAPI.Constants;
 using Xunit;
 using ModelList = TodoAppAPI.Models.List;
 
@@ -116,9 +117,9 @@ public class CardDueDateReminderServiceTests
     public async Task CardsService_UpdateDueDateAsync_resets_reminder_history_when_due_date_changes_or_is_removed()
     {
         await using var context = CreateContext();
-        var oldDueDate = new DateTime(2026, 6, 1, 9, 0, 0);
+        var oldDueDate = DateTime.UtcNow.AddDays(2);
         SeedUsers(context, "owner", "assignee");
-        SeedCard(context, "card-1", "board-1", "list-1", "owner", oldDueDate, "Active", "assignee");
+        SeedCard(context, "card-1", "board-1", "list-1", "owner", oldDueDate, CardStatusValues.ToDo, "assignee");
         context.CardDueDateReminderDeliveries.Add(Delivery("card-1", DueDateReminderMilestone.OneDayBefore, oldDueDate));
         await context.SaveChangesAsync();
         var auth = new Mock<IAuthorizationService>();
@@ -143,9 +144,9 @@ public class CardDueDateReminderServiceTests
     public async Task CardsService_UpdateCard_resets_history_only_when_due_date_changes()
     {
         await using var context = CreateContext();
-        var dueDate = new DateTime(2026, 6, 1, 9, 0, 0);
+        var dueDate = DateTime.UtcNow.AddDays(2);
         SeedUsers(context, "owner", "assignee");
-        SeedCard(context, "card-1", "board-1", "list-1", "owner", dueDate, "Active", "assignee");
+        SeedCard(context, "card-1", "board-1", "list-1", "owner", dueDate, CardStatusValues.ToDo, "assignee");
         context.CardDueDateReminderDeliveries.Add(Delivery("card-1", DueDateReminderMilestone.OneDayBefore, dueDate));
         await context.SaveChangesAsync();
         var auth = new Mock<IAuthorizationService>();

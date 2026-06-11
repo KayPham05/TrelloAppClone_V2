@@ -6,6 +6,7 @@ using TodoAppAPI.Interfaces;
 using TodoAppAPI.Models;
 using TodoAppAPI.Service;
 using TodoAppAPI.Services;
+using TodoAppAPI.Constants;
 using Xunit;
 using ModelList = TodoAppAPI.Models.List;
 
@@ -78,7 +79,7 @@ public class NotificationFailureIsolationTests
             .Setup(r => r.ResetReminderHistoryAsync("card-1", It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
         var service = new CardsService(context, auth.Object, new ThrowingNotificationService(), reminderService.Object);
-        var dueDate = new DateTime(2026, 6, 1);
+        var dueDate = DateTime.UtcNow.AddDays(2);
 
         var result = await service.UpdateDueDateAsync("card-1", dueDate, "actor");
 
@@ -153,7 +154,7 @@ public class NotificationFailureIsolationTests
             ListUId = listId,
             Title = "Important card",
             UserUId = ownerId,
-            Status = "Active"
+            Status = CardStatusValues.ToDo
         });
         context.SaveChanges();
     }

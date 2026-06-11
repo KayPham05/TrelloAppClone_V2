@@ -1,3 +1,5 @@
+import '../../../../core/constants/card_status_values.dart';
+
 class TodoItemEntity {
   final String id;
   final String title;
@@ -79,7 +81,7 @@ class CardEntity {
     this.description,
     this.dueDate,
     required this.position,
-    this.status = 'New',
+    this.status = CardStatusValues.toDo,
     this.listId,
     this.backgroundUrl,
     this.boardId,

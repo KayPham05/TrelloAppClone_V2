@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using TodoAppAPI.Constants;
 using TodoAppAPI.Data;
 using TodoAppAPI.Interfaces;
 using TodoAppAPI.Models;
@@ -55,6 +56,10 @@ namespace TodoAppAPI.Service
                     card.ListUId = null; // Inbox mặc định không có list
                     
                 card.CreatedAt = DateTime.UtcNow;
+                if (CardStatusValues.IsDueDateInPast(card.DueDate))
+                    return null;
+
+                CardStatusValues.ApplyCalculatedStatus(card);
 
                 _context.Todos.Add(card);
 
@@ -84,7 +89,7 @@ namespace TodoAppAPI.Service
                     DueDate = card.DueDate,
                     Position = card.Position,
                     CreatedAt = card.CreatedAt,
-                    Status = card.Status,
+                    Status = CardStatusValues.Normalize(card.Status),
                     ListUId = card.ListUId,
                     BackgroundUrl = card.BackgroundUrl,
                     Members = new List<CardMemberDto>()
@@ -112,7 +117,7 @@ namespace TodoAppAPI.Service
                                 DueDate = uic.Card.DueDate,
                                 Position = uic.Position,   // dùng Position từ UserInboxCard
                                 CreatedAt = uic.Card.CreatedAt,
-                                Status = uic.Card.Status,
+                                Status = CardStatusValues.CalculateStatus(uic.Card.Status, uic.Card.DueDate, DateTime.UtcNow),
                                 ListUId = uic.Card.ListUId,
                                 BackgroundUrl = uic.Card.BackgroundUrl,
                                 CardLabels = uic.Card.CardLabels.Select(l => new CardLabelDto {
@@ -136,13 +141,25 @@ namespace TodoAppAPI.Service
 
                 var existingCard = await _context.Todos.FirstOrDefaultAsync(c => c.CardUId == cardId);
                 if (existingCard == null) return false;
+                if (CardStatusValues.IsDueDateInPast(card.DueDate))
+                    return false;
 
                 // Update allowed inbox fields
                 if (card.Title != null) existingCard.Title = card.Title;
                 existingCard.Description = card.Description;
                 existingCard.DueDate = card.DueDate;
                 existingCard.BackgroundUrl = card.BackgroundUrl;
-                if (card.Status != null) existingCard.Status = card.Status;
+                if (card.Status != null)
+                {
+                    var normalizedStatus = CardStatusValues.Normalize(card.Status);
+                    existingCard.Status = normalizedStatus == CardStatusValues.Completed
+                        ? CardStatusValues.Completed
+                        : CardStatusValues.CalculateOpenStatus(card.DueDate, DateTime.UtcNow);
+                }
+                else
+                {
+                    CardStatusValues.ApplyCalculatedStatus(existingCard);
+                }
                 existingCard.Position = card.Position;
 
                 _context.Todos.Update(existingCard);

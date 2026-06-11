@@ -4,6 +4,7 @@ using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
+using TodoAppAPI.Constants;
 using TodoAppAPI.Data;
 using TodoAppAPI.DTOs.ProjectAnalysis;
 using TodoAppAPI.Interfaces;
@@ -72,7 +73,7 @@ namespace TodoAppAPI.Service.Gemini
                 .Include(c => c.List)
                 .Include(c => c.TodoItems)
                 .Include(c => c.CardLabels)
-                .Where(c => c.List != null && boardIds.Contains(c.List.BoardUId) && c.Status != "Deleted" && !c.IsArchived)
+                .Where(c => c.List != null && boardIds.Contains(c.List.BoardUId) && !c.IsArchived)
                 .OrderBy(c => c.List!.Position)
                 .ThenBy(c => c.Position)
                 .ToListAsync(cancellationToken);
@@ -102,7 +103,7 @@ namespace TodoAppAPI.Service.Gemini
                 .Include(c => c.List)
                 .Include(c => c.TodoItems)
                 .Include(c => c.CardLabels)
-                .Where(c => c.List != null && c.List.BoardUId == boardUId && c.Status != "Deleted" && !c.IsArchived && c.List.Status != "Deleted" && c.List.Status != "Archived" && c.List.Status != "archived")
+                .Where(c => c.List != null && c.List.BoardUId == boardUId && !c.IsArchived && c.List.Status != "Deleted" && c.List.Status != "Archived" && c.List.Status != "archived")
                 .OrderBy(c => c.List!.Position)
                 .ThenBy(c => c.Position)
                 .ToListAsync(cancellationToken);
@@ -118,7 +119,7 @@ namespace TodoAppAPI.Service.Gemini
                 .Include(c => c.List)
                 .Include(c => c.TodoItems)
                 .Include(c => c.CardLabels)
-                .FirstOrDefaultAsync(c => c.CardUId == cardUId && c.Status != "Deleted" && !c.IsArchived, cancellationToken);
+                .FirstOrDefaultAsync(c => c.CardUId == cardUId && !c.IsArchived, cancellationToken);
             if (card == null)
                 return AnalysisResult.NotFound("Không tìm thấy card.");
 
@@ -385,7 +386,7 @@ namespace TodoAppAPI.Service.Gemini
                     Title = c.Title ?? c.CardUId,
                     ListUId = c.ListUId,
                     ListName = c.List?.ListName ?? string.Empty,
-                    Status = c.Status,
+                    Status = CardStatusValues.CalculateStatus(c.Status, c.DueDate),
                     DueDate = c.DueDate,
                     Position = c.Position,
                     TotalTodoItems = c.TodoItems?.Count ?? 0,
@@ -639,18 +640,17 @@ namespace TodoAppAPI.Service.Gemini
 
         private static bool IsCompletedCard(ProjectAnalysisSnapshotCardDto card)
         {
-            var status = card.Status ?? string.Empty;
-            return ContainsAny(status, "completed", "done", "hoan_thanh", "xong");
+            return CardStatusValues.IsCompleted(card.Status);
         }
 
         private static string GetStatusCategory(ProjectAnalysisSnapshotCardDto card)
         {
-            var status = card.Status ?? string.Empty;
+            var status = CardStatusValues.CalculateStatus(card.Status, card.DueDate);
             if (IsCompletedCard(card))
                 return CompletedStatusKey;
-            if (ContainsAny(status, "to do", "todo", "chua lam", "new", "open"))
+            if (status == CardStatusValues.ToDo)
                 return TodoStatusKey;
-            if (ContainsAny(status, "in progress", "doing", "dang lam", "active"))
+            if (status == CardStatusValues.DueSoon)
                 return InProgressStatusKey;
             return OtherStatusKey;
         }

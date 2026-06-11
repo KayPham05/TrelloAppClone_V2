@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:apptreolon/features/card/domain/entities/card_entity.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/card_status_values.dart';
 
 class CardOverviewWidget extends StatelessWidget {
   final CardEntity card;
@@ -17,9 +18,13 @@ class CardOverviewWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool isCompleted = card.status.toLowerCase() == 'hoan_thanh' ||
-        card.status.toLowerCase() == 'hoàn thành' ||
-        card.status.toLowerCase() == 'completed';
+    final status = CardStatusValues.calculate(card.status, card.dueDate);
+    final bool isCompleted = CardStatusValues.isCompleted(status);
+    final dueStatusColor = CardStatusValues.isOverdue(status)
+        ? Colors.red
+        : CardStatusValues.isDueSoon(status)
+            ? Colors.amber
+            : null;
 
     return GestureDetector(
       onTap: onTap,
@@ -105,11 +110,11 @@ class CardOverviewWidget extends StatelessWidget {
                           if (card.dueDate != null) const SizedBox(width: 10),
                        ],
                        if (card.dueDate != null) ...[
-                          const Icon(Icons.access_time_rounded, size: 14, color: AppColors.onSurfaceVariant),
+                          Icon(Icons.access_time_rounded, size: 14, color: dueStatusColor ?? AppColors.onSurfaceVariant),
                           const SizedBox(width: 4),
                           Text(
                             '${card.dueDate!.day}/${card.dueDate!.month}',
-                            style: GoogleFonts.inter(fontSize: 12, color: AppColors.onSurfaceVariant),
+                            style: GoogleFonts.inter(fontSize: 12, color: dueStatusColor ?? AppColors.onSurfaceVariant),
                           ),
                        ],
                     ],
