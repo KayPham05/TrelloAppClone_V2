@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using TodoAppAPI.Constants;
 using TodoAppAPI.Data;
 using TodoAppAPI.DTOs;
 using TodoAppAPI.Interfaces;
@@ -44,6 +45,11 @@ namespace TodoAppAPI.Service
                 if (string.IsNullOrEmpty(card.ListUId))
                     card.ListUId = null; // Inbox mặc định (null)
 
+                if (CardStatusValues.IsDueDateInPast(card.DueDate))
+                    return false;
+
+                CardStatusValues.ApplyCalculatedStatus(card);
+
                 _dbContext.Todos.Add(card);
                 await _dbContext.SaveChangesAsync();
                 return true;
@@ -87,13 +93,21 @@ namespace TodoAppAPI.Service
                 .Include(c => c.CardLabels)
                 .FirstOrDefault(c => c.CardUId == cardUId);
 
-            if (card != null && card.List != null)
+            if (card != null)
             {
-                card.ListName = card.List.ListName;
-                if (card.List.Board != null)
+                if (CardStatusValues.ApplyCalculatedStatus(card))
                 {
-                    card.BoardName = card.List.Board.BoardName;
-                    card.BoardBackgroundUrl = card.List.Board.BackgroundUrl;
+                    _dbContext.SaveChanges();
+                }
+
+                if (card.List != null)
+                {
+                    card.ListName = card.List.ListName;
+                    if (card.List.Board != null)
+                    {
+                        card.BoardName = card.List.Board.BoardName;
+                        card.BoardBackgroundUrl = card.List.Board.BackgroundUrl;
+                    }
                 }
             }
 
@@ -102,15 +116,29 @@ namespace TodoAppAPI.Service
 
         public List<Card> GetCardsByBoardId(string boardUId)
         {
-            return _dbContext.Todos
+            var cards = _dbContext.Todos
                 .Include(c => c.List)
                 .Include(c => c.TodoItems)
                 .Include(c => c.Comments)
                 .Include(c => c.FileUrls)
                 .Include(c => c.CardMembers).ThenInclude(m => m.User)
                 .Include(c => c.CardLabels)
-                .Where(c => c.Status != "Deleted" && c.List.BoardUId == boardUId && !c.IsArchived)
+                .Where(c => c.List != null && c.List.BoardUId == boardUId && !c.IsArchived)
                 .ToList();
+
+            var now = DateTime.UtcNow;
+            var changed = false;
+            foreach (var item in cards)
+            {
+                changed = CardStatusValues.ApplyCalculatedStatus(item, now) || changed;
+            }
+
+            if (changed)
+            {
+                _dbContext.SaveChanges();
+            }
+
+            return cards;
         }
 
         public async Task<bool> UpdateCard(Card card, string userUId)
@@ -122,6 +150,9 @@ namespace TodoAppAPI.Service
 
                 var existing = await _dbContext.Todos.FindAsync(card.CardUId);
                 if (existing == null) return false;
+                if (CardStatusValues.IsDueDateInPast(card.DueDate))
+                    return false;
+
                 var dueDateChanged = existing.DueDate != card.DueDate;
                 existing.Title = card.Title;
                 existing.Description = card.Description;
@@ -129,6 +160,7 @@ namespace TodoAppAPI.Service
                 existing.Position = card.Position;
                 existing.ListUId = card.ListUId;
                 existing.BackgroundUrl = card.BackgroundUrl;
+                CardStatusValues.ApplyCalculatedStatus(existing);
                 _dbContext.Update(existing);
                 await _dbContext.SaveChangesAsync();
                 if (dueDateChanged)
@@ -193,29 +225,32 @@ namespace TodoAppAPI.Service
 
         }
 
-        public async Task<bool> UpdateStatus(string cardUId, string newStatus, string userUId)
+        public async Task<string?> UpdateStatus(string cardUId, string newStatus, string userUId)
         {
             try
             {
                 if (!await _authService.CanEditCardAsync(cardUId, userUId))
-                    return false;
+                    return null;
 
                 var card = await _dbContext.Todos.FirstOrDefaultAsync(c => c.CardUId == cardUId);
-                if (card == null) return false;
+                if (card == null) return null;
 
-                card.Status = newStatus;
+                var normalizedStatus = CardStatusValues.Normalize(newStatus);
+                card.Status = normalizedStatus == CardStatusValues.Completed
+                    ? CardStatusValues.Completed
+                    : CardStatusValues.CalculateOpenStatus(card.DueDate, DateTime.UtcNow);
 
                 _dbContext.Update(card);
                 await _dbContext.SaveChangesAsync();
 
                 Console.WriteLine($"Status updated successfully");
 
-                return true;
+                return card.Status;
             }
             catch (Exception e)
             {
                 Console.WriteLine($"Lỗi khi cập nhật Status cho Card: {e.Message}");
-                return false;
+                return null;
             }
         }
 
@@ -331,8 +366,12 @@ namespace TodoAppAPI.Service
                     .FirstOrDefaultAsync(c => c.CardUId == cardUId);
                 if (card == null) return false;
 
+                if (CardStatusValues.IsDueDateInPast(dueDate))
+                    return false;
+
                 var dueDateChanged = card.DueDate != dueDate;
                 card.DueDate = dueDate;
+                CardStatusValues.ApplyCalculatedStatus(card);
                 _dbContext.Todos.Update(card);
                 await _dbContext.SaveChangesAsync();
                 if (dueDateChanged)
@@ -434,13 +473,15 @@ namespace TodoAppAPI.Service
                               (bm.BoardRole == "Owner" || bm.BoardRole == "Admin"));
                 if (!isBoardAdmin) return 0;
 
-                var completedStatuses = new[] { "hoan_thanh", "hoàn thành", "completed" };
                 var cards = await _dbContext.Todos
                     .Where(c => !c.IsArchived &&
                                 c.List != null &&
-                                c.List.BoardUId == boardUId &&
-                                completedStatuses.Contains(c.Status!.ToLower()))
+                                c.List.BoardUId == boardUId)
                     .ToListAsync();
+
+                cards = cards
+                    .Where(c => CardStatusValues.IsCompleted(c.Status))
+                    .ToList();
 
                 foreach (var c in cards)
                     c.IsArchived = true;

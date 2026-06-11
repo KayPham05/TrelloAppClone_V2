@@ -4,6 +4,7 @@ using TodoAppAPI.Data;
 using TodoAppAPI.Interfaces;
 using TodoAppAPI.Models;
 using TodoAppAPI.Service;
+using TodoAppAPI.Constants;
 using Xunit;
 
 namespace TodoAppAPI.Tests;
@@ -42,9 +43,9 @@ public class BoardServiceTests
 
         Assert.Equal(3, cards.Count);
         Assert.All(cards, card => Assert.Equal("owner-1", card.UserUId));
-        Assert.Contains(cards, card => card.Title == "Tạo thẻ đầu tiên của bạn" && card.Status == "todo" && card.ListUId == lists[0].ListUId);
-        Assert.Contains(cards, card => card.Title == "Kéo thẻ này sang cột Đang làm" && card.Status == "inProgress" && card.ListUId == lists[1].ListUId);
-        Assert.Contains(cards, card => card.Title == "Chuyển thẻ đã xong vào đây" && card.Status == "completed" && card.ListUId == lists[2].ListUId);
+        Assert.Contains(cards, card => card.Title == "Tạo thẻ đầu tiên của bạn" && card.Status == CardStatusValues.ToDo && card.ListUId == lists[0].ListUId);
+        Assert.Contains(cards, card => card.Title == "Kéo thẻ này sang cột Đang làm" && card.Status == CardStatusValues.ToDo && card.ListUId == lists[1].ListUId);
+        Assert.Contains(cards, card => card.Title == "Chuyển thẻ đã xong vào đây" && card.Status == CardStatusValues.Completed && card.ListUId == lists[2].ListUId);
     }
 
     private static TodoDbContext CreateContext()

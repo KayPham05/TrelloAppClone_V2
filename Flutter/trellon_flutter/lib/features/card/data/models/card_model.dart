@@ -1,3 +1,4 @@
+import '../../../../core/constants/card_status_values.dart';
 import '../../domain/entities/card_entity.dart';
 
 class CardLabelModel {
@@ -158,7 +159,7 @@ class CardModel {
     this.description,
     this.dueDate,
     required this.position,
-    this.status = 'New',
+    this.status = CardStatusValues.toDo,
     this.listId,
     this.backgroundUrl,
     this.boardId,
@@ -212,7 +213,7 @@ class CardModel {
       description: json['description'],
       dueDate: json['dueDate'] != null ? DateTime.tryParse(json['dueDate']) : null,
       position: json['position'] ?? 0,
-      status: json['status'] ?? 'New',
+      status: CardStatusValues.normalize(json['status']),
       listId: json['listUId'] ?? json['listId'],
       backgroundUrl: json['backgroundUrl'],
       boardId: json['boardUId'] ?? json['boardId'],

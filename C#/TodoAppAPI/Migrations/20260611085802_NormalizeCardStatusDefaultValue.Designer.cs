@@ -12,8 +12,8 @@ using TodoAppAPI.Data;
 namespace TodoAppAPI.Migrations
 {
     [DbContext(typeof(TodoDbContext))]
-    [Migration("20260605220419_init-DB")]
-    partial class initDB
+    [Migration("20260611085802_NormalizeCardStatusDefaultValue")]
+    partial class NormalizeCardStatusDefaultValue
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -232,7 +232,7 @@ namespace TodoAppAPI.Migrations
                         .ValueGeneratedOnAdd()
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)")
-                        .HasDefaultValue("To Do");
+                        .HasDefaultValue("to_do");
 
                     b.Property<string>("Title")
                         .IsRequired()

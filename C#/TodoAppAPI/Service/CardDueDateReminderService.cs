@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using TodoAppAPI.Constants;
 using TodoAppAPI.Data;
 using TodoAppAPI.DTOs;
 using TodoAppAPI.Interfaces;
@@ -27,6 +28,7 @@ namespace TodoAppAPI.Service
                 .Include(c => c.CardMembers)
                 .Where(c => c.DueDate.HasValue)
                 .Where(c => c.DueDate <= now.AddDays(1))
+                .Where(c => !c.IsArchived)
                 .Where(c => c.CardMembers!.Any())
                 .ToListAsync(cancellationToken);
 
@@ -164,14 +166,8 @@ namespace TodoAppAPI.Service
 
         private static bool ShouldSkip(Card card)
         {
-            var status = card.Status?.Trim();
-            if (string.IsNullOrWhiteSpace(status))
-                return false;
-
-            return status.Equals("Deleted", StringComparison.OrdinalIgnoreCase)
-                || status.Equals("Completed", StringComparison.OrdinalIgnoreCase)
-                || status.Equals("hoan_thanh", StringComparison.OrdinalIgnoreCase)
-                || status.Equals("hoàn thành", StringComparison.OrdinalIgnoreCase);
+            return CardStatusValues.IsCompleted(card.Status)
+                || CardStatusValues.IsLegacyDeleted(card.Status);
         }
 
         private void DetachPendingReminderDelivery(string cardUId, DueDateReminderMilestone milestone)

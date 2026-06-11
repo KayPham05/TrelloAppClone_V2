@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:apptreolon/core/constants/api_endpoints.dart';
+import 'package:apptreolon/core/constants/card_status_values.dart';
 import 'package:apptreolon/features/card/data/models/card_model.dart';
 import 'package:apptreolon/features/card/domain/entities/card_entity.dart';
 
@@ -40,6 +41,10 @@ class InboxRemoteDataSourceImpl implements InboxRemoteDataSource {
 
   @override
   Future<CardEntity> addInboxCard(String userUId, String title, {DateTime? dueDate}) async {
+    if (CardStatusValues.isDueDateInPast(dueDate)) {
+      throw Exception(CardStatusValues.dueDateInPastMessage);
+    }
+
     final response = await dio.post(
       '${ApiEndpoints.card}/$userUId/inbox',
       data: {
@@ -55,6 +60,10 @@ class InboxRemoteDataSourceImpl implements InboxRemoteDataSource {
 
   @override
   Future<CardEntity> updateInboxCard(String cardId, String userUId, {String? title, String? description, DateTime? dueDate, String? backgroundUrl, String? status}) async {
+    if (CardStatusValues.isDueDateInPast(dueDate)) {
+      throw Exception(CardStatusValues.dueDateInPastMessage);
+    }
+
     final response = await dio.put(
       '${ApiEndpoints.card}/inbox/$cardId?userUId=$userUId',
       data: {
@@ -62,7 +71,7 @@ class InboxRemoteDataSourceImpl implements InboxRemoteDataSource {
         'description': description,
         'dueDate': dueDate?.toIso8601String(),
         'backgroundUrl': backgroundUrl,
-        'status': status,
+        'status': status == null ? null : CardStatusValues.normalize(status),
       },
     );
     if (response.statusCode == 200 || response.statusCode == 201) {

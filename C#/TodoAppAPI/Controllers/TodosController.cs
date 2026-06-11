@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
+using TodoAppAPI.Constants;
 using TodoAppAPI.Hubs;
 using TodoAppAPI.DTOs;
 using TodoAppAPI.Interfaces;
@@ -56,6 +57,9 @@ namespace TodoAppAPI.Controllers
         [HttpPost]
         public async Task<IActionResult> Add([FromBody] Card card)
         {
+            if (CardStatusValues.IsDueDateInPast(card.DueDate))
+                return BadRequest(new { message = CardStatusValues.DueDateInPastMessage });
+
             if (await _cardService.AddCard(card))
             {
                 _ = _activity.AddActivity(card.UserUId, $"added card '{card.Title}' to list '{card.ListUId}'");
@@ -84,6 +88,9 @@ namespace TodoAppAPI.Controllers
             if (card == null || string.IsNullOrEmpty(card.Title))
                 return BadRequest("Thiếu thông tin card.");
 
+            if (CardStatusValues.IsDueDateInPast(card.DueDate))
+                return BadRequest(new { message = CardStatusValues.DueDateInPastMessage });
+
             var createdCard = await _userInboxCardService.AddCardToInboxAsync(userUId, card);
             
             if (createdCard != null)
@@ -98,6 +105,9 @@ namespace TodoAppAPI.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(string id, [FromBody] Card card, [FromQuery] string userUId)
         {
+            if (CardStatusValues.IsDueDateInPast(card.DueDate))
+                return BadRequest(new { message = CardStatusValues.DueDateInPastMessage });
+
             card.CardUId = id;
             if (await _cardService.UpdateCard(card, userUId))
             {
@@ -125,6 +135,9 @@ namespace TodoAppAPI.Controllers
         [HttpPut("inbox/{id}")]
         public async Task<IActionResult> UpdateInbox(string id, [FromBody] Card card, [FromQuery] string userUId)
         {
+            if (CardStatusValues.IsDueDateInPast(card.DueDate))
+                return BadRequest(new { message = CardStatusValues.DueDateInPastMessage });
+
             if (await _userInboxCardService.UpdateInboxCardAsync(id, userUId, card))
             {
                 _ = _activity.AddActivity(userUId, $"updated card '{card.Title}' in inbox");
@@ -220,11 +233,11 @@ namespace TodoAppAPI.Controllers
             if (card == null)
                 return NotFound("Card không tồn tại");
 
-            var success = await _cardService.UpdateStatus(CardUId, newStatus, userUId);
-            if (!success)
+            var updatedStatus = await _cardService.UpdateStatus(CardUId, newStatus, userUId);
+            if (updatedStatus == null)
                 return BadRequest(new { message = "Không thể cập nhật status cho Card hoặc bạn không có quyền." });
             _ = _activity.AddActivity(userUId,
-                $"updated status of card '{card.Title}' to '{newStatus}'");
+                $"updated status of card '{card.Title}' to '{updatedStatus}'");
 
             if (!string.IsNullOrEmpty(card.ListUId))
             {
@@ -232,13 +245,13 @@ namespace TodoAppAPI.Controllers
                 if (list != null)
                 {
                     await _boardHubContext.Clients.Group(BoardHub.BoardGroup(list.BoardUId))
-                        .SendAsync("CardStatusUpdated", new { cardUId = CardUId, newStatus = newStatus, boardUId = list.BoardUId });
+                        .SendAsync("CardStatusUpdated", new { cardUId = CardUId, newStatus = updatedStatus, boardUId = list.BoardUId });
                 }
             }
 
             // Thông báo cho Planner
             await _notificationHubContext.Clients.Group(NotificationHub.UserGroup(userUId))
-                .SendAsync("CardStatusUpdated", new { cardUId = CardUId, newStatus = newStatus });
+                .SendAsync("CardStatusUpdated", new { cardUId = CardUId, newStatus = updatedStatus });
 
             return Ok(new { message = "Cập nhật status cho Card thành công." });
         }
@@ -249,6 +262,9 @@ namespace TodoAppAPI.Controllers
             var card = _cardService.GetById(cardUId);
             if (card == null)
                 return NotFound("Card không tồn tại");
+
+            if (CardStatusValues.IsDueDateInPast(request.DueDate))
+                return BadRequest(new { message = CardStatusValues.DueDateInPastMessage });
 
             var success = await _cardService.UpdateDueDateAsync(cardUId, request.DueDate, request.UserUId);
             if (!success)
