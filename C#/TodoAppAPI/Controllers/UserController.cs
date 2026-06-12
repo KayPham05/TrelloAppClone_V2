@@ -105,12 +105,12 @@ namespace TodoAppAPI.Controllers
             {
                 //  Kiểm tra hết hạn mã
                 if (user.VerificationTokenExpiresAt == null || user.VerificationTokenExpiresAt < DateTime.UtcNow)
-                    return BadRequest("Mã xác thực đã hết hạn. Vui lòng yêu cầu mã mới.");
+                    return Unauthorized("Mã xác thực đã hết hạn. Vui lòng yêu cầu mã mới.");
 
                 //  Kiểm tra mã hợp lệ
                 bool valid = BCrypt.Net.BCrypt.Verify(req.Code, user.VerificationTokenHash);
                 if (!valid)
-                    return BadRequest("Mã xác thực không hợp lệ.");
+                    return Unauthorized("Mã xác thực không hợp lệ.");
 
                 //  Cập nhật trạng thái xác thực
                 user.IsEmailVerified = true;
@@ -187,7 +187,7 @@ namespace TodoAppAPI.Controllers
             var ok = await _userService.ToggleTwoFactorAsync(userUId, enabled);
 
             if (!ok)
-                return BadRequest(new { message = "Không tìm thấy user." });
+                return NotFound(new { message = "Không tìm thấy user." });
 
             return Ok(new { message = enabled ? "Đã bật 2FA" : "Đã tắt 2FA" });
         }
@@ -231,7 +231,7 @@ namespace TodoAppAPI.Controllers
             }
             catch (UnauthorizedAccessException ex)
             {
-                return BadRequest(new { message = ex.Message });
+                return Unauthorized(new { message = ex.Message });
             }
             catch (ArgumentException ex)
             {
@@ -314,7 +314,7 @@ namespace TodoAppAPI.Controllers
             }
             catch (UnauthorizedAccessException ex)
             {
-                return BadRequest(new { message = ex.Message });
+                return Unauthorized(new { message = ex.Message });
             }
             catch (InvalidOperationException ex)
             {
@@ -349,7 +349,7 @@ namespace TodoAppAPI.Controllers
             }
             catch (UnauthorizedAccessException ex)
             {
-                return BadRequest(new { message = ex.Message });
+                return Unauthorized(new { message = ex.Message });
             }
             catch (InvalidOperationException ex)
             {
@@ -388,7 +388,7 @@ namespace TodoAppAPI.Controllers
             }
             catch (UnauthorizedAccessException ex)
             {
-                return BadRequest(new { message = ex.Message });
+                return Unauthorized(new { message = ex.Message });
             }
             catch (Exception ex)
             {
@@ -439,11 +439,11 @@ namespace TodoAppAPI.Controllers
                                 </div>
                             </body>
                         </html>";
-                return Content(errorHtml, "text/html");
+                return new ContentResult { Content = errorHtml, ContentType = "text/html", StatusCode = 400 };
             }
             catch (UnauthorizedAccessException ex)
             {
-                return BadRequest(new { message = ex.Message });
+                return Unauthorized(new { message = ex.Message });
             }
             catch (Exception ex)
             {

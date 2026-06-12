@@ -31,8 +31,19 @@ namespace TodoAppAPI.Controllers
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterRequest request)
         {
-            var result = await _authService.RegisterAsync(request.UserName, request.Email, request.Password);
-            return Ok(result);
+            try
+            {
+                var result = await _authService.RegisterAsync(request.UserName, request.Email, request.Password);
+                return StatusCode(201, result);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
         //  AllowAnonymous cho login
@@ -43,11 +54,20 @@ namespace TodoAppAPI.Controllers
             var result = await _authService.LoginAsync(request.Email, request.Password);
 
             if (!string.IsNullOrEmpty(result.Token))
+            {
                 await SetRefreshCookie(result.UserUId);
-            else if (!result.requiresVerification && !result.requires2FA)
-                return Unauthorized(result);
-
-            return Ok(result);
+                return Ok(result);
+            }
+            else if (result.requiresVerification)
+            {
+                return StatusCode(403, result);
+            }
+            else if (result.requires2FA)
+            {
+                return Ok(result);
+            }
+            
+            return Unauthorized(result);
         }
 
         //  AllowAnonymous cho Google login
@@ -62,7 +82,7 @@ namespace TodoAppAPI.Controllers
             var googleResponse = await httpClient.GetAsync($"https://www.googleapis.com/oauth2/v2/userinfo?access_token={request.AccessToken}");
 
             if (!googleResponse.IsSuccessStatusCode)
-                return BadRequest("Access token Google không hợp lệ.");
+                return Unauthorized("Access token Google không hợp lệ.");
 
             var json = await googleResponse.Content.ReadAsStringAsync();
             var googleUser = JsonConvert.DeserializeObject<GoogleUserInfo>(json);
@@ -73,9 +93,20 @@ namespace TodoAppAPI.Controllers
             var user = await _authService.GoogleLoginAsync(googleUser.Email, googleUser.Name);
 
             if (!string.IsNullOrEmpty(user.Token))
+            {
                 await SetRefreshCookie(user.UserUId);
+                return Ok(user);
+            }
+            else if (user.requiresVerification)
+            {
+                return StatusCode(403, user);
+            }
+            else if (user.requires2FA)
+            {
+                return Ok(user);
+            }
 
-            return Ok(user);
+            return Unauthorized(user);
         }
 
         // AllowAnonymous cho refresh-token
@@ -162,7 +193,7 @@ namespace TodoAppAPI.Controllers
             catch (Exception ex)
             {
                 _logger.LogError($" Logout error: {ex.Message}");
-                return Ok(new { message = "Đã đăng xuất (có lỗi khi xóa session)." });
+                return StatusCode(500, new { message = "Đã đăng xuất (có lỗi khi xóa session)." });
             }
         }
 
@@ -174,9 +205,12 @@ namespace TodoAppAPI.Controllers
             var result = await _authService.VerifyOtpAsync(req.Email, req.Otp);
 
             if (!string.IsNullOrEmpty(result.Token))
+            {
                 await SetRefreshCookie(result.UserUId);
-
-            return Ok(result);
+                return Ok(result);
+            }
+            
+            return Unauthorized(result);
         }
 
         private async Task SetRefreshCookie(string userUId)
@@ -238,7 +272,7 @@ namespace TodoAppAPI.Controllers
 
                 if (!result.IsTwoFactorEnabled)
                 {
-                    return BadRequest(new { message = result.Message });
+                    return Unauthorized(new { message = result.Message });
                 }
 
                 return Ok(new
@@ -276,7 +310,7 @@ namespace TodoAppAPI.Controllers
             }
             catch (InvalidOperationException ex)
             {
-                return BadRequest(new { message = ex.Message });
+                return Conflict(new { message = ex.Message });
             }
             catch (Exception ex)
             {
@@ -312,7 +346,7 @@ namespace TodoAppAPI.Controllers
             }
             catch (UnauthorizedAccessException ex)
             {
-                return BadRequest(new { message = ex.Message });
+                return Unauthorized(new { message = ex.Message });
             }
             catch (Exception ex)
             {
@@ -351,7 +385,7 @@ namespace TodoAppAPI.Controllers
             {
                 var success = await _authService.SendForgotPasswordOtpAsync(email);
                 if (!success)
-                    return BadRequest(new { message = "Không thể gửi OTP. Tài khoản không tồn tại hoặc sử dụng Google Login." });
+                    return NotFound(new { message = "Không thể gửi OTP. Tài khoản không tồn tại hoặc sử dụng Google Login." });
 
                 return Ok(new { message = "Mã OTP khôi phục mật khẩu đã được gửi đến email của bạn." });
             }
