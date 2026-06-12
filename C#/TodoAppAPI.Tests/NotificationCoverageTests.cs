@@ -266,7 +266,7 @@ public class NotificationCoverageTests
     }
 
     [Fact]
-    public async Task CardsService_AddFileToCardAsync_uses_file_url_in_vietnamese_notification()
+    public async Task CardsService_AddFileToCardAsync_uses_file_name_in_vietnamese_notification()
     {
         await using var context = CreateContext();
         SeedUsers(context, "actor", "member");
@@ -280,11 +280,11 @@ public class NotificationCoverageTests
         Assert.NotNull(result.FileUrl);
         var notification = Assert.Single(await context.Notifications.ToListAsync());
         Assert.Equal(NotificationType.AttachmentAdded, notification.Type);
-        Assert.Equal("Nguyễn An đã thêm một đính kèm https://files.test/spec.pdf vào Important card.", notification.Message);
+        Assert.Equal("Nguyễn An đã thêm một đính kèm spec.pdf vào Important card.", notification.Message);
     }
 
     [Fact]
-    public async Task CardsService_DeleteAttachmentAsync_uses_deleted_file_url_in_vietnamese_notification()
+    public async Task CardsService_DeleteAttachmentAsync_uses_deleted_file_name_in_vietnamese_notification()
     {
         await using var context = CreateContext();
         SeedUsers(context, "actor", "member");
@@ -306,7 +306,7 @@ public class NotificationCoverageTests
         Assert.True(result);
         var notification = Assert.Single(await context.Notifications.ToListAsync());
         Assert.Equal(NotificationType.AttachmentRemoved, notification.Type);
-        Assert.Equal("Nguyễn An đã xóa một đính kèm https://files.test/delete.pdf khỏi Important card.", notification.Message);
+        Assert.Equal("Nguyễn An đã xóa một đính kèm delete.pdf khỏi Important card.", notification.Message);
     }
 
     [Fact]

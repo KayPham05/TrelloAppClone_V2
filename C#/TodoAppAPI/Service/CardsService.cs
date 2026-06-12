@@ -342,7 +342,7 @@ namespace TodoAppAPI.Service
                 await _dbContext.SaveChangesAsync();
 
                 var actorName = await GetUserDisplayNameAsync(userUId);
-                var filePath = string.IsNullOrWhiteSpace(fileUrl.Url) ? fileUrl.FileName : fileUrl.Url;
+                var fileDisplayName = GetAttachmentDisplayName(fileUrl.FileName, fileUrl.Url);
                 var cardTitle = card.Title ?? card.CardUId;
                 var boardId = await GetBoardIdForListAsync(card.ListUId);
                 var notifications = await BuildCardMemberNotificationsAsync(
@@ -350,7 +350,7 @@ namespace TodoAppAPI.Service
                     userUId,
                     NotificationType.AttachmentAdded,
                     "Đính kèm đã được thêm",
-                    $"{actorName} đã thêm một đính kèm {filePath} vào {cardTitle}.",
+                    $"{actorName} đã thêm một đính kèm {fileDisplayName} vào {cardTitle}.",
                     boardId,
                     card.ListUId);
 
@@ -393,7 +393,7 @@ namespace TodoAppAPI.Service
                 if (!await _authService.CanEditCardAsync(fileUrl.CardUId, userUId))
                     return false;
 
-                var filePath = string.IsNullOrWhiteSpace(fileUrl.Url) ? fileUrl.FileName : fileUrl.Url;
+                var fileDisplayName = GetAttachmentDisplayName(fileUrl.FileName, fileUrl.Url);
                 var cardTitle = fileUrl.Card?.Title ?? fileUrl.CardUId;
                 var listId = fileUrl.Card?.ListUId;
                 var boardId = await GetBoardIdForListAsync(listId);
@@ -405,7 +405,7 @@ namespace TodoAppAPI.Service
                     userUId,
                     NotificationType.AttachmentRemoved,
                     "Đính kèm đã bị xóa",
-                    $"{actorName} đã xóa một đính kèm {filePath} khỏi {cardTitle}.",
+                    $"{actorName} đã xóa một đính kèm {fileDisplayName} khỏi {cardTitle}.",
                     boardId,
                     listId);
 
@@ -693,6 +693,14 @@ namespace TodoAppAPI.Service
                 .Where(l => l.ListUId == listUId)
                 .Select(l => l.BoardUId)
                 .FirstOrDefaultAsync();
+        }
+
+        private static string GetAttachmentDisplayName(string? fileName, string? url)
+        {
+            if (!string.IsNullOrWhiteSpace(fileName))
+                return fileName;
+
+            return string.IsNullOrWhiteSpace(url) ? "tệp đính kèm" : url;
         }
     }
 }
