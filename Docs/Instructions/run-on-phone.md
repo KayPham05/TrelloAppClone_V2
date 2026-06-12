@@ -43,7 +43,7 @@ Backend can listen o `http://0.0.0.0:5293`.
 Bat USB debugging, cam dien thoai vao may tinh, roi chay:
 
 ```powershell
-cd "Flutter\kabo_flutter"
+cd "Flutter\trellon_flutter"
 flutter devices
 flutter run
 ```

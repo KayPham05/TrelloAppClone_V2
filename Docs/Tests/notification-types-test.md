@@ -42,8 +42,8 @@ Bảng dưới đây liệt kê các loại thông báo hiện được backend 
 | 4 | `DueDateChanged` | `14` | Card | Hạn của card được thay đổi hoặc bị xóa. | Card members, trừ người thực hiện thao tác. | `Nguyễn An đã đổi hạn của Important card thành 2026-06-13 09:30.` |
 | 5 | `DueDateReminder` | `15` | Card | Service nhắc hạn phát hiện card sắp đến hạn hoặc đã đến hạn. | Card members cần nhận nhắc hạn. | `Thẻ 'Important card' sẽ đến hạn vào 2026-06-13 09:30.` |
 | 6 | `CardArchived` | `16` | Card | Card được lưu trữ. | Card members, trừ người thực hiện thao tác. | `Nguyễn An đã lưu trữ Important card` |
-| 7 | `AttachmentAdded` | `17` | Card | Một file URL được thêm vào card. | Card members, trừ người thực hiện thao tác. | `Nguyễn An đã thêm một đính kèm https://files.test/spec.pdf vào Important card.` |
-| 8 | `AttachmentRemoved` | `18` | Card | Một file URL bị xóa khỏi card. | Card members, trừ người thực hiện thao tác. | `Nguyễn An đã xóa một đính kèm https://files.test/delete.pdf khỏi Important card.` |
+| 7 | `AttachmentAdded` | `17` | Card | Một tệp được thêm vào card. | Card members, trừ người thực hiện thao tác. | `Nguyễn An đã thêm một đính kèm spec.pdf vào Important card.` |
+| 8 | `AttachmentRemoved` | `18` | Card | Một tệp bị xóa khỏi card. | Card members, trừ người thực hiện thao tác. | `Nguyễn An đã xóa một đính kèm delete.pdf khỏi Important card.` |
 | 9 | `CardRenamed` | `19` | Card | Tên card thay đổi. | Card members, trừ người thực hiện thao tác. | `Nguyễn An đã đổi tên Important card thành Updated card.` |
 | 10 | `Mention` | `4` | Comment/Card | Comment trong card mention card member bằng `@username`. | Card member được mention. | `Nguyễn An đã nhắc đến bạn trong Important card.` |
 | 11 | `BoardMemberAdded` | `8` | Board | Một người dùng được thêm vào board. | Board member vừa được thêm. | `Bạn đã được Nguyễn An thêm vào Sprint Board.` |
