@@ -10,7 +10,8 @@ import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
-class MockNotificationRepository extends Mock implements INotificationRepository {}
+class MockNotificationRepository extends Mock
+    implements INotificationRepository {}
 
 void main() {
   late MockNotificationRepository repository;
@@ -73,7 +74,10 @@ void main() {
         );
         return cubit;
       },
-      act: (cubit) => cubit.fetchNotifications(refresh: true, tab: NotificationTab.sentToMe),
+      act: (cubit) => cubit.fetchNotifications(
+        refresh: true,
+        tab: NotificationTab.sentToMe,
+      ),
       expect: () => [
         isA<NotificationLoading>(),
         isA<NotificationLoaded>()
@@ -122,7 +126,9 @@ void main() {
       act: (cubit) => cubit.applyRealtimeNotification(unreadNotification),
       expect: () => [
         isA<NotificationLoaded>()
-            .having((s) => s.notifications.map((n) => n.id).toList(), 'ids', ['2'])
+            .having((s) => s.notifications.map((n) => n.id).toList(), 'ids', [
+              '2',
+            ])
             .having((s) => s.unreadCount, 'unreadCount', 3),
       ],
     );
@@ -145,6 +151,35 @@ void main() {
     );
 
     blocTest<NotificationCubit, NotificationState>(
+      'applyRealtimeNotification shows new core card direct notifications on sent-to-me tab',
+      seed: () => NotificationLoaded(
+        notifications: [unreadNotification],
+        unreadCount: 2,
+        tab: NotificationTab.sentToMe,
+      ),
+      build: () => cubit,
+      act: (cubit) => cubit.applyRealtimeNotification(
+        NotificationEntity(
+          id: 'card-archived-1',
+          recipientId: 'user1',
+          title: 'Thẻ đã được lưu trữ',
+          message: 'Nguyễn An đã lưu trữ Important card',
+          createdAt: DateTime(2026, 6, 12, 10),
+          isRead: false,
+          type: NotificationTypeEnum.cardArchived,
+        ),
+      ),
+      expect: () => [
+        isA<NotificationLoaded>()
+            .having((s) => s.notifications.map((n) => n.id).toList(), 'ids', [
+              'card-archived-1',
+              '1',
+            ])
+            .having((s) => s.unreadCount, 'unreadCount', 3),
+      ],
+    );
+
+    blocTest<NotificationCubit, NotificationState>(
       'markAsRead updates item and decrements unread count',
       seed: () => NotificationLoaded(
         notifications: [unreadNotification],
@@ -152,7 +187,9 @@ void main() {
         tab: NotificationTab.all,
       ),
       build: () {
-        when(() => repository.markAsRead(notiId: '1')).thenAnswer((_) async => true);
+        when(
+          () => repository.markAsRead(notiId: '1'),
+        ).thenAnswer((_) async => true);
         return cubit;
       },
       act: (cubit) => cubit.markAsRead('1'),
@@ -171,7 +208,9 @@ void main() {
         tab: NotificationTab.sentToMe,
       ),
       build: () {
-        when(() => repository.markAsRead(notiId: '1')).thenAnswer((_) async => true);
+        when(
+          () => repository.markAsRead(notiId: '1'),
+        ).thenAnswer((_) async => true);
         return cubit;
       },
       act: (cubit) => cubit.markAsRead('1'),
@@ -243,7 +282,11 @@ void main() {
       expect: () => [
         isA<NotificationLoaded>()
             .having((s) => s.notifications.length, 'length', 2)
-            .having((s) => s.notifications.every((n) => n.isRead), 'all read', true)
+            .having(
+              (s) => s.notifications.every((n) => n.isRead),
+              'all read',
+              true,
+            )
             .having((s) => s.unreadCount, 'unreadCount', 0),
       ],
     );
@@ -364,11 +407,17 @@ void main() {
           tab: NotificationTab.all,
         ),
         build: () {
-          when(() => repository.deleteNotification(notiId: '1')).thenAnswer((_) async => true);
+          when(
+            () => repository.deleteNotification(notiId: '1'),
+          ).thenAnswer((_) async => true);
           return cubit;
         },
         act: (cubit) async {
-          final res = await cubit.confirmDeleteNotification('1', unreadNotification, 0);
+          final res = await cubit.confirmDeleteNotification(
+            '1',
+            unreadNotification,
+            0,
+          );
           expect(res, true);
         },
         expect: () => [],
@@ -385,11 +434,17 @@ void main() {
           tab: NotificationTab.all,
         ),
         build: () {
-          when(() => repository.deleteNotification(notiId: '1')).thenAnswer((_) async => false);
+          when(
+            () => repository.deleteNotification(notiId: '1'),
+          ).thenAnswer((_) async => false);
           return cubit;
         },
         act: (cubit) async {
-          final res = await cubit.confirmDeleteNotification('1', unreadNotification, 0);
+          final res = await cubit.confirmDeleteNotification(
+            '1',
+            unreadNotification,
+            0,
+          );
           expect(res, false);
         },
         expect: () => [
@@ -413,7 +468,11 @@ void main() {
         expect: () => [
           isA<NotificationLoaded>()
               .having((s) => s.notifications, 'notifications', isEmpty)
-              .having((s) => s.unreadCount, 'unreadCount', 1), // deleted from real-time keeps unread count or user-updated count
+              .having(
+                (s) => s.unreadCount,
+                'unreadCount',
+                1,
+              ), // deleted from real-time keeps unread count or user-updated count
         ],
       );
 
@@ -427,7 +486,11 @@ void main() {
         build: () => cubit,
         act: (cubit) => cubit.applyUnreadCount(15),
         expect: () => [
-          isA<NotificationLoaded>().having((s) => s.unreadCount, 'unreadCount', 15),
+          isA<NotificationLoaded>().having(
+            (s) => s.unreadCount,
+            'unreadCount',
+            15,
+          ),
         ],
       );
 
@@ -440,9 +503,7 @@ void main() {
         ),
         build: () => cubit,
         act: (cubit) => cubit.reset(),
-        expect: () => [
-          isA<NotificationInitial>(),
-        ],
+        expect: () => [isA<NotificationInitial>()],
       );
     });
 
@@ -470,11 +531,15 @@ void main() {
           );
           return cubit;
         },
-        act: (cubit) => cubit.fetchNotifications(refresh: false, tab: NotificationTab.all),
+        act: (cubit) =>
+            cubit.fetchNotifications(refresh: false, tab: NotificationTab.all),
         expect: () => [
           isA<NotificationLoaded>()
               .having((s) => s.notifications.length, 'length', 2)
-              .having((s) => s.notifications.map((n) => n.id).toList(), 'ids', ['1', '2']),
+              .having((s) => s.notifications.map((n) => n.id).toList(), 'ids', [
+                '1',
+                '2',
+              ]),
         ],
       );
 
@@ -490,10 +555,15 @@ void main() {
           ).thenThrow(Exception('Network Error'));
           return cubit;
         },
-        act: (cubit) => cubit.fetchNotifications(refresh: true, tab: NotificationTab.all),
+        act: (cubit) =>
+            cubit.fetchNotifications(refresh: true, tab: NotificationTab.all),
         expect: () => [
           isA<NotificationLoading>(),
-          isA<NotificationError>().having((s) => s.message, 'message', contains('Network Error')),
+          isA<NotificationError>().having(
+            (s) => s.message,
+            'message',
+            contains('Network Error'),
+          ),
         ],
       );
     });

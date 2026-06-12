@@ -352,8 +352,13 @@ class NotificationCubit extends Cubit<NotificationState> {
       NotificationTypeEnum.workspaceMemberAdded,
       NotificationTypeEnum.workspaceMemberRemoved,
       NotificationTypeEnum.workspaceRoleChanged,
+      NotificationTypeEnum.move,
       NotificationTypeEnum.dueDateChanged,
       NotificationTypeEnum.dueDateReminder,
+      NotificationTypeEnum.cardArchived,
+      NotificationTypeEnum.attachmentAdded,
+      NotificationTypeEnum.attachmentRemoved,
+      NotificationTypeEnum.cardRenamed,
     }.contains(type);
   }
 

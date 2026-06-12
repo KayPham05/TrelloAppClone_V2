@@ -30,7 +30,8 @@ class ActivityPageView extends StatefulWidget {
 
 class _ActivityPageViewState extends State<ActivityPageView> {
   int _selectedTabIndex = 0; // 0: All, 1: Me, 2: Read
-  final NotificationTabCoordinator _tabCoordinator = NotificationTabCoordinator();
+  final NotificationTabCoordinator _tabCoordinator =
+      NotificationTabCoordinator();
   late final PageController _pageController;
 
   @override
@@ -88,7 +89,11 @@ class _ActivityPageViewState extends State<ActivityPageView> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         children: [
-          const Icon(Icons.grid_view_rounded, color: Color(0xFF1D4ED8), size: 24),
+          const Icon(
+            Icons.grid_view_rounded,
+            color: Color(0xFF1D4ED8),
+            size: 24,
+          ),
           const SizedBox(width: 10),
           Text(
             'Không gian làm việc',
@@ -147,7 +152,9 @@ class _ActivityPageViewState extends State<ActivityPageView> {
               ),
               BlocBuilder<NotificationCubit, NotificationState>(
                 builder: (context, state) {
-                  final unreadCount = context.read<NotificationCubit>().unreadCount;
+                  final unreadCount = context
+                      .read<NotificationCubit>()
+                      .unreadCount;
                   return IgnorePointer(
                     ignoring: unreadCount == 0,
                     child: AnimatedOpacity(
@@ -155,15 +162,23 @@ class _ActivityPageViewState extends State<ActivityPageView> {
                       duration: const Duration(milliseconds: 200),
                       child: TextButton(
                         onPressed: () async {
-                          final success = await context.read<NotificationCubit>().markAllAsRead();
+                          final success = await context
+                              .read<NotificationCubit>()
+                              .markAllAsRead();
                           if (!context.mounted) return;
                           if (success) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Đã đánh dấu tất cả đã đọc')),
+                              const SnackBar(
+                                content: Text('Đã đánh dấu tất cả đã đọc'),
+                              ),
                             );
                           } else {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Đã xảy ra lỗi, không thể đánh dấu')),
+                              const SnackBar(
+                                content: Text(
+                                  'Đã xảy ra lỗi, không thể đánh dấu',
+                                ),
+                              ),
                             );
                           }
                         },
@@ -222,7 +237,13 @@ class _ActivityPageViewState extends State<ActivityPageView> {
             color: isSelected ? Colors.white : Colors.transparent,
             borderRadius: BorderRadius.circular(99),
             boxShadow: isSelected
-                ? [const BoxShadow(color: Color(0x0A000000), blurRadius: 4, offset: Offset(0, 2))]
+                ? [
+                    const BoxShadow(
+                      color: Color(0x0A000000),
+                      blurRadius: 4,
+                      offset: Offset(0, 2),
+                    ),
+                  ]
                 : [],
           ),
           child: Center(
@@ -231,7 +252,9 @@ class _ActivityPageViewState extends State<ActivityPageView> {
               style: GoogleFonts.inter(
                 fontSize: 14,
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                color: isSelected ? AppColors.primary : AppColors.onSurfaceVariant,
+                color: isSelected
+                    ? AppColors.primary
+                    : AppColors.onSurfaceVariant,
               ),
             ),
           ),
@@ -239,7 +262,6 @@ class _ActivityPageViewState extends State<ActivityPageView> {
       ),
     );
   }
-
 }
 
 class NotificationListTab extends StatefulWidget {
@@ -261,8 +283,11 @@ class _NotificationListTabState extends State<NotificationListTab> {
   }
 
   void _onScroll() {
-    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
-      context.read<NotificationCubit>().fetchNotifications(tab: _tabForIndex(widget.tabIndex));
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      context.read<NotificationCubit>().fetchNotifications(
+        tab: _tabForIndex(widget.tabIndex),
+      );
     }
   }
 
@@ -312,7 +337,8 @@ class _NotificationListTabState extends State<NotificationListTab> {
         slivers: [
           BlocBuilder<NotificationCubit, NotificationState>(
             builder: (context, state) {
-              if (state is NotificationInitial || state is NotificationLoading) {
+              if (state is NotificationInitial ||
+                  state is NotificationLoading) {
                 return const SliverFillRemaining(
                   child: Center(child: CircularProgressIndicator()),
                 );
@@ -324,9 +350,16 @@ class _NotificationListTabState extends State<NotificationListTab> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.error_outline, color: Colors.red, size: 48),
+                        const Icon(
+                          Icons.error_outline,
+                          color: Colors.red,
+                          size: 48,
+                        ),
                         const SizedBox(height: 16),
-                        Text(state.message, style: GoogleFonts.inter(color: Colors.red)),
+                        Text(
+                          state.message,
+                          style: GoogleFonts.inter(color: Colors.red),
+                        ),
                         TextButton(
                           onPressed: _onRefresh,
                           child: const Text('Thử lại'),
@@ -350,7 +383,12 @@ class _NotificationListTabState extends State<NotificationListTab> {
                 if (notifications.isEmpty) {
                   return SliverFillRemaining(
                     child: Center(
-                      child: Text('Không có thông báo nào', style: GoogleFonts.inter(color: AppColors.onSurfaceVariant)),
+                      child: Text(
+                        'Không có thông báo nào',
+                        style: GoogleFonts.inter(
+                          color: AppColors.onSurfaceVariant,
+                        ),
+                      ),
                     ),
                   );
                 }
@@ -363,12 +401,15 @@ class _NotificationListTabState extends State<NotificationListTab> {
                             ? const SizedBox.shrink()
                             : const Padding(
                                 padding: EdgeInsets.symmetric(vertical: 16),
-                                child: Center(child: CircularProgressIndicator()),
+                                child: Center(
+                                  child: CircularProgressIndicator(),
+                                ),
                               );
                       }
                       return _buildNotificationItem(notifications[index]);
                     },
-                    childCount: notifications.length + (state.hasReachedMax ? 0 : 1),
+                    childCount:
+                        notifications.length + (state.hasReachedMax ? 0 : 1),
                   ),
                 );
               }
@@ -376,9 +417,7 @@ class _NotificationListTabState extends State<NotificationListTab> {
               return const SliverToBoxAdapter(child: SizedBox.shrink());
             },
           ),
-          const SliverToBoxAdapter(
-            child: SizedBox(height: 80),
-          ),
+          const SliverToBoxAdapter(child: SizedBox(height: 80)),
         ],
       ),
     );
@@ -404,7 +443,9 @@ class _NotificationListTabState extends State<NotificationListTab> {
         var undone = false;
         final messenger = ScaffoldMessenger.of(context);
         final availableSnackBarWidth = MediaQuery.sizeOf(context).width - 32;
-        final snackBarWidth = availableSnackBarWidth < 320 ? availableSnackBarWidth : 320.0;
+        final snackBarWidth = availableSnackBarWidth < 320
+            ? availableSnackBarWidth
+            : 320.0;
         messenger.hideCurrentSnackBar();
         messenger
             .showSnackBar(
@@ -412,7 +453,10 @@ class _NotificationListTabState extends State<NotificationListTab> {
                 duration: const Duration(seconds: 2),
                 behavior: SnackBarBehavior.floating,
                 width: snackBarWidth,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 content: Row(
                   children: [
                     const Expanded(child: Text('Đã xóa thông báo')),
@@ -420,7 +464,10 @@ class _NotificationListTabState extends State<NotificationListTab> {
                       style: TextButton.styleFrom(
                         foregroundColor: Colors.white,
                         minimumSize: Size.zero,
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
                       onPressed: () {
@@ -437,10 +484,16 @@ class _NotificationListTabState extends State<NotificationListTab> {
             .closed
             .then((_) async {
               if (undone) return;
-              final success = await cubit.confirmDeleteNotification(notif.id, entity, index);
+              final success = await cubit.confirmDeleteNotification(
+                notif.id,
+                entity,
+                index,
+              );
               if (!success && mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Xóa thông báo thất bại. Đã khôi phục.')),
+                  const SnackBar(
+                    content: Text('Xóa thông báo thất bại. Đã khôi phục.'),
+                  ),
                 );
               }
             });
@@ -469,7 +522,10 @@ class _NotificationListTabState extends State<NotificationListTab> {
     );
   }
 
-  Future<void> _handleNotificationTap(BuildContext context, NotificationEntity notif) async {
+  Future<void> _handleNotificationTap(
+    BuildContext context,
+    NotificationEntity notif,
+  ) async {
     if (!notif.isRead) {
       await context.read<NotificationCubit>().markAsRead(notif.id);
     }
@@ -492,7 +548,11 @@ class _NotificationListTabState extends State<NotificationListTab> {
       return;
     }
 
-    await Navigator.pushNamed(context, target.routeName, arguments: target.arguments);
+    await Navigator.pushNamed(
+      context,
+      target.routeName,
+      arguments: target.arguments,
+    );
   }
 
   void _showRemovalDialog(BuildContext context, NotificationEntity notif) {
@@ -513,18 +573,30 @@ class _NotificationListTabState extends State<NotificationListTab> {
                   color: Color(0xFFE8EAFF),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.notifications_outlined, size: 32, color: Color(0xFF1D3A8A)),
+                child: const Icon(
+                  Icons.notifications_outlined,
+                  size: 32,
+                  color: Color(0xFF1D3A8A),
+                ),
               ),
               const SizedBox(height: 16),
               Text(
                 'Thông báo hệ thống',
-                style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w700, color: const Color(0xFF1E293B)),
+                style: GoogleFonts.inter(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFF1E293B),
+                ),
               ),
               const SizedBox(height: 10),
               Text(
                 notif.message.isNotEmpty ? notif.message : notif.title,
                 textAlign: TextAlign.center,
-                style: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF64748B), height: 1.5),
+                style: GoogleFonts.inter(
+                  fontSize: 14,
+                  color: const Color(0xFF64748B),
+                  height: 1.5,
+                ),
               ),
               const SizedBox(height: 24),
               SizedBox(
@@ -534,10 +606,18 @@ class _NotificationListTabState extends State<NotificationListTab> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF1D4ED8),
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
-                  child: Text('Đồng ý', style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 15)),
+                  child: Text(
+                    'Đồng ý',
+                    style: GoogleFonts.inter(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 15,
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(height: 10),
@@ -547,10 +627,19 @@ class _NotificationListTabState extends State<NotificationListTab> {
                   onPressed: () => Navigator.pop(ctx),
                   style: TextButton.styleFrom(
                     backgroundColor: const Color(0xFFEEEEEE),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
-                  child: Text('Đóng', style: GoogleFonts.inter(fontWeight: FontWeight.w500, fontSize: 15, color: const Color(0xFF1E293B))),
+                  child: Text(
+                    'Đóng',
+                    style: GoogleFonts.inter(
+                      fontWeight: FontWeight.w500,
+                      fontSize: 15,
+                      color: const Color(0xFF1E293B),
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -563,7 +652,8 @@ class _NotificationListTabState extends State<NotificationListTab> {
   NotificationNavigationService _notificationNavigationService() {
     return NotificationNavigationService(
       loadCardsByBoard: (boardId) async {
-        final cards = await serviceLocator<BoardRemoteDataSource>().getCardsByBoard(boardId);
+        final cards = await serviceLocator<BoardRemoteDataSource>()
+            .getCardsByBoard(boardId);
         return cards.map((card) => card.toEntity()).toList();
       },
       loadWorkspaces: () async {
@@ -597,7 +687,9 @@ class _NotificationListTabState extends State<NotificationListTab> {
                               notif.title,
                               style: GoogleFonts.inter(
                                 fontSize: 15,
-                                fontWeight: !notif.isRead ? FontWeight.w700 : FontWeight.w600,
+                                fontWeight: !notif.isRead
+                                    ? FontWeight.w700
+                                    : FontWeight.w600,
                                 color: const Color(0xFF1E293B),
                               ),
                             ),
@@ -633,7 +725,8 @@ class _NotificationListTabState extends State<NotificationListTab> {
                               color: const Color(0xFF94A3B8),
                             ),
                           ),
-                          if (notif.actorName != null && notif.actorName!.isNotEmpty) ...[
+                          if (notif.actorName != null &&
+                              notif.actorName!.isNotEmpty) ...[
                             const SizedBox(width: 8),
                             Container(
                               width: 4,
@@ -668,34 +761,54 @@ class _NotificationListTabState extends State<NotificationListTab> {
   Widget _buildNotificationIcon(NotificationTypeEnum type) {
     final (icon, color, background) = switch (type) {
       NotificationTypeEnum.assign => (
-          Icons.person_add_rounded,
-          AppColors.primaryContainer,
-          const Color(0xFFEFF6FF),
-        ),
+        Icons.person_add_rounded,
+        AppColors.primaryContainer,
+        const Color(0xFFEFF6FF),
+      ),
       NotificationTypeEnum.mention => (
-          Icons.chat_bubble_rounded,
-          AppColors.secondary,
-          const Color(0xFFF1F5F9),
-        ),
-      NotificationTypeEnum.due || NotificationTypeEnum.dueDateChanged || NotificationTypeEnum.dueDateReminder => (
-          Icons.schedule_rounded,
-          const Color(0xFFEA580C),
-          const Color(0xFFFFEDD5),
-        ),
+        Icons.chat_bubble_rounded,
+        AppColors.secondary,
+        const Color(0xFFF1F5F9),
+      ),
+      NotificationTypeEnum.due ||
+      NotificationTypeEnum.dueDateChanged ||
+      NotificationTypeEnum.dueDateReminder => (
+        Icons.schedule_rounded,
+        const Color(0xFFEA580C),
+        const Color(0xFFFFEDD5),
+      ),
+      NotificationTypeEnum.move => (
+        Icons.drive_file_move_rounded,
+        const Color(0xFF2563EB),
+        const Color(0xFFDBEAFE),
+      ),
+      NotificationTypeEnum.cardArchived => (
+        Icons.archive_rounded,
+        const Color(0xFF475569),
+        const Color(0xFFE2E8F0),
+      ),
+      NotificationTypeEnum.attachmentAdded ||
+      NotificationTypeEnum.attachmentRemoved => (
+        Icons.attach_file_rounded,
+        const Color(0xFF059669),
+        const Color(0xFFD1FAE5),
+      ),
+      NotificationTypeEnum.cardRenamed => (
+        Icons.edit_note_rounded,
+        const Color(0xFF7C3AED),
+        const Color(0xFFF3E8FF),
+      ),
       _ => (
-          Icons.notifications_rounded,
-          AppColors.primary,
-          const Color(0xFFEFF6FF),
-        ),
+        Icons.notifications_rounded,
+        AppColors.primary,
+        const Color(0xFFEFF6FF),
+      ),
     };
 
     return Container(
       width: 40,
       height: 40,
-      decoration: BoxDecoration(
-        color: background,
-        shape: BoxShape.circle,
-      ),
+      decoration: BoxDecoration(color: background, shape: BoxShape.circle),
       child: Icon(icon, size: 20, color: color),
     );
   }

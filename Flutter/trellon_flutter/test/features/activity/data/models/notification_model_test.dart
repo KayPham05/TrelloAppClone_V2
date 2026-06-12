@@ -71,6 +71,25 @@ void main() {
       expect(model.type, NotificationTypeEnum.comment);
     });
 
+    test('maps core card notification type integers', () {
+      expect(
+        NotificationTypeEnum.fromInt(16),
+        NotificationTypeEnum.cardArchived,
+      );
+      expect(
+        NotificationTypeEnum.fromInt(17),
+        NotificationTypeEnum.attachmentAdded,
+      );
+      expect(
+        NotificationTypeEnum.fromInt(18),
+        NotificationTypeEnum.attachmentRemoved,
+      );
+      expect(
+        NotificationTypeEnum.fromInt(19),
+        NotificationTypeEnum.cardRenamed,
+      );
+    });
+
     test('optional context fields default to null when absent', () {
       final json = {
         'notiId': 'noti-min',
