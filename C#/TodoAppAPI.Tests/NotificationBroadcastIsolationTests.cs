@@ -25,8 +25,8 @@ public class NotificationBroadcastIsolationTests
             {
                 RecipientId = "recipient",
                 Type = NotificationType.DueDateReminder,
-                Title = "Card due soon",
-                Message = "Card is due soon.",
+                Title = "Thẻ sắp đến hạn",
+                Message = "Thẻ sắp đến hạn.",
                 CardId = "card-1",
                 Link = "/card-detail/card-1"
             }

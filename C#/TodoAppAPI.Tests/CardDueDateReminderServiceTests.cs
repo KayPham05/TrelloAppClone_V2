@@ -33,6 +33,8 @@ public class CardDueDateReminderServiceTests
         Assert.All(notifications, n =>
         {
             Assert.Equal(NotificationType.DueDateReminder, n.Type);
+            Assert.Equal("Thẻ sắp đến hạn trong 1 ngày", n.Title);
+            Assert.Equal("Thẻ 'card-1' sẽ đến hạn vào 2026-06-01 11:00.", n.Message);
             Assert.Equal("card-1", n.CardId);
             Assert.Equal("board-1", n.BoardId);
             Assert.Equal("list-1", n.ListId);
@@ -75,7 +77,9 @@ public class CardDueDateReminderServiceTests
 
         var delivery = Assert.Single(await context.CardDueDateReminderDeliveries.ToListAsync());
         Assert.Equal(DueDateReminderMilestone.OneHourBefore, delivery.Milestone);
-        Assert.Single(await context.Notifications.ToListAsync());
+        var notification = Assert.Single(await context.Notifications.ToListAsync());
+        Assert.Equal("Thẻ sắp đến hạn trong 1 giờ", notification.Title);
+        Assert.Equal("Thẻ 'card-1' sẽ đến hạn lúc 2026-06-01 09:45.", notification.Message);
     }
 
     [Fact]
@@ -91,7 +95,9 @@ public class CardDueDateReminderServiceTests
 
         var delivery = Assert.Single(await context.CardDueDateReminderDeliveries.ToListAsync());
         Assert.Equal(DueDateReminderMilestone.DueNow, delivery.Milestone);
-        Assert.Single(await context.Notifications.ToListAsync());
+        var notification = Assert.Single(await context.Notifications.ToListAsync());
+        Assert.Equal("Thẻ đã đến hạn", notification.Title);
+        Assert.Equal("Thẻ 'card-1' đã đến hạn hoặc quá hạn.", notification.Message);
     }
 
     [Fact]
