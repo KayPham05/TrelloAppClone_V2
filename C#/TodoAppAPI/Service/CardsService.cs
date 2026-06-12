@@ -154,6 +154,11 @@ namespace TodoAppAPI.Service
                     return false;
 
                 var dueDateChanged = existing.DueDate != card.DueDate;
+                var oldTitle = existing.Title ?? existing.CardUId;
+                var newTitle = card.Title ?? card.CardUId;
+                var titleChanged = oldTitle != newTitle;
+                var oldListUId = existing.ListUId;
+                var moved = oldListUId != card.ListUId && !string.IsNullOrWhiteSpace(card.ListUId);
                 existing.Title = card.Title;
                 existing.Description = card.Description;
                 existing.DueDate = card.DueDate;
@@ -166,6 +171,41 @@ namespace TodoAppAPI.Service
                 if (dueDateChanged)
                 {
                     await _dueDateReminderService.ResetReminderHistoryAsync(existing.CardUId);
+                }
+                if (titleChanged)
+                {
+                    var actorName = await GetUserDisplayNameAsync(userUId);
+                    var boardId = await GetBoardIdForListAsync(existing.ListUId);
+                    var notifications = await BuildCardMemberNotificationsAsync(
+                        existing.CardUId,
+                        userUId,
+                        NotificationType.CardRenamed,
+                        "Thẻ đã được đổi tên",
+                        $"{actorName} đã đổi tên {oldTitle} thành {newTitle}.",
+                        boardId,
+                        existing.ListUId);
+
+                    await _notificationService.TryCreateManyInternalAsync(notifications, "card rename");
+                }
+                if (moved)
+                {
+                    var destinationList = await _dbContext.Lists
+                        .AsNoTracking()
+                        .FirstOrDefaultAsync(l => l.ListUId == existing.ListUId);
+                    if (destinationList != null)
+                    {
+                        var actorName = await GetUserDisplayNameAsync(userUId);
+                        var notifications = await BuildCardMemberNotificationsAsync(
+                            existing.CardUId,
+                            userUId,
+                            NotificationType.Move,
+                            "Thẻ đã được di chuyển",
+                            $"{actorName} đã chuyển {newTitle} sang {destinationList.ListName}.",
+                            destinationList.BoardUId,
+                            existing.ListUId);
+
+                        await _notificationService.TryCreateManyInternalAsync(notifications, "card move");
+                    }
                 }
                 return true;
             }
@@ -186,6 +226,11 @@ namespace TodoAppAPI.Service
             {
                 var card = await _dbContext.Todos.FirstOrDefaultAsync(c => c.CardUId == cardUId);
                 if (card == null) return false;
+                var oldListUId = card.ListUId;
+                var destinationList = await _dbContext.Lists
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(l => l.ListUId == newListUId);
+                var moved = oldListUId != newListUId && destinationList != null;
                 card.ListUId = newListUId;
                 if (position.HasValue) card.Position = position.Value;
                 await _dbContext.SaveChangesAsync();
@@ -215,6 +260,21 @@ namespace TodoAppAPI.Service
                 }
 
                 await transaction.CommitAsync();
+                if (moved)
+                {
+                    var actorName = await GetUserDisplayNameAsync(userUId);
+                    var cardTitle = card.Title ?? card.CardUId;
+                    var notifications = await BuildCardMemberNotificationsAsync(
+                        cardUId,
+                        userUId,
+                        NotificationType.Move,
+                        "Thẻ đã được di chuyển",
+                        $"{actorName} đã chuyển {cardTitle} sang {destinationList!.ListName}.",
+                        destinationList.BoardUId,
+                        newListUId);
+
+                    await _notificationService.TryCreateManyInternalAsync(notifications, "card move");
+                }
                 return true;
             }catch(Exception e)
             {
@@ -281,6 +341,21 @@ namespace TodoAppAPI.Service
                 _dbContext.FileUrls.Add(fileUrl);
                 await _dbContext.SaveChangesAsync();
 
+                var actorName = await GetUserDisplayNameAsync(userUId);
+                var filePath = string.IsNullOrWhiteSpace(fileUrl.Url) ? fileUrl.FileName : fileUrl.Url;
+                var cardTitle = card.Title ?? card.CardUId;
+                var boardId = await GetBoardIdForListAsync(card.ListUId);
+                var notifications = await BuildCardMemberNotificationsAsync(
+                    cardUId,
+                    userUId,
+                    NotificationType.AttachmentAdded,
+                    "Đính kèm đã được thêm",
+                    $"{actorName} đã thêm một đính kèm {filePath} vào {cardTitle}.",
+                    boardId,
+                    card.ListUId);
+
+                await _notificationService.TryCreateManyInternalAsync(notifications, "card attachment add");
+
                 return (fileUrl, false);
             }
             catch (Exception ex)
@@ -318,8 +393,23 @@ namespace TodoAppAPI.Service
                 if (!await _authService.CanEditCardAsync(fileUrl.CardUId, userUId))
                     return false;
 
+                var filePath = string.IsNullOrWhiteSpace(fileUrl.Url) ? fileUrl.FileName : fileUrl.Url;
+                var cardTitle = fileUrl.Card?.Title ?? fileUrl.CardUId;
+                var listId = fileUrl.Card?.ListUId;
+                var boardId = await GetBoardIdForListAsync(listId);
                 _dbContext.FileUrls.Remove(fileUrl);
                 await _dbContext.SaveChangesAsync();
+                var actorName = await GetUserDisplayNameAsync(userUId);
+                var notifications = await BuildCardMemberNotificationsAsync(
+                    fileUrl.CardUId,
+                    userUId,
+                    NotificationType.AttachmentRemoved,
+                    "Đính kèm đã bị xóa",
+                    $"{actorName} đã xóa một đính kèm {filePath} khỏi {cardTitle}.",
+                    boardId,
+                    listId);
+
+                await _notificationService.TryCreateManyInternalAsync(notifications, "card attachment remove");
                 return true;
             }
             catch (Exception ex)
@@ -379,6 +469,12 @@ namespace TodoAppAPI.Service
                     await _dueDateReminderService.ResetReminderHistoryAsync(cardUId);
                 }
 
+                var actorName = await GetUserDisplayNameAsync(userUId);
+                var cardTitle = card.Title ?? card.CardUId;
+                var dueDateMessage = dueDate.HasValue
+                    ? $"{actorName} đã đổi hạn của {cardTitle} thành {dueDate.Value:yyyy-MM-dd HH:mm}."
+                    : $"{actorName} đã xóa hạn của {cardTitle}.";
+
                 var assignees = card.CardMembers?
                     .Where(cm => cm.UserUId != userUId)
                     .Select(cm => cm.UserUId)
@@ -388,10 +484,8 @@ namespace TodoAppAPI.Service
                         RecipientId = recipientId,
                         ActorId = userUId,
                         Type = NotificationType.DueDateChanged,
-                        Title = "Card due date changed",
-                        Message = dueDate.HasValue
-                            ? $"Due date for card '{card.Title ?? card.CardUId}' is now {dueDate.Value:yyyy-MM-dd}."
-                            : $"Due date was removed from card '{card.Title ?? card.CardUId}'.",
+                        Title = "Hạn thẻ đã thay đổi",
+                        Message = dueDateMessage,
                         BoardId = card.List?.BoardUId,
                         ListId = card.ListUId,
                         CardId = cardUId,
@@ -415,12 +509,26 @@ namespace TodoAppAPI.Service
                 if (!await _authService.CanEditCardAsync(cardUId, userUId))
                     return false;
 
-                var card = await _dbContext.Todos.FirstOrDefaultAsync(c => c.CardUId == cardUId);
+                var card = await _dbContext.Todos
+                    .Include(c => c.List)
+                    .FirstOrDefaultAsync(c => c.CardUId == cardUId);
                 if (card == null) return false;
 
                 card.IsArchived = true;
                 _dbContext.Todos.Update(card);
                 await _dbContext.SaveChangesAsync();
+                var actorName = await GetUserDisplayNameAsync(userUId);
+                var cardTitle = card.Title ?? card.CardUId;
+                var notifications = await BuildCardMemberNotificationsAsync(
+                    cardUId,
+                    userUId,
+                    NotificationType.CardArchived,
+                    "Thẻ đã được lưu trữ",
+                    $"{actorName} đã lưu trữ {cardTitle}",
+                    card.List?.BoardUId,
+                    card.ListUId);
+
+                await _notificationService.TryCreateManyInternalAsync(notifications, "card archive");
                 return true;
             }
             catch (Exception ex)
@@ -532,6 +640,59 @@ namespace TodoAppAPI.Service
                 Console.WriteLine($"Lỗi khi tham gia Card: {ex.Message}");
                 return false;
             }
+        }
+
+        private async Task<List<NotificationDTO>> BuildCardMemberNotificationsAsync(
+            string cardUId,
+            string actorUId,
+            NotificationType type,
+            string title,
+            string message,
+            string? boardId,
+            string? listId)
+        {
+            var recipients = await _dbContext.CardMembers
+                .AsNoTracking()
+                .Where(cm => cm.CardUId == cardUId && cm.UserUId != actorUId)
+                .Select(cm => cm.UserUId)
+                .Distinct()
+                .ToListAsync();
+
+            return recipients.Select(recipientId => new NotificationDTO
+            {
+                RecipientId = recipientId,
+                ActorId = actorUId,
+                Type = type,
+                Title = title,
+                Message = message,
+                BoardId = boardId,
+                ListId = listId,
+                CardId = cardUId,
+                Link = $"/card-detail/{cardUId}"
+            }).ToList();
+        }
+
+        private async Task<string> GetUserDisplayNameAsync(string userUId)
+        {
+            var name = await _dbContext.Users
+                .AsNoTracking()
+                .Where(u => u.UserUId == userUId)
+                .Select(u => u.UserName)
+                .FirstOrDefaultAsync();
+
+            return string.IsNullOrWhiteSpace(name) ? userUId : name;
+        }
+
+        private async Task<string?> GetBoardIdForListAsync(string? listUId)
+        {
+            if (string.IsNullOrWhiteSpace(listUId))
+                return null;
+
+            return await _dbContext.Lists
+                .AsNoTracking()
+                .Where(l => l.ListUId == listUId)
+                .Select(l => l.BoardUId)
+                .FirstOrDefaultAsync();
         }
     }
 }

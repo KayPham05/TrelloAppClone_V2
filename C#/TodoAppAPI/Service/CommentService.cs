@@ -125,6 +125,9 @@ namespace TodoAppAPI.Service
                 .Where(u => memberIds.Contains(u.UserUId))
                 .ToListAsync();
 
+            var actorName = await GetUserDisplayNameAsync(comment.UserUId);
+            var cardTitle = card.Title ?? card.CardUId;
+
             var recipients = users
                 .Where(u => u.UserUId != comment.UserUId)
                 .Where(u => mentionedTokens.Any(token =>
@@ -137,8 +140,8 @@ namespace TodoAppAPI.Service
                     RecipientId = userId,
                     ActorId = comment.UserUId,
                     Type = NotificationType.Mention,
-                    Title = "You were mentioned in a card",
-                    Message = $"You were mentioned in card '{card.Title ?? card.CardUId}'.",
+                    Title = "Bạn đã được nhắc đến trong thẻ",
+                    Message = $"{actorName} đã nhắc đến bạn trong {cardTitle}.",
                     BoardId = card.List?.BoardUId,
                     ListId = card.ListUId,
                     CardId = card.CardUId,
@@ -153,6 +156,17 @@ namespace TodoAppAPI.Service
         {
             var atIndex = email.IndexOf('@');
             return atIndex > 0 ? email[..atIndex] : email;
+        }
+
+        private async Task<string> GetUserDisplayNameAsync(string userUId)
+        {
+            var name = await _dbContext.Users
+                .AsNoTracking()
+                .Where(u => u.UserUId == userUId)
+                .Select(u => u.UserName)
+                .FirstOrDefaultAsync();
+
+            return string.IsNullOrWhiteSpace(name) ? userUId : name;
         }
     }
 }

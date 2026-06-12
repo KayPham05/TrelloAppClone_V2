@@ -217,13 +217,15 @@ namespace TodoAppAPI.Service
                 if (userId != requesterUId)
                 {
                     var workspace = await _context.Workspaces.AsNoTracking().FirstOrDefaultAsync(w => w.WorkspaceUId == workspaceId);
+                    var actorName = await GetUserDisplayNameAsync(requesterUId);
+                    var workspaceName = workspace?.Name ?? workspaceId;
                     await _notificationService.TryCreateInternalAsync(new NotificationDTO
                     {
                         RecipientId = userId,
                         ActorId = requesterUId,
                         Type = NotificationType.WorkspaceMemberAdded,
-                        Title = "You were added to a workspace",
-                        Message = $"You were added to workspace '{workspace?.Name ?? workspaceId}' as {role}.",
+                        Title = "Bạn đã được thêm vào không gian làm việc",
+                        Message = $"Bạn đã được {actorName} thêm vào {workspaceName}.",
                         WorkspaceId = workspaceId,
                         Link = $"/workspace-menu/{workspaceId}"
                     }, "workspace member invite");
@@ -282,13 +284,15 @@ namespace TodoAppAPI.Service
             if (userId != requesterUId)
             {
                 var workspace = await _context.Workspaces.AsNoTracking().FirstOrDefaultAsync(w => w.WorkspaceUId == workspaceId);
+                var actorName = await GetUserDisplayNameAsync(requesterUId);
+                var workspaceName = workspace?.Name ?? workspaceId;
                 await _notificationService.TryCreateInternalAsync(new NotificationDTO
                 {
                     RecipientId = userId,
                     ActorId = requesterUId,
                     Type = NotificationType.WorkspaceMemberRemoved,
-                    Title = "You were removed from a workspace",
-                    Message = $"You were removed from workspace '{workspace?.Name ?? workspaceId}'.",
+                    Title = "Bạn đã bị xóa khỏi không gian làm việc",
+                    Message = $"Bạn đã bị {actorName} xóa khỏi {workspaceName}.",
                     WorkspaceId = workspaceId,
                     Link = $"/workspace-menu/{workspaceId}"
                 }, "workspace member remove");
@@ -326,13 +330,14 @@ namespace TodoAppAPI.Service
             if (userId != requesterUId)
             {
                 var workspace = await _context.Workspaces.AsNoTracking().FirstOrDefaultAsync(w => w.WorkspaceUId == workspaceId);
+                var actorName = await GetUserDisplayNameAsync(requesterUId);
                 await _notificationService.TryCreateInternalAsync(new NotificationDTO
                 {
                     RecipientId = userId,
                     ActorId = requesterUId,
                     Type = NotificationType.WorkspaceRoleChanged,
-                    Title = "Your workspace role changed",
-                    Message = $"Your role in workspace '{workspace?.Name ?? workspaceId}' changed from {oldRole} to {newRole}.",
+                    Title = "Vai trò trong không gian làm việc đã thay đổi",
+                    Message = $"{actorName} đã thay đổi vai trò của bạn từ {ToVietnameseRoleLabel(oldRole)} -> {ToVietnameseRoleLabel(newRole)}",
                     WorkspaceId = workspaceId,
                     Link = $"/workspace-menu/{workspaceId}"
                 }, "workspace member role update");
@@ -364,6 +369,32 @@ namespace TodoAppAPI.Service
                 .Include(b => b.Lists)
                 .OrderBy(b => b.BoardName)
                 .ToListAsync();
+        }
+
+        private async Task<string> GetUserDisplayNameAsync(string userUId)
+        {
+            var name = await _context.Users
+                .AsNoTracking()
+                .Where(u => u.UserUId == userUId)
+                .Select(u => u.UserName)
+                .FirstOrDefaultAsync();
+
+            return string.IsNullOrWhiteSpace(name) ? userUId : name;
+        }
+
+        private static string ToVietnameseRoleLabel(string? role)
+        {
+            return role switch
+            {
+                "Owner" => "Chủ sở hữu",
+                "Admin" => "Quản trị viên",
+                "Member" => "Thành viên",
+                "Viewer" => "Người xem",
+                "Editor" => "Biên tập viên",
+                "Assignee" => "Người thực hiện",
+                "Observer" => "Người theo dõi",
+                _ => string.IsNullOrWhiteSpace(role) ? "Không xác định" : role
+            };
         }
     }
 }
