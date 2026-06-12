@@ -61,6 +61,8 @@ appsettings.*.local.json
 .agent
 .codegraph/
 .claude/
+skills-lock.json
+
 
 # -----------------------------
 # Common dependencies / bundles
