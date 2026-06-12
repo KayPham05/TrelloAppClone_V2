@@ -17,6 +17,10 @@
         WorkspaceMemberRemoved = 12,
         WorkspaceRoleChanged = 13,
         DueDateChanged = 14,
-        DueDateReminder = 15
+        DueDateReminder = 15,
+        CardArchived = 16,
+        AttachmentAdded = 17,
+        AttachmentRemoved = 18,
+        CardRenamed = 19
     }
 }

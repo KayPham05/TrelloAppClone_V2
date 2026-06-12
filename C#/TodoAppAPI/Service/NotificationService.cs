@@ -21,8 +21,13 @@ namespace TodoAppAPI.Service
             NotificationType.WorkspaceMemberAdded,
             NotificationType.WorkspaceMemberRemoved,
             NotificationType.WorkspaceRoleChanged,
+            NotificationType.Move,
             NotificationType.DueDateChanged,
-            NotificationType.DueDateReminder
+            NotificationType.DueDateReminder,
+            NotificationType.CardArchived,
+            NotificationType.AttachmentAdded,
+            NotificationType.AttachmentRemoved,
+            NotificationType.CardRenamed
         };
 
         private readonly TodoDbContext _context;
