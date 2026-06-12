@@ -8,6 +8,7 @@ import '../../../board/data/datasources/board_remote_data_source.dart';
 import '../../../workspace/domain/usecases/get_workspaces_usecase.dart';
 import '../../data/services/notification_navigation_service.dart';
 import '../../domain/entities/notification_entity.dart';
+import '../controllers/notification_access_message.dart';
 import '../controllers/notification_tab_coordinator.dart';
 import '../cubit/notification_cubit.dart';
 import '../cubit/notification_state.dart';
@@ -531,10 +532,12 @@ class _NotificationListTabState extends State<NotificationListTab> {
     }
     if (!context.mounted) return;
 
-    // Thông báo loại "bị xóa" → hiển thị dialog, không navigate
     if (notif.type == NotificationTypeEnum.boardMemberRemoved ||
         notif.type == NotificationTypeEnum.workspaceMemberRemoved) {
-      _showRemovalDialog(context, notif);
+      _showNotificationAccessDialog(
+        context,
+        NotificationAccessMessage.forNotification(notif),
+      );
       return;
     }
 
@@ -542,8 +545,9 @@ class _NotificationListTabState extends State<NotificationListTab> {
     if (!context.mounted) return;
 
     if (target == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Không thể mở nội dung thông báo')),
+      _showNotificationAccessDialog(
+        context,
+        NotificationAccessMessage.invalidTarget,
       );
       return;
     }
@@ -555,96 +559,31 @@ class _NotificationListTabState extends State<NotificationListTab> {
     );
   }
 
-  void _showRemovalDialog(BuildContext context, NotificationEntity notif) {
+  void _showNotificationAccessDialog(BuildContext context, String message) {
     showDialog(
       context: context,
-      builder: (ctx) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Bell icon
-              Container(
-                width: 64,
-                height: 64,
-                decoration: const BoxDecoration(
-                  color: Color(0xFFE8EAFF),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.notifications_outlined,
-                  size: 32,
-                  color: Color(0xFF1D3A8A),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Thông báo hệ thống',
-                style: GoogleFonts.inter(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: const Color(0xFF1E293B),
-                ),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                notif.message.isNotEmpty ? notif.message : notif.title,
-                textAlign: TextAlign.center,
-                style: GoogleFonts.inter(
-                  fontSize: 14,
-                  color: const Color(0xFF64748B),
-                  height: 1.5,
-                ),
-              ),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () => Navigator.pop(ctx),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF1D4ED8),
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                  ),
-                  child: Text(
-                    'Đồng ý',
-                    style: GoogleFonts.inter(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 15,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 10),
-              SizedBox(
-                width: double.infinity,
-                child: TextButton(
-                  onPressed: () => Navigator.pop(ctx),
-                  style: TextButton.styleFrom(
-                    backgroundColor: const Color(0xFFEEEEEE),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                  ),
-                  child: Text(
-                    'Đóng',
-                    style: GoogleFonts.inter(
-                      fontWeight: FontWeight.w500,
-                      fontSize: 15,
-                      color: const Color(0xFF1E293B),
-                    ),
-                  ),
-                ),
-              ),
-            ],
+      builder: (ctx) => AlertDialog(
+        title: Text(
+          'Thông báo',
+          style: GoogleFonts.inter(fontWeight: FontWeight.w700),
+        ),
+        content: Text(
+          message,
+          style: GoogleFonts.inter(
+            fontSize: 14,
+            color: const Color(0xFF475569),
+            height: 1.4,
           ),
         ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(
+              'Đóng',
+              style: GoogleFonts.inter(fontWeight: FontWeight.w600),
+            ),
+          ),
+        ],
       ),
     );
   }
