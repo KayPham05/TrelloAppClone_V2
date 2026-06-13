@@ -15,13 +15,13 @@ namespace TodoAppAPI.Service
     public class UserService : IUserService
     {
         private readonly TodoDbContext _context;
-        private readonly EmailService _emailService;
+        private readonly IEmailService _emailService;
         private readonly IJwtService _jwtService;
         private readonly ILogger<UserService> _logger;
         private readonly IHubContext<NotificationHub> _notificationHubContext;
         private readonly IMemoryCache _memoryCache;
 
-        public UserService(TodoDbContext context, EmailService emailService, IJwtService jwtService, ILogger<UserService> logger, IMemoryCache memoryCache, IHubContext<NotificationHub> notificationHubContext)
+        public UserService(TodoDbContext context, IEmailService emailService, IJwtService jwtService, ILogger<UserService> logger, IMemoryCache memoryCache, IHubContext<NotificationHub> notificationHubContext)
         {
             _context = context;
             _emailService = emailService;
