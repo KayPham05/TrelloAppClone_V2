@@ -42,8 +42,7 @@ public class CommentServiceTests
         Assert.Equal("Hello @User2", result.Content);
         
         // Assert notifications were created
-        mockNotificationService.Verify(n => n.TryCreateManyInternalAsync(It.IsAny<List<TodoAppAPI.DTOs.NotificationDTO>>(), "comment mention"), Times.Once);
-        mockNotificationService.Verify(n => n.TryCreateManyInternalAsync(It.IsAny<List<TodoAppAPI.DTOs.NotificationDTO>>(), "comment add"), Times.Once);
+        mockNotificationService.Verify(n => n.CreateManyInternalAsync(It.IsAny<IEnumerable<TodoAppAPI.DTOs.NotificationDTO>>()), Times.Exactly(2));
     }
 
     [Fact]
