@@ -12,6 +12,7 @@ namespace TodoAppAPI.Service
     {
         private static readonly HashSet<NotificationType> SentToMeTypes = new()
         {
+            NotificationType.Comment,
             NotificationType.Assign,
             NotificationType.CardUnassigned,
             NotificationType.Mention,

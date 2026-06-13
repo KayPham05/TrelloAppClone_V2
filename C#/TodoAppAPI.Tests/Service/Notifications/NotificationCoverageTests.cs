@@ -43,9 +43,9 @@ public class NotificationCoverageTests
         var page = await service.GetNotificationsAsync("user-1", NotificationTab.SentToMe, 1, 20);
 
         Assert.Equal(
-            new[] { "n1", "n2", "n6", "n7", "n8", "n9", "n10" }.OrderBy(id => id),
+            new[] { "n1", "n2", "n3", "n6", "n7", "n8", "n9", "n10" }.OrderBy(id => id),
             page.Items.Select(i => i.NotiId).OrderBy(id => id));
-        Assert.DoesNotContain(page.Items, i => i.NotiId is "n3" or "n4" or "n5");
+        Assert.DoesNotContain(page.Items, i => i.NotiId is "n4" or "n5");
         Assert.Equal(8, page.UnreadCount);
     }
 
@@ -157,7 +157,7 @@ public class NotificationCoverageTests
         });
 
         var notifications = await context.Notifications.ToListAsync();
-        Assert.Single(notifications);
+        Assert.Equal(2, notifications.Count);
         Assert.Equal("member", notifications[0].RecipientId);
         Assert.Equal(NotificationType.Mention, notifications[0].Type);
         Assert.Equal("Nguyễn An đã nhắc đến bạn trong Important card.", notifications[0].Message);
@@ -186,7 +186,61 @@ public class NotificationCoverageTests
             Content = "@member @member @MEMBER"
         });
 
-        Assert.Single(await context.Notifications.ToListAsync());
+        var notifications = await context.Notifications.ToListAsync();
+        Assert.Equal(2, notifications.Count);
+        Assert.Single(notifications, n => n.Type == NotificationType.Comment);
+        Assert.Single(notifications, n => n.Type == NotificationType.Mention);
+    }
+
+    [Fact]
+    public async Task CommentService_AddCommentAsync_notifies_assignees_when_comment_has_no_mentions()
+    {
+        await using var context = CreateContext();
+        SeedUsers(context, "actor", "member", "other");
+        SetUserName(context, "actor", "Nguyá»…n An");
+        SeedBoardListAndCard(context, "board-1", "list-1", "card-1", "actor");
+        SeedCardMembers(context, "card-1", "actor", "member", "other");
+        await context.SaveChangesAsync();
+        var service = new CommentService(context, CreateRecordingNotificationService(context));
+
+        await service.AddCommentAsync(new Comment
+        {
+            CardUId = "card-1",
+            UserUId = "actor",
+            Content = "please review"
+        });
+
+        var notifications = await context.Notifications.ToListAsync();
+        Assert.Equal(2, notifications.Count);
+        Assert.All(notifications, n => Assert.Equal(NotificationType.Comment, n.Type));
+        Assert.DoesNotContain(notifications, n => n.RecipientId == "actor");
+        Assert.Contains(notifications, n => n.RecipientId == "member");
+        Assert.Contains(notifications, n => n.RecipientId == "other");
+    }
+
+    [Fact]
+    public async Task CommentService_AddCommentAsync_matches_full_email_mentions_with_plus_address()
+    {
+        await using var context = CreateContext();
+        SeedUsers(context, "actor", "member");
+        context.Users.Single(u => u.UserUId == "member").Email = "member+qa@example.com";
+        SetUserName(context, "actor", "Nguyá»…n An");
+        SetUserName(context, "member", "Display Member");
+        SeedBoardListAndCard(context, "board-1", "list-1", "card-1", "actor");
+        SeedCardMembers(context, "card-1", "member");
+        await context.SaveChangesAsync();
+        var service = new CommentService(context, CreateRecordingNotificationService(context));
+
+        await service.AddCommentAsync(new Comment
+        {
+            CardUId = "card-1",
+            UserUId = "actor",
+            Content = "@member+qa@example.com please review"
+        });
+
+        var notifications = await context.Notifications.ToListAsync();
+        Assert.Contains(notifications, n => n.RecipientId == "member" && n.Type == NotificationType.Mention);
+        Assert.Contains(notifications, n => n.RecipientId == "member" && n.Type == NotificationType.Comment);
     }
 
     [Fact]
