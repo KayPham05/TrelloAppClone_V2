@@ -25,14 +25,22 @@ class CardRepositoryImpl implements ICardRepository {
   }
 
   @override
-  Future<CardEntity> addCard({required String listId, required String title, required int position, required String userUId}) async {
+  Future<CardEntity> addCard({
+    required String listId,
+    required String title,
+    required int position,
+    required String userUId,
+  }) async {
     try {
-      final response = await dio.post(ApiEndpoints.card, data: {
-        'listUId': listId,
-        'title': title,
-        'position': position,
-        'userUId': userUId,
-      });
+      final response = await dio.post(
+        ApiEndpoints.card,
+        data: {
+          'listUId': listId,
+          'title': title,
+          'position': position,
+          'userUId': userUId,
+        },
+      );
       if (response.statusCode == 200 || response.statusCode == 201) {
         return CardModel.fromJson(response.data).toEntity();
       }
@@ -43,7 +51,16 @@ class CardRepositoryImpl implements ICardRepository {
   }
 
   @override
-  Future<CardEntity> updateCard({required String cardId, required String title, required String userUId, String? description, DateTime? dueDate, String? backgroundUrl, int? position, String? listId}) async {
+  Future<CardEntity> updateCard({
+    required String cardId,
+    required String title,
+    required String userUId,
+    String? description,
+    DateTime? dueDate,
+    String? backgroundUrl,
+    int? position,
+    String? listId,
+  }) async {
     try {
       final data = {
         'title': title,
@@ -54,9 +71,16 @@ class CardRepositoryImpl implements ICardRepository {
         'listUId': listId,
       };
 
-      final response = await dio.put('${ApiEndpoints.card}/$cardId?userUId=$userUId', data: data);
+      final response = await dio.put(
+        '${ApiEndpoints.card}/$cardId?userUId=$userUId',
+        data: data,
+      );
       if (response.statusCode == 200) {
-        return const CardEntity(id: '', title: '', position: 0); // dummy response
+        return const CardEntity(
+          id: '',
+          title: '',
+          position: 0,
+        ); // dummy response
       }
       throw Exception('Lỗi khi cập nhật thẻ');
     } catch (e) {
@@ -65,9 +89,14 @@ class CardRepositoryImpl implements ICardRepository {
   }
 
   @override
-  Future<void> deleteCard({required String cardId, required String userUId}) async {
+  Future<void> deleteCard({
+    required String cardId,
+    required String userUId,
+  }) async {
     try {
-      final response = await dio.delete('${ApiEndpoints.card}/$cardId?userUId=$userUId');
+      final response = await dio.delete(
+        '${ApiEndpoints.card}/$cardId?userUId=$userUId',
+      );
       if (response.statusCode != 200 && response.statusCode != 204) {
         throw Exception('Lỗi khi xóa thẻ');
       }
@@ -79,7 +108,9 @@ class CardRepositoryImpl implements ICardRepository {
   @override
   Future<String> getCardDescription({required String cardId}) async {
     try {
-      final response = await dio.get('${ApiEndpoints.card}/$cardId/description');
+      final response = await dio.get(
+        '${ApiEndpoints.card}/$cardId/description',
+      );
       if (response.statusCode == 200) {
         return response.data['description'] ?? '';
       }
@@ -90,10 +121,20 @@ class CardRepositoryImpl implements ICardRepository {
   }
 
   @override
-  Future<CardEntity> updateListUId({required String cardId, required String newListId, required String userUId}) async {
+  Future<CardEntity> updateListUId({
+    required String cardId,
+    required String newListId,
+    required String userUId,
+  }) async {
     try {
-      final request = UpdateListRequestModel(listUId: newListId, userUId: userUId);
-      final response = await dio.put('${ApiEndpoints.card}/$cardId/update-list', data: request.toJson());
+      final request = UpdateListRequestModel(
+        listUId: newListId,
+        userUId: userUId,
+      );
+      final response = await dio.put(
+        '${ApiEndpoints.card}/$cardId/update-list',
+        data: request.toJson(),
+      );
       if (response.statusCode == 200) {
         return CardModel.fromJson(response.data).toEntity();
       }
@@ -104,7 +145,11 @@ class CardRepositoryImpl implements ICardRepository {
   }
 
   @override
-  Future<CardEntity> updateStatus({required String cardId, required String newStatus, required String userUId}) async {
+  Future<CardEntity> updateStatus({
+    required String cardId,
+    required String newStatus,
+    required String userUId,
+  }) async {
     try {
       final normalizedStatus = CardStatusValues.normalize(newStatus);
       final response = await dio.put(
@@ -120,14 +165,21 @@ class CardRepositoryImpl implements ICardRepository {
   }
 
   @override
-  Future<CardEntity> addTodoItem({required String cardId, required String todoTitle}) async {
+  Future<CardEntity> addTodoItem({
+    required String cardId,
+    required String todoTitle,
+  }) async {
     try {
-      final response = await dio.post('${ApiEndpoints.todoItem}/add', data: {
-        'cardUId': cardId,
-        'content': todoTitle
-      });
+      final response = await dio.post(
+        '${ApiEndpoints.todoItem}/add',
+        data: {'cardUId': cardId, 'content': todoTitle},
+      );
       if (response.statusCode == 200 || response.statusCode == 201) {
-        return const CardEntity(id: '', title: '', position: 0); // Dummy, caller handles refetch
+        return const CardEntity(
+          id: '',
+          title: '',
+          position: 0,
+        ); // Dummy, caller handles refetch
       }
       throw Exception('Lỗi khi thêm Todo');
     } catch (e) {
@@ -136,11 +188,21 @@ class CardRepositoryImpl implements ICardRepository {
   }
 
   @override
-  Future<CardEntity> updateTodoItem({required String cardId, required String todoId, required bool isCompleted}) async {
+  Future<CardEntity> updateTodoItem({
+    required String cardId,
+    required String todoId,
+    required bool isCompleted,
+  }) async {
     try {
-      final response = await dio.put('${ApiEndpoints.todoItem}/$todoId/update-status?status=${isCompleted ? "completed" : "active"}');
+      final response = await dio.put(
+        '${ApiEndpoints.todoItem}/$todoId/update-status?status=${isCompleted ? "completed" : "active"}',
+      );
       if (response.statusCode == 200) {
-        return const CardEntity(id: '', title: '', position: 0); // Dummy, caller handles refetch
+        return const CardEntity(
+          id: '',
+          title: '',
+          position: 0,
+        ); // Dummy, caller handles refetch
       }
       throw Exception('Lỗi khi cập nhật Todo');
     } catch (e) {
@@ -149,16 +211,20 @@ class CardRepositoryImpl implements ICardRepository {
   }
 
   @override
-  Future<CardEntity> updateDueDate({required String cardId, required DateTime dueDate, required String userUId}) async {
+  Future<CardEntity> updateDueDate({
+    required String cardId,
+    required DateTime dueDate,
+    required String userUId,
+  }) async {
     try {
       if (CardStatusValues.isDueDateInPast(dueDate)) {
         throw Exception(CardStatusValues.dueDateInPastMessage);
       }
 
-      final response = await dio.put('${ApiEndpoints.card}/$cardId/duedate', data: {
-        'dueDate': dueDate.toIso8601String(),
-        'userUId': userUId,
-      });
+      final response = await dio.put(
+        '${ApiEndpoints.card}/$cardId/duedate',
+        data: {'dueDate': dueDate.toIso8601String(), 'userUId': userUId},
+      );
       if (response.statusCode == 200) {
         return CardModel.fromJson(response.data).toEntity();
       }
@@ -174,15 +240,9 @@ class CardRepositoryImpl implements ICardRepository {
       final response = await dio.get('${ApiEndpoints.comments}/card/$cardId');
       if (response.statusCode == 200) {
         final List<dynamic> data = response.data;
-        return data.map((json) {
-          return CommentEntity(
-            id: json['commentUId'] ?? '',
-            content: json['content'] ?? '',
-            createdAt: json['createdAt'] != null ? DateTime.tryParse(json['createdAt']) ?? DateTime.now() : DateTime.now(),
-            userUId: json['userUId'] ?? '',
-            authorName: json['user'] != null ? json['user']['userName'] : json['userName'],
-          );
-        }).toList();
+        return data
+            .map((json) => CommentModel.fromJson(json).toEntity())
+            .toList();
       }
       throw Exception('Lỗi khi lấy bình luận');
     } catch (e) {
@@ -191,22 +251,18 @@ class CardRepositoryImpl implements ICardRepository {
   }
 
   @override
-  Future<CommentEntity> addComment({required String cardId, required String content, required String userUId}) async {
+  Future<CommentEntity> addComment({
+    required String cardId,
+    required String content,
+    required String userUId,
+  }) async {
     try {
-      final response = await dio.post(ApiEndpoints.comments, data: {
-        'cardUId': cardId,
-        'content': content,
-        'userUId': userUId,
-      });
+      final response = await dio.post(
+        ApiEndpoints.comments,
+        data: {'cardUId': cardId, 'content': content, 'userUId': userUId},
+      );
       if (response.statusCode == 200 || response.statusCode == 201) {
-        final json = response.data;
-        return CommentEntity(
-          id: json['commentUId'] ?? '',
-          content: json['content'] ?? '',
-          createdAt: json['createdAt'] != null ? DateTime.tryParse(json['createdAt']) ?? DateTime.now() : DateTime.now(),
-          userUId: json['userUId'] ?? '',
-          authorName: json['user'] != null ? json['user']['userName'] : json['userName'],
-        );
+        return CommentModel.fromJson(response.data).toEntity();
       }
       throw Exception('Lỗi khi thêm bình luận');
     } catch (e) {
@@ -215,7 +271,88 @@ class CardRepositoryImpl implements ICardRepository {
   }
 
   @override
-  Future<List<CardMemberEntity>> getCardMembers({required String cardId}) async {
+  Future<CommentEntity> updateComment({
+    required String commentId,
+    required String content,
+    required String userUId,
+  }) async {
+    try {
+      final response = await dio.put(
+        '${ApiEndpoints.comments}/$commentId',
+        data: {'content': content, 'userUId': userUId},
+      );
+      if (response.statusCode == 200) {
+        return CommentModel.fromJson(response.data).toEntity();
+      }
+      throw Exception('Lá»—i khi cáº­p nháº­t bÃ¬nh luáº­n');
+    } catch (e) {
+      throw Exception('Lá»—i káº¿t ná»‘i server: $e');
+    }
+  }
+
+  @override
+  Future<void> deleteComment({
+    required String commentId,
+    required String userUId,
+  }) async {
+    try {
+      final response = await dio.delete(
+        '${ApiEndpoints.comments}/$commentId?userUId=$userUId',
+      );
+      if (response.statusCode != 200 && response.statusCode != 204) {
+        throw Exception('Lá»—i khi xÃ³a bÃ¬nh luáº­n');
+      }
+    } catch (e) {
+      throw Exception('Lá»—i káº¿t ná»‘i server: $e');
+    }
+  }
+
+  @override
+  Future<FileUrlEntity> uploadCommentAttachment({
+    required String commentId,
+    required String filePath,
+    required String userUId,
+  }) async {
+    try {
+      final fileName = filePath.split('/').last;
+      final formData = FormData.fromMap({
+        'file': await MultipartFile.fromFile(filePath, filename: fileName),
+      });
+      final response = await dio.post(
+        '${ApiEndpoints.comments}/$commentId/attachments?userUId=$userUId',
+        data: formData,
+      );
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return FileUrlModel.fromJson(response.data).toEntity();
+      }
+      throw Exception('Lá»—i khi táº£i lÃªn táº­p tin bÃ¬nh luáº­n');
+    } catch (e) {
+      throw Exception('Lá»—i káº¿t ná»‘i server: $e');
+    }
+  }
+
+  @override
+  Future<void> deleteCommentAttachment({
+    required String commentId,
+    required String fileId,
+    required String userUId,
+  }) async {
+    try {
+      final response = await dio.delete(
+        '${ApiEndpoints.comments}/$commentId/attachments/$fileId?userUId=$userUId',
+      );
+      if (response.statusCode != 200 && response.statusCode != 204) {
+        throw Exception('Lá»—i khi xÃ³a táº­p tin bÃ¬nh luáº­n');
+      }
+    } catch (e) {
+      throw Exception('Lá»—i káº¿t ná»‘i server: $e');
+    }
+  }
+
+  @override
+  Future<List<CardMemberEntity>> getCardMembers({
+    required String cardId,
+  }) async {
     try {
       final response = await dio.get('${ApiEndpoints.cardMember}/$cardId');
       if (response.statusCode == 200) {
@@ -244,7 +381,9 @@ class CardRepositoryImpl implements ICardRepository {
       final response = await dio.get('${ApiEndpoints.todoItem}/$cardId');
       if (response.statusCode == 200) {
         final List<dynamic> data = response.data;
-        return data.map((json) => TodoItemModel.fromJson(json).toEntity()).toList();
+        return data
+            .map((json) => TodoItemModel.fromJson(json).toEntity())
+            .toList();
       }
       return [];
     } catch (e) {
@@ -255,10 +394,14 @@ class CardRepositoryImpl implements ICardRepository {
   @override
   Future<List<FileUrlEntity>> getAttachments({required String cardId}) async {
     try {
-      final response = await dio.get('${ApiEndpoints.card}/$cardId/attachments');
+      final response = await dio.get(
+        '${ApiEndpoints.card}/$cardId/attachments',
+      );
       if (response.statusCode == 200) {
         final List<dynamic> data = response.data;
-        return data.map((json) => FileUrlModel.fromJson(json).toEntity()).toList();
+        return data
+            .map((json) => FileUrlModel.fromJson(json).toEntity())
+            .toList();
       }
       return [];
     } catch (e) {
@@ -267,12 +410,18 @@ class CardRepositoryImpl implements ICardRepository {
   }
 
   @override
-  Future<FileUrlEntity> uploadAttachment({required String cardId, required String filePath, required String userUId, String? description}) async {
+  Future<FileUrlEntity> uploadAttachment({
+    required String cardId,
+    required String filePath,
+    required String userUId,
+    String? description,
+  }) async {
     try {
       String fileName = filePath.split('/').last;
       FormData formData = FormData.fromMap({
         "file": await MultipartFile.fromFile(filePath, filename: fileName),
-        if (description != null && description.isNotEmpty) "description": description,
+        if (description != null && description.isNotEmpty)
+          "description": description,
       });
 
       final response = await dio.post(
@@ -296,7 +445,11 @@ class CardRepositoryImpl implements ICardRepository {
   }
 
   @override
-  Future<String> uploadCardCover({required String cardId, required String filePath, required String userUId}) async {
+  Future<String> uploadCardCover({
+    required String cardId,
+    required String filePath,
+    required String userUId,
+  }) async {
     try {
       String fileName = filePath.split('/').last;
       FormData formData = FormData.fromMap({
@@ -318,9 +471,15 @@ class CardRepositoryImpl implements ICardRepository {
   }
 
   @override
-  Future<void> deleteAttachment({required String cardId, required String fileId, required String userUId}) async {
+  Future<void> deleteAttachment({
+    required String cardId,
+    required String fileId,
+    required String userUId,
+  }) async {
     try {
-      final response = await dio.delete('${ApiEndpoints.card}/$cardId/attachments/$fileId?userUId=$userUId');
+      final response = await dio.delete(
+        '${ApiEndpoints.card}/$cardId/attachments/$fileId?userUId=$userUId',
+      );
       if (response.statusCode != 200 && response.statusCode != 204) {
         throw Exception('Lỗi khi xóa tệp đính kèm');
       }
@@ -330,10 +489,18 @@ class CardRepositoryImpl implements ICardRepository {
   }
 
   @override
-  Future<void> updateAttachmentDescription({required String cardId, required String fileId, required String userUId, String? description}) async {
+  Future<void> updateAttachmentDescription({
+    required String cardId,
+    required String fileId,
+    required String userUId,
+    String? description,
+  }) async {
     try {
-      final queryParam = 'userUId=$userUId${description != null ? '&description=${Uri.encodeQueryComponent(description)}' : ''}';
-      final response = await dio.put('${ApiEndpoints.card}/$cardId/attachments/$fileId/description?$queryParam');
+      final queryParam =
+          'userUId=$userUId${description != null ? '&description=${Uri.encodeQueryComponent(description)}' : ''}';
+      final response = await dio.put(
+        '${ApiEndpoints.card}/$cardId/attachments/$fileId/description?$queryParam',
+      );
       if (response.statusCode != 200) {
         throw Exception('Lỗi khi cập nhật mô tả tệp đính kèm');
       }
@@ -343,12 +510,16 @@ class CardRepositoryImpl implements ICardRepository {
   }
 
   @override
-  Future<CardLabelEntity> addCardLabel({required String cardId, required String title, required String colorCode}) async {
+  Future<CardLabelEntity> addCardLabel({
+    required String cardId,
+    required String title,
+    required String colorCode,
+  }) async {
     try {
-      final response = await dio.post('${ApiEndpoints.card}/$cardId/labels', data: {
-        'title': title,
-        'colorCode': colorCode,
-      });
+      final response = await dio.post(
+        '${ApiEndpoints.card}/$cardId/labels',
+        data: {'title': title, 'colorCode': colorCode},
+      );
       if (response.statusCode == 200 || response.statusCode == 201) {
         return CardLabelModel.fromJson(response.data).toEntity();
       }
@@ -359,9 +530,14 @@ class CardRepositoryImpl implements ICardRepository {
   }
 
   @override
-  Future<void> deleteCardLabel({required String cardId, required String labelId}) async {
+  Future<void> deleteCardLabel({
+    required String cardId,
+    required String labelId,
+  }) async {
     try {
-      final response = await dio.delete('${ApiEndpoints.card}/$cardId/labels/$labelId');
+      final response = await dio.delete(
+        '${ApiEndpoints.card}/$cardId/labels/$labelId',
+      );
       if (response.statusCode != 200 && response.statusCode != 204) {
         throw Exception('Lỗi khi xóa nhãn');
       }
@@ -371,9 +547,13 @@ class CardRepositoryImpl implements ICardRepository {
   }
 
   @override
-  Future<List<CardMemberEntity>> getBoardMembers({required String boardId}) async {
+  Future<List<CardMemberEntity>> getBoardMembers({
+    required String boardId,
+  }) async {
     try {
-      final response = await dio.get('${ApiEndpoints.boardMember}/$boardId/members');
+      final response = await dio.get(
+        '${ApiEndpoints.boardMember}/$boardId/members',
+      );
       if (response.statusCode == 200) {
         final List<dynamic> data = response.data;
         return data.map((json) {
@@ -470,9 +650,14 @@ class CardRepositoryImpl implements ICardRepository {
   }
 
   @override
-  Future<void> archiveCard({required String cardId, required String userUId}) async {
+  Future<void> archiveCard({
+    required String cardId,
+    required String userUId,
+  }) async {
     try {
-      final response = await dio.patch('${ApiEndpoints.card}/$cardId/archive?userUId=$userUId');
+      final response = await dio.patch(
+        '${ApiEndpoints.card}/$cardId/archive?userUId=$userUId',
+      );
       if (response.statusCode != 200) throw Exception('Lỗi khi lưu trữ thẻ');
     } catch (e) {
       throw Exception('Lỗi kết nối server: $e');
@@ -480,9 +665,14 @@ class CardRepositoryImpl implements ICardRepository {
   }
 
   @override
-  Future<void> unarchiveCard({required String cardId, required String userUId}) async {
+  Future<void> unarchiveCard({
+    required String cardId,
+    required String userUId,
+  }) async {
     try {
-      final response = await dio.patch('${ApiEndpoints.card}/$cardId/unarchive?userUId=$userUId');
+      final response = await dio.patch(
+        '${ApiEndpoints.card}/$cardId/unarchive?userUId=$userUId',
+      );
       if (response.statusCode != 200) throw Exception('Lỗi khi khôi phục thẻ');
     } catch (e) {
       throw Exception('Lỗi kết nối server: $e');
@@ -490,7 +680,11 @@ class CardRepositoryImpl implements ICardRepository {
   }
 
   @override
-  Future<void> joinCard({required String cardId, required String userUId, required String boardId}) async {
+  Future<void> joinCard({
+    required String cardId,
+    required String userUId,
+    required String boardId,
+  }) async {
     try {
       final response = await dio.post(
         '${ApiEndpoints.card}/$cardId/join?userUId=$userUId&boardId=$boardId',

@@ -21,11 +21,7 @@ class CardLabelModel {
   }
 
   CardLabelEntity toEntity() {
-    return CardLabelEntity(
-      id: id,
-      title: title,
-      colorCode: colorCode,
-    );
+    return CardLabelEntity(id: id, title: title, colorCode: colorCode);
   }
 }
 
@@ -49,19 +45,11 @@ class TodoItemModel {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'todoUId': id,
-      'title': title,
-      'isCompleted': isCompleted,
-    };
+    return {'todoUId': id, 'title': title, 'isCompleted': isCompleted};
   }
 
   TodoItemEntity toEntity() {
-    return TodoItemEntity(
-      id: id,
-      title: title,
-      isCompleted: isCompleted,
-    );
+    return TodoItemEntity(id: id, title: title, isCompleted: isCompleted);
   }
 }
 
@@ -80,7 +68,7 @@ class FileUrlModel {
 
   factory FileUrlModel.fromJson(Map<String, dynamic> json) {
     return FileUrlModel(
-      id: json['fileUId'] ?? json['id'] ?? '',
+      id: json['fileUId'] ?? json['attachmentUId'] ?? json['id'] ?? '',
       url: json['url'] ?? '',
       fileName: json['fileName'] ?? '',
       description: json['description'],
@@ -101,24 +89,43 @@ class CommentModel {
   final String id;
   final String content;
   final DateTime createdAt;
+  final DateTime? updatedAt;
   final String userUId;
   final String? authorName;
+  final String? avatarUrl;
+  final List<FileUrlModel> attachments;
 
   CommentModel({
     required this.id,
     required this.content,
     required this.createdAt,
+    this.updatedAt,
     required this.userUId,
     this.authorName,
+    this.avatarUrl,
+    this.attachments = const [],
   });
 
   factory CommentModel.fromJson(Map<String, dynamic> json) {
+    final userJson = json['user'] as Map<String, dynamic>?;
+    final attachmentsJson = json['attachments'] as List?;
     return CommentModel(
       id: json['commentUId'] ?? json['id'] ?? '',
       content: json['content'] ?? '',
-      createdAt: json['createdAt'] != null ? DateTime.tryParse(json['createdAt']) ?? DateTime.now() : DateTime.now(),
+      createdAt: json['createdAt'] != null
+          ? DateTime.tryParse(json['createdAt']) ?? DateTime.now()
+          : DateTime.now(),
+      updatedAt: json['updatedAt'] != null
+          ? DateTime.tryParse(json['updatedAt'])
+          : null,
       userUId: json['userUId'] ?? '',
-      authorName: json['user'] != null ? json['user']['userName'] : json['userName'],
+      authorName: userJson != null ? userJson['userName'] : json['userName'],
+      avatarUrl:
+          json['avatarUrl'] ??
+          (userJson != null ? userJson['avatarUrl'] : null),
+      attachments: attachmentsJson != null
+          ? attachmentsJson.map((item) => FileUrlModel.fromJson(item)).toList()
+          : const [],
     );
   }
 
@@ -127,8 +134,11 @@ class CommentModel {
       id: id,
       content: content,
       createdAt: createdAt,
+      updatedAt: updatedAt,
       userUId: userUId,
       authorName: authorName,
+      avatarUrl: avatarUrl,
+      attachments: attachments.map((item) => item.toEntity()).toList(),
     );
   }
 }
@@ -186,32 +196,49 @@ class CardModel {
 
     var commentsFromJson = json['comments'] as List?;
     List<CommentEntity> commentList = commentsFromJson != null
-        ? commentsFromJson.map((json) => CommentEntity(
-            id: json['commentUId'] ?? '',
-            content: json['content'] ?? '',
-            createdAt: json['createdAt'] != null ? DateTime.tryParse(json['createdAt']) ?? DateTime.now() : DateTime.now(),
-            userUId: json['userUId'] ?? '',
-            authorName: json['user'] != null ? json['user']['userName'] : json['userName'],
-          )).toList()
+        ? commentsFromJson
+              .map((json) => CommentModel.fromJson(json).toEntity())
+              .toList()
         : [];
 
     var membersFromJson = (json['members'] ?? json['cardMembers']) as List?;
     List<CardMemberEntity> memberList = membersFromJson != null
-        ? membersFromJson.map((json) => CardMemberEntity(
-            id: json['id'] ?? json['cardMemberUId'] ?? '',
-            userUId: json['userUId'] ?? '',
-            userName: json['userName'] ?? json['fullName'] ?? (json['user'] != null ? (json['user']['userName'] ?? json['user']['name'] ?? 'Unknown') : 'Unknown'),
-            email: json['email'] ?? (json['user'] != null ? json['user']['email'] : ''),
-            avatarUrl: json['avatarUrl'] ?? json['avatar'] ?? (json['user'] != null ? (json['user']['avatarUrl'] ?? json['user']['avatar']) : null),
-            role: json['role'] ?? 'Observer',
-          )).toList()
+        ? membersFromJson
+              .map(
+                (json) => CardMemberEntity(
+                  id: json['id'] ?? json['cardMemberUId'] ?? '',
+                  userUId: json['userUId'] ?? '',
+                  userName:
+                      json['userName'] ??
+                      json['fullName'] ??
+                      (json['user'] != null
+                          ? (json['user']['userName'] ??
+                                json['user']['name'] ??
+                                'Unknown')
+                          : 'Unknown'),
+                  email:
+                      json['email'] ??
+                      (json['user'] != null ? json['user']['email'] : ''),
+                  avatarUrl:
+                      json['avatarUrl'] ??
+                      json['avatar'] ??
+                      (json['user'] != null
+                          ? (json['user']['avatarUrl'] ??
+                                json['user']['avatar'])
+                          : null),
+                  role: json['role'] ?? 'Observer',
+                ),
+              )
+              .toList()
         : [];
 
     return CardModel(
       id: json['cardUId'] ?? json['id'] ?? '',
       title: json['title'] ?? '',
       description: json['description'],
-      dueDate: json['dueDate'] != null ? DateTime.tryParse(json['dueDate']) : null,
+      dueDate: json['dueDate'] != null
+          ? DateTime.tryParse(json['dueDate'])
+          : null,
       position: json['position'] ?? 0,
       status: CardStatusValues.normalize(json['status']),
       listId: json['listUId'] ?? json['listId'],
@@ -224,7 +251,8 @@ class CardModel {
       fileUrls: fileList,
       comments: commentList,
       members: memberList,
-      labels: (json['cardLabels'] as List?)
+      labels:
+          (json['cardLabels'] as List?)
               ?.map((e) => CardLabelModel.fromJson(e).toEntity())
               .toList() ??
           [],
