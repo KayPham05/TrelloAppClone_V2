@@ -28,6 +28,7 @@ namespace TodoAppAPI.Data
             modelBuilder.ApplyConfiguration(new ActivityConfiguration());
             modelBuilder.ApplyConfiguration(new TodoItemConfiguration());
             modelBuilder.ApplyConfiguration(new CommentConfiguration());
+            modelBuilder.ApplyConfiguration(new CommentAttachmentConfiguration());
             modelBuilder.ApplyConfiguration(new RoleConfiguration());
             modelBuilder.ApplyConfiguration(new BoardMemberConfiguration());
             modelBuilder.ApplyConfiguration(new UserInboxCardConfiguration());
@@ -59,6 +60,7 @@ namespace TodoAppAPI.Data
         public DbSet<Role> Roles { get; set; }
         public DbSet<BoardMember> BoardMembers { get; set; }
         public DbSet<Comment> Comments { get; set; }
+        public DbSet<CommentAttachment> CommentAttachments { get; set; }
         public DbSet<TodoItem> TodoItems { get; set; }
         public DbSet<UserInboxCard> UserInboxCards { get; set; }
         public DbSet<Workspace> Workspaces { get; set; }

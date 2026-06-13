@@ -22,6 +22,9 @@ namespace TodoAppAPI.Configurations
             builder.Property(x => x.CreatedAt)
                    .HasDefaultValueSql("GETDATE()");
 
+            builder.Property(x => x.UpdatedAt)
+                   .IsRequired(false);
+
             // Card → Comment: CASCADE
             builder.HasOne(x => x.Card)
                    .WithMany(c => c.Comments)
