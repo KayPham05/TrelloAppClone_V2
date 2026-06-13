@@ -11,7 +11,8 @@ namespace TodoAppAPI.Service
     {
         private static readonly Regex MentionRegex = new(
             @"@([A-Za-z0-9._%+\-]+(?:@[A-Za-z0-9.\-]+\.[A-Za-z]{2,})?)",
-            RegexOptions.Compiled);
+            RegexOptions.Compiled,
+            TimeSpan.FromMilliseconds(250));
 
         private readonly TodoDbContext _dbContext;
         private readonly INotificationService _notificationService;
