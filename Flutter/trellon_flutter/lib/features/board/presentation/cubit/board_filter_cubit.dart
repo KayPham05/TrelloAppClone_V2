@@ -123,71 +123,62 @@ class BoardFilterCubit extends Cubit<BoardFilterState> {
   }
 
   bool _cardMatches(CardEntity card, ListEntity list) {
-    // 1. Text query — match card title, description, list name, checklist item title, label title, member name
-    if (state.query.isNotEmpty) {
-      final q = state.query.toLowerCase();
-      final inTitle = card.title.toLowerCase().contains(q);
-      final inDesc = (card.description ?? '').toLowerCase().contains(q);
-      final inList = list.name.toLowerCase().contains(q);
-      final inChecklist = card.todoItems.any(
-        (t) => t.title.toLowerCase().contains(q),
-      );
-      final inLabel = card.labels.any((l) => l.title.toLowerCase().contains(q));
-      final inMember = card.members.any(
-        (m) => m.userName.toLowerCase().contains(q),
-      );
-      if (!inTitle &&
-          !inDesc &&
-          !inList &&
-          !inChecklist &&
-          !inLabel &&
-          !inMember) {
-        return false;
-      }
-    }
-
-    // 2. Member filter — card must have ALL selected members
-    if (state.selectedMemberUIds.isNotEmpty) {
-      final cardMemberIds = card.members.map((m) => m.userUId).toSet();
-      if (!state.selectedMemberUIds.every((id) => cardMemberIds.contains(id))) {
-        return false;
-      }
-    }
-
-    // 3. Label filter — card must have at least one selected label
-    if (state.selectedLabelIds.isNotEmpty) {
-      final cardLabelIds = card.labels.map((l) => l.id).toSet();
-      if (!state.selectedLabelIds.any((id) => cardLabelIds.contains(id))) {
-        return false;
-      }
-    }
-
-    // 4. Due-date filter
-    if (state.dueDateFilter != DueDateFilter.none) {
-      final due = card.dueDate;
-      if (due == null) return false;
-      final now = DateTime.now();
-      final today = DateTime(now.year, now.month, now.day);
-      final dueDay = DateTime(due.year, due.month, due.day);
-
-      switch (state.dueDateFilter) {
-        case DueDateFilter.overdue:
-          if (!dueDay.isBefore(today)) return false;
-        case DueDateFilter.today:
-          if (dueDay != today) return false;
-        case DueDateFilter.thisWeek:
-          final endOfWeek = today.add(Duration(days: 7 - today.weekday));
-          if (dueDay.isBefore(today) || dueDay.isAfter(endOfWeek)) return false;
-        case DueDateFilter.thisMonth:
-          final endOfMonth = DateTime(now.year, now.month + 1, 0);
-          if (dueDay.isBefore(today) || dueDay.isAfter(endOfMonth)) {
-            return false;
-          }
-        case DueDateFilter.none:
-          break;
-      }
-    }
-
+    if (!_matchesQuery(card, list)) return false;
+    if (!_matchesMembers(card)) return false;
+    if (!_matchesLabels(card)) return false;
+    if (!_matchesDueDate(card)) return false;
     return true;
+  }
+
+  bool _matchesQuery(CardEntity card, ListEntity list) {
+    if (state.query.isEmpty) return true;
+    final q = state.query.toLowerCase();
+    
+    if (card.title.toLowerCase().contains(q)) return true;
+    if ((card.description ?? '').toLowerCase().contains(q)) return true;
+    if (list.name.toLowerCase().contains(q)) return true;
+    if (card.todoItems.any((t) => t.title.toLowerCase().contains(q))) return true;
+    if (card.labels.any((l) => l.title.toLowerCase().contains(q))) return true;
+    if (card.members.any((m) => m.userName.toLowerCase().contains(q))) return true;
+    
+    return false;
+  }
+
+  bool _matchesMembers(CardEntity card) {
+    if (state.selectedMemberUIds.isEmpty) return true;
+    final cardMemberIds = card.members.map((m) => m.userUId).toSet();
+    return state.selectedMemberUIds.every((id) => cardMemberIds.contains(id));
+  }
+
+  bool _matchesLabels(CardEntity card) {
+    if (state.selectedLabelIds.isEmpty) return true;
+    final cardLabelIds = card.labels.map((l) => l.id).toSet();
+    return state.selectedLabelIds.any((id) => cardLabelIds.contains(id));
+  }
+
+  bool _matchesDueDate(CardEntity card) {
+    if (state.dueDateFilter == DueDateFilter.none) return true;
+    
+    final due = card.dueDate;
+    if (due == null) return false;
+    
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final dueDay = DateTime(due.year, due.month, due.day);
+
+    switch (state.dueDateFilter) {
+      case DueDateFilter.overdue:
+        return dueDay.isBefore(today);
+      case DueDateFilter.today:
+        return dueDay == today;
+      case DueDateFilter.thisWeek:
+        final endOfWeek = today.add(Duration(days: 7 - today.weekday));
+        return !dueDay.isBefore(today) && !dueDay.isAfter(endOfWeek);
+      case DueDateFilter.thisMonth:
+        final endOfMonth = DateTime(now.year, now.month + 1, 0);
+        return !dueDay.isBefore(today) && !dueDay.isAfter(endOfMonth);
+      case DueDateFilter.none:
+        return true;
+    }
   }
 }

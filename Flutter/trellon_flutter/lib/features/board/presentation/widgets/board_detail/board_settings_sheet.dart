@@ -137,6 +137,8 @@ class _BoardSettingsSheetState extends State<BoardSettingsSheet> {
     );
   }
 
+  static const _thanhVienLabel = 'Thành viên';
+
   String _visibilityLabel(String? v) {
     switch (v) {
       case 'Public':
@@ -144,7 +146,7 @@ class _BoardSettingsSheetState extends State<BoardSettingsSheet> {
       case 'Workspace':
         return 'Không gian làm việc';
       default:
-        return 'Thành viên';
+        return _thanhVienLabel;
     }
   }
 
@@ -414,7 +416,7 @@ class _BoardSettingsSheetState extends State<BoardSettingsSheet> {
                       contentPadding: EdgeInsets.zero,
                       title: const Text('Quyền bình luận'),
                       subtitle: Text(
-                        'Thành viên',
+                        _thanhVienLabel,
                         style: GoogleFonts.inter(
                           fontSize: 12,
                           color: AppColors.onSurfaceVariant,
@@ -450,7 +452,7 @@ class _BoardSettingsSheetState extends State<BoardSettingsSheet> {
                       contentPadding: EdgeInsets.zero,
                       title: const Text('Thêm thành viên'),
                       subtitle: Text(
-                        'Thành viên',
+                        _thanhVienLabel,
                         style: GoogleFonts.inter(
                           fontSize: 12,
                           color: AppColors.onSurfaceVariant,

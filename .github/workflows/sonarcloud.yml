@@ -65,7 +65,7 @@ jobs:
 
       - name: Get Flutter dependencies
         working-directory: Flutter/trellon_flutter
-        run: flutter pub get
+        run: flutter pub get --enforce-lockfile
         continue-on-error: false
 
       - name: Prepare Flutter env for CI

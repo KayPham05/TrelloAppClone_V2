@@ -279,7 +279,7 @@ class NotificationCubit extends Cubit<NotificationState> {
     if (s is NotificationLoaded) {
       emit(s.copyWith(isLogoutRequested: true));
     } else {
-      emit(NotificationLoaded(notifications: [], isLogoutRequested: true));
+      emit(const NotificationLoaded(notifications: [], isLogoutRequested: true));
     }
   }
 
