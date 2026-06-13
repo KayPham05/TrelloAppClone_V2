@@ -10,6 +10,7 @@ import '../../domain/usecases/save_recent_board_usecase.dart';
 import '../../data/datasources/board_remote_data_source.dart';
 import '../../data/models/list_model.dart';
 import '../../domain/entities/list_entity.dart';
+import 'board_filter_cubit.dart';
 import 'board_detail_state.dart';
 
 class BoardDetailCubit extends Cubit<BoardDetailState> {
@@ -21,6 +22,8 @@ class BoardDetailCubit extends Cubit<BoardDetailState> {
 
   // Rollback snapshot for optimistic updates
   List<ListEntity>? _previousLists;
+  Timer? _filterDebounce;
+  int _filterRequestSeq = 0;
 
   BoardDetailCubit({
     required this.dataSource,
@@ -82,6 +85,7 @@ class BoardDetailCubit extends Cubit<BoardDetailState> {
         boardName: boardName,
         backgroundUrl: backgroundUrl,
         lists: lists,
+        unfilteredLists: lists,
         boardRole: boardRole,
         boardVisibility: visibility,
         workspaceId: workspaceId,
@@ -91,6 +95,108 @@ class BoardDetailCubit extends Cubit<BoardDetailState> {
     } catch (e) {
       emit(BoardDetailError(e.toString()));
     }
+  }
+
+  Future<void> applyBoardFilter(BoardFilterState filter, {bool debounce = true}) async {
+    final current = state;
+    if (current is! BoardDetailLoaded) return;
+
+    _filterDebounce?.cancel();
+    if (debounce) {
+      _filterDebounce = Timer(const Duration(milliseconds: 500), () {
+        _applyBoardFilterNow(filter);
+      });
+      return;
+    }
+
+    await _applyBoardFilterNow(filter);
+  }
+
+  Future<void> _applyBoardFilterNow(BoardFilterState filter) async {
+    final current = state;
+    if (current is! BoardDetailLoaded) return;
+
+    final sourceLists = current.unfilteredLists ?? current.lists;
+    if (!filter.isActive) {
+      emit(current.copyWith(
+        lists: sourceLists,
+        unfilteredLists: sourceLists,
+        activeFilter: filter,
+        isFiltering: false,
+        clearFilterError: true,
+      ));
+      return;
+    }
+
+    final requestSeq = ++_filterRequestSeq;
+    emit(current.copyWith(
+      activeFilter: filter,
+      isFiltering: true,
+      clearFilterError: true,
+    ));
+
+    try {
+      final cardModels = await dataSource.filterCardsByBoard(
+        current.boardId,
+        filter.toRequest(),
+      );
+
+      if (requestSeq != _filterRequestSeq || state is! BoardDetailLoaded) {
+        return;
+      }
+
+      final freshCurrent = state as BoardDetailLoaded;
+      final filteredLists = _mergeCardsIntoLists(
+        freshCurrent.unfilteredLists ?? sourceLists,
+        cardModels.map((card) => card.toEntity()).toList(),
+      );
+
+      emit(freshCurrent.copyWith(
+        lists: filteredLists,
+        activeFilter: filter,
+        isFiltering: false,
+        clearFilterError: true,
+      ));
+    } catch (_) {
+      if (requestSeq != _filterRequestSeq || state is! BoardDetailLoaded) {
+        return;
+      }
+      final freshCurrent = state as BoardDetailLoaded;
+      emit(freshCurrent.copyWith(
+        isFiltering: false,
+        filterError: 'Khong the loc card.',
+      ));
+    }
+  }
+
+  void clearBoardFilter() {
+    final current = state;
+    if (current is! BoardDetailLoaded) return;
+
+    _filterDebounce?.cancel();
+    _filterRequestSeq++;
+    final sourceLists = current.unfilteredLists ?? current.lists;
+    emit(current.copyWith(
+      lists: sourceLists,
+      unfilteredLists: sourceLists,
+      activeFilter: const BoardFilterState(),
+      isFiltering: false,
+      clearFilterError: true,
+    ));
+  }
+
+  List<ListEntity> _mergeCardsIntoLists(List<ListEntity> sourceLists, List<CardEntity> cards) {
+    final cardsByList = <String, List<CardEntity>>{};
+    for (final card in cards) {
+      final key = card.listId ?? '';
+      cardsByList.putIfAbsent(key, () => []).add(card);
+    }
+
+    return sourceLists.map((list) {
+      final listCards = List<CardEntity>.from(cardsByList[list.id] ?? [])
+        ..sort((a, b) => a.position.compareTo(b.position));
+      return list.copyWith(cards: listCards);
+    }).toList();
   }
 
   Future<void> reload() async {
@@ -352,6 +458,12 @@ class BoardDetailCubit extends Cubit<BoardDetailState> {
       final currentState = state as BoardDetailLoaded;
       emit(currentState.copyWith(clearTransientError: true));
     }
+  }
+
+  @override
+  Future<void> close() {
+    _filterDebounce?.cancel();
+    return super.close();
   }
 
   // ─── Board Settings ────────────────────────────────────────────────────────
