@@ -6,6 +6,8 @@ import '../../../../../core/data_sources/user_local_data_source.dart';
 import '../../../../../core/utils/member_role_helper.dart';
 import '../../../../../core/services/authorization_service.dart';
 import '../../../../../init_dependencies.dart';
+import '../../../../member_invite/domain/usecases/search_invite_suggestions_usecase.dart';
+import '../../../../member_invite/presentation/widgets/member_invite_picker.dart';
 import '../../../data/datasources/board_remote_data_source.dart';
 import '../../cubit/board_member_cubit.dart';
 import '../../../domain/entities/board_member.dart';
@@ -13,11 +15,13 @@ import '../../../domain/entities/board_member.dart';
 class BoardMembersManageSheet extends StatelessWidget {
   final String boardId;
   final String boardName;
+  final String? workspaceId;
 
   const BoardMembersManageSheet({
     super.key,
     required this.boardId,
     required this.boardName,
+    this.workspaceId,
   });
 
   @override
@@ -27,7 +31,11 @@ class BoardMembersManageSheet extends StatelessWidget {
         dataSource: serviceLocator<BoardRemoteDataSource>(),
         userLocalDataSource: serviceLocator<UserLocalDataSource>(),
       )..loadMembers(boardId),
-      child: _BoardMembersManageSheetView(boardId: boardId, boardName: boardName),
+      child: _BoardMembersManageSheetView(
+        boardId: boardId,
+        boardName: boardName,
+        workspaceId: workspaceId,
+      ),
     );
   }
 }
@@ -35,17 +43,21 @@ class BoardMembersManageSheet extends StatelessWidget {
 class _BoardMembersManageSheetView extends StatefulWidget {
   final String boardId;
   final String boardName;
+  final String? workspaceId;
 
   const _BoardMembersManageSheetView({
     required this.boardId,
     required this.boardName,
+    this.workspaceId,
   });
 
   @override
-  State<_BoardMembersManageSheetView> createState() => _BoardMembersManageSheetViewState();
+  State<_BoardMembersManageSheetView> createState() =>
+      _BoardMembersManageSheetViewState();
 }
 
-class _BoardMembersManageSheetViewState extends State<_BoardMembersManageSheetView> {
+class _BoardMembersManageSheetViewState
+    extends State<_BoardMembersManageSheetView> {
   final _authService = AuthorizationService();
 
   @override
@@ -105,20 +117,30 @@ class _BoardMembersManageSheetViewState extends State<_BoardMembersManageSheetVi
                       children: [
                         Text(
                           widget.boardName,
-                          style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 16),
+                          style: GoogleFonts.inter(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
                         ),
                         const SizedBox(height: 4),
                         const Text(
                           'Sẽ mời với tư cách thành viên',
                           style: TextStyle(color: Colors.grey, fontSize: 14),
-                        )
+                        ),
                       ],
                     ),
                   ),
                   ElevatedButton.icon(
                     onPressed: () => _showAddMemberDialog(context),
-                    icon: const Icon(Icons.ios_share, size: 16, color: Colors.white),
-                    label: const Text('Mời', style: TextStyle(color: Colors.white)),
+                    icon: const Icon(
+                      Icons.ios_share,
+                      size: 16,
+                      color: Colors.white,
+                    ),
+                    label: const Text(
+                      'Mời',
+                      style: TextStyle(color: Colors.white),
+                    ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.blue[700],
                       minimumSize: const Size(0, 40),
@@ -126,14 +148,14 @@ class _BoardMembersManageSheetViewState extends State<_BoardMembersManageSheetVi
                         borderRadius: BorderRadius.circular(20),
                       ),
                     ),
-                  )
+                  ),
                 ],
               ),
             ),
           ),
 
           const SizedBox(height: 24),
-          
+
           Expanded(
             child: BlocBuilder<BoardMemberCubit, BoardMemberState>(
               builder: (context, state) {
@@ -163,8 +185,10 @@ class _BoardMembersManageSheetViewState extends State<_BoardMembersManageSheetVi
                           itemCount: state.members.length,
                           itemBuilder: (context, index) {
                             final member = state.members[index];
-                            final canManageThisBoard = _authService.canManageBoard(state.currentUserRole, null);
-                            final canModifyThisMember = canManageThisBoard && member.role != 'Owner';
+                            final canManageThisBoard = _authService
+                                .canManageBoard(state.currentUserRole, null);
+                            final canModifyThisMember =
+                                canManageThisBoard && member.role != 'Owner';
 
                             return ListTile(
                               leading: CircleAvatar(
@@ -173,13 +197,31 @@ class _BoardMembersManageSheetViewState extends State<_BoardMembersManageSheetVi
                                   cacheKey: 'avatar_${member.userUId}',
                                 ),
                               ),
-                              title: Text(member.userName, style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
-                              subtitle: Text(member.email, style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                              title: Text(
+                                member.userName,
+                                style: GoogleFonts.inter(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              subtitle: Text(
+                                member.email,
+                                style: const TextStyle(
+                                  color: Colors.grey,
+                                  fontSize: 12,
+                                ),
+                              ),
                               trailing: GestureDetector(
-                                onTap: canModifyThisMember ? () => _showUpdateRoleDialog(context, member) : null,
+                                onTap: canModifyThisMember
+                                    ? () =>
+                                          _showUpdateRoleDialog(context, member)
+                                    : null,
                                 child: Text(
                                   member.role,
-                                  style: TextStyle(color: canModifyThisMember ? Colors.blue : Colors.grey),
+                                  style: TextStyle(
+                                    color: canModifyThisMember
+                                        ? Colors.blue
+                                        : Colors.grey,
+                                  ),
                                 ),
                               ),
                             );
@@ -193,14 +235,17 @@ class _BoardMembersManageSheetViewState extends State<_BoardMembersManageSheetVi
               },
             ),
           ),
-          
+
           // Bottom Search Input mimicking Add
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: GestureDetector(
               onTap: () => _showAddMemberDialog(context),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.grey[100],
                   borderRadius: BorderRadius.circular(30),
@@ -213,7 +258,10 @@ class _BoardMembersManageSheetViewState extends State<_BoardMembersManageSheetVi
                     Expanded(
                       child: Text(
                         'Mời bằng tên, tên người dùng hoặc email',
-                        style: GoogleFonts.inter(color: Colors.grey, fontSize: 14),
+                        style: GoogleFonts.inter(
+                          color: Colors.grey,
+                          fontSize: 14,
+                        ),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
@@ -229,59 +277,43 @@ class _BoardMembersManageSheetViewState extends State<_BoardMembersManageSheetVi
 
   void _showAddMemberDialog(BuildContext context) {
     final cubit = context.read<BoardMemberCubit>();
-    final emailCtrl = TextEditingController();
+    final searchUseCase = serviceLocator<SearchInviteSuggestionsUseCase>();
     String selectedRole = 'Editor';
 
-    showModalBottomSheet(
+    showDialog<void>(
       context: context,
-      isScrollControlled: true,
-      builder: (ctx) => Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(ctx).viewInsets.bottom,
-          left: 16, right: 16, top: 16,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Mời thành viên', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 16),
-            TextField(
-              controller: emailCtrl,
-              decoration: const InputDecoration(labelText: 'Email', border: OutlineInputBorder()),
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setSheetState) => MemberInvitePicker(
+          title: 'Mời thành viên vào bảng',
+          roleControl: DropdownButtonFormField<String>(
+            initialValue: selectedRole,
+            decoration: const InputDecoration(
+              labelText: 'Vai trò',
+              border: OutlineInputBorder(),
             ),
-            const SizedBox(height: 12),
-            DropdownButtonFormField<String>(
-              initialValue: selectedRole,
-              decoration: const InputDecoration(border: OutlineInputBorder()),
-              items: MemberRoleHelper.rolesForScope(MemberScope.board)
-                  .where((r) => r != 'Owner')
-                  .map((r) => DropdownMenuItem(value: r, child: Text(r)))
-                  .toList(),
-              onChanged: (v) => selectedRole = v ?? selectedRole,
-            ),
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () async {
-                  final email = emailCtrl.text.trim();
-                  if (email.isEmpty) return;
-                  Navigator.pop(ctx);
-                  final user = await cubit.findUserByEmail(email);
-                  if (user != null) {
-                    await cubit.addMember(
-                      boardId: widget.boardId,
-                      userId: user['userUId'],
-                      role: selectedRole,
-                    );
-                  }
-                },
-                child: const Text('Thêm'),
-              ),
-            ),
-            const SizedBox(height: 16),
-          ],
+            items: MemberRoleHelper.rolesForScope(MemberScope.board)
+                .where((role) => role != 'Owner')
+                .map((role) => DropdownMenuItem(value: role, child: Text(role)))
+                .toList(),
+            onChanged: (value) =>
+                setSheetState(() => selectedRole = value ?? selectedRole),
+          ),
+          searchSuggestions: ({required query, required selected}) async {
+            final requesterUId =
+                await serviceLocator<UserLocalDataSource>().getUserId() ?? '';
+            return searchUseCase(
+              query: query,
+              scope: 'board',
+              requesterUId: requesterUId,
+              workspaceId: widget.workspaceId,
+              boardId: widget.boardId,
+            );
+          },
+          onSubmit: (selected) => cubit.addMembers(
+            boardId: widget.boardId,
+            userIds: selected.map((user) => user.userUId).toList(),
+            role: selectedRole,
+          ),
         ),
       ),
     );
@@ -299,7 +331,10 @@ class _BoardMembersManageSheetViewState extends State<_BoardMembersManageSheetVi
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Đổi quyền — ${member.userName}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text(
+              'Đổi quyền — ${member.userName}',
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
               initialValue: selectedRole,
@@ -346,7 +381,10 @@ class _BoardMembersManageSheetViewState extends State<_BoardMembersManageSheetVi
                     userId: member.userUId,
                   );
                 },
-                child: const Text('Xoá khỏi bảng', style: TextStyle(color: Colors.red)),
+                child: const Text(
+                  'Xoá khỏi bảng',
+                  style: TextStyle(color: Colors.red),
+                ),
               ),
             ),
             const SizedBox(height: 16),
