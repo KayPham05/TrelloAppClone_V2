@@ -50,7 +50,10 @@ class _BoardBackgroundSheetState extends State<BoardBackgroundSheet>
 
   Future<void> _pickAndUpload() async {
     final picker = ImagePicker();
-    final XFile? file = await picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
+    final XFile? file = await picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 85,
+    );
     if (file == null) return;
     if (!mounted) return;
     setState(() => _uploading = true);
@@ -66,7 +69,9 @@ class _BoardBackgroundSheetState extends State<BoardBackgroundSheet>
     // Encode as special URL: gradient://<hexStart>:<hexEnd>
     final start = colors[0].toARGB32().toRadixString(16).padLeft(8, '0');
     final end = colors[1].toARGB32().toRadixString(16).padLeft(8, '0');
-    await context.read<BoardDetailCubit>().updateBoardBackground('gradient://$start:$end');
+    await context.read<BoardDetailCubit>().updateBoardBackground(
+      'gradient://$start:$end',
+    );
     if (mounted) Navigator.pop(context);
   }
 
@@ -91,8 +96,12 @@ class _BoardBackgroundSheetState extends State<BoardBackgroundSheet>
         children: [
           const SizedBox(height: 12),
           Container(
-            width: 40, height: 4,
-            decoration: BoxDecoration(color: Colors.grey.withValues(alpha: 0.5), borderRadius: BorderRadius.circular(2)),
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: Colors.grey.withValues(alpha: 0.5),
+              borderRadius: BorderRadius.circular(2),
+            ),
           ),
           const SizedBox(height: 12),
           // Header
@@ -108,7 +117,10 @@ class _BoardBackgroundSheetState extends State<BoardBackgroundSheet>
                   child: Text(
                     'Phông nền bảng',
                     textAlign: TextAlign.center,
-                    style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600),
+                    style: GoogleFonts.inter(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
                 const SizedBox(width: 48),
@@ -121,7 +133,10 @@ class _BoardBackgroundSheetState extends State<BoardBackgroundSheet>
             labelColor: AppColors.primaryContainer,
             unselectedLabelColor: AppColors.onSurfaceVariant,
             indicatorColor: AppColors.primaryContainer,
-            tabs: const [Tab(text: 'Màu sắc'), Tab(text: 'Ảnh')],
+            tabs: const [
+              Tab(text: 'Màu sắc'),
+              Tab(text: 'Ảnh'),
+            ],
           ),
           Expanded(
             child: TabBarView(
@@ -157,7 +172,13 @@ class _BoardBackgroundSheetState extends State<BoardBackgroundSheet>
                   children: [
                     Padding(
                       padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-                      child: Text('Stock', style: GoogleFonts.inter(fontSize: 13, color: AppColors.onSurfaceVariant)),
+                      child: Text(
+                        'Stock',
+                        style: GoogleFonts.inter(
+                          fontSize: 13,
+                          color: AppColors.onSurfaceVariant,
+                        ),
+                      ),
                     ),
                     SizedBox(
                       height: 140,
@@ -182,7 +203,13 @@ class _BoardBackgroundSheetState extends State<BoardBackgroundSheet>
                     ),
                     Padding(
                       padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
-                      child: Text('Tuỳ chỉnh', style: GoogleFonts.inter(fontSize: 13, color: AppColors.onSurfaceVariant)),
+                      child: Text(
+                        'Tuỳ chỉnh',
+                        style: GoogleFonts.inter(
+                          fontSize: 13,
+                          color: AppColors.onSurfaceVariant,
+                        ),
+                      ),
                     ),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -198,7 +225,11 @@ class _BoardBackgroundSheetState extends State<BoardBackgroundSheet>
                           ),
                           child: _uploading
                               ? const Center(child: CircularProgressIndicator())
-                              : const Icon(Icons.add, size: 32, color: AppColors.onSurfaceVariant),
+                              : const Icon(
+                                  Icons.add,
+                                  size: 32,
+                                  color: AppColors.onSurfaceVariant,
+                                ),
                         ),
                       ),
                     ),

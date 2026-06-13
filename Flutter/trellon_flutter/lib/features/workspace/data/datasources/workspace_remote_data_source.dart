@@ -11,7 +11,10 @@ class WorkspaceRemoteDataSource {
 
   Future<List<WorkspaceModel>> getWorkspaces(String userUid) async {
     try {
-      final response = await client.get(ApiEndpoints.workspace, queryParameters: {'userUid': userUid});
+      final response = await client.get(
+        ApiEndpoints.workspace,
+        queryParameters: {'userUid': userUid},
+      );
       if (response.statusCode == 200) {
         final List data = response.data;
         return data.map((json) => WorkspaceModel.fromJson(json)).toList();
@@ -27,9 +30,15 @@ class WorkspaceRemoteDataSource {
     }
   }
 
-  Future<List<BoardModel>> getWorkspaceBoards(String workspaceId, String userUid) async {
+  Future<List<BoardModel>> getWorkspaceBoards(
+    String workspaceId,
+    String userUid,
+  ) async {
     try {
-      final response = await client.get('${ApiEndpoints.workspace}/$workspaceId/boards', queryParameters: {'userUId': userUid});
+      final response = await client.get(
+        '${ApiEndpoints.workspace}/$workspaceId/boards',
+        queryParameters: {'userUId': userUid},
+      );
       if (response.statusCode == 200) {
         final List data = response.data;
         return data.map((json) => BoardModel.fromJson(json)).toList();
@@ -63,7 +72,7 @@ class WorkspaceRemoteDataSource {
     if (response.statusCode == 200 || response.statusCode == 201) {
       if (response.data is Map && response.data['message'] != null) {
         return WorkspaceModel(
-          id: '', 
+          id: '',
           name: name,
           description: description ?? '',
           type: WorkspaceTypeExtension.fromString(type),
@@ -106,7 +115,8 @@ class WorkspaceRemoteDataSource {
       queryParameters: {'workspaceId': workspaceId, 'requestUserId': userUId},
     );
     if (response.statusCode == 200) {
-      if (response.data is Map && response.data['message'] == 'Không có quyền') {
+      if (response.data is Map &&
+          response.data['message'] == 'Không có quyền') {
         throw Exception('Bạn không có quyền xóa không gian này');
       }
     }
@@ -117,22 +127,38 @@ class WorkspaceRemoteDataSource {
 
   Future<void> addWorkspaceMember({
     required String workspaceId,
-    required String email,
+    required String userId,
     required String role,
     required String requesterUId,
   }) async {
-    // Note: The backend InviteUser DTO expects UserId. 
-    // This implementation might need mapping if email is used instead of ID.
     final response = await client.post(
       '${ApiEndpoints.workspaceMember}/$workspaceId/invite',
-      data: {
-        'userId': email, // Assuming email is used as identifier here for now, or FE should resolve ID first
-        'role': role,
-        'requesterUId': requesterUId,
-      },
+      data: {'userId': userId, 'role': role, 'requesterUId': requesterUId},
     );
     if (response.statusCode != 200 && response.statusCode != 201) {
       throw Exception('Failed to add workspace member');
+    }
+  }
+
+  Future<void> updateBoardVisibility({
+    required String boardId,
+    required String boardName,
+    required String workspaceId,
+    required String visibility,
+    required String userUId,
+  }) async {
+    final response = await client.put(
+      '${ApiEndpoints.boards}/$boardId',
+      data: {
+        'boardUId': boardId,
+        'boardName': boardName,
+        'workspaceUId': workspaceId,
+        'visibility': visibility,
+      },
+      queryParameters: {'userUId': userUId},
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to update board visibility');
     }
   }
 }

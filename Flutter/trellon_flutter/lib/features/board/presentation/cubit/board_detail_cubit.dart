@@ -33,12 +33,20 @@ class BoardDetailCubit extends Cubit<BoardDetailState> {
   // ─── Load Board (Real API) ─────────────────────────────────────────────────
 
   /// Loads lists and cards from backend in parallel, then groups cards into lists.
-  Future<void> loadBoard(String boardId, String boardName, {String? backgroundUrl, String? workspaceId, String? workspaceName, String? visibility, bool isPersonal = false}) async {
+  Future<void> loadBoard(
+    String boardId,
+    String boardName, {
+    String? backgroundUrl,
+    String? workspaceId,
+    String? workspaceName,
+    String? visibility,
+    bool isPersonal = false,
+  }) async {
     emit(BoardDetailLoading());
     try {
       // Fetch lists, cards, and board role in parallel
       final userUId = await userLocalDataSource.getUserId() ?? '';
-      
+
       // Save recent board in background
       saveRecentBoardUseCase(userUId, boardId).catchError((_) {});
 
@@ -74,20 +82,21 @@ class BoardDetailCubit extends Cubit<BoardDetailState> {
           boardId: l.boardId,
           cards: listCards,
         );
-      }).toList()
-        ..sort((a, b) => a.position.compareTo(b.position));
+      }).toList()..sort((a, b) => a.position.compareTo(b.position));
 
-      emit(BoardDetailLoaded(
-        boardId: boardId,
-        boardName: boardName,
-        backgroundUrl: backgroundUrl,
-        lists: lists,
-        boardRole: boardRole,
-        boardVisibility: visibility,
-        workspaceId: workspaceId,
-        workspaceName: workspaceName,
-        isPersonal: isPersonal,
-      ));
+      emit(
+        BoardDetailLoaded(
+          boardId: boardId,
+          boardName: boardName,
+          backgroundUrl: backgroundUrl,
+          lists: lists,
+          boardRole: boardRole,
+          boardVisibility: visibility,
+          workspaceId: workspaceId,
+          workspaceName: workspaceName,
+          isPersonal: isPersonal,
+        ),
+      );
     } catch (e) {
       emit(BoardDetailError(e.toString()));
     }
@@ -113,7 +122,9 @@ class BoardDetailCubit extends Cubit<BoardDetailState> {
     if (current is! BoardDetailLoaded) return;
     try {
       final userUId = await userLocalDataSource.getUserId() ?? '';
-      final position = current.lists.isEmpty ? 0 : current.lists.last.position + 1;
+      final position = current.lists.isEmpty
+          ? 0
+          : current.lists.last.position + 1;
       final newListModel = await dataSource.createList(
         boardId: current.boardId,
         name: name,
@@ -136,7 +147,10 @@ class BoardDetailCubit extends Cubit<BoardDetailState> {
 
   // ─── Create Card ───────────────────────────────────────────────────────────
 
-  Future<void> createCard({required String listId, required String title}) async {
+  Future<void> createCard({
+    required String listId,
+    required String title,
+  }) async {
     final current = state;
     if (current is! BoardDetailLoaded) return;
     try {
@@ -144,9 +158,18 @@ class BoardDetailCubit extends Cubit<BoardDetailState> {
       if (listIndex < 0) return;
       final position = current.lists[listIndex].cards.length;
       final userUId = await userLocalDataSource.getUserId() ?? '';
-      await dataSource.createCard(listId: listId, title: title, position: position, userUId: userUId);
+      await dataSource.createCard(
+        listId: listId,
+        title: title,
+        position: position,
+        userUId: userUId,
+      );
       // Reload to get the real card ID from backend
-      await loadBoard(current.boardId, current.boardName, backgroundUrl: current.backgroundUrl);
+      await loadBoard(
+        current.boardId,
+        current.boardName,
+        backgroundUrl: current.backgroundUrl,
+      );
     } catch (_) {
       // Silently fail
     }
@@ -154,7 +177,11 @@ class BoardDetailCubit extends Cubit<BoardDetailState> {
 
   // ─── Update Card Status ────────────────────────────────────────────────────
 
-  Future<void> toggleCardStatus(String listId, String cardId, bool isCompleted) async {
+  Future<void> toggleCardStatus(
+    String listId,
+    String cardId,
+    bool isCompleted,
+  ) async {
     final current = state;
     if (current is! BoardDetailLoaded) return;
     try {
@@ -165,7 +192,7 @@ class BoardDetailCubit extends Cubit<BoardDetailState> {
       final newStatus = isCompleted
           ? CardStatusValues.completed
           : CardStatusValues.calculate(CardStatusValues.toDo, card.dueDate);
-      
+
       // Optimistic upate
       final newLists = List<ListEntity>.from(current.lists);
       final listIdx = newLists.indexWhere((l) => l.id == listId);
@@ -179,12 +206,20 @@ class BoardDetailCubit extends Cubit<BoardDetailState> {
         }
       }
 
-      await updateCardStatusUseCase(cardId: cardId, newStatus: newStatus, userUId: userUId);
+      await updateCardStatusUseCase(
+        cardId: cardId,
+        newStatus: newStatus,
+        userUId: userUId,
+      );
     } catch (_) {
       // Revert if error
       if (state is BoardDetailLoaded) {
         final lastState = state as BoardDetailLoaded;
-        emit(lastState.copyWith(transientError: 'Không thể cập nhật trạng thái thẻ.'));
+        emit(
+          lastState.copyWith(
+            transientError: 'Không thể cập nhật trạng thái thẻ.',
+          ),
+        );
       }
     }
   }
@@ -252,10 +287,12 @@ class BoardDetailCubit extends Cubit<BoardDetailState> {
       _persistMoveCard(card.id, targetListId, currentState);
     } catch (e) {
       if (_previousLists != null) {
-        emit(currentState.copyWith(
-          lists: _previousLists,
-          transientError: 'Lỗi di chuyển thẻ. Đã hoàn tác.',
-        ));
+        emit(
+          currentState.copyWith(
+            lists: _previousLists,
+            transientError: 'Lỗi di chuyển thẻ. Đã hoàn tác.',
+          ),
+        );
       }
     } finally {
       _previousLists = null;
@@ -269,21 +306,26 @@ class BoardDetailCubit extends Cubit<BoardDetailState> {
   ) async {
     try {
       final userUId = await userLocalDataSource.getUserId() ?? '';
-      await dataSource.moveCard(cardId: cardId, newListId: newListId, userUId: userUId);
+      await dataSource.moveCard(
+        cardId: cardId,
+        newListId: newListId,
+        userUId: userUId,
+      );
     } catch (_) {
       // Rollback to snapshot
       if (state is BoardDetailLoaded) {
-        emit(snapshotOnError.copyWith(transientError: 'Lỗi di chuyển thẻ. Đã hoàn tác.'));
+        emit(
+          snapshotOnError.copyWith(
+            transientError: 'Lỗi di chuyển thẻ. Đã hoàn tác.',
+          ),
+        );
       }
     }
   }
 
   // ─── Move List (Optimistic + API reorder) ─────────────────────────────────
 
-  void moveList({
-    required ListEntity list,
-    required int insertIndex,
-  }) {
+  void moveList({required ListEntity list, required int insertIndex}) {
     if (state is! BoardDetailLoaded) return;
     final currentState = state as BoardDetailLoaded;
 
@@ -310,10 +352,12 @@ class BoardDetailCubit extends Cubit<BoardDetailState> {
       _persistReorderLists(currentState.boardId, newLists, currentState);
     } catch (e) {
       if (_previousLists != null) {
-        emit(currentState.copyWith(
-          lists: _previousLists,
-          transientError: 'Lỗi di chuyển cột. Đã hoàn tác.',
-        ));
+        emit(
+          currentState.copyWith(
+            lists: _previousLists,
+            transientError: 'Lỗi di chuyển cột. Đã hoàn tác.',
+          ),
+        );
       }
     } finally {
       _previousLists = null;
@@ -328,19 +372,29 @@ class BoardDetailCubit extends Cubit<BoardDetailState> {
     try {
       // Convert to ListModel for the data source
       final listModels = updatedLists
-          .map((l) => ListModel(
-                id: l.id,
-                name: l.name,
-                position: l.position,
-                status: l.status,
-                boardId: l.boardId,
-              ))
+          .map(
+            (l) => ListModel(
+              id: l.id,
+              name: l.name,
+              position: l.position,
+              status: l.status,
+              boardId: l.boardId,
+            ),
+          )
           .toList();
       final userUId = await userLocalDataSource.getUserId() ?? '';
-      await dataSource.reorderLists(boardId: boardId, lists: listModels, userUId: userUId);
+      await dataSource.reorderLists(
+        boardId: boardId,
+        lists: listModels,
+        userUId: userUId,
+      );
     } catch (_) {
       if (state is BoardDetailLoaded) {
-        emit(snapshotOnError.copyWith(transientError: 'Lỗi sắp xếp cột. Đã hoàn tác.'));
+        emit(
+          snapshotOnError.copyWith(
+            transientError: 'Lỗi sắp xếp cột. Đã hoàn tác.',
+          ),
+        );
       }
     }
   }
@@ -410,7 +464,10 @@ class BoardDetailCubit extends Cubit<BoardDetailState> {
     }
   }
 
-  Future<bool> transferBoardWorkspace(String newWorkspaceUId, String newWorkspaceName) async {
+  Future<bool> transferBoardWorkspace(
+    String newWorkspaceUId,
+    String newWorkspaceName,
+  ) async {
     final current = state;
     if (current is! BoardDetailLoaded) return false;
     final userUId = await userLocalDataSource.getUserId() ?? '';
@@ -421,11 +478,20 @@ class BoardDetailCubit extends Cubit<BoardDetailState> {
         requesterUId: userUId,
       );
       if (success) {
-        emit(current.copyWith(workspaceId: newWorkspaceUId, workspaceName: newWorkspaceName));
+        emit(
+          current.copyWith(
+            workspaceId: newWorkspaceUId,
+            workspaceName: newWorkspaceName,
+          ),
+        );
       }
       return success;
     } catch (_) {
-      emit(current.copyWith(transientError: 'Không thể chuyển không gian làm việc.'));
+      emit(
+        current.copyWith(
+          transientError: 'Không thể chuyển không gian làm việc.',
+        ),
+      );
       return false;
     }
   }
@@ -491,11 +557,13 @@ class BoardDetailCubit extends Cubit<BoardDetailState> {
   void applyRealtimeBoardUpdated(Map<String, dynamic> payload) {
     if (state is! BoardDetailLoaded) return;
     final current = state as BoardDetailLoaded;
-    emit(current.copyWith(
-      boardName: payload['boardName'],
-      backgroundUrl: payload['backgroundUrl'],
-      boardVisibility: payload['visibility'],
-    ));
+    emit(
+      current.copyWith(
+        boardName: payload['boardName'],
+        backgroundUrl: payload['backgroundUrl'],
+        boardVisibility: payload['visibility'],
+      ),
+    );
   }
 
   void applyRealtimeBoardBackgroundUpdated(String url) {
@@ -507,7 +575,7 @@ class BoardDetailCubit extends Cubit<BoardDetailState> {
   void applyRealtimeListCreated(Map<String, dynamic> payload) {
     if (state is! BoardDetailLoaded) return;
     final current = state as BoardDetailLoaded;
-    
+
     // Avoid duplicates
     if (current.lists.any((l) => l.id == payload['listUId'])) return;
 
@@ -522,14 +590,14 @@ class BoardDetailCubit extends Cubit<BoardDetailState> {
 
     final updatedLists = [...current.lists, newList]
       ..sort((a, b) => a.position.compareTo(b.position));
-    
+
     emit(current.copyWith(lists: updatedLists));
   }
 
   void applyRealtimeListStatusUpdated(String listUId, String status) {
     if (state is! BoardDetailLoaded) return;
     final current = state as BoardDetailLoaded;
-    
+
     if (status == 'Archived' || status == 'Deleted') {
       final updatedLists = current.lists.where((l) => l.id != listUId).toList();
       emit(current.copyWith(lists: updatedLists));
@@ -544,15 +612,15 @@ class BoardDetailCubit extends Cubit<BoardDetailState> {
   void applyRealtimeListReordered(List<dynamic> order) {
     if (state is! BoardDetailLoaded) return;
     final current = state as BoardDetailLoaded;
-    
+
     final Map<String, int> positions = {};
     for (var i = 0; i < order.length; i++) {
-        positions[order[i].toString()] = i;
+      positions[order[i].toString()] = i;
     }
 
     final updatedLists = current.lists.map((l) {
-        final pos = positions[l.id];
-        return pos != null ? l.copyWith(position: pos) : l;
+      final pos = positions[l.id];
+      return pos != null ? l.copyWith(position: pos) : l;
     }).toList()..sort((a, b) => a.position.compareTo(b.position));
 
     emit(current.copyWith(lists: updatedLists));
@@ -571,7 +639,7 @@ class BoardDetailCubit extends Cubit<BoardDetailState> {
     }
 
     final newCard = CardModel.fromJson(payload).toEntity();
-    
+
     final updatedLists = current.lists.map((l) {
       if (l.id == listId) {
         final updatedCards = [...l.cards, newCard]
@@ -635,11 +703,14 @@ class BoardDetailCubit extends Cubit<BoardDetailState> {
       if (l.id == newListUId) {
         final updatedCards = List<CardEntity>.from(l.cards);
         final safePos = position.clamp(0, updatedCards.length);
-        updatedCards.insert(safePos, movedCard!.copyWith(listId: newListUId, position: position));
-        
+        updatedCards.insert(
+          safePos,
+          movedCard!.copyWith(listId: newListUId, position: position),
+        );
+
         // Re-sort just in case
-        for(int i=0; i<updatedCards.length; i++) {
-            updatedCards[i] = updatedCards[i].copyWith(position: i);
+        for (int i = 0; i < updatedCards.length; i++) {
+          updatedCards[i] = updatedCards[i].copyWith(position: i);
         }
         return l.copyWith(cards: updatedCards);
       }
@@ -650,12 +721,11 @@ class BoardDetailCubit extends Cubit<BoardDetailState> {
   }
 
   void applyRealtimeCommentAdded(Map<String, dynamic> payload) {
-      // Typically comments are handled in a different Cubit or detail page.
-      // If BoardDetail contains comment counts, update them here.
+    // Typically comments are handled in a different Cubit or detail page.
+    // If BoardDetail contains comment counts, update them here.
   }
 
   void applyRealtimeCommentDeleted(String commentUId, String cardUId) {
-      // Same as above.
+    // Same as above.
   }
 }
-

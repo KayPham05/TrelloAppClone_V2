@@ -27,7 +27,7 @@ extension DueDateFilterLabel on DueDateFilter {
 class BoardFilterState extends Equatable {
   final String query;
   final Set<String> selectedMemberUIds; // userUId
-  final Set<String> selectedLabelIds;   // label id
+  final Set<String> selectedLabelIds; // label id
   final DueDateFilter dueDateFilter;
 
   const BoardFilterState({
@@ -58,8 +58,12 @@ class BoardFilterState extends Equatable {
   }
 
   @override
-  List<Object?> get props =>
-      [query, selectedMemberUIds, selectedLabelIds, dueDateFilter];
+  List<Object?> get props => [
+    query,
+    selectedMemberUIds,
+    selectedLabelIds,
+    dueDateFilter,
+  ];
 }
 
 // ── Cubit ────────────────────────────────────────────────────────────────────
@@ -102,7 +106,9 @@ class BoardFilterCubit extends Cubit<BoardFilterState> {
     if (!state.isActive) return lists;
 
     return lists.map((list) {
-      final filteredCards = list.cards.where((card) => _cardMatches(card, list)).toList();
+      final filteredCards = list.cards
+          .where((card) => _cardMatches(card, list))
+          .toList();
       return list.copyWith(cards: filteredCards);
     }).toList();
   }
@@ -123,13 +129,19 @@ class BoardFilterCubit extends Cubit<BoardFilterState> {
       final inTitle = card.title.toLowerCase().contains(q);
       final inDesc = (card.description ?? '').toLowerCase().contains(q);
       final inList = list.name.toLowerCase().contains(q);
-      final inChecklist =
-          card.todoItems.any((t) => t.title.toLowerCase().contains(q));
-      final inLabel =
-          card.labels.any((l) => l.title.toLowerCase().contains(q));
-      final inMember =
-          card.members.any((m) => m.userName.toLowerCase().contains(q));
-      if (!inTitle && !inDesc && !inList && !inChecklist && !inLabel && !inMember) {
+      final inChecklist = card.todoItems.any(
+        (t) => t.title.toLowerCase().contains(q),
+      );
+      final inLabel = card.labels.any((l) => l.title.toLowerCase().contains(q));
+      final inMember = card.members.any(
+        (m) => m.userName.toLowerCase().contains(q),
+      );
+      if (!inTitle &&
+          !inDesc &&
+          !inList &&
+          !inChecklist &&
+          !inLabel &&
+          !inMember) {
         return false;
       }
     }
@@ -168,7 +180,9 @@ class BoardFilterCubit extends Cubit<BoardFilterState> {
           if (dueDay.isBefore(today) || dueDay.isAfter(endOfWeek)) return false;
         case DueDateFilter.thisMonth:
           final endOfMonth = DateTime(now.year, now.month + 1, 0);
-          if (dueDay.isBefore(today) || dueDay.isAfter(endOfMonth)) return false;
+          if (dueDay.isBefore(today) || dueDay.isAfter(endOfMonth)) {
+            return false;
+          }
         case DueDateFilter.none:
           break;
       }

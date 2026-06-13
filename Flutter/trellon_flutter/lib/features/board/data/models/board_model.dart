@@ -11,6 +11,7 @@ class BoardModel extends BoardEntity {
     super.coverColor,
     super.status,
     super.backgroundUrl,
+    super.isStarred,
   });
 
   factory BoardModel.fromJson(Map<String, dynamic> json) {
@@ -23,6 +24,7 @@ class BoardModel extends BoardEntity {
       workspaceName: json['workspaceName'] ?? 'Không gian làm việc',
       status: json['status'] ?? 'Active',
       backgroundUrl: json['backgroundUrl'],
+      isStarred: json['isStarred'] ?? false,
     );
   }
 
@@ -35,6 +37,7 @@ class BoardModel extends BoardEntity {
       'workspaceUId': workspaceId,
       'status': status,
       'backgroundUrl': backgroundUrl,
+      'isStarred': isStarred,
     };
   }
 }

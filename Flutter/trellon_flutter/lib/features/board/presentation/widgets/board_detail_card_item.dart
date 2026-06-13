@@ -30,12 +30,16 @@ class BoardDetailCardItem extends StatelessWidget {
                 color: const Color(0x21091E42), // rgba(9,30,66,0.13)
                 blurRadius: 3,
                 offset: const Offset(0, 1),
-              )
+              ),
             ],
           ),
           child: Text(
             card.title,
-            style: const TextStyle(color: AppColors.textPrimary, fontSize: 17, fontWeight: FontWeight.w600),
+            style: const TextStyle(
+              color: AppColors.textPrimary,
+              fontSize: 17,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ),
       ),
@@ -54,13 +58,15 @@ class BoardDetailCardItem extends StatelessWidget {
         final state = cubit.state;
         final boardId = state is BoardDetailLoaded ? state.boardId : null;
         final boardName = state is BoardDetailLoaded ? state.boardName : null;
-        final boardBackgroundUrl = state is BoardDetailLoaded ? state.backgroundUrl : null;
+        final boardBackgroundUrl = state is BoardDetailLoaded
+            ? state.backgroundUrl
+            : null;
         // Find the list name by card.listId
         final listName = state is BoardDetailLoaded
             ? state.lists
-                .where((l) => l.id == card.listId)
-                .map((l) => l.name)
-                .firstOrNull
+                  .where((l) => l.id == card.listId)
+                  .map((l) => l.name)
+                  .firstOrNull
             : null;
 
         await Navigator.push(
@@ -77,7 +83,11 @@ class BoardDetailCardItem extends StatelessWidget {
         );
 
         if (state is BoardDetailLoaded) {
-          cubit.loadBoard(state.boardId, state.boardName, backgroundUrl: state.backgroundUrl);
+          cubit.loadBoard(
+            state.boardId,
+            state.boardName,
+            backgroundUrl: state.backgroundUrl,
+          );
         }
       },
       child: Container(
@@ -89,7 +99,7 @@ class BoardDetailCardItem extends StatelessWidget {
               color: const Color(0x21091E42), // rgba(9,30,66,0.13)
               blurRadius: 3,
               offset: const Offset(0, 1),
-            )
+            ),
           ],
         ),
         child: Column(
@@ -97,7 +107,9 @@ class BoardDetailCardItem extends StatelessWidget {
           children: [
             if (card.backgroundUrl != null && card.backgroundUrl!.isNotEmpty)
               ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(8),
+                ),
                 child: Image.network(
                   card.backgroundUrl!,
                   height: 100, // Roughly 50% increase max for small cards
@@ -114,13 +126,21 @@ class BoardDetailCardItem extends StatelessWidget {
                   _buildLabels(),
                   Text(
                     card.title,
-                    style: const TextStyle(color: AppColors.textPrimary, fontSize: 14, fontWeight: FontWeight.w500),
+                    style: const TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
-                  if (card.description != null && card.description!.isNotEmpty) ...[
+                  if (card.description != null &&
+                      card.description!.isNotEmpty) ...[
                     const SizedBox(height: 4),
                     Text(
                       card.description!,
-                      style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                      style: const TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 12,
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -128,7 +148,12 @@ class BoardDetailCardItem extends StatelessWidget {
                 ],
               ),
             ),
-            if (card.dueDate != null || card.todoItems.isNotEmpty || card.comments.isNotEmpty || card.fileUrls.isNotEmpty || (card.description != null && card.description!.isNotEmpty) || card.members.isNotEmpty)
+            if (card.dueDate != null ||
+                card.todoItems.isNotEmpty ||
+                card.comments.isNotEmpty ||
+                card.fileUrls.isNotEmpty ||
+                (card.description != null && card.description!.isNotEmpty) ||
+                card.members.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
                 child: _buildMeta(),
@@ -147,23 +172,27 @@ class BoardDetailCardItem extends StatelessWidget {
         spacing: 4,
         runSpacing: 4,
         children: card.labels.map((l) {
-            Color color;
-            if (l.colorCode.isNotEmpty) {
-              final buffer = StringBuffer();
-              if (l.colorCode.length == 6 || l.colorCode.length == 7) buffer.write('ff');
-              buffer.write(l.colorCode.replaceFirst('#', ''));
-              color = Color(int.tryParse(buffer.toString(), radix: 16) ?? 0xFF9E9E9E);
-            } else {
-              color = Colors.grey;
+          Color color;
+          if (l.colorCode.isNotEmpty) {
+            final buffer = StringBuffer();
+            if (l.colorCode.length == 6 || l.colorCode.length == 7) {
+              buffer.write('ff');
             }
-            return Container(
-              height: 8,
-              width: 32,
-              decoration: BoxDecoration(
-                color: color,
-                borderRadius: BorderRadius.circular(4),
-              ),
+            buffer.write(l.colorCode.replaceFirst('#', ''));
+            color = Color(
+              int.tryParse(buffer.toString(), radix: 16) ?? 0xFF9E9E9E,
             );
+          } else {
+            color = Colors.grey;
+          }
+          return Container(
+            height: 8,
+            width: 32,
+            decoration: BoxDecoration(
+              color: color,
+              borderRadius: BorderRadius.circular(4),
+            ),
+          );
         }).toList(),
       ),
     );
@@ -181,25 +210,43 @@ class BoardDetailCardItem extends StatelessWidget {
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.schedule, color: AppColors.warning, size: 14),
+                  const Icon(
+                    Icons.schedule,
+                    color: AppColors.warning,
+                    size: 14,
+                  ),
                   const SizedBox(width: 4),
                   Text(
                     '${card.dueDate!.day}/${card.dueDate!.month}',
-                    style: const TextStyle(color: AppColors.warning, fontSize: 12),
+                    style: const TextStyle(
+                      color: AppColors.warning,
+                      fontSize: 12,
+                    ),
                   ),
                 ],
               ),
             if (card.description != null && card.description!.isNotEmpty)
-              const Icon(Icons.subject, color: AppColors.textSecondary, size: 14),
+              const Icon(
+                Icons.subject,
+                color: AppColors.textSecondary,
+                size: 14,
+              ),
             if (card.comments.isNotEmpty)
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.chat_bubble_outline, color: AppColors.textSecondary, size: 14),
+                  const Icon(
+                    Icons.chat_bubble_outline,
+                    color: AppColors.textSecondary,
+                    size: 14,
+                  ),
                   const SizedBox(width: 4),
                   Text(
                     '${card.comments.length}',
-                    style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                    style: const TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 12,
+                    ),
                   ),
                 ],
               ),
@@ -207,11 +254,18 @@ class BoardDetailCardItem extends StatelessWidget {
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.attach_file, color: AppColors.textSecondary, size: 14),
+                  const Icon(
+                    Icons.attach_file,
+                    color: AppColors.textSecondary,
+                    size: 14,
+                  ),
                   const SizedBox(width: 4),
                   Text(
                     '${card.fileUrls.length}',
-                    style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                    style: const TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 12,
+                    ),
                   ),
                 ],
               ),
@@ -219,11 +273,18 @@ class BoardDetailCardItem extends StatelessWidget {
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.check_box_outlined, color: AppColors.textSecondary, size: 14),
+                  const Icon(
+                    Icons.check_box_outlined,
+                    color: AppColors.textSecondary,
+                    size: 14,
+                  ),
                   const SizedBox(width: 4),
                   Text(
                     '${card.todoItems.where((t) => t.isCompleted).length}/${card.todoItems.length}',
-                    style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                    style: const TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 12,
+                    ),
                   ),
                 ],
               ),
@@ -239,7 +300,11 @@ class BoardDetailCardItem extends StatelessWidget {
                   backgroundColor: AppColors.primary.withValues(alpha: 0.2),
                   child: Text(
                     (m.userName.isNotEmpty ? m.userName.substring(0, 1) : 'U'),
-                    style: const TextStyle(fontSize: 10, color: AppColors.primary, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      fontSize: 10,
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               );

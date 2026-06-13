@@ -118,7 +118,11 @@ class VisibilityPickerSheet extends StatelessWidget {
                   ),
                   const SizedBox(width: 12),
                   if (isSelected)
-                    const Icon(Icons.check_rounded, color: Color(0xFF2563EB), size: 20)
+                    const Icon(
+                      Icons.check_rounded,
+                      color: Color(0xFF2563EB),
+                      size: 20,
+                    )
                   else
                     const SizedBox(width: 20),
                 ],

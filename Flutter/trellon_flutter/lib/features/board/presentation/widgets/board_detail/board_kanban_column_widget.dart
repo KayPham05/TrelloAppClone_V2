@@ -48,10 +48,7 @@ class KanbanColumnWidget extends StatelessWidget {
         children: [
           ReorderableDragStartListener(
             index: columnIndex,
-            child: MouseRegion(
-              cursor: SystemMouseCursors.grab,
-              child: header,
-            ),
+            child: MouseRegion(cursor: SystemMouseCursors.grab, child: header),
           ),
           Flexible(
             child: ListView.builder(
@@ -192,7 +189,11 @@ class _ZoomAddCardButton extends StatelessWidget {
         ),
         child: Row(
           children: [
-            const Icon(Icons.add_rounded, size: 18, color: AppColors.onSurfaceVariant),
+            const Icon(
+              Icons.add_rounded,
+              size: 18,
+              color: AppColors.onSurfaceVariant,
+            ),
             const SizedBox(width: 6),
             Text(
               'Thêm thẻ',
@@ -224,7 +225,12 @@ class KanbanColumnHeaderWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       color: Colors.transparent,
-      padding: EdgeInsets.fromLTRB(14 * scale, 14 * scale, 8 * scale, 10 * scale),
+      padding: EdgeInsets.fromLTRB(
+        14 * scale,
+        14 * scale,
+        8 * scale,
+        10 * scale,
+      ),
       child: Row(
         children: [
           Expanded(

@@ -63,8 +63,11 @@ class WorkspaceSection extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 4),
-                const Icon(Icons.chevron_right_rounded,
-                    size: 18, color: Color(0xFF2563EB)),
+                const Icon(
+                  Icons.chevron_right_rounded,
+                  size: 18,
+                  color: Color(0xFF2563EB),
+                ),
               ],
             ),
           ),
@@ -82,9 +85,9 @@ class WorkspaceSection extends StatelessWidget {
             ),
           )
         else
-          ...workspace.boards
-              .cast<dynamic>()
-              .map((b) => BoardListTileFromDynamic(board: b)),
+          ...workspace.boards.cast<dynamic>().map(
+            (b) => BoardListTileFromDynamic(board: b),
+          ),
         const Divider(height: 1, thickness: 1),
       ],
     );

@@ -4,7 +4,6 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../../../core/constants/app_colors.dart';
 import '../../../domain/entities/board_entity.dart';
 
-
 class PersonalBoardTileWidget extends StatelessWidget {
   final BoardEntity board;
   final VoidCallback onTap;
@@ -62,7 +61,11 @@ class PersonalBoardTileWidget extends StatelessWidget {
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right_rounded, color: AppColors.outlineVariant, size: 20),
+            const Icon(
+              Icons.chevron_right_rounded,
+              color: AppColors.outlineVariant,
+              size: 20,
+            ),
           ],
         ),
       ),
@@ -71,9 +74,12 @@ class PersonalBoardTileWidget extends StatelessWidget {
 
   String _visibilityLabel(String visibility) {
     switch (visibility.toLowerCase()) {
-      case 'public': return 'Công khai';
-      case 'workspace': return 'Không gian làm việc';
-      default: return 'Riêng tư';
+      case 'public':
+        return 'Công khai';
+      case 'workspace':
+        return 'Không gian làm việc';
+      default:
+        return 'Riêng tư';
     }
   }
 }
@@ -101,7 +107,10 @@ class _BoardIcon extends StatelessWidget {
 
   Widget _buildColorBox() {
     final color = board.coverColor != null
-        ? Color(int.tryParse('0xFF${board.coverColor!.replaceAll('#', '')}') ?? 0xFF0052CC)
+        ? Color(
+            int.tryParse('0xFF${board.coverColor!.replaceAll('#', '')}') ??
+                0xFF0052CC,
+          )
         : AppColors.primaryContainer;
     return Container(
       width: 66,

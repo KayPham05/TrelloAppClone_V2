@@ -14,8 +14,8 @@ class CardItemWidget extends StatelessWidget {
     final dueStatusColor = CardStatusValues.isOverdue(displayStatus)
         ? Colors.red
         : CardStatusValues.isDueSoon(displayStatus)
-            ? AppColors.warning
-            : AppColors.textSecondary;
+        ? AppColors.warning
+        : AppColors.textSecondary;
 
     return GestureDetector(
       onTap: () => _showCardDetail(context, card),
@@ -26,13 +26,19 @@ class CardItemWidget extends StatelessWidget {
           children: [
             Text(
               card.title,
-              style: const TextStyle(color: AppColors.textPrimary, fontSize: 14),
+              style: const TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: 14,
+              ),
             ),
             if (card.description != null) ...[
               const SizedBox(height: 4),
               Text(
                 card.description!,
-                style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                style: const TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 12,
+                ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -61,8 +67,8 @@ class CardItemWidget extends StatelessWidget {
     final dueStatusColor = CardStatusValues.isOverdue(displayStatus)
         ? Colors.red
         : CardStatusValues.isDueSoon(displayStatus)
-            ? AppColors.warning
-            : AppColors.textSecondary;
+        ? AppColors.warning
+        : AppColors.textSecondary;
 
     showModalBottomSheet(
       context: context,
@@ -79,15 +85,32 @@ class CardItemWidget extends StatelessWidget {
           children: [
             Center(
               child: Container(
-                width: 40, height: 4,
-                decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2)),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppColors.border,
+                  borderRadius: BorderRadius.circular(2),
+                ),
               ),
             ),
             const SizedBox(height: 16),
-            Text(card.title, style: const TextStyle(color: AppColors.textWhite, fontSize: 18, fontWeight: FontWeight.bold)),
+            Text(
+              card.title,
+              style: const TextStyle(
+                color: AppColors.textWhite,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
             if (card.description != null) ...[
               const SizedBox(height: 12),
-              Text(card.description!, style: const TextStyle(color: AppColors.textSecondary, fontSize: 14)),
+              Text(
+                card.description!,
+                style: const TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 14,
+                ),
+              ),
             ],
             const SizedBox(height: 16),
             Row(
@@ -96,7 +119,10 @@ class CardItemWidget extends StatelessWidget {
                 if (card.dueDate != null) ...[
                   const SizedBox(width: 8),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: dueStatusColor.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(6),
@@ -105,7 +131,10 @@ class CardItemWidget extends StatelessWidget {
                       children: [
                         Icon(Icons.schedule, color: dueStatusColor, size: 14),
                         const SizedBox(width: 4),
-                        Text(_formatDate(card.dueDate!), style: TextStyle(color: dueStatusColor, fontSize: 12)),
+                        Text(
+                          _formatDate(card.dueDate!),
+                          style: TextStyle(color: dueStatusColor, fontSize: 12),
+                        ),
                       ],
                     ),
                   ),
@@ -133,7 +162,11 @@ class CardItemWidget extends StatelessWidget {
       ),
       child: Text(
         CardStatusValues.label(normalizedStatus),
-        style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w500),
+        style: TextStyle(
+          color: color,
+          fontSize: 12,
+          fontWeight: FontWeight.w500,
+        ),
       ),
     );
   }

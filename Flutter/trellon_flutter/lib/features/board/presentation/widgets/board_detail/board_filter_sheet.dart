@@ -342,7 +342,7 @@ class _BoardFilterSheetState extends State<BoardFilterSheet> {
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 itemCount: members.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 12),
+                separatorBuilder: (_, _) => const SizedBox(width: 12),
                 itemBuilder: (_, i) {
                   final m = members[i];
                   final selected = filterState.selectedMemberUIds.contains(

@@ -7,10 +7,7 @@ import '../../domain/entities/list_entity.dart';
 class ListMenuBottomSheet extends StatelessWidget {
   final ListEntity list;
 
-  const ListMenuBottomSheet({
-    super.key,
-    required this.list,
-  });
+  const ListMenuBottomSheet({super.key, required this.list});
 
   @override
   Widget build(BuildContext context) {

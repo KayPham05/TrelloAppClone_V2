@@ -36,13 +36,17 @@ class WorkspaceBoardItemWidget extends StatelessWidget {
       borderRadius: BorderRadius.circular(12),
       child: InkWell(
         onTap: () async {
-          await Navigator.pushNamed(context, '/board-detail', arguments: {
-            'boardId': board.id,
-            'boardName': board.name,
-            'backgroundUrl': board.backgroundUrl,
-            'workspaceId': board.workspaceId,
-            'workspaceName': board.workspaceName,
-          });
+          await Navigator.pushNamed(
+            context,
+            '/board-detail',
+            arguments: {
+              'boardId': board.id,
+              'boardName': board.name,
+              'backgroundUrl': board.backgroundUrl,
+              'workspaceId': board.workspaceId,
+              'workspaceName': board.workspaceName,
+            },
+          );
           if (context.mounted) {
             context.read<WorkspaceCubit>().loadWorkspaces();
             final uid = await serviceLocator<UserLocalDataSource>().getUserId();
@@ -66,14 +70,14 @@ class WorkspaceBoardItemWidget extends StatelessWidget {
               ClipRRect(
                 borderRadius: BorderRadius.circular(6),
                 child: board.backgroundUrl != null
-                  ? Image.network(
-                      board.backgroundUrl!,
-                      width: 60,
-                      height: 32,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, _, _) => _buildFallbackColor(color),
-                    )
-                  : _buildFallbackColor(color),
+                    ? Image.network(
+                        board.backgroundUrl!,
+                        width: 60,
+                        height: 32,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, _, _) => _buildFallbackColor(color),
+                      )
+                    : _buildFallbackColor(color),
               ),
               const SizedBox(width: 10),
               // Board name + visibility
@@ -119,17 +123,27 @@ class WorkspaceBoardItemWidget extends StatelessWidget {
                 icon: Icon(
                   isStarred ? Icons.star_rounded : Icons.star_outline_rounded,
                   size: 18,
-                  color: isStarred ? const Color(0xFFF59E0B) : AppColors.outlineVariant,
+                  color: isStarred
+                      ? const Color(0xFFF59E0B)
+                      : AppColors.outlineVariant,
                 ),
               ),
               // Board actions menu
-              if (onRename != null || onDelete != null || onToggleVisibility != null)
+              if (onRename != null ||
+                  onDelete != null ||
+                  onToggleVisibility != null)
                 PopupMenuButton<String>(
                   onSelected: (value) {
                     switch (value) {
-                      case 'rename':        onRename?.call();          break;
-                      case 'visibility':    onToggleVisibility?.call(); break;
-                      case 'delete':        onDelete?.call();           break;
+                      case 'rename':
+                        onRename?.call();
+                        break;
+                      case 'visibility':
+                        onToggleVisibility?.call();
+                        break;
+                      case 'delete':
+                        onDelete?.call();
+                        break;
                     }
                   },
                   itemBuilder: (_) => [
@@ -138,7 +152,10 @@ class WorkspaceBoardItemWidget extends StatelessWidget {
                         value: 'rename',
                         child: ListTile(
                           dense: true,
-                          leading: Icon(Icons.drive_file_rename_outline_rounded, size: 18),
+                          leading: Icon(
+                            Icons.drive_file_rename_outline_rounded,
+                            size: 18,
+                          ),
                           title: Text('Đổi tên'),
                           contentPadding: EdgeInsets.zero,
                         ),
@@ -158,10 +175,15 @@ class WorkspaceBoardItemWidget extends StatelessWidget {
                         value: 'delete',
                         child: ListTile(
                           dense: true,
-                          leading: Icon(Icons.delete_outline_rounded,
-                              size: 18, color: Colors.red.shade400),
-                          title: Text('Xóa board',
-                              style: TextStyle(color: Colors.red.shade400)),
+                          leading: Icon(
+                            Icons.delete_outline_rounded,
+                            size: 18,
+                            color: Colors.red.shade400,
+                          ),
+                          title: Text(
+                            'Xóa board',
+                            style: TextStyle(color: Colors.red.shade400),
+                          ),
                           contentPadding: EdgeInsets.zero,
                         ),
                       ),
@@ -172,7 +194,8 @@ class WorkspaceBoardItemWidget extends StatelessWidget {
                     color: AppColors.onSurfaceVariant,
                   ),
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10)),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
             ],
           ),

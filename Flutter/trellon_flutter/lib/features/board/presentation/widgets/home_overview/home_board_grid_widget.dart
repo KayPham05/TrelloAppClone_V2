@@ -48,13 +48,17 @@ class HomeBoardCardWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = ColorUtils.hexToColor(board.coverColor ?? '#0079BF');
-    
+
     return GestureDetector(
-      onTap: () => Navigator.pushNamed(context, '/board-detail', arguments: {
-        'boardId': board.id,
-        'boardName': board.name,
-        'backgroundUrl': board.backgroundUrl,
-      }),
+      onTap: () => Navigator.pushNamed(
+        context,
+        '/board-detail',
+        arguments: {
+          'boardId': board.id,
+          'boardName': board.name,
+          'backgroundUrl': board.backgroundUrl,
+        },
+      ),
       child: AnimatedScale(
         scale: 1.0,
         duration: const Duration(milliseconds: 150),
@@ -110,8 +114,12 @@ class HomeBoardCardWidget extends StatelessWidget {
                     ),
                     const SizedBox(width: 4),
                     Icon(
-                      Icons.star_outline_rounded,
-                      color: AppColors.onSurfaceVariant,
+                      board.isStarred
+                          ? Icons.star_rounded
+                          : Icons.star_outline_rounded,
+                      color: board.isStarred
+                          ? const Color(0xFFF59E0B)
+                          : AppColors.onSurfaceVariant,
                       size: 18,
                     ),
                   ],

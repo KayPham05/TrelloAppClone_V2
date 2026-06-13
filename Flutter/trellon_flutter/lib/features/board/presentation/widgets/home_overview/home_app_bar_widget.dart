@@ -79,7 +79,10 @@ class _HomeAppBarWidgetState extends State<HomeAppBarWidget> {
               height: 36,
               child: TextField(
                 controller: _searchController,
-                style: GoogleFonts.inter(fontSize: 13, color: AppColors.onSurface),
+                style: GoogleFonts.inter(
+                  fontSize: 13,
+                  color: AppColors.onSurface,
+                ),
                 decoration: InputDecoration(
                   hintText: 'Tìm kiếm bảng',
                   hintStyle: GoogleFonts.inter(

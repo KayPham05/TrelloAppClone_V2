@@ -737,6 +737,11 @@ class _NotificationListTabState extends State<NotificationListTab> {
         const Color(0xFF7C3AED),
         const Color(0xFFF3E8FF),
       ),
+      NotificationTypeEnum.workspaceRenamed => (
+        Icons.groups_rounded,
+        const Color(0xFF0F766E),
+        const Color(0xFFCCFBF1),
+      ),
       _ => (
         Icons.notifications_rounded,
         AppColors.primary,

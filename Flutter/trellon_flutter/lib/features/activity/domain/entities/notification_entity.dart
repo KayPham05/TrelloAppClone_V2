@@ -20,7 +20,8 @@ enum NotificationTypeEnum {
   cardArchived(16),
   attachmentAdded(17),
   attachmentRemoved(18),
-  cardRenamed(19);
+  cardRenamed(19),
+  workspaceRenamed(20);
 
   final int value;
   const NotificationTypeEnum(this.value);

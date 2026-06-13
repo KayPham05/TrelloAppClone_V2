@@ -5,20 +5,27 @@ import '../../domain/usecases/create_workspace_usecase.dart';
 import '../../domain/usecases/update_workspace_usecase.dart';
 import '../../domain/usecases/delete_workspace_usecase.dart';
 import '../../domain/usecases/add_workspace_member_usecase.dart';
+import '../../domain/usecases/update_workspace_board_visibility_usecase.dart';
 import '../../../../core/data_sources/user_local_data_source.dart';
 import '../../../board/domain/usecases/create_board_usecase.dart';
 import '../../../board/domain/usecases/delete_board_usecase.dart';
+import '../../../board/domain/usecases/set_board_starred_usecase.dart';
+import '../../../board/domain/usecases/update_board_usecase.dart';
 import '../../../../core/services/authorization_service.dart';
+import '../../../member_invite/domain/entities/invite_batch_result.dart';
 
 abstract class WorkspaceState {}
 
 class WorkspaceInitial extends WorkspaceState {}
+
 class WorkspaceLoading extends WorkspaceState {}
+
 class WorkspaceLoaded extends WorkspaceState {
   final List<WorkspaceEntity> personal;
   final List<WorkspaceEntity> team;
   WorkspaceLoaded({required this.personal, required this.team});
 }
+
 class WorkspaceError extends WorkspaceState {
   final String message;
   WorkspaceError(this.message);
@@ -30,8 +37,12 @@ class WorkspaceCubit extends Cubit<WorkspaceState> {
   final UpdateWorkspaceUseCase updateWorkspaceUseCase;
   final DeleteWorkspaceUseCase deleteWorkspaceUseCase;
   final AddWorkspaceMemberUseCase addWorkspaceMemberUseCase;
+  final UpdateWorkspaceBoardVisibilityUseCase
+  updateWorkspaceBoardVisibilityUseCase;
   final CreateBoardUseCase createBoardUseCase;
   final DeleteBoardUseCase deleteBoardUseCase;
+  final SetBoardStarredUseCase setBoardStarredUseCase;
+  final UpdateBoardUseCase updateBoardUseCase;
   final UserLocalDataSource userLocalDataSource;
 
   WorkspaceCubit({
@@ -40,8 +51,11 @@ class WorkspaceCubit extends Cubit<WorkspaceState> {
     required this.updateWorkspaceUseCase,
     required this.deleteWorkspaceUseCase,
     required this.addWorkspaceMemberUseCase,
+    required this.updateWorkspaceBoardVisibilityUseCase,
     required this.createBoardUseCase,
     required this.deleteBoardUseCase,
+    required this.setBoardStarredUseCase,
+    required this.updateBoardUseCase,
     required this.userLocalDataSource,
   }) : super(WorkspaceInitial());
 
@@ -50,18 +64,28 @@ class WorkspaceCubit extends Cubit<WorkspaceState> {
     try {
       final userUid = await userLocalDataSource.getUserId() ?? '';
       final workspaces = await getWorkspacesUseCase(userUid);
-      
-      final activeWorkspaces = workspaces.where((w) => w.status != 'Deleted').toList();
-      final personal = activeWorkspaces.where((w) => w.type == WorkspaceType.personal).toList();
-      final team = activeWorkspaces.where((w) => w.type == WorkspaceType.team).toList();
-      
+
+      final activeWorkspaces = workspaces
+          .where((w) => w.status != 'Deleted')
+          .toList();
+      final personal = activeWorkspaces
+          .where((w) => w.type == WorkspaceType.personal)
+          .toList();
+      final team = activeWorkspaces
+          .where((w) => w.type == WorkspaceType.team)
+          .toList();
+
       emit(WorkspaceLoaded(personal: personal, team: team));
     } catch (e) {
       emit(WorkspaceError(e.toString()));
     }
   }
 
-  Future<void> createWorkspace(String name, String? description, WorkspaceType type) async {
+  Future<void> createWorkspace(
+    String name,
+    String? description,
+    WorkspaceType type,
+  ) async {
     try {
       final userUid = await userLocalDataSource.getUserId() ?? '';
       await createWorkspaceUseCase(
@@ -76,10 +100,15 @@ class WorkspaceCubit extends Cubit<WorkspaceState> {
     }
   }
 
-  Future<void> updateWorkspace(String id, String name, String? description, WorkspaceType type) async {
+  Future<bool> updateWorkspace(
+    String id,
+    String name,
+    String? description,
+    WorkspaceType type,
+  ) async {
     try {
       final userUid = await userLocalDataSource.getUserId() ?? '';
-      
+
       // Permission check
       final currentState = state;
       if (currentState is WorkspaceLoaded) {
@@ -88,8 +117,12 @@ class WorkspaceCubit extends Cubit<WorkspaceState> {
         if (workspace != null) {
           final role = workspace.getUserRole(userUid);
           if (!AuthorizationService().canManageWorkspace(role)) {
-            if (!isClosed) emit(WorkspaceError('Bạn không có quyền chỉnh sửa không gian này.'));
-            return;
+            if (!isClosed) {
+              emit(
+                WorkspaceError('Bạn không có quyền chỉnh sửa không gian này.'),
+              );
+            }
+            return false;
           }
         }
       }
@@ -102,8 +135,10 @@ class WorkspaceCubit extends Cubit<WorkspaceState> {
         userUId: userUid,
       );
       if (!isClosed) await loadWorkspaces();
+      return true;
     } catch (e) {
-      if (!isClosed) emit(WorkspaceError(e.toString()));
+      if (!isClosed) emit(WorkspaceError(_friendlyWorkspaceError(e)));
+      return false;
     }
   }
 
@@ -119,7 +154,9 @@ class WorkspaceCubit extends Cubit<WorkspaceState> {
         if (workspace != null) {
           final role = workspace.getUserRole(userUid);
           if (!AuthorizationService().canManageWorkspace(role)) {
-            if (!isClosed) emit(WorkspaceError('Bạn không có quyền xóa không gian này.'));
+            if (!isClosed) {
+              emit(WorkspaceError('Bạn không có quyền xóa không gian này.'));
+            }
             return;
           }
         }
@@ -132,21 +169,70 @@ class WorkspaceCubit extends Cubit<WorkspaceState> {
     }
   }
 
-  Future<void> addMember(String workspaceId, String email) async {
+  Future<bool> addMember(String workspaceId, String userIdentifier) async {
     try {
       final userUid = await userLocalDataSource.getUserId() ?? '';
       await addWorkspaceMemberUseCase(
         workspaceId: workspaceId,
-        email: email,
+        userId: userIdentifier,
         role: 'Member',
         requesterUId: userUid,
       );
+      return true;
     } catch (e) {
-      emit(WorkspaceError(e.toString()));
+      if (!isClosed) emit(WorkspaceError(_friendlyWorkspaceError(e)));
+      return false;
     }
   }
 
-  Future<void> createBoard(String workspaceId, String name, String? backgroundUrl) async {
+  Future<InviteBatchResult> addMembersByUserIds({
+    required String workspaceId,
+    required List<String> userIds,
+  }) async {
+    var success = 0;
+    var failure = 0;
+    final requesterUId = await userLocalDataSource.getUserId() ?? '';
+
+    for (final userId in userIds) {
+      try {
+        await addWorkspaceMemberUseCase(
+          workspaceId: workspaceId,
+          userId: userId,
+          role: 'Member',
+          requesterUId: requesterUId,
+        );
+        success++;
+      } catch (_) {
+        failure++;
+      }
+    }
+
+    if (success > 0 && !isClosed) {
+      await loadWorkspaces();
+    }
+
+    return InviteBatchResult(successCount: success, failureCount: failure);
+  }
+
+  String _friendlyWorkspaceError(Object error) {
+    final message = error.toString();
+    if (message.contains('403')) {
+      return 'Bạn không có quyền thực hiện thao tác này.';
+    }
+    if (message.contains('404')) {
+      return 'Không tìm thấy không gian làm việc hoặc người dùng.';
+    }
+    if (message.contains('Failed to add workspace member')) {
+      return 'Không thể mời thành viên vào không gian làm việc.';
+    }
+    return 'Không thể thực hiện thao tác với không gian làm việc.';
+  }
+
+  Future<void> createBoard(
+    String workspaceId,
+    String name,
+    String? backgroundUrl,
+  ) async {
     try {
       final userUid = await userLocalDataSource.getUserId() ?? '';
       await createBoardUseCase(
@@ -168,7 +254,74 @@ class WorkspaceCubit extends Cubit<WorkspaceState> {
       // Let SignalR handle the UI update or manually refresh:
       await loadWorkspaces();
     } catch (e) {
-      emit(WorkspaceError('Không thể xóa bảng. Cần quyền Owner. ${e.toString()}'));
+      emit(
+        WorkspaceError('Không thể xóa bảng. Cần quyền Owner. ${e.toString()}'),
+      );
+    }
+  }
+
+  Future<bool> updateBoardVisibility({
+    required String boardId,
+    required String boardName,
+    required String workspaceId,
+    required String visibility,
+  }) async {
+    try {
+      final userUid = await userLocalDataSource.getUserId() ?? '';
+      await updateWorkspaceBoardVisibilityUseCase(
+        boardId: boardId,
+        boardName: boardName,
+        workspaceId: workspaceId,
+        visibility: visibility,
+        userUId: userUid,
+      );
+      await loadWorkspaces();
+      return true;
+    } catch (e) {
+      if (!isClosed) emit(WorkspaceError(_friendlyWorkspaceError(e)));
+      return false;
+    }
+  }
+
+  Future<bool> renameBoard({
+    required String boardId,
+    required String boardName,
+    required String workspaceId,
+    required String visibility,
+  }) async {
+    try {
+      final userUid = await userLocalDataSource.getUserId() ?? '';
+      await updateBoardUseCase(
+        boardId: boardId,
+        boardName: boardName.trim(),
+        workspaceUId: workspaceId,
+        visibility: visibility,
+        userUId: userUid,
+      );
+      await loadWorkspaces();
+      return true;
+    } catch (e) {
+      if (!isClosed) emit(WorkspaceError(_friendlyWorkspaceError(e)));
+      return false;
+    }
+  }
+
+  Future<bool> setBoardStarred({
+    required String boardId,
+    required bool isStarred,
+  }) async {
+    try {
+      final userUid = await userLocalDataSource.getUserId() ?? '';
+      await setBoardStarredUseCase(
+        userUid: userUid,
+        boardId: boardId,
+        isStarred: isStarred,
+      );
+      await loadWorkspaces();
+      return true;
+    } catch (e) {
+      if (!isClosed) emit(WorkspaceError(_friendlyWorkspaceError(e)));
+      return false;
     }
   }
 
@@ -206,8 +359,12 @@ class WorkspaceCubit extends Cubit<WorkspaceState> {
   void applyRealtimeWorkspaceDeleted(String workspaceId) {
     final currentState = state;
     if (currentState is WorkspaceLoaded) {
-      final updatedPersonal = currentState.personal.where((w) => w.id != workspaceId).toList();
-      final updatedTeam = currentState.team.where((w) => w.id != workspaceId).toList();
+      final updatedPersonal = currentState.personal
+          .where((w) => w.id != workspaceId)
+          .toList();
+      final updatedTeam = currentState.team
+          .where((w) => w.id != workspaceId)
+          .toList();
       emit(WorkspaceLoaded(personal: updatedPersonal, team: updatedTeam));
     }
   }

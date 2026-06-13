@@ -79,15 +79,25 @@ class _AddCardFormWidgetState extends State<AddCardFormWidget> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
                       minimumSize: Size.zero,
                     ),
-                    child: const Text('Thêm thẻ', style: TextStyle(fontSize: 13)),
+                    child: const Text(
+                      'Thêm thẻ',
+                      style: TextStyle(fontSize: 13),
+                    ),
                   ),
                 const SizedBox(width: 8),
                 IconButton(
                   onPressed: widget.onCancel,
-                  icon: const Icon(Icons.close, size: 18, color: AppColors.textSecondary),
+                  icon: const Icon(
+                    Icons.close,
+                    size: 18,
+                    color: AppColors.textSecondary,
+                  ),
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
                 ),

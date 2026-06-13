@@ -36,7 +36,11 @@ class ListColumnWidget extends StatelessWidget {
                     ),
                   ),
                 ),
-                const Icon(Icons.more_horiz, color: AppColors.textSecondary, size: 20),
+                const Icon(
+                  Icons.more_horiz,
+                  color: AppColors.textSecondary,
+                  size: 20,
+                ),
               ],
             ),
           ),
@@ -57,8 +61,10 @@ class ListColumnWidget extends StatelessWidget {
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
                     itemCount: list.cards.length,
-                    separatorBuilder: (_, _) => Container(height: 0.5, color: AppColors.border),
-                    itemBuilder: (ctx, i) => CardItemWidget(card: list.cards[i]),
+                    separatorBuilder: (_, _) =>
+                        Container(height: 0.5, color: AppColors.border),
+                    itemBuilder: (ctx, i) =>
+                        CardItemWidget(card: list.cards[i]),
                   ),
                 // Add card button
                 InkWell(
@@ -67,9 +73,19 @@ class ListColumnWidget extends StatelessWidget {
                     padding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                     child: Row(
                       children: [
-                        Icon(Icons.add, color: AppColors.textSecondary, size: 18),
+                        Icon(
+                          Icons.add,
+                          color: AppColors.textSecondary,
+                          size: 18,
+                        ),
                         SizedBox(width: 6),
-                        Text('Thêm thẻ', style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+                        Text(
+                          'Thêm thẻ',
+                          style: TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 13,
+                          ),
+                        ),
                       ],
                     ),
                   ),

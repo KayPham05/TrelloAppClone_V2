@@ -65,8 +65,6 @@ class _BoardArchiveSheetState extends State<BoardArchiveSheet>
     });
   }
 
-
-
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -173,10 +171,11 @@ class _BoardArchiveSheetState extends State<BoardArchiveSheet>
                               boardId: widget.boardId,
                               scale: 1.0,
                               onTap: () async {
-                                
                                 String? boardName;
                                 String? boardBackgroundUrl;
-                                final state = context.read<BoardDetailCubit>().state;
+                                final state = context
+                                    .read<BoardDetailCubit>()
+                                    .state;
                                 if (state is BoardDetailLoaded) {
                                   boardName = state.boardName;
                                   boardBackgroundUrl = state.backgroundUrl;

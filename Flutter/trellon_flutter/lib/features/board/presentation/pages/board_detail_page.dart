@@ -341,6 +341,7 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
                                       child: BoardMenuSheet(
                                         boardId: boardId,
                                         boardName: bName,
+                                        workspaceId: loadedState?.workspaceId,
                                       ),
                                     ),
                                   );
@@ -397,9 +398,17 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
                 // No change — keep existing filter
               } else {
                 // Check if the result is a full-clear (all cards == original)
-                final totalOriginal = lists.fold<int>(0, (s, l) => s + l.cards.length);
-                final totalResult = result.fold<int>(0, (s, l) => s + l.cards.length);
-                _filteredLists = (totalResult == totalOriginal && result.length == lists.length)
+                final totalOriginal = lists.fold<int>(
+                  0,
+                  (s, l) => s + l.cards.length,
+                );
+                final totalResult = result.fold<int>(
+                  0,
+                  (s, l) => s + l.cards.length,
+                );
+                _filteredLists =
+                    (totalResult == totalOriginal &&
+                        result.length == lists.length)
                     ? null
                     : result;
               }
@@ -778,9 +787,8 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
           },
         ),
       ),
-      onReorder: (oldIndex, newIndex) {
-        // ReorderableListView calls onReorder with newIndex adjusted
-        final targetIdx = newIndex > oldIndex ? newIndex - 1 : newIndex;
+      onReorderItem: (oldIndex, newIndex) {
+        final targetIdx = newIndex;
         final list = listsToRender[oldIndex];
 
         setState(() {
