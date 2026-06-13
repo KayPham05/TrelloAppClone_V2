@@ -237,5 +237,63 @@
       <li><code>flutter analyze lib\features\board\presentation\widgets\board_list\recent_boards_section.dart test\recent_boards_section_animation_test.dart</code>: no issues found.</li>
     </ul>
   </div>
+  <div class="entry">
+    <div class="timestamp">2026-06-13 23:05 Asia/Bangkok - Comment feature implementation start</div>
+    <h2>Design decisions</h2>
+    <ul>
+      <li>Implementing the current <code>Docs/Plans/Comment Plan.md</code> v3 design, which uses a dedicated <code>CommentAttachment</code> table instead of adding comment attachment fields to existing card-level <code>FileUrl</code>.</li>
+      <li>Working in the existing <code>Email_Noti</code> checkout because the workspace already contains user edits and no native worktree tool is available in this harness.</li>
+      <li>Comment attachment upload will reuse the existing <code>ICloudinaryService.UploadFileAsync</code> entry point from card attachments, with persistence handled by <code>CommentService</code>.</li>
+    </ul>
+    <h2>Deviations</h2>
+    <ul>
+      <li>No intentional deviations yet. Any future departure from the plan will be recorded here before or alongside the code change.</li>
+    </ul>
+    <h2>Tradeoffs</h2>
+    <ul>
+      <li>Option A adds a new table and avoids overloading <code>FileUrls</code>, at the cost of parallel attachment mapping code for comments.</li>
+    </ul>
+    <h2>Open questions</h2>
+    <ul>
+      <li>Plan v3 leaves final attachment preview behavior open; implementation will start with compact file chips and links unless a richer preview is already easy to reuse.</li>
+    </ul>
+  </div>
+  <div class="entry">
+    <div class="timestamp">2026-06-13 23:55 Asia/Bangkok - Comment feature implementation checkpoint</div>
+    <h2>Design decisions</h2>
+    <ul>
+      <li>Comment notifications now create <code>Mention</code> notifications for tagged board/card members and <code>Comment</code> notifications for assigned card members, excluding the commenter.</li>
+      <li>Users can tag by <code>@username</code>, email prefix, or full <code>@email</code>, including plus-address emails such as <code>@member+qa@example.com</code>.</li>
+      <li>Flutter uses the board member list for mention suggestions when available, falling back to assigned card members if the board member list has not been loaded.</li>
+      <li>Comment attachments are uploaded after the comment is created, then attached to the same comment in local state.</li>
+      <li>Edit/delete endpoints only update or remove the comment and broadcast the card detail realtime event; they do not call notification creation.</li>
+    </ul>
+    <h2>Deviations</h2>
+    <ul>
+      <li>Attachment UI currently renders compact file chips instead of a rich preview gallery. This keeps the first implementation generic for all file types and avoids duplicating the card attachment image editor flow.</li>
+      <li>Inbox-card comment attachments/edit/delete are disabled from the card detail UI because the implemented backend endpoints target board-card comments. Existing inbox comment creation remains unchanged.</li>
+      <li>A pre-existing ignored migration named <code>20260613152714_AddCommentAttachmentSupport</code> was left untouched because it appears to create a broad schema baseline. The source-controlled migration for this feature is <code>20260613154422_AddCommentAttachment</code>.</li>
+    </ul>
+    <h2>Tradeoffs</h2>
+    <ul>
+      <li>Uploading comment files after comment creation avoids adding a mixed multipart create-comment endpoint, but a failed file upload can leave the text comment created without some attachments.</li>
+      <li>Using a separate <code>CommentAttachment</code> table keeps comment files isolated from card-level attachments, but adds parallel DTO/model mapping on both backend and Flutter.</li>
+    </ul>
+    <h2>Open questions</h2>
+    <ul>
+      <li>Do you want edit-comment mode to reuse the full mention suggestion bottom sheet, or is the current inline edit enough?</li>
+      <li>Should comment attachment chips open the uploaded URL in-app/browser when tapped?</li>
+      <li>Should inbox comments support the same edit/delete/attachment behavior in a later backend pass?</li>
+    </ul>
+    <h2>Verification Results</h2>
+    <ul>
+      <li><code>dotnet build C#\TodoAppAPI\TodoAppAPI.csproj</code>: passed, 0 warnings, 0 errors.</li>
+      <li><code>dotnet test C#\TodoAppAPI.Tests\TodoAppAPI.Tests.csproj</code>: passed 115/115.</li>
+      <li><code>flutter test</code>: passed 129/129.</li>
+      <li><code>flutter test test/features/card/presentation/widgets/comment_mention_helper_test.dart</code>: passed 5/5.</li>
+      <li><code>flutter analyze lib/features/card test/features/card/presentation/widgets/comment_mention_helper_test.dart lib/init_dependencies.dart</code>: no issues found.</li>
+      <li><code>flutter analyze</code>: exits 1 because of 15 existing warning/info items outside this feature, including deprecated encrypted preferences, <code>print</code> usage in <code>main.dart</code>, and an unused import in <code>main_shell.dart</code>.</li>
+    </ul>
+  </div>
 </body>
 </html>
