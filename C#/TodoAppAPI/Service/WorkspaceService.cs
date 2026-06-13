@@ -148,11 +148,11 @@ namespace TodoAppAPI.Service
             var workspaces = await _context.Workspaces
                 .AsNoTracking()
                 .Include(w => w.Owner)
-                .Include(w => w.Members)
+                .Include(w => w.Members!)
                     .ThenInclude(m => m.User)
-                .Include(w => w.Boards)
+                .Include(w => w.Boards!)
                     .ThenInclude(b => b.Members)
-                .Where(w => (w.OwnerUId == userId || w.Members.Any(m => m.UserUId == userId)) && w.Status == "Active")
+                .Where(w => (w.OwnerUId == userId || w.Members!.Any(m => m.UserUId == userId)) && w.Status == "Active")
                 .ToListAsync();
 
             return workspaces.Select(w =>
@@ -178,13 +178,13 @@ namespace TodoAppAPI.Service
                     Description = w.Description,
                     CreatedAt = w.CreatedAt,
                     Status = w.Status,
-                    OwnerName = w.Owner.UserName,
+                    OwnerName = w.Owner?.UserName ?? string.Empty,
                     OwnerUId = w.OwnerUId,
                     Type = "team", // Default to team for these workspaces
-                    Members = w.Members.Select(m => new MemberDTO
+                    Members = w.Members!.Select(m => new MemberDTO
                     {
                         UserUId = m.UserUId,
-                        UserName = m.User.UserName,
+                        UserName = m.User?.UserName ?? string.Empty,
                         Role = m.Role
                     }).ToList(),
                     Boards = visibleBoards.Select(b => new BoardDTO

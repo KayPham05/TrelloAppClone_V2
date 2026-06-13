@@ -224,9 +224,9 @@ namespace TodoAppAPI.Services
                 .Select(bm => new MemberDTO
                 {
                     UserUId   = bm.UserUId,
-                    UserName  = bm.User.UserName,
-                    Email     = bm.User.Email,
-                    AvatarUrl = bm.User.AvatarUrl,
+                    UserName  = bm.User != null ? bm.User.UserName : string.Empty,
+                    Email     = bm.User != null ? bm.User.Email : string.Empty,
+                    AvatarUrl = bm.User != null ? bm.User.AvatarUrl : null,
                     Role      = bm.BoardRole
                 })
                 .ToListAsync();
