@@ -103,20 +103,75 @@ namespace TodoAppAPI.Service
             if (!await _authService.CanManageWorkspaceAsync(workspaceId, requesterUId))
                 return false;
 
+            var oldName = workspace.Name;
             workspace.Name = name;
             workspace.Description = description;
-            
 
             await _context.SaveChangesAsync();
+
+            if (!string.Equals(oldName, name, StringComparison.Ordinal))
+            {
+                var actorName = await GetUserDisplayNameAsync(requesterUId);
+                var recipients = workspace.Members?
+                    .Where(m => m.UserUId != requesterUId)
+                    .Select(m => m.UserUId)
+                    .Distinct()
+                    .ToList() ?? new List<string>();
+
+                foreach (var recipientId in recipients)
+                {
+                    await _notificationService.TryCreateInternalAsync(new NotificationDTO
+                    {
+                        RecipientId = recipientId,
+                        ActorId = requesterUId,
+                        Type = NotificationType.WorkspaceRenamed,
+                        Title = "Tên không gian làm việc đã thay đổi",
+                        Message = $"{actorName} đã đổi tên không gian làm việc {oldName} thành {name}.",
+                        WorkspaceId = workspaceId,
+                        Link = $"/workspace-menu/{workspaceId}"
+                    }, "workspace rename");
+                }
+            }
+
             return true;
         }
 
 
         public async Task<List<WorkspaceDTO>> GetAllWorkspaces(string userId)
         {
-            return await _context.Workspaces
+            var starredBoardIds = await _context.UserStarredBoards
+                .AsNoTracking()
+                .Where(s => s.UserUId == userId)
+                .Select(s => s.BoardUId)
+                .ToHashSetAsync();
+
+            var workspaces = await _context.Workspaces
+                .AsNoTracking()
+                .Include(w => w.Owner)
+                .Include(w => w.Members)
+                    .ThenInclude(m => m.User)
+                .Include(w => w.Boards)
+                    .ThenInclude(b => b.Members)
                 .Where(w => (w.OwnerUId == userId || w.Members.Any(m => m.UserUId == userId)) && w.Status == "Active")
-                .Select(w => new WorkspaceDTO
+                .ToListAsync();
+
+            return workspaces.Select(w =>
+                {
+                    var workspaceRole = w.OwnerUId == userId
+                        ? RoleConstants.WorkspaceOwner
+                        : w.Members?.FirstOrDefault(m => m.UserUId == userId)?.Role;
+
+                    var canManageWorkspace =
+                        workspaceRole == RoleConstants.WorkspaceOwner ||
+                        workspaceRole == RoleConstants.WorkspaceAdmin;
+
+                    var visibleBoards = canManageWorkspace
+                        ? w.Boards ?? new List<Board>()
+                        : (w.Boards ?? new List<Board>())
+                            .Where(b => b.Visibility != "Private" || (b.Members?.Any(m => m.UserUId == userId) ?? false))
+                            .ToList();
+
+                    return new WorkspaceDTO
                 {
                     WorkspaceUId = w.WorkspaceUId,
                     Name = w.Name,
@@ -132,7 +187,7 @@ namespace TodoAppAPI.Service
                         UserName = m.User.UserName,
                         Role = m.Role
                     }).ToList(),
-                    Boards = w.Boards.Select(b => new BoardDTO
+                    Boards = visibleBoards.Select(b => new BoardDTO
                     {
                         BoardUId = b.BoardUId,
                         BoardName = b.BoardName,
@@ -142,10 +197,12 @@ namespace TodoAppAPI.Service
                         BackgroundUrl = b.BackgroundUrl,
                         Status = b.Status,
                         CreatedAt = b.CreatedAt,
-                        UserUId = b.UserUId
+                        UserUId = b.UserUId,
+                        IsStarred = starredBoardIds.Contains(b.BoardUId)
                     }).ToList()
+                };
                 })
-                .ToListAsync();
+                .ToList();
         }
 
         public async Task<Workspace?> GetWorkspaceByIdAsync(string workspaceId)
@@ -182,6 +239,9 @@ namespace TodoAppAPI.Service
         {
             try
             {
+                if (string.IsNullOrWhiteSpace(userId))
+                    return false;
+
                 bool exists = await _context.Workspaces
                     .AnyAsync(w => w.WorkspaceUId == workspaceId);
                 if (!exists)
@@ -190,13 +250,16 @@ namespace TodoAppAPI.Service
                 if (!await _authService.CanManageWorkspaceMembersAsync(workspaceId, requesterUId))
                     return false;
 
+                var userIdentifier = userId.Trim();
+                var normalizedEmail = userIdentifier.ToLowerInvariant();
                 var user = await _context.Users
-                    .FirstOrDefaultAsync(u => u.UserUId == userId);
+                    .FirstOrDefaultAsync(u => u.UserUId == userIdentifier || (u.Email != null && u.Email.ToLower() == normalizedEmail));
                 if (user == null)
                     return false;
 
+                var targetUserUId = user.UserUId;
                 var existingMember = await _context.WorkspaceMembers
-                    .FirstOrDefaultAsync(m => m.WorkspaceUId == workspaceId && m.UserUId == userId);
+                    .FirstOrDefaultAsync(m => m.WorkspaceUId == workspaceId && m.UserUId == targetUserUId);
                 if (existingMember != null)
                     return false;
 
@@ -204,7 +267,7 @@ namespace TodoAppAPI.Service
                 {
                     WorkspaceMemberUId = Guid.NewGuid().ToString(),
                     WorkspaceUId = workspaceId,
-                    UserUId = userId,
+                    UserUId = targetUserUId,
                     Role = role, 
                     JoinedAt = DateTime.UtcNow
                 };
@@ -212,16 +275,16 @@ namespace TodoAppAPI.Service
                 _context.WorkspaceMembers.Add(newMember);
                 await _context.SaveChangesAsync();
 
-                await _authService.LogPermissionChangeAsync(workspaceId, "Workspace", userId, requesterUId, "InviteMember", null, role);
+                await _authService.LogPermissionChangeAsync(workspaceId, "Workspace", targetUserUId, requesterUId, "InviteMember", null, role);
 
-                if (userId != requesterUId)
+                if (targetUserUId != requesterUId)
                 {
                     var workspace = await _context.Workspaces.AsNoTracking().FirstOrDefaultAsync(w => w.WorkspaceUId == workspaceId);
                     var actorName = await GetUserDisplayNameAsync(requesterUId);
                     var workspaceName = workspace?.Name ?? workspaceId;
                     await _notificationService.TryCreateInternalAsync(new NotificationDTO
                     {
-                        RecipientId = userId,
+                        RecipientId = targetUserUId,
                         ActorId = requesterUId,
                         Type = NotificationType.WorkspaceMemberAdded,
                         Title = "Bạn đã được thêm vào không gian làm việc",
@@ -350,22 +413,39 @@ namespace TodoAppAPI.Service
 
         public async Task<List<Board>> GetWorkspaceBoards(string workspaceId, string userId)
         {
-            var isWorkspaceMember = await IsUserWorkspaceMember(workspaceId, userId);
+            var workspace = await _context.Workspaces
+                .AsNoTracking()
+                .FirstOrDefaultAsync(w => w.WorkspaceUId == workspaceId && w.Status != "Deleted");
 
-            if (!isWorkspaceMember)
+            if (workspace == null)
+                return new List<Board>();
+
+            var workspaceRole = await _context.WorkspaceMembers
+                .AsNoTracking()
+                .Where(m => m.WorkspaceUId == workspaceId && m.UserUId == userId)
+                .Select(m => m.Role)
+                .FirstOrDefaultAsync();
+
+            var canManageWorkspace =
+                workspace.OwnerUId == userId ||
+                workspaceRole == RoleConstants.WorkspaceOwner ||
+                workspaceRole == RoleConstants.WorkspaceAdmin;
+
+            if (canManageWorkspace)
             {
-
                 return await _context.Boards
-                    .Where(b => b.WorkspaceUId == workspaceId &&
-                               b.Members.Any(m => m.UserUId == userId))
+                    .Where(b => b.WorkspaceUId == workspaceId)
                     .Include(b => b.Lists)
+                    .OrderBy(b => b.BoardName)
                     .ToListAsync();
             }
 
+            if (workspaceRole == null)
+                return new List<Board>();
+
             return await _context.Boards
                 .Where(b => b.WorkspaceUId == workspaceId &&
-                           (b.Visibility != "Private" ||
-                            b.Members.Any(m => m.UserUId == userId)))
+                           (b.Visibility != "Private" || b.Members.Any(m => m.UserUId == userId)))
                 .Include(b => b.Lists)
                 .OrderBy(b => b.BoardName)
                 .ToListAsync();

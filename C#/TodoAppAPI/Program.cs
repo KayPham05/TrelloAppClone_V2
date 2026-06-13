@@ -28,6 +28,7 @@ builder.Services.AddScoped<ICardsService, CardsService>();
 builder.Services.AddScoped<IUserInboxCard, UserInboxCardService>();
 builder.Services.AddScoped<IWorkspaceService, WorkspaceService>();
 builder.Services.AddScoped<IUserRecentBoardService, UserBoardRecentService>();
+builder.Services.AddScoped<IUserStarredBoardService, UserStarredBoardService>();
 builder.Services.AddScoped<ITodoItemService, TodoItemService>();
 builder.Services.AddScoped<IBoardMemberService, BoardMemberService>();
 builder.Services.AddScoped<ICardMemberService, CardMemberService>();

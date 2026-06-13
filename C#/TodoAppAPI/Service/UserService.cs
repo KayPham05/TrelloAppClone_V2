@@ -69,6 +69,131 @@ namespace TodoAppAPI.Service
             
         }
 
+        public async Task<List<UserInviteSuggestionDTO>> GetInviteSuggestionsAsync(
+            string query,
+            string scope,
+            string requesterUId,
+            string? workspaceId,
+            string? boardId,
+            int limit = 10)
+        {
+            var normalizedQuery = (query ?? string.Empty).Trim().ToLowerInvariant();
+            if (normalizedQuery.Length < 2)
+            {
+                return new List<UserInviteSuggestionDTO>();
+            }
+
+            limit = Math.Clamp(limit, 1, 20);
+            var normalizedScope = (scope ?? string.Empty).Trim().ToLowerInvariant();
+
+            var usersQuery = _context.Users
+                .AsNoTracking()
+                .Where(u => u.UserUId != requesterUId)
+                .Where(u => u.StatusAccount != "Locked")
+                .Where(u =>
+                    u.Email.ToLower().Contains(normalizedQuery) ||
+                    u.UserName.ToLower().Contains(normalizedQuery));
+
+            if (normalizedScope == "board")
+            {
+                if (string.IsNullOrWhiteSpace(workspaceId) || string.IsNullOrWhiteSpace(boardId))
+                {
+                    return new List<UserInviteSuggestionDTO>();
+                }
+
+                var boardBelongsToWorkspace = await _context.Boards
+                    .AsNoTracking()
+                    .AnyAsync(b => b.BoardUId == boardId && b.WorkspaceUId == workspaceId);
+                if (!boardBelongsToWorkspace)
+                {
+                    return new List<UserInviteSuggestionDTO>();
+                }
+
+                var workspace = await _context.Workspaces
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(w => w.WorkspaceUId == workspaceId);
+                if (workspace == null)
+                {
+                    return new List<UserInviteSuggestionDTO>();
+                }
+
+                var workspaceMemberRoles = await _context.WorkspaceMembers
+                    .AsNoTracking()
+                    .Where(wm => wm.WorkspaceUId == workspaceId)
+                    .Select(wm => new { wm.UserUId, wm.Role })
+                    .ToListAsync();
+
+                var allowedUserIds = workspaceMemberRoles
+                    .Select(wm => wm.UserUId)
+                    .Append(workspace.OwnerUId)
+                    .Where(id => !string.IsNullOrWhiteSpace(id))
+                    .Distinct()
+                    .ToHashSet();
+
+                var existingBoardMemberIds = await _context.BoardMembers
+                    .AsNoTracking()
+                    .Where(bm => bm.BoardUId == boardId)
+                    .Select(bm => bm.UserUId)
+                    .ToListAsync();
+                var existingBoardMemberSet = existingBoardMemberIds.ToHashSet();
+
+                var users = await usersQuery
+                    .Where(u => allowedUserIds.Contains(u.UserUId))
+                    .Where(u => !existingBoardMemberSet.Contains(u.UserUId))
+                    .OrderBy(u => u.UserName)
+                    .ThenBy(u => u.Email)
+                    .Take(limit)
+                    .ToListAsync();
+
+                var roleLookup = workspaceMemberRoles.ToDictionary(wm => wm.UserUId, wm => wm.Role);
+                return users.Select(u => new UserInviteSuggestionDTO
+                {
+                    UserUId = u.UserUId,
+                    UserName = u.UserName,
+                    Email = u.Email,
+                    AvatarUrl = u.AvatarUrl,
+                    WorkspaceRole = u.UserUId == workspace.OwnerUId ? "Owner" : roleLookup.GetValueOrDefault(u.UserUId)
+                }).ToList();
+            }
+
+            if (normalizedScope == "workspace")
+            {
+                if (!string.IsNullOrWhiteSpace(workspaceId))
+                {
+                    var existingWorkspaceMemberIds = await _context.WorkspaceMembers
+                        .AsNoTracking()
+                        .Where(wm => wm.WorkspaceUId == workspaceId)
+                        .Select(wm => wm.UserUId)
+                        .ToListAsync();
+                    var workspaceOwnerId = await _context.Workspaces
+                        .AsNoTracking()
+                        .Where(w => w.WorkspaceUId == workspaceId)
+                        .Select(w => w.OwnerUId)
+                        .FirstOrDefaultAsync();
+                    var excludedIds = existingWorkspaceMemberIds
+                        .Append(workspaceOwnerId)
+                        .Where(id => !string.IsNullOrWhiteSpace(id))
+                        .ToHashSet();
+                    usersQuery = usersQuery.Where(u => !excludedIds.Contains(u.UserUId));
+                }
+
+                return await usersQuery
+                    .OrderBy(u => u.UserName)
+                    .ThenBy(u => u.Email)
+                    .Take(limit)
+                    .Select(u => new UserInviteSuggestionDTO
+                    {
+                        UserUId = u.UserUId,
+                        UserName = u.UserName,
+                        Email = u.Email,
+                        AvatarUrl = u.AvatarUrl
+                    })
+                    .ToListAsync();
+            }
+
+            return new List<UserInviteSuggestionDTO>();
+        }
+
 
         public async Task<string> ResendVerificationCodeAsync(string email)
         {

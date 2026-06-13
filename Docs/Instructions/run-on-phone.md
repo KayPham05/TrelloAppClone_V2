@@ -30,9 +30,10 @@ Khong dung `localhost` hoac `10.0.2.2` khi chay tren dien thoai that.
 
 ## 3. Chay backend
 
+//dotnet ef database update
+
 ```powershell
 cd "C#\TodoAppAPI"
-dotnet ef database update
 dotnet run --launch-profile http
 ```
 

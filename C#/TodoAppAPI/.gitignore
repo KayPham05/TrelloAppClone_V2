@@ -18,4 +18,6 @@ appsettings.Development.json
 appsettings.Local.json
 appsettings.*.local.json
 
-Migrations/
+Migrations/*
+!Migrations/20260613123000_AddUserStarredBoard.cs
+!Migrations/20260613123000_AddUserStarredBoard.Designer.cs

@@ -27,7 +27,8 @@ namespace TodoAppAPI.Service
             NotificationType.CardArchived,
             NotificationType.AttachmentAdded,
             NotificationType.AttachmentRemoved,
-            NotificationType.CardRenamed
+            NotificationType.CardRenamed,
+            NotificationType.WorkspaceRenamed
         };
 
         private readonly TodoDbContext _context;

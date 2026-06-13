@@ -21,6 +21,7 @@
         CardArchived = 16,
         AttachmentAdded = 17,
         AttachmentRemoved = 18,
-        CardRenamed = 19
+        CardRenamed = 19,
+        WorkspaceRenamed = 20
     }
 }
