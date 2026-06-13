@@ -3,6 +3,8 @@ import 'package:apptreolon/features/card/presentation/widgets/card_detail/mentio
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  const testQaEmail = 'member+qa@example.com';
+
   group('detectActiveMentionToken', () {
     test('detects simple mention at cursor', () {
       final result = detectActiveMentionToken('hello @an', 9);
@@ -13,10 +15,10 @@ void main() {
     });
 
     test('detects full email mention at cursor', () {
-      final text = 'please @member+qa@example.com';
+      final text = 'please @$testQaEmail';
       final result = detectActiveMentionToken(text, text.length);
 
-      expect(result?.query, 'member+qa@example.com');
+      expect(result?.query, testQaEmail);
     });
 
     test('returns null after whitespace closes mention', () {
@@ -48,7 +50,7 @@ void main() {
         id: '2',
         userUId: 'u2',
         userName: 'QA Member',
-        email: 'member+qa@example.com',
+        email: testQaEmail,
         role: 'Assignee',
       ),
     ];
@@ -56,7 +58,7 @@ void main() {
     test('matches by username, email prefix, and full email', () {
       expect(filterMentionMembers(members, 'an'), [members[0]]);
       expect(filterMentionMembers(members, 'member+qa'), [members[1]]);
-      expect(filterMentionMembers(members, 'member+qa@example.com'), [
+      expect(filterMentionMembers(members, testQaEmail), [
         members[1],
       ]);
     });

@@ -7,6 +7,9 @@ import 'package:apptreolon/features/member_invite/domain/entities/invite_suggest
 import 'package:apptreolon/features/member_invite/presentation/widgets/member_invite_picker.dart';
 
 void main() {
+  const testUserId = 'user-1';
+  const testUserName = 'Nguyen Van A';
+
   testWidgets('selects suggestions as chips and submits selected users', (
     tester,
   ) async {
@@ -25,8 +28,8 @@ void main() {
                 }) async {
                   return const [
                     InviteSuggestion(
-                      userUId: 'user-1',
-                      userName: 'Nguyen Van A',
+                      userUId: testUserId,
+                      userName: testUserName,
                       email: 'nguyena@example.com',
                     ),
                   ];
@@ -47,12 +50,12 @@ void main() {
     await tester.tap(find.byType(ListTile));
     await tester.pumpAndSettle();
 
-    expect(find.text('Nguyen Van A'), findsOneWidget);
+    expect(find.text(testUserName), findsOneWidget);
 
     await tester.tap(find.text('Mời'));
     await tester.pumpAndSettle();
 
-    expect(submitted.single.userUId, 'user-1');
+    expect(submitted.single.userUId, testUserId);
   });
 
   testWidgets('shows loading state and removes selected chips smoothly', (
@@ -89,8 +92,8 @@ void main() {
 
     completer.complete(const [
       InviteSuggestion(
-        userUId: 'user-1',
-        userName: 'Nguyen Van A',
+        userUId: testUserId,
+        userName: testUserName,
         email: 'nguyena@example.com',
       ),
     ]);

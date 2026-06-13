@@ -91,6 +91,8 @@ class MockDio extends Fake implements Dio {
 
 void main() {
   group('NotificationRemoteDataSource', () {
+    const testNotiId = 'noti-123';
+
     test('getNotifications parses paged response with server unread count', () async {
       final mockDio = MockDio(
         onGet: (path, {data, options, queryParameters}) async {
@@ -102,7 +104,7 @@ void main() {
             data: {
               'items': [
                 {
-                  'notiId': 'noti-123',
+                  'notiId': testNotiId,
                   'recipientId': 'user-1',
                   'actorId': 'user-2',
                   'actorName': 'John Doe',
@@ -131,7 +133,7 @@ void main() {
       expect(result.items.length, 1);
       expect(result.unreadCount, 7);
       expect(result.hasMore, false);
-      expect(result.items.first.id, 'noti-123');
+      expect(result.items.first.id, testNotiId);
       expect(result.items.first.actorName, 'John Doe');
       expect(result.items.first.type, NotificationTypeEnum.comment);
       expect(result.items.first.isRead, false);
@@ -140,7 +142,7 @@ void main() {
     test('markAsRead returns true on 200', () async {
       final mockDio = MockDio(
         onPatch: (path, {data, options, queryParameters}) async {
-          expect(path, 'notifications/noti-123/read');
+          expect(path, 'notifications/$testNotiId/read');
           return Response(
             requestOptions: RequestOptions(path: path),
             statusCode: 200,
@@ -151,7 +153,7 @@ void main() {
 
       final dataSource = NotificationRemoteDataSourceImpl(dio: mockDio);
 
-      expect(await dataSource.markAsRead(notiId: 'noti-123'), true);
+      expect(await dataSource.markAsRead(notiId: testNotiId), true);
     });
 
     test('markAllAsRead returns updated count from response', () async {
@@ -174,7 +176,7 @@ void main() {
     test('deleteNotification returns true on 200', () async {
       final mockDio = MockDio(
         onDelete: (path, {data, options, queryParameters}) async {
-          expect(path, 'notifications/noti-123');
+          expect(path, 'notifications/$testNotiId');
           return Response(
             requestOptions: RequestOptions(path: path),
             statusCode: 200,
@@ -185,7 +187,7 @@ void main() {
 
       final dataSource = NotificationRemoteDataSourceImpl(dio: mockDio);
 
-      expect(await dataSource.deleteNotification(notiId: 'noti-123'), true);
+      expect(await dataSource.deleteNotification(notiId: testNotiId), true);
     });
   });
 }

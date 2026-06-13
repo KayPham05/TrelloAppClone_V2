@@ -7,17 +7,20 @@ import 'package:apptreolon/routes.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  const testBoardId = 'board-1';
+  const testWorkspaceId = 'workspace-1';
+
   const board = BoardEntity(
-    id: 'board-1',
+    id: testBoardId,
     name: 'Board',
     visibility: 'Workspace',
     isPersonal: false,
-    workspaceId: 'workspace-1',
+    workspaceId: testWorkspaceId,
     workspaceName: 'Team',
   );
 
   const workspaceWithBoard = WorkspaceEntity(
-    id: 'workspace-1',
+    id: testWorkspaceId,
     name: 'Team',
     boards: [board],
   );
@@ -48,18 +51,18 @@ void main() {
     );
 
     final target = await service.resolve(
-      notification(workspaceId: 'workspace-1', boardId: 'board-1'),
+      notification(workspaceId: testWorkspaceId, boardId: testBoardId),
     );
 
     expect(target?.routeName, AppRoutes.boardDetail);
-    expect(target?.arguments, containsPair('boardId', 'board-1'));
+    expect(target?.arguments, containsPair('boardId', testBoardId));
   });
 
   test(
     'tap board notification returns null when board is no longer accessible',
     () async {
       final workspace = WorkspaceEntity(
-        id: 'workspace-1',
+        id: testWorkspaceId,
         name: 'Team',
         boards: const [],
       );
@@ -69,7 +72,7 @@ void main() {
       );
 
       final target = await service.resolve(
-        notification(workspaceId: 'workspace-1', boardId: 'board-removed'),
+        notification(workspaceId: testWorkspaceId, boardId: 'board-removed'),
       );
 
       expect(target, isNull);
@@ -88,15 +91,15 @@ void main() {
 
       final target = await service.resolve(
         notification(
-          workspaceId: 'workspace-1',
-          boardId: 'board-1',
+          workspaceId: testWorkspaceId,
+          boardId: testBoardId,
           cardId: 'card-1',
         ),
       );
 
       expect(target?.routeName, AppRoutes.cardDetail);
       final args = target?.arguments as Map<String, dynamic>;
-      expect(args['boardId'], 'board-1');
+      expect(args['boardId'], testBoardId);
       expect((args['card'] as CardEntity).id, 'card-1');
     },
   );
@@ -109,8 +112,8 @@ void main() {
 
     final target = await service.resolve(
       notification(
-        workspaceId: 'workspace-1',
-        boardId: 'board-1',
+        workspaceId: testWorkspaceId,
+        boardId: testBoardId,
         cardId: 'missing',
       ),
     );
@@ -122,7 +125,7 @@ void main() {
     'tap workspace notification opens workspace menu when workspace exists',
     () async {
       final workspace = WorkspaceEntity(
-        id: 'workspace-1',
+        id: testWorkspaceId,
         name: 'Team',
         boards: const [],
       );
@@ -132,7 +135,7 @@ void main() {
       );
 
       final target = await service.resolve(
-        notification(workspaceId: 'workspace-1'),
+        notification(workspaceId: testWorkspaceId),
       );
 
       expect(target?.routeName, AppRoutes.workspaceMenu);
