@@ -116,3 +116,4 @@ coverage/
 .sonarqube/
 SonarQube.Analysis.xml
 .sonar/
+.sonarlint/

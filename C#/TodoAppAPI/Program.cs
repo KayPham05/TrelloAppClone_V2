@@ -33,7 +33,7 @@ builder.Services.AddScoped<ITodoItemService, TodoItemService>();
 builder.Services.AddScoped<IBoardMemberService, BoardMemberService>();
 builder.Services.AddScoped<ICardMemberService, CardMemberService>();
 builder.Services.AddScoped<ICardLabelService, CardLabelService>();
-builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddEmailServices();
 builder.Services.AddScoped<IActivity, ActivityService>();
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
