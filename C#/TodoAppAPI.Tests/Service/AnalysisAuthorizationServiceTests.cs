@@ -68,6 +68,19 @@ public class AnalysisAuthorizationServiceTests
     }
 
     [Fact]
+    public async Task CanManageWorkspaceMembersAsync_allows_workspace_owner_uid_without_member_row()
+    {
+        await using var context = CreateContext();
+        context.Workspaces.Add(new Workspace { WorkspaceUId = "ws-1", Name = "Team", OwnerUId = "owner" });
+        await context.SaveChangesAsync();
+        var service = new AuthorizationService(context);
+
+        var result = await service.CanManageWorkspaceMembersAsync("ws-1", "owner");
+
+        Assert.True(result);
+    }
+
+    [Fact]
     public async Task CanViewCardAnalysisAsync_allows_board_members_and_inbox_owners()
     {
         await using var context = CreateContext();
