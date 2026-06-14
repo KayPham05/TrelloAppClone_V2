@@ -93,6 +93,11 @@ class InboxRepositoriesImpl extends InboxRepositories {
   }
 
   @override
+  Future<void> renameAttachment({required String cardId, required String fileId, required String userUId, required String fileName}) async {
+    await remoteDataSource.renameAttachment(cardId, fileId, userUId, fileName);
+  }
+
+  @override
   Future<void> moveCardToInbox({required String cardId, required String userUId, required int position}) async {
     await remoteDataSource.moveCardToInbox(cardId, userUId, position);
   }

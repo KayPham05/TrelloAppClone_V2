@@ -16,6 +16,7 @@ abstract class InboxRepositories {
   Future<FileUrlEntity> uploadAttachment({required String cardId, required String filePath, required String userUId, String? description});
   Future<void> deleteAttachment({required String cardId, required String fileId, required String userUId});
   Future<void> updateAttachmentDescription({required String cardId, required String fileId, required String userUId, String? description});
+  Future<void> renameAttachment({required String cardId, required String fileId, required String userUId, required String fileName});
 
   // Move-card support
   Future<void> moveCardToInbox({required String cardId, required String userUId, required int position});

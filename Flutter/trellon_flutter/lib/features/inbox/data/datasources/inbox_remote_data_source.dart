@@ -20,6 +20,7 @@ abstract class InboxRemoteDataSource {
   Future<FileUrlEntity> uploadAttachment(String cardId, String filePath, String userUId, String? description);
   Future<void> deleteAttachment(String cardId, String fileId, String userUId);
   Future<void> updateAttachmentDescription(String cardId, String fileId, String userUId, String? description);
+  Future<void> renameAttachment(String cardId, String fileId, String userUId, String fileName);
   Future<void> moveCardToInbox(String cardId, String userUId, int position);
   Future<void> reorderInboxCards(String userUId, List<Map<String, dynamic>> items);
 }
@@ -200,6 +201,17 @@ class InboxRemoteDataSourceImpl implements InboxRemoteDataSource {
     );
     if (response.statusCode != 200) {
       throw Exception("Lỗi update attachment description inbox");
+    }
+  }
+
+  @override
+  Future<void> renameAttachment(String cardId, String fileId, String userUId, String fileName) async {
+    final queryParam = 'userUId=$userUId&fileName=${Uri.encodeQueryComponent(fileName)}';
+    final response = await dio.put(
+      '${ApiEndpoints.card}/$cardId/attachments/$fileId/rename?$queryParam',
+    );
+    if (response.statusCode != 200) {
+      throw Exception("Lỗi đổi tên attachment inbox");
     }
   }
 
