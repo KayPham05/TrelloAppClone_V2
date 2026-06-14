@@ -14,6 +14,7 @@ namespace TodoAppAPI.Interfaces
         // ==================== BOARD AUTHORIZATION ====================
         
         Task<bool> CanManageBoardAsync(string boardId, string userId);
+        Task<bool> CanViewBoardAsync(string boardId, string userId);
         Task<bool> CanEditBoardAsync(string boardId, string userId);
         Task<bool> CanDeleteBoardAsync(string boardId, string userId);
         Task<bool> CanManageBoardMembersAsync(string boardId, string userId);
