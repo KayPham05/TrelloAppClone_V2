@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -44,8 +46,10 @@ class CardDetailPage extends StatefulWidget {
 class _CardDetailPageState extends State<CardDetailPage> {
   late CardDetailCubit _cubit;
   bool _quickActionsExpanded = true;
+  int _selectedTab = 0; // 0: Chi tiết, 1: Hoạt động
   late bool _isArchived;
   String? _currentUserId;
+  Timer? _timeUpdateTimer;
 
   @override
   void initState() {
@@ -60,10 +64,14 @@ class _CardDetailPageState extends State<CardDetailPage> {
     UserLocalDataSource().getUserId().then((userId) {
       if (mounted) setState(() => _currentUserId = userId);
     });
+    _timeUpdateTimer = Timer.periodic(const Duration(minutes: 1), (timer) {
+      if (mounted) setState(() {});
+    });
   }
 
   @override
   void dispose() {
+    _timeUpdateTimer?.cancel();
     _cubit.close();
     super.dispose();
   }
@@ -263,6 +271,86 @@ class _CardDetailPageState extends State<CardDetailPage> {
                                 indent: 16,
                                 endIndent: 16,
                               ),
+                              const SizedBox(height: 16),
+
+                              // ── Custom TabBar ────────────────────────────
+                              Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 16),
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey.shade100,
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  padding: const EdgeInsets.all(4),
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                        child: GestureDetector(
+                                          onTap: () => setState(() => _selectedTab = 0),
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(vertical: 8),
+                                            decoration: BoxDecoration(
+                                              color: _selectedTab == 0 ? Colors.white : Colors.transparent,
+                                              borderRadius: BorderRadius.circular(6),
+                                              boxShadow: _selectedTab == 0
+                                                  ? [
+                                                      BoxShadow(
+                                                        color: Colors.black.withValues(alpha: 0.05),
+                                                        blurRadius: 4,
+                                                        offset: const Offset(0, 2),
+                                                      )
+                                                    ]
+                                                  : [],
+                                            ),
+                                            alignment: Alignment.center,
+                                            child: Text(
+                                              'Chi tiết',
+                                              style: GoogleFonts.inter(
+                                                fontSize: 14,
+                                                fontWeight: _selectedTab == 0 ? FontWeight.w600 : FontWeight.w500,
+                                                color: _selectedTab == 0 ? Colors.black87 : Colors.grey.shade600,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      Expanded(
+                                        child: GestureDetector(
+                                          onTap: () => setState(() => _selectedTab = 1),
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(vertical: 8),
+                                            decoration: BoxDecoration(
+                                              color: _selectedTab == 1 ? Colors.white : Colors.transparent,
+                                              borderRadius: BorderRadius.circular(6),
+                                              boxShadow: _selectedTab == 1
+                                                  ? [
+                                                      BoxShadow(
+                                                        color: Colors.black.withValues(alpha: 0.05),
+                                                        blurRadius: 4,
+                                                        offset: const Offset(0, 2),
+                                                      )
+                                                    ]
+                                                  : [],
+                                            ),
+                                            alignment: Alignment.center,
+                                            child: Text(
+                                              'Bình luận',
+                                              style: GoogleFonts.inter(
+                                                fontSize: 14,
+                                                fontWeight: _selectedTab == 1 ? FontWeight.w600 : FontWeight.w500,
+                                                color: _selectedTab == 1 ? Colors.black87 : Colors.grey.shade600,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+
+                              if (_selectedTab == 0) ...[
 
                               // ── Description ──────────────────────────
                               CardDetailDescription(
@@ -382,10 +470,13 @@ class _CardDetailPageState extends State<CardDetailPage> {
                                 endIndent: 16,
                               ),
 
+                              ],
+
+                              if (_selectedTab == 1) ...[
                               // ── Activity ───────────────────────────────
                               const SizedBox(height: 4),
                               CardDetailActivityList(
-                                activities: state.comments
+                                activities: (state.comments.toList()..sort((a, b) => b.createdAt.compareTo(a.createdAt)))
                                     .map(
                                       (c) => CardActivityItemData(
                                         commentId: c.id,
@@ -406,6 +497,7 @@ class _CardDetailPageState extends State<CardDetailPage> {
                                     )
                                     .toList(),
                               ),
+                              ],
                               const SizedBox(height: 80),
                             ],
                           ),
@@ -460,15 +552,16 @@ class _CardDetailPageState extends State<CardDetailPage> {
                   ),
 
                   // ── Sticky comment bar ──────────────────────────────
-                  SafeArea(
-                    top: false,
-                    child: CardDetailCommentBar(
-                      mentionMembers: state.potentialMembers.isNotEmpty
-                          ? state.potentialMembers
-                          : state.members,
-                      allowAttachments: !widget.isInboxCard,
+                  if (_selectedTab == 1)
+                    SafeArea(
+                      top: false,
+                      child: CardDetailCommentBar(
+                        mentionMembers: state.potentialMembers.isNotEmpty
+                            ? state.potentialMembers
+                            : state.members,
+                        allowAttachments: !widget.isInboxCard,
+                      ),
                     ),
-                  ),
                 ],
               );
             },
@@ -503,12 +596,21 @@ class _CardDetailPageState extends State<CardDetailPage> {
   }
 
   String _formatTime(DateTime dt) {
+    final utcDt = dt.isUtc
+        ? dt
+        : DateTime.utc(dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second,
+            dt.millisecond, dt.microsecond);
+    final localDt = utcDt.toLocal();
+
     final now = DateTime.now();
-    final diff = now.difference(dt);
-    if (diff.inSeconds < 60) return '${diff.inSeconds} giây trước';
+    final diff = now.difference(localDt);
+
+    if (diff.isNegative) return 'Ngay bây giờ';
+    if (diff.inSeconds < 60) return 'Ngay bây giờ';
     if (diff.inMinutes < 60) return '${diff.inMinutes} phút trước';
     if (diff.inHours < 24) return '${diff.inHours} giờ trước';
-    return '${dt.day}/${dt.month}/${dt.year}';
+    if (diff.inDays < 7) return '${diff.inDays} ngày trước';
+    return '${localDt.day}/${localDt.month}/${localDt.year}';
   }
 
   String _initialFor(String? name) {

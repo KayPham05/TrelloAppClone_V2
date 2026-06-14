@@ -1,6 +1,7 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../../domain/entities/card_entity.dart';
 import 'mention_suggestion_list.dart';
@@ -36,7 +37,7 @@ class CommentEditorSheet extends StatefulWidget {
       useSafeArea: true,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (_) => CommentEditorSheet(
         mentionMembers: mentionMembers,
@@ -65,9 +66,12 @@ class _CommentEditorSheetState extends State<CommentEditorSheet> {
     _controller = TextEditingController(text: widget.initialContent ?? '');
     _controller.addListener(_syncMentionToken);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _focusNode.requestFocus();
-      if (widget.openFilePickerOnOpen && widget.allowAttachments) {
-        _pickFiles();
+      if (widget.openFilePickerOnOpen) {
+        Future.delayed(const Duration(milliseconds: 300), () {
+          if (mounted) _showAddAttachmentBottomSheet();
+        });
+      } else {
+        _focusNode.requestFocus();
       }
     });
   }
@@ -103,6 +107,67 @@ class _CommentEditorSheetState extends State<CommentEditorSheet> {
     if (result == null || result.files.isEmpty) return;
     setState(() {
       _files.addAll(result.files.where((file) => file.path != null));
+    });
+  }
+
+  Future<void> _pickImage(ImageSource source) async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: source);
+    if (pickedFile != null) {
+      setState(() {
+        _files.add(
+          PlatformFile(
+            path: pickedFile.path,
+            name: pickedFile.name,
+            size: 0,
+          ),
+        );
+      });
+    }
+  }
+
+  void _showAddAttachmentBottomSheet() {
+    _focusNode.unfocus();
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (bottomSheetContext) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.camera_alt),
+                title: const Text('Chụp ảnh'),
+                onTap: () {
+                  Navigator.pop(bottomSheetContext);
+                  _pickImage(ImageSource.camera);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.photo_library),
+                title: const Text('Thư viện ảnh/video'),
+                onTap: () {
+                  Navigator.pop(bottomSheetContext);
+                  _pickImage(ImageSource.gallery);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.folder),
+                title: const Text('Tài liệu/chọn File'),
+                onTap: () {
+                  Navigator.pop(bottomSheetContext);
+                  _pickFiles();
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    ).then((_) {
+      if (mounted) _focusNode.requestFocus();
     });
   }
 
@@ -145,21 +210,39 @@ class _CommentEditorSheetState extends State<CommentEditorSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.only(bottom: 16),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade300,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
           Row(
             children: [
               Text(
                 widget.initialContent == null
-                    ? 'Binh luan'
-                    : 'Chinh sua binh luan',
+                    ? 'Bình luận'
+                    : 'Chỉnh sửa bình luận',
                 style: GoogleFonts.inter(
-                  fontSize: 16,
+                  fontSize: 18,
                   fontWeight: FontWeight.w700,
+                  color: Colors.black87,
                 ),
               ),
               const Spacer(),
-              IconButton(
-                icon: const Icon(Icons.close_rounded),
-                onPressed: () => Navigator.of(context).pop(),
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade100,
+                  shape: BoxShape.circle,
+                ),
+                child: IconButton(
+                  icon: Icon(Icons.close_rounded, size: 20, color: Colors.grey.shade700),
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
               ),
             ],
           ),
@@ -171,13 +254,26 @@ class _CommentEditorSheetState extends State<CommentEditorSheet> {
             maxLines: 8,
             textInputAction: TextInputAction.newline,
             decoration: InputDecoration(
-              hintText: 'Nhap @username hoac @email de tag thanh vien',
-              filled: true,
-              fillColor: Colors.grey.shade100,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide.none,
+              hintText: 'Nhập @username hoặc @email để tag thành viên',
+              hintStyle: GoogleFonts.inter(
+                fontSize: 14,
+                color: Colors.grey.shade400,
               ),
+              filled: true,
+              fillColor: Colors.grey.shade50,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(color: Colors.grey.shade200),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(color: Colors.grey.shade200),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: const BorderSide(color: Colors.blue, width: 1.5),
+              ),
+              contentPadding: const EdgeInsets.all(16),
             ),
           ),
           if (activeMention != null) ...[
@@ -213,18 +309,27 @@ class _CommentEditorSheetState extends State<CommentEditorSheet> {
                 IconButton(
                   tooltip: 'Dinh kem tep',
                   icon: const Icon(Icons.attach_file_rounded),
-                  onPressed: _isSubmitting ? null : _pickFiles,
+                  onPressed: _isSubmitting ? null : _showAddAttachmentBottomSheet,
                 ),
               const Spacer(),
               FilledButton(
+                style: FilledButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
                 onPressed: _isSubmitting ? null : _submit,
                 child: _isSubmitting
                     ? const SizedBox(
                         width: 18,
                         height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                       )
-                    : Text(widget.initialContent == null ? 'Gui' : 'Luu'),
+                    : Text(
+                        widget.initialContent == null ? 'Gửi' : 'Lưu',
+                        style: GoogleFonts.inter(fontWeight: FontWeight.w600),
+                      ),
               ),
             ],
           ),
