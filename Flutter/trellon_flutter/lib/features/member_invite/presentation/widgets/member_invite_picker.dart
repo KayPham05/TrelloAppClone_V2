@@ -142,7 +142,8 @@ class _MemberInvitePickerState extends State<MemberInvitePicker> {
       opacity: curved,
       child: SizeTransition(
         sizeFactor: curved,
-        alignment: Alignment.topCenter,
+        axis: Axis.vertical,
+        axisAlignment: -1.0,
         child: child,
       ),
     );

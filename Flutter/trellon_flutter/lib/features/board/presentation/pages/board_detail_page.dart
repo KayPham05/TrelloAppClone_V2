@@ -640,7 +640,9 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
       (sum, list) => sum + list.cards.length,
     );
     if (state.isFiltering) {
-      return const Center(child: CircularProgressIndicator(color: Colors.white));
+      return const Center(
+        child: CircularProgressIndicator(color: Colors.white),
+      );
     }
     if (state.filterError != null) {
       return Center(
@@ -789,8 +791,9 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
           },
         ),
       ),
-      onReorderItem: (oldIndex, newIndex) {
-        final targetIdx = newIndex;
+      onReorder: (oldIndex, newIndex) {
+        // ReorderableListView calls onReorder with newIndex adjusted
+        final targetIdx = newIndex > oldIndex ? newIndex - 1 : newIndex;
         final list = listsToRender[oldIndex];
 
         setState(() {
