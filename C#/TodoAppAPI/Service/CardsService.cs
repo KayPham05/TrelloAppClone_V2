@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 using TodoAppAPI.Constants;
 using TodoAppAPI.Data;
 using TodoAppAPI.DTOs;
@@ -139,6 +140,410 @@ namespace TodoAppAPI.Service
             }
 
             return cards;
+        }
+
+        public async Task<BoardCardFilterResult> FilterCardsByBoardAsync(string boardUId, BoardCardFilterRequest request, string userUId)
+        {
+            request ??= new BoardCardFilterRequest();
+            var normalized = NormalizeFilterRequest(request);
+            if (normalized.ErrorMessage != null)
+                return BoardCardFilterResult.BadRequest(normalized.ErrorMessage);
+
+            var boardExists = await _dbContext.Boards
+                .AsNoTracking()
+                .AnyAsync(b => b.BoardUId == boardUId && b.Status != "Deleted");
+            if (!boardExists)
+                return BoardCardFilterResult.NotFound("Board khÃ´ng tá»“n táº¡i.");
+
+            if (!await _authService.CanViewBoardAsync(boardUId, userUId))
+                return BoardCardFilterResult.Forbidden("Báº¡n khÃ´ng cÃ³ quyá»n truy cáº­p board nÃ y.");
+
+            var now = DateTime.UtcNow;
+            var query = _dbContext.Todos
+                .AsNoTracking()
+                .Where(c => c.List != null && c.List.BoardUId == boardUId && !c.IsArchived);
+
+            if (normalized.MemberUIds.Count > 0)
+            {
+                var validMemberIds = await _dbContext.BoardMembers
+                    .AsNoTracking()
+                    .Where(bm => bm.BoardUId == boardUId && normalized.MemberUIds.Contains(bm.UserUId))
+                    .Select(bm => bm.UserUId)
+                    .Distinct()
+                    .ToListAsync();
+
+                if (validMemberIds.Count != normalized.MemberUIds.Count)
+                    return BoardCardFilterResult.BadRequest("Member filter khÃ´ng há»£p lá»‡ cho board nÃ y.");
+            }
+
+            var selectedLabelUIds = normalized.LabelGroups
+                .SelectMany(group => group)
+                .Distinct()
+                .ToList();
+            if (selectedLabelUIds.Count > 0)
+            {
+                var validLabelIds = await _dbContext.CardLabels
+                    .AsNoTracking()
+                    .Where(cl => cl.Card.List != null &&
+                                 cl.Card.List.BoardUId == boardUId &&
+                                 selectedLabelUIds.Contains(cl.CardLabelUId))
+                    .Select(cl => cl.CardLabelUId)
+                    .Distinct()
+                    .ToListAsync();
+
+                if (validLabelIds.Count != selectedLabelUIds.Count)
+                    return BoardCardFilterResult.BadRequest("Label filter khÃ´ng há»£p lá»‡ cho board nÃ y.");
+            }
+
+            if (!normalized.HasAnyPredicate)
+            {
+                query = ApplyCardIncludes(query);
+            }
+            else if (normalized.MatchMode == BoardCardFilterValues.MatchExact)
+            {
+                query = ApplyExactFilter(query, normalized, userUId, now);
+                query = ApplyCardIncludes(query);
+            }
+            else
+            {
+                query = ApplyAnyFilter(query, normalized, userUId, now);
+                query = ApplyCardIncludes(query);
+            }
+
+            var cards = await query
+                .OrderBy(c => c.List!.Position)
+                .ThenBy(c => c.Position)
+                .ToListAsync();
+
+            foreach (var card in cards)
+            {
+                card.Status = CardStatusValues.CalculateStatus(card.Status, card.DueDate, now);
+            }
+
+            return BoardCardFilterResult.Success(cards);
+        }
+
+        private static IQueryable<Card> ApplyExactFilter(
+            IQueryable<Card> query,
+            NormalizedBoardCardFilter request,
+            string userUId,
+            DateTime now)
+        {
+            if (request.Keyword != null)
+            {
+                var keyword = request.Keyword;
+                query = query.Where(c =>
+                    (c.Title != null && c.Title.ToLower().Contains(keyword)) ||
+                    (c.Description != null && c.Description.ToLower().Contains(keyword)));
+            }
+
+            if (request.NoMembers)
+                query = query.Where(c => !c.CardMembers!.Any());
+
+            if (request.AssignedToMe)
+                query = query.Where(c => c.CardMembers!.Any(cm => cm.UserUId == userUId));
+
+            foreach (var memberUId in request.MemberUIds)
+            {
+                var selectedMemberUId = memberUId;
+                query = query.Where(c => c.CardMembers!.Any(cm => cm.UserUId == selectedMemberUId));
+            }
+
+            if (request.CompletionStatus == BoardCardFilterValues.CompletionCompleted)
+                query = query.Where(c => c.Status == CardStatusValues.Completed);
+            else if (request.CompletionStatus == BoardCardFilterValues.CompletionIncomplete)
+                query = query.Where(c => c.Status != CardStatusValues.Completed);
+
+            foreach (var dueDateFilter in request.DueDateFilters)
+            {
+                query = ApplyDueDateFilter(query, dueDateFilter, now);
+            }
+
+            if (request.NoLabels)
+                query = query.Where(c => !c.CardLabels!.Any());
+
+            foreach (var labelGroup in request.LabelGroups)
+            {
+                var selectedLabelUIds = labelGroup;
+                query = query.Where(c => c.CardLabels!.Any(cl => selectedLabelUIds.Contains(cl.CardLabelUId)));
+            }
+
+            return query;
+        }
+
+        private static IQueryable<Card> ApplyAnyFilter(
+            IQueryable<Card> query,
+            NormalizedBoardCardFilter request,
+            string userUId,
+            DateTime now)
+        {
+            Expression<Func<Card, bool>>? predicate = null;
+
+            if (request.Keyword != null)
+            {
+                var keyword = request.Keyword;
+                predicate = Or(predicate, c =>
+                    (c.Title != null && c.Title.ToLower().Contains(keyword)) ||
+                    (c.Description != null && c.Description.ToLower().Contains(keyword)));
+            }
+
+            if (request.NoMembers)
+                predicate = Or(predicate, c => !c.CardMembers!.Any());
+
+            if (request.AssignedToMe)
+                predicate = Or(predicate, c => c.CardMembers!.Any(cm => cm.UserUId == userUId));
+
+            if (request.MemberUIds.Count > 0)
+            {
+                var memberUIds = request.MemberUIds;
+                predicate = Or(predicate, c => c.CardMembers!.Any(cm => memberUIds.Contains(cm.UserUId)));
+            }
+
+            if (request.CompletionStatus == BoardCardFilterValues.CompletionCompleted)
+                predicate = Or(predicate, c => c.Status == CardStatusValues.Completed);
+            else if (request.CompletionStatus == BoardCardFilterValues.CompletionIncomplete)
+                predicate = Or(predicate, c => c.Status != CardStatusValues.Completed);
+
+            foreach (var dueDateFilter in request.DueDateFilters)
+            {
+                predicate = Or(predicate, DueDatePredicate(dueDateFilter, now));
+            }
+
+            if (request.NoLabels)
+                predicate = Or(predicate, c => !c.CardLabels!.Any());
+
+            if (request.LabelGroups.Count > 0)
+            {
+                var labelUIds = request.LabelGroups.SelectMany(group => group).Distinct().ToList();
+                predicate = Or(predicate, c => c.CardLabels!.Any(cl => labelUIds.Contains(cl.CardLabelUId)));
+            }
+
+            return predicate == null ? query : query.Where(predicate);
+        }
+
+        private static IQueryable<Card> ApplyDueDateFilter(IQueryable<Card> query, string dueDateFilter, DateTime now)
+        {
+            return dueDateFilter switch
+            {
+                BoardCardFilterValues.DueOverdue => query.Where(DueDatePredicate(BoardCardFilterValues.DueOverdue, now)),
+                BoardCardFilterValues.DueNoDate => query.Where(DueDatePredicate(BoardCardFilterValues.DueNoDate, now)),
+                BoardCardFilterValues.DueNextWeek => query.Where(DueDatePredicate(BoardCardFilterValues.DueNextWeek, now)),
+                BoardCardFilterValues.DueNextMonth => query.Where(DueDatePredicate(BoardCardFilterValues.DueNextMonth, now)),
+                _ => query
+            };
+        }
+
+        private static Expression<Func<Card, bool>> DueDatePredicate(string dueDateFilter, DateTime now)
+        {
+            var nextWeek = now.AddDays(7);
+            var nextMonth = now.AddDays(30);
+
+            return dueDateFilter switch
+            {
+                BoardCardFilterValues.DueOverdue =>
+                    c => c.DueDate != null && c.DueDate < now && c.Status != CardStatusValues.Completed,
+                BoardCardFilterValues.DueNoDate =>
+                    c => c.DueDate == null,
+                BoardCardFilterValues.DueNextWeek =>
+                    c => c.DueDate != null && c.DueDate > now && c.DueDate <= nextWeek,
+                BoardCardFilterValues.DueNextMonth =>
+                    c => c.DueDate != null && c.DueDate > now && c.DueDate <= nextMonth,
+                _ => c => true
+            };
+        }
+
+        private static IQueryable<Card> ApplyCardIncludes(IQueryable<Card> query)
+        {
+            return query
+                .Include(c => c.List)
+                .Include(c => c.TodoItems)
+                .Include(c => c.Comments)
+                .Include(c => c.FileUrls)
+                .Include(c => c.CardMembers).ThenInclude(m => m.User)
+                .Include(c => c.CardLabels);
+        }
+
+        private static Expression<Func<Card, bool>> Or(
+            Expression<Func<Card, bool>>? left,
+            Expression<Func<Card, bool>> right)
+        {
+            if (left == null) return right;
+
+            var parameter = left.Parameters[0];
+            var body = Expression.OrElse(left.Body, new ReplaceParameterVisitor(right.Parameters[0], parameter).Visit(right.Body)!);
+            return Expression.Lambda<Func<Card, bool>>(body, parameter);
+        }
+
+        private sealed class ReplaceParameterVisitor : ExpressionVisitor
+        {
+            private readonly ParameterExpression _source;
+            private readonly ParameterExpression _target;
+
+            public ReplaceParameterVisitor(ParameterExpression source, ParameterExpression target)
+            {
+                _source = source;
+                _target = target;
+            }
+
+            protected override Expression VisitParameter(ParameterExpression node)
+            {
+                return node == _source ? _target : base.VisitParameter(node);
+            }
+        }
+
+        private static NormalizedBoardCardFilter NormalizeFilterRequest(BoardCardFilterRequest request)
+        {
+            var matchMode = string.IsNullOrWhiteSpace(request.MatchMode)
+                ? BoardCardFilterValues.MatchExact
+                : request.MatchMode.Trim().ToLowerInvariant();
+
+            if (matchMode is not (BoardCardFilterValues.MatchExact or BoardCardFilterValues.MatchAny))
+                return NormalizedBoardCardFilter.Invalid("Match mode khÃ´ng há»£p lá»‡.");
+
+            var completionStatus = string.IsNullOrWhiteSpace(request.CompletionStatus)
+                ? null
+                : request.CompletionStatus.Trim();
+
+            if (completionStatus is not null &&
+                completionStatus is not (BoardCardFilterValues.CompletionCompleted or BoardCardFilterValues.CompletionIncomplete))
+            {
+                return NormalizedBoardCardFilter.Invalid("Completion status khÃ´ng há»£p lá»‡.");
+            }
+
+            var dueDateFilters = request.DueDateFilters
+                .Select(f => f?.Trim().ToLowerInvariant())
+                .Where(f => !string.IsNullOrWhiteSpace(f))
+                .Select(f => f!)
+                .Distinct()
+                .ToList()!;
+
+            var allowedDueDateFilters = new HashSet<string>
+            {
+                BoardCardFilterValues.DueOverdue,
+                BoardCardFilterValues.DueNoDate,
+                BoardCardFilterValues.DueNextWeek,
+                BoardCardFilterValues.DueNextMonth
+            };
+
+            if (dueDateFilters.Any(f => !allowedDueDateFilters.Contains(f)))
+                return NormalizedBoardCardFilter.Invalid("Due-date filter khÃ´ng há»£p lá»‡.");
+
+            var memberUIds = NormalizeIds(request.MemberUIds, out var memberError);
+            if (memberError != null) return NormalizedBoardCardFilter.Invalid(memberError);
+
+            var labelGroups = NormalizeLabelGroups(request.LabelUIds, request.SelectedLabelGroups, out var labelError);
+            if (labelError != null) return NormalizedBoardCardFilter.Invalid(labelError);
+
+            var keyword = request.Keyword?.Trim().ToLowerInvariant();
+            if (string.IsNullOrWhiteSpace(keyword))
+                keyword = null;
+
+            return new NormalizedBoardCardFilter(
+                keyword,
+                request.NoMembers,
+                request.AssignedToMe,
+                memberUIds,
+                completionStatus,
+                dueDateFilters,
+                request.NoLabels,
+                labelGroups,
+                matchMode,
+                null);
+        }
+
+        private static List<string> NormalizeIds(IEnumerable<string>? ids, out string? errorMessage)
+        {
+            errorMessage = null;
+            var normalized = new List<string>();
+            if (ids == null) return normalized;
+
+            foreach (var id in ids)
+            {
+                var trimmed = id?.Trim();
+                if (string.IsNullOrWhiteSpace(trimmed))
+                {
+                    errorMessage = "Identifier filter khÃ´ng há»£p lá»‡.";
+                    return new List<string>();
+                }
+
+                if (!normalized.Contains(trimmed))
+                    normalized.Add(trimmed);
+            }
+
+            return normalized;
+        }
+
+        private static List<List<string>> NormalizeLabelGroups(
+            IEnumerable<string>? legacyLabelUIds,
+            IEnumerable<BoardCardLabelFilterGroupRequest>? selectedLabelGroups,
+            out string? errorMessage)
+        {
+            errorMessage = null;
+            var normalizedGroups = new List<List<string>>();
+
+            var legacyIds = NormalizeIds(legacyLabelUIds, out var legacyError);
+            if (legacyError != null)
+            {
+                errorMessage = legacyError;
+                return new List<List<string>>();
+            }
+
+            normalizedGroups.AddRange(legacyIds.Select(id => new List<string> { id }));
+
+            if (selectedLabelGroups == null)
+                return normalizedGroups;
+
+            foreach (var group in selectedLabelGroups)
+            {
+                if (group == null)
+                {
+                    errorMessage = "Label group filter khÃƒÂ´ng hÃ¡Â»Â£p lÃ¡Â»â€¡.";
+                    return new List<List<string>>();
+                }
+
+                var ids = NormalizeIds(group.CardLabelUIds, out var groupError);
+                if (groupError != null)
+                {
+                    errorMessage = groupError;
+                    return new List<List<string>>();
+                }
+
+                if (ids.Count == 0)
+                {
+                    errorMessage = "Label group filter khÃƒÂ´ng hÃ¡Â»Â£p lÃ¡Â»â€¡.";
+                    return new List<List<string>>();
+                }
+
+                normalizedGroups.Add(ids);
+            }
+
+            return normalizedGroups;
+        }
+
+        private sealed record NormalizedBoardCardFilter(
+            string? Keyword,
+            bool NoMembers,
+            bool AssignedToMe,
+            List<string> MemberUIds,
+            string? CompletionStatus,
+            List<string> DueDateFilters,
+            bool NoLabels,
+            List<List<string>> LabelGroups,
+            string MatchMode,
+            string? ErrorMessage)
+        {
+            public bool HasAnyPredicate =>
+                Keyword != null ||
+                NoMembers ||
+                AssignedToMe ||
+                MemberUIds.Count > 0 ||
+                CompletionStatus != null ||
+                DueDateFilters.Count > 0 ||
+                NoLabels ||
+                LabelGroups.Count > 0;
+
+            public static NormalizedBoardCardFilter Invalid(string message) =>
+                new(null, false, false, new List<string>(), null, new List<string>(), false, new List<List<string>>(), BoardCardFilterValues.MatchExact, message);
         }
 
         public async Task<bool> UpdateCard(Card card, string userUId)

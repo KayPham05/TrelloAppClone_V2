@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import '../../../../core/constants/api_endpoints.dart';
 import '../models/board_model.dart';
+import '../models/board_card_filter_request.dart';
 import '../models/list_model.dart';
 import '../../../card/data/models/card_model.dart';
 
@@ -54,6 +55,7 @@ abstract class BoardRemoteDataSource {
   // Board Detail (Lists & Cards)
   Future<List<ListModel>> getLists(String boardId);
   Future<List<CardModel>> getCardsByBoard(String boardId);
+  Future<List<CardModel>> filterCardsByBoard(String boardId, BoardCardFilterRequest request);
   Future<List<CardModel>> getArchivedCards(String boardId, String userUId);
   Future<void> restoreCard({required String cardId, required String userUId});
   Future<int> archiveAllCompleted({
@@ -373,10 +375,20 @@ class BoardRemoteDataSourceImpl implements BoardRemoteDataSource {
   }
 
   @override
-  Future<List<CardModel>> getArchivedCards(
-    String boardId,
-    String userUId,
-  ) async {
+  Future<List<CardModel>> filterCardsByBoard(String boardId, BoardCardFilterRequest request) async {
+    final response = await client.post(
+      '${ApiEndpoints.card}/by-board/$boardId/filter',
+      data: request.toJson(),
+    );
+    if (response.statusCode == 200) {
+      final List data = response.data;
+      return data.map((json) => CardModel.fromJson(json)).toList();
+    }
+    throw Exception('Failed to filter cards');
+  }
+
+  @override
+  Future<List<CardModel>> getArchivedCards(String boardId, String userUId) async {
     try {
       final response = await client.get(
         '${ApiEndpoints.card}/archived',
