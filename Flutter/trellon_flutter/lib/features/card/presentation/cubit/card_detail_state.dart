@@ -16,6 +16,8 @@ class CardDetailLoaded extends CardDetailState {
   final List<CommentEntity> comments;
   final bool isUploadingAttachment;
   final String? attachmentError;
+  final String? editingCommentId;
+  final String? commentActionError;
 
   CardDetailLoaded({
     required this.card,
@@ -25,6 +27,8 @@ class CardDetailLoaded extends CardDetailState {
     required this.comments,
     this.isUploadingAttachment = false,
     this.attachmentError,
+    this.editingCommentId,
+    this.commentActionError,
   });
 
   CardDetailLoaded copyWith({
@@ -36,6 +40,10 @@ class CardDetailLoaded extends CardDetailState {
     bool? isUploadingAttachment,
     String? attachmentError,
     bool clearAttachmentError = false,
+    String? editingCommentId,
+    bool clearEditingComment = false,
+    String? commentActionError,
+    bool clearCommentActionError = false,
   }) {
     return CardDetailLoaded(
       card: card ?? this.card,
@@ -43,13 +51,32 @@ class CardDetailLoaded extends CardDetailState {
       members: members ?? this.members,
       potentialMembers: potentialMembers ?? this.potentialMembers,
       comments: comments ?? this.comments,
-      isUploadingAttachment: isUploadingAttachment ?? this.isUploadingAttachment,
-      attachmentError: clearAttachmentError ? null : (attachmentError ?? this.attachmentError),
+      isUploadingAttachment:
+          isUploadingAttachment ?? this.isUploadingAttachment,
+      attachmentError: clearAttachmentError
+          ? null
+          : (attachmentError ?? this.attachmentError),
+      editingCommentId: clearEditingComment
+          ? null
+          : (editingCommentId ?? this.editingCommentId),
+      commentActionError: clearCommentActionError
+          ? null
+          : (commentActionError ?? this.commentActionError),
     );
   }
 
   @override
-  List<Object?> get props => [card, todos, members, potentialMembers, comments, isUploadingAttachment, attachmentError];
+  List<Object?> get props => [
+    card,
+    todos,
+    members,
+    potentialMembers,
+    comments,
+    isUploadingAttachment,
+    attachmentError,
+    editingCommentId,
+    commentActionError,
+  ];
 }
 
 class CardDetailError extends CardDetailState {

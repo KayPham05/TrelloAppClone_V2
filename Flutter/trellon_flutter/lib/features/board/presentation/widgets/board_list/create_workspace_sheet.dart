@@ -36,10 +36,10 @@ class _CreateWorkspaceSheetState extends State<CreateWorkspaceSheet> {
     setState(() => _isCreating = true);
     try {
       await context.read<WorkspaceCubit>().createWorkspace(
-            name,
-            _descCtrl.text.trim().isEmpty ? null : _descCtrl.text.trim(),
-            WorkspaceType.team,
-          );
+        name,
+        _descCtrl.text.trim().isEmpty ? null : _descCtrl.text.trim(),
+        WorkspaceType.team,
+      );
       if (mounted) Navigator.pop(context);
     } catch (_) {
       if (mounted) setState(() => _isCreating = false);
@@ -83,8 +83,11 @@ class _CreateWorkspaceSheetState extends State<CreateWorkspaceSheet> {
                       shape: BoxShape.circle,
                       color: AppColors.surfaceContainerLow,
                     ),
-                    child: const Icon(Icons.close_rounded,
-                        size: 18, color: Colors.grey),
+                    child: const Icon(
+                      Icons.close_rounded,
+                      size: 18,
+                      color: Colors.grey,
+                    ),
                   ),
                 ),
                 Expanded(
@@ -103,7 +106,9 @@ class _CreateWorkspaceSheetState extends State<CreateWorkspaceSheet> {
                   onTap: _isCreating ? null : _create,
                   child: Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 8),
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
                     decoration: BoxDecoration(
                       color: _isCreating
                           ? AppColors.outlineVariant
@@ -115,7 +120,9 @@ class _CreateWorkspaceSheetState extends State<CreateWorkspaceSheet> {
                             width: 16,
                             height: 16,
                             child: CircularProgressIndicator(
-                                strokeWidth: 2, color: Colors.white),
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
                           )
                         : Text(
                             'Tạo mới',
@@ -138,14 +145,20 @@ class _CreateWorkspaceSheetState extends State<CreateWorkspaceSheet> {
               child: TextField(
                 controller: _nameCtrl,
                 style: GoogleFonts.inter(
-                    fontSize: 15, color: AppColors.onSurface),
+                  fontSize: 15,
+                  color: AppColors.onSurface,
+                ),
                 decoration: InputDecoration(
                   hintText: 'Tên không gian làm việc',
                   hintStyle: GoogleFonts.inter(
-                      fontSize: 15, color: AppColors.onSurfaceVariant),
+                    fontSize: 15,
+                    color: AppColors.onSurfaceVariant,
+                  ),
                   border: InputBorder.none,
                   contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 14),
+                    horizontal: 16,
+                    vertical: 14,
+                  ),
                 ),
               ),
             ),
@@ -159,14 +172,20 @@ class _CreateWorkspaceSheetState extends State<CreateWorkspaceSheet> {
                 controller: _descCtrl,
                 maxLines: 3,
                 style: GoogleFonts.inter(
-                    fontSize: 15, color: AppColors.onSurface),
+                  fontSize: 15,
+                  color: AppColors.onSurface,
+                ),
                 decoration: InputDecoration(
                   hintText: 'Mô tả (tuỳ chọn)',
                   hintStyle: GoogleFonts.inter(
-                      fontSize: 14, color: AppColors.onSurfaceVariant),
+                    fontSize: 14,
+                    color: AppColors.onSurfaceVariant,
+                  ),
                   border: InputBorder.none,
                   contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 14),
+                    horizontal: 16,
+                    vertical: 14,
+                  ),
                 ),
               ),
             ),

@@ -48,6 +48,31 @@ namespace TodoAppAPI.Controllers
             return await GetUserByEmail(email);
         }
 
+        [HttpGet("invite-suggestions")]
+        public async Task<IActionResult> GetInviteSuggestions(
+            [FromQuery] string query,
+            [FromQuery] string scope,
+            [FromQuery] string requesterUId,
+            [FromQuery] string? workspaceId,
+            [FromQuery] string? boardId,
+            [FromQuery] int limit = 10)
+        {
+            if (string.IsNullOrWhiteSpace(requesterUId))
+            {
+                return BadRequest("requesterUId không hợp lệ");
+            }
+
+            var suggestions = await _userService.GetInviteSuggestionsAsync(
+                query,
+                scope,
+                requesterUId,
+                workspaceId,
+                boardId,
+                limit);
+
+            return Ok(suggestions);
+        }
+
         [HttpPost("AddBio")]
         public async Task<IActionResult> AddBio([FromQuery] string userUId, [FromQuery] string Bio)
         {

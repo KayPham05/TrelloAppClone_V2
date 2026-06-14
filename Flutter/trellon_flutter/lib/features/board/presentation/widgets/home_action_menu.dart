@@ -15,7 +15,10 @@ Future<void> showHomeActionMenu(
   final RelativeRect position = RelativeRect.fromRect(
     Rect.fromPoints(
       button.localToGlobal(Offset.zero, ancestor: overlay),
-      button.localToGlobal(button.size.bottomRight(Offset.zero), ancestor: overlay),
+      button.localToGlobal(
+        button.size.bottomRight(Offset.zero),
+        ancestor: overlay,
+      ),
     ),
     Offset.zero & overlay.size,
   );

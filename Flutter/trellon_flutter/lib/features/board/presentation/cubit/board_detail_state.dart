@@ -72,7 +72,9 @@ class BoardDetailLoaded extends BoardDetailState {
       boardName: boardName ?? this.boardName,
       backgroundUrl: backgroundUrl ?? this.backgroundUrl,
       lists: lists ?? this.lists,
-      transientError: clearTransientError ? null : (transientError ?? this.transientError),
+      transientError: clearTransientError
+          ? null
+          : (transientError ?? this.transientError),
       boardRole: boardRole ?? this.boardRole,
       workspaceRole: workspaceRole ?? this.workspaceRole,
       boardVisibility: boardVisibility ?? this.boardVisibility,

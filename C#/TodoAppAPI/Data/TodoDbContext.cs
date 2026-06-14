@@ -28,12 +28,14 @@ namespace TodoAppAPI.Data
             modelBuilder.ApplyConfiguration(new ActivityConfiguration());
             modelBuilder.ApplyConfiguration(new TodoItemConfiguration());
             modelBuilder.ApplyConfiguration(new CommentConfiguration());
+            modelBuilder.ApplyConfiguration(new CommentAttachmentConfiguration());
             modelBuilder.ApplyConfiguration(new RoleConfiguration());
             modelBuilder.ApplyConfiguration(new BoardMemberConfiguration());
             modelBuilder.ApplyConfiguration(new UserInboxCardConfiguration());
             modelBuilder.ApplyConfiguration(new WorkspaceConfiguration());
             modelBuilder.ApplyConfiguration(new WorkspaceMemberConfiguration());
             modelBuilder.ApplyConfiguration(new UserRecentBoardConfiguaration());
+            modelBuilder.ApplyConfiguration(new UserStarredBoardConfiguration());
             modelBuilder.ApplyConfiguration(new CardMemberConfiguration());
             modelBuilder.ApplyConfiguration(new UserSessionConfiguration());
             modelBuilder.ApplyConfiguration(new UserOtpConfiguration());
@@ -58,11 +60,13 @@ namespace TodoAppAPI.Data
         public DbSet<Role> Roles { get; set; }
         public DbSet<BoardMember> BoardMembers { get; set; }
         public DbSet<Comment> Comments { get; set; }
+        public DbSet<CommentAttachment> CommentAttachments { get; set; }
         public DbSet<TodoItem> TodoItems { get; set; }
         public DbSet<UserInboxCard> UserInboxCards { get; set; }
         public DbSet<Workspace> Workspaces { get; set; }
         public DbSet<WorkspaceMembers> WorkspaceMembers { get; set; }
         public DbSet<UserRecentBoard> UserRecentBoards { get; set; }
+        public DbSet<UserStarredBoard> UserStarredBoards { get; set; }
         public DbSet<CardMember> CardMembers { get; set; }
         public DbSet<UserSession> UserSessions { get; set; }
         public DbSet<UserOtp> UserOtps { get; set; }

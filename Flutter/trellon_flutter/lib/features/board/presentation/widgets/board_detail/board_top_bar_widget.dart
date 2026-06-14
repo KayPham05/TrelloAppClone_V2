@@ -17,7 +17,9 @@ class BoardTopBarWidget extends StatelessWidget {
       builder: (context, state) {
         String title = 'Bảng';
         if (state is BoardDetailLoaded) {
-          title = state.workspaceName ?? (state.isPersonal ? 'Bảng cá nhân' : 'Không gian làm việc');
+          title =
+              state.workspaceName ??
+              (state.isPersonal ? 'Bảng cá nhân' : 'Không gian làm việc');
         }
 
         return Container(
@@ -50,14 +52,25 @@ class BoardTopBarWidget extends StatelessWidget {
                 ),
               ),
               IconButton(
-                icon: const Icon(Icons.search_rounded, color: Color(0xFF64748B)),
+                icon: const Icon(
+                  Icons.search_rounded,
+                  color: Color(0xFF64748B),
+                ),
                 onPressed: () async {
-                  final uid = await serviceLocator<UserLocalDataSource>().getUserId();
+                  final uid = await serviceLocator<UserLocalDataSource>()
+                      .getUserId();
                   if (!context.mounted) return;
                   if (uid != null) {
-                    showSearch(context: context, delegate: GlobalSearchDelegate(userUId: uid));
+                    showSearch(
+                      context: context,
+                      delegate: GlobalSearchDelegate(userUId: uid),
+                    );
                   } else {
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Lỗi: Không tìm thấy User ID!')));
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Lỗi: Không tìm thấy User ID!'),
+                      ),
+                    );
                   }
                 },
               ),
@@ -75,8 +88,10 @@ class BoardTopBarWidget extends StatelessWidget {
       future: serviceLocator<UserLocalDataSource>().getUserName(),
       builder: (context, snapshot) {
         final name = snapshot.data ?? 'U';
-        final initial = name.isNotEmpty ? name.substring(0, 1).toUpperCase() : 'U';
-        
+        final initial = name.isNotEmpty
+            ? name.substring(0, 1).toUpperCase()
+            : 'U';
+
         return Container(
           width: 30,
           height: 30,

@@ -18,13 +18,17 @@ class BoardListTile extends StatelessWidget {
     final color = ColorUtils.hexToColor(board.coverColor ?? '#0079BF');
     return InkWell(
       onTap: () async {
-        await Navigator.pushNamed(context, '/board-detail', arguments: {
-          'boardId': board.id,
-          'boardName': board.name,
-          'backgroundUrl': board.backgroundUrl,
-          'workspaceId': board.workspaceId,
-          'workspaceName': board.workspaceName,
-        });
+        await Navigator.pushNamed(
+          context,
+          '/board-detail',
+          arguments: {
+            'boardId': board.id,
+            'boardName': board.name,
+            'backgroundUrl': board.backgroundUrl,
+            'workspaceId': board.workspaceId,
+            'workspaceName': board.workspaceName,
+          },
+        );
         final uid = await serviceLocator<UserLocalDataSource>().getUserId();
         if (uid != null && context.mounted) {
           context.read<BoardCubit>().fetchBoardData(uid, '');
@@ -80,13 +84,17 @@ class BoardListTileFromDynamic extends StatelessWidget {
 
     return InkWell(
       onTap: () async {
-        await Navigator.pushNamed(context, '/board-detail', arguments: {
-          'boardId': id,
-          'boardName': name,
-          'backgroundUrl': backgroundUrl,
-          'workspaceId': (board as dynamic).workspaceId,
-          'workspaceName': (board as dynamic).workspaceName,
-        });
+        await Navigator.pushNamed(
+          context,
+          '/board-detail',
+          arguments: {
+            'boardId': id,
+            'boardName': name,
+            'backgroundUrl': backgroundUrl,
+            'workspaceId': (board as dynamic).workspaceId,
+            'workspaceName': (board as dynamic).workspaceName,
+          },
+        );
         final uid = await serviceLocator<UserLocalDataSource>().getUserId();
         if (uid != null && context.mounted) {
           context.read<BoardCubit>().fetchBoardData(uid, '');

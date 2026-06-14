@@ -54,9 +54,7 @@ class BoardSubBarWidget extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(
-                    isStarred
-                        ? Icons.star_rounded
-                        : Icons.star_outline_rounded,
+                    isStarred ? Icons.star_rounded : Icons.star_outline_rounded,
                     color: Colors.white,
                     size: 16,
                   ),

@@ -36,7 +36,7 @@ namespace TodoAppAPI.Service
             {
                 using var scope = _scopeFactory.CreateScope();
                 var service = scope.ServiceProvider.GetRequiredService<ICardDueDateReminderService>();
-                await service.SendDueRemindersAsync(DateTime.Now, stoppingToken);
+                await service.SendDueRemindersAsync(DateTime.UtcNow, stoppingToken);
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
             {

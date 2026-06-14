@@ -6,13 +6,13 @@ class AddWorkspaceMemberUseCase {
 
   Future<void> call({
     required String workspaceId,
-    required String email,
+    required String userId,
     required String role,
     required String requesterUId,
   }) async {
     return await repository.addWorkspaceMember(
       workspaceId: workspaceId,
-      email: email,
+      userId: userId,
       role: role,
       requesterUId: requesterUId,
     );

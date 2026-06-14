@@ -3,7 +3,10 @@ import '../../../board/domain/entities/board_entity.dart';
 
 abstract class WorkspaceRepository {
   Future<List<WorkspaceEntity>> getWorkspaces(String userUid);
-  Future<List<BoardEntity>> getWorkspaceBoards(String workspaceId, String userUid);
+  Future<List<BoardEntity>> getWorkspaceBoards(
+    String workspaceId,
+    String userUid,
+  );
   Future<WorkspaceEntity> createWorkspace({
     required String name,
     required String? description,
@@ -23,8 +26,15 @@ abstract class WorkspaceRepository {
   });
   Future<void> addWorkspaceMember({
     required String workspaceId,
-    required String email,
+    required String userId,
     required String role,
     required String requesterUId,
+  });
+  Future<void> updateBoardVisibility({
+    required String boardId,
+    required String boardName,
+    required String workspaceId,
+    required String visibility,
+    required String userUId,
   });
 }

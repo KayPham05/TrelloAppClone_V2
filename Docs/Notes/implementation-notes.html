@@ -1,12 +1,12 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="vi">
 <head>
   <meta charset="utf-8">
-  <title>Gemini Project Analysis Implementation Notes</title>
+  <title>Member Invite Autocomplete Implementation Notes</title>
   <style>
     body { font-family: Arial, sans-serif; line-height: 1.5; margin: 24px; color: #1f2937; }
     h1 { font-size: 24px; margin-bottom: 8px; }
-    h2 { font-size: 18px; margin-top: 24px; border-bottom: 1px solid #d1d5db; padding-bottom: 4px; }
+    h2 { font-size: 18px; margin-top: 0; border-bottom: 1px solid #d1d5db; padding-bottom: 4px; }
     .entry { border: 1px solid #d1d5db; border-radius: 8px; padding: 12px 16px; margin: 12px 0; }
     .timestamp { color: #4b5563; font-size: 13px; margin-bottom: 8px; }
     ul { margin-top: 6px; }
@@ -14,354 +14,286 @@
   </style>
 </head>
 <body>
-  <h1>Gemini Project Analysis Implementation Notes</h1>
-  <p>Ghi chú triển khai cho tính năng Gemini API phân tích và báo cáo tiến độ dự án.</p>
+  <h1>Member Invite Autocomplete Implementation Notes</h1>
+  <p>Ghi chú triển khai cho tính năng gợi ý và mời nhiều thành viên vào workspace hoặc board.</p>
 
   <div class="entry">
-    <div class="timestamp">2026-06-02 00:00 Asia/Bangkok - Phase 1 kickoff</div>
+    <div class="timestamp">2026-06-13 00:00 Asia/Bangkok - Kickoff</div>
     <h2>Design decisions</h2>
     <ul>
-      <li>Chọn REST typed <code>HttpClient</code> cho Gemini thay vì thêm package <code>Google.GenAI</code> trong Phase 1. Lý do: REST docs hiện mô tả structured JSON schema rõ hơn, không cần tải dependency mới, và vẫn giữ API key ở backend.</li>
-      <li>Không tạo DB phase trong lượt MVP này. Plan mới nói DB report history là later phase; MVP dùng <code>IMemoryCache</code> 5 phút.</li>
-      <li>Flutter Phase 2 chỉ expose Board analysis. Backend Phase 1 vẫn tạo service/route cho Workspace, Board, Card theo plan.</li>
+      <li>Đã xóa toàn bộ section cũ trong file này theo yêu cầu, bao gồm các ghi chú cũ và conflict marker còn sót lại.</li>
+      <li>Thực hiện trong branch hiện tại <code>Email_Noti</code> vì đây không phải <code>main</code>/<code>master</code>; không tạo worktree mới để tránh làm lệch workspace IDE đang mở.</li>
+      <li>Không dùng subagent trong lượt này vì công cụ subagent hiện chỉ được phép khi người dùng yêu cầu rõ việc delegation/parallel agents.</li>
     </ul>
     <h2>Deviations</h2>
     <ul>
-      <li>Nếu plan còn nhắc <code>Google.GenAI</code> như lựa chọn ưu tiên, implementation thực tế dùng REST để giảm rủi ro dependency và giữ structured output kiểm soát được.</li>
+      <li>Chưa có.</li>
     </ul>
     <h2>Tradeoffs</h2>
     <ul>
-      <li>REST cần tự parse response <code>candidates[].content.parts[].text</code>, nhưng đổi lại dễ mock test và không phụ thuộc SDK API surface.</li>
+      <li>Làm trực tiếp trong workspace hiện tại giúp giữ đúng context IDE và các thay đổi đang dở, nhưng cần đọc kỹ các file dirty trước khi sửa để không ghi đè công việc khác.</li>
     </ul>
     <h2>Open questions</h2>
     <ul>
-      <li>DB report history có cần triển khai ngay sau MVP hay để sprint riêng?</li>
+      <li>Chưa có.</li>
     </ul>
   </div>
-
   <div class="entry">
-    <div class="timestamp">2026-06-02 00:00 Asia/Bangkok - Phase 1 backend implementation</div>
+    <div class="timestamp">2026-06-13 00:00 Asia/Bangkok - Member invite autocomplete implementation</div>
     <h2>Design decisions</h2>
     <ul>
-      <li>Thêm <code>AnalysisResult</code> wrapper để service phân biệt <code>Success</code>, <code>NotFound</code>, và <code>Forbidden</code>. Controller chuyển wrapper này thành HTTP status tương ứng.</li>
-      <li>Backend analysis authorization dùng role chặt hơn view thường: Board Owner/Admin/Editor được phân tích; Board Viewer bị từ chối. Workspace Owner/Admin được phân tích workspace hoặc board thuộc workspace.</li>
-      <li>Gemini lỗi, thiếu key, timeout, hoặc JSON không hợp lệ đều fallback về DTO metric-only để frontend không crash.</li>
+      <li>Backend board autocomplete validates that <code>boardId</code> belongs to the supplied <code>workspaceId</code> before returning suggestions. This is stricter than the plan sample and prevents cross-workspace suggestion leakage if the client sends mismatched IDs.</li>
+      <li>Flutter tests and imports use the real package name <code>apptreolon</code> from <code>pubspec.yaml</code>, not the plan placeholder <code>trellon_flutter</code>.</li>
+      <li><code>MemberInvitePicker</code> only calls <code>Navigator.pop</code> after a successful submit when the current navigator can pop. This keeps the widget usable both inside modal sheets and inside widget tests/embedded contexts.</li>
+      <li>Board invite autocomplete now receives <code>workspaceId</code> through <code>BoardDetailPage</code> -> <code>BoardMenuSheet</code> -> <code>BoardMembersManageSheet</code>, because board suggestions must be constrained to workspace members.</li>
+      <li>Updated <code>BoardDetailPage</code> from deprecated <code>onReorder</code> to <code>onReorderItem</code> while touching the file, because the current Flutter analyzer treats the old callback as an issue. The destination index no longer needs manual adjustment.</li>
     </ul>
     <h2>Deviations</h2>
     <ul>
-      <li>Không thêm NuGet <code>Google.GenAI</code>; REST client được dùng cho Phase 1.</li>
-      <li>Không tạo DB migration/report history vì plan đã chuyển phần này sang later phase.</li>
+      <li>Không dùng trực tiếp <code>UserLocalDataSource()</code> như plan snippet; các UI mới lấy qua <code>serviceLocator&lt;UserLocalDataSource&gt;()</code> để khớp dependency injection hiện có.</li>
+      <li>Chưa xóa các helper method legacy không còn được gọi trong một số page vì file đang có chuỗi mojibake cũ gây khó patch an toàn; active entry points đã chuyển sang picker mới và file <code>add_member_dialog.dart</code> đã bị xóa.</li>
     </ul>
     <h2>Tradeoffs</h2>
     <ul>
-      <li>Metric hoàn thành card dùng rule explicit: status/list name chứa done/completed/hoàn thành/xong. Đây là heuristic vì repo chưa có trạng thái workflow chuẩn.</li>
-      <li>Cache hiện mutate DTO cached bằng cách set <code>Cached = true</code> khi hit cache. Cách này đơn giản cho MVP, nhưng nếu sau này cần immutable DTO thì nên clone report trước khi trả.</li>
+      <li>Batch invite hiện gửi từng request tuần tự và reload một lần sau khi có ít nhất một invite thành công. Cách này đơn giản và giữ nguyên backend endpoint hiện tại, nhưng chưa tối ưu số request như một endpoint batch thật sự.</li>
+      <li>Board sheet nhận <code>workspaceId</code> nullable để không phá các luồng personal/loading cũ. Nếu <code>workspaceId</code> rỗng, backend autocomplete board sẽ trả danh sách rỗng thay vì gợi ý sai scope.</li>
     </ul>
     <h2>Open questions</h2>
     <ul>
-      <li>Có cần thay query param <code>userUId</code> bằng user id lấy từ JWT claim ở một phase hardening riêng không?</li>
+      <li>Có muốn thêm endpoint batch invite thật sự ở backend để giảm số request khi chọn nhiều người không?</li>
+      <li>Có muốn xóa triệt để các helper legacy trong page bằng một pass riêng xử lý encoding/mojibake không?</li>
     </ul>
   </div>
-
   <div class="entry">
-    <div class="timestamp">2026-06-02 00:00 Asia/Bangkok - Phase 2 frontend implementation</div>
+    <div class="timestamp">2026-06-13 00:00 Asia/Bangkok - Verification</div>
     <h2>Design decisions</h2>
     <ul>
-      <li>Frontend dùng feature folder <code>features/ai_analysis</code> với các lớp data/domain/presentation riêng để bám theo kiến trúc Flutter hiện có.</li>
-      <li>Màn hình Phase 2 mở từ Board Detail và gọi endpoint <code>analysis/board/{boardUId}?userUId=...</code>; repository/usecase vẫn hỗ trợ Workspace/Card để không lệch contract backend Phase 1.</li>
-      <li>Nút <code>Báo cáo AI</code> chỉ hiển thị cho Board Owner/Admin/Editor. Viewer không thấy entry point để khớp authorization backend.</li>
-      <li>Parser model chấp nhận cả schema DTO Phase 1 (<code>detail</code>, <code>doneCards</code>, <code>label</code>) và schema mô tả trong test/plan (<code>description</code>, <code>completedCards</code>, <code>name</code>).</li>
+      <li>Chạy đúng các gate tự động chính của plan: backend test project đầy đủ, Flutter test cho <code>test/features/member_invite</code>, Flutter analyzer cho các vùng <code>member_invite</code>, workspace presentation, board presentation, <code>init_dependencies.dart</code>, và <code>api_endpoints.dart</code>.</li>
+      <li>Sửa thêm một số analyzer info trong vùng board presentation vì plan yêu cầu analyze cả thư mục <code>lib/features/board/presentation</code>, không chỉ các file invite được sửa trực tiếp.</li>
     </ul>
     <h2>Deviations</h2>
     <ul>
-      <li>Chưa thêm route global trong router vì board detail hiện đang dùng <code>Navigator.push</code>/<code>MaterialPageRoute</code> cho nhiều luồng cục bộ; entry point AI dùng cùng kiểu này để scope thay đổi nhỏ.</li>
-      <li>Chưa expose Workspace/Card analysis trong UI mặc dù data layer đã hỗ trợ, vì plan Phase 2 ưu tiên Board analysis trong board detail.</li>
+      <li>Manual smoke test chưa được chạy vì lượt này không khởi động backend + Flutter app với dữ liệu người dùng thật.</li>
+      <li>Lệnh <code>dart format</code> trong plan format theo thư mục rộng nên tạo formatting churn ở nhiều file board/workspace presentation ngoài phạm vi code logic chính.</li>
     </ul>
     <h2>Tradeoffs</h2>
     <ul>
-      <li>Không thêm package chart/progress mới; dùng widget Flutter mặc định để tránh dependency và giữ MVP nhẹ. Khi cần dashboard giàu hơn có thể bổ sung chart library ở phase sau.</li>
-      <li>UI hiển thị fallback banner khi rủi ro và đề xuất rỗng. Cách này đơn giản hơn việc backend phải thêm field fallback riêng, nhưng có thể nhận nhầm board thật sự không có risk/suggestion.</li>
+      <li>Giữ formatting churn thay vì revert tự động để không vô tình ghi đè thay đổi người dùng trong workspace dirty. Nếu muốn diff nhỏ hơn, nên làm một pass riêng để chỉ giữ formatting cần thiết.</li>
     </ul>
     <h2>Open questions</h2>
     <ul>
-      <li>Có muốn thêm entry point phân tích cho Workspace menu và Card detail ngay ở phase sau không?</li>
-      <li>Có cần lưu lịch sử báo cáo phía client/server để so sánh tiến độ theo thời gian không?</li>
-    </ul>
-  </div>
-
-  <div class="entry">
-    <div class="timestamp">2026-06-03 11:00 Asia/Bangkok - Resolve Flutter Static Analysis Issues</div>
-    <h2>Design decisions</h2>
-    <ul>
-      <li>Thay thế <code>withOpacity(opacity)</code> đã lỗi thời bằng <code>withValues(alpha: alpha)</code> theo khuyến nghị của Flutter mới nhất.</li>
-      <li>Sử dụng cú pháp null-aware element marker <code>?trailing</code> thay vì kiểm tra null bằng <code>if</code> hoặc dùng bang operator <code>trailing!</code> để tuân thủ luật phân tích tĩnh <code>use_null_aware_elements</code> và tránh syntax error.</li>
-      <li>Thay thế <code>Color.value</code> đã deprecated bằng <code>toARGB32()</code> để giữ nguyên biểu diễn màu số nguyên 32-bit.</li>
-      <li>Chuyển đổi <code>onReorder</code> cũ sang <code>onReorderItem</code> trong <code>ReorderableListView</code>, đồng thời điều chỉnh index phù hợp trước khi gọi cubit.</li>
-      <li>Loại bỏ bóng (shadow shadowing) của biến <code>isStarred</code> tại <code>workspace_board_item_widget.dart</code> để kích hoạt lại sử dụng trường chính xác của widget.</li>
-    </ul>
-    <h2>Deviations</h2>
-    <ul>
-      <li>Không có.</li>
-    </ul>
-    <h2>Tradeoffs</h2>
-    <ul>
-      <li>Không có.</li>
-    </ul>
-    <h2>Open questions</h2>
-    <ul>
-      <li>Không có.</li>
-    </ul>
-  </div>
-
-<<<<<<< HEAD
-      <dt>Open questions</dt>
-      <dd>Whether the completion bar before merge includes Trello-like tap-to-navigate and multi-device <code>NotificationReadAll</code> parity, or whether those move to a hardening follow-up.</dd>
-    </dl>
-    <p>Verification refresh from the latest local rerun: <code>flutter test --no-pub test/notification_api_test.dart test/notification_cubit_test.dart test/notification_model_test.dart test/notification_realtime_service_test.dart test/activity_page_notification_flow_test.dart -r expanded</code> â†’ <strong>20/20 passed</strong>; <code>dart analyze lib/features/activity lib/core/common_widgets/main_shell.dart lib/init_dependencies.dart</code> â†’ <strong>No issues found</strong>; <code>flutter --version</code> â†’ <strong>Flutter 3.44.0, Dart 3.12.0, DevTools 2.57.0</strong>.</p>
-  </section>
-  <section>
-    <h2>2026-05-26 20:55:46 +07:00</h2>
-    <dl>
-      <dt>Design decisions</dt>
-      <dd>Notification creation from business services is now best-effort after the business save succeeds. Domain services call <code>TryCreateInternalAsync</code> / <code>TryCreateManyInternalAsync</code> so a notification write/send failure is logged but does not roll back the actual board, card, comment, member, or workspace operation.</dd>
-      <dd>Backend notification coverage was added as a separate <code>C#/TodoAppAPI.Tests</code> xUnit project instead of relying only on <code>dotnet build</code>. The tests cover failure isolation, server tab filtering, ownership checks for read/delete, locked manual notification POST behavior, and mention validation/deduplication.</dd>
-      <dd>Flutter realtime parity was implemented in production code for <code>NotificationReadAll</code>. The cubit applies the event by clearing the unread tab, marking loaded items as read on other tabs, and setting <code>unreadCount</code> to zero.</dd>
-      <dd>Notification tap navigation uses typed context fields (<code>workspaceId</code>, <code>boardId</code>, <code>cardId</code>, <code>commentId</code>) rather than trusting the backend <code>link</code> string. Missing or deleted targets return no route and let <code>ActivityPage</code> show a user-visible snackbar.</dd>
-      <dd>Activity tab fetching was centralized through <code>NotificationTabCoordinator</code>. Tapping a tab only animates the page; <code>PageView.onPageChanged</code> performs the fetch, avoiding duplicate server requests during normal tab switching.</dd>
-
-      <dt>Deviations</dt>
-      <dd>No outbox, retry queue, or background notification dispatcher was added in this pass. This intentionally differs from a guaranteed-delivery design because the reviewed high-risk bug was false failure of successful business actions, not durable notification retry.</dd>
-      <dd>Due-date scheduled reminders remain out of scope. The current implementation covers due-date set/change notifications only; timed reminders still require a future scheduler specification.</dd>
-      <dd>Navigation does not use arbitrary backend deep-link strings as the source of truth. This is a deliberate safety and correctness deviation: routes are built from validated typed IDs so stale or malformed links do not navigate blindly.</dd>
-      <dd>The manual realtime smoke test with two signed-in devices and a real backend was not executed in this documentation pass. Automated tests cover the pure Flutter/backend logic, but live SignalR transport still needs manual confirmation.</dd>
-
-      <dt>Tradeoffs</dt>
-      <dd>Best-effort notification dispatch is simpler and safer for current domain operations than introducing an outbox schema now. The tradeoff is that notification delivery can still be lost if the notification write fails after the business transaction succeeds.</dd>
-      <dd>The navigation service resolves cards through existing board/card data instead of adding a new dedicated backend deep-link resolver. This avoids API expansion, but deleted or inaccessible cards are handled as non-navigable results.</dd>
-      <dd>Flutter tests focus on cubit/service behavior rather than a full widget/device flow. This keeps required tests deterministic in CI-style environments, but it does not replace final manual smoke testing for SignalR and real screen navigation.</dd>
-
-      <dt>Open questions</dt>
-      <dd>Confirm whether scheduled due-date reminders should be added in a later phase, including reminder timing, recipient rules, and whether reminders should repeat or send once.</dd>
-      <dd>Confirm whether notification tap navigation should eventually support a backend-generated canonical deep link in addition to typed IDs.</dd>
-      <dd>Run or confirm the remaining manual smoke test: two active sessions receive <code>NotificationCreated</code>, <code>NotificationRead</code>, <code>NotificationReadAll</code>, and <code>NotificationDeleted</code> consistently, and tapping card/board/workspace notifications opens the expected screen.</dd>
-    </dl>
-    <p>Verification recorded for this implementation pass: <code>dotnet build "C#\TodoAppAPI\TodoAppAPI.csproj"</code> passed with 0 warnings and 0 errors; <code>dotnet test "C#\TodoAppAPI.Tests\TodoAppAPI.Tests.csproj"</code> passed 11/11; <code>flutter test --no-pub test/notification_api_test.dart test/notification_cubit_test.dart test/notification_model_test.dart test/notification_realtime_service_test.dart test/activity_page_notification_flow_test.dart test/notification_navigation_service_test.dart -r expanded</code> passed 30/30; <code>dart analyze lib/features/activity lib/core/common_widgets/main_shell.dart lib/init_dependencies.dart</code> reported no issues; <code>git diff --check</code> reported only LF/CRLF line-ending warnings and no whitespace errors.</p>
-  </section>
-  <section>
-    <h2>2026-05-26 21:22:36 +07:00</h2>
-    <dl>
-      <dt>Design decisions</dt>
-      <dd>Scheduled due-date reminder is now a required notification feature before the notification feature can be considered merge-ready. The scheduler rule is fixed: run every 15 minutes and notify assignees at exactly three milestones per card: 1 day before due date, 1 hour before due date, and when due date is reached.</dd>
-      <dd>Each reminder milestone must be sent at most once per card. Cards that are completed or have no assignees are skipped.</dd>
-      <dd>If a card due date is changed or removed, the reminder send history for that card must be reset so all milestones can be sent again from the new due-date state.</dd>
-      <dd>Typed notification context IDs are accepted as sufficient for navigation. No backend-generated canonical deep link is required for this phase.</dd>
-      <dd>The manual realtime/navigation smoke test is now documented as a required Definition of Done in <code>Docs/Tests/notification-smoke-test.md</code>.</dd>
-
-      <dt>Deviations</dt>
-      <dd>The previous due-date reminder deviation is no longer accepted as final behavior. The current code still lacks the scheduled reminder worker/history reset behavior, so this is now a pending implementation gap before merge rather than an approved out-of-scope item.</dd>
-      <dd>No deviation is needed for backend deep links because typed IDs are the confirmed design.</dd>
-
-      <dt>Tradeoffs</dt>
-      <dd>The scheduler requirement keeps reminder delivery inside the backend instead of pushing this responsibility to Flutter clients. This is more reliable for offline users, but it requires backend state to track which milestone notifications were already sent.</dd>
-      <dd>The smoke test remains manual because it verifies live SignalR behavior across two active sessions, which the current automated test setup does not cover end-to-end.</dd>
-
-      <dt>Open questions</dt>
-      <dd>None for navigation: typed IDs are enough.</dd>
-      <dd>None for the smoke-test merge gate: if all 6 scenarios pass, merge is allowed; if any scenario fails, open a bug ticket and do not merge.</dd>
-      <dd>Implementation question for the next code pass: choose the backend persistence shape for reminder send history, likely a small table keyed by card ID and reminder milestone so due-date changes can reset the card's reminder records safely.</dd>
-    </dl>
-    <p>Documentation update: created <code>Docs/Tests/notification-smoke-test.md</code> with 6 required pre-merge scenarios covering realtime create, read-all sync, tap navigation, stale-card tap handling, and realtime delete.</p>
-  </section>
-  <section>
-    <h2>2026-05-26 21:47:52 +07:00</h2>
-    <dl>
-      <dt>Design decisions</dt>
-      <dd>Scheduled due-date reminder is now implemented in the backend. <code>CardDueDateReminderHostedService</code> runs once when the API starts and then repeats every 15 minutes with server-local <code>DateTime.Now</code>.</dd>
-      <dd>Reminder send history is persisted in <code>CardDueDateReminderDeliveries</code> with a unique key on <code>(CardUId, Milestone)</code>. The scheduler records the milestone marker before creating notifications so the database unique index can prevent duplicate delivery under concurrent scheduler runs.</dd>
-      <dd>The three reminder windows are implemented as fixed milestones: <code>OneDayBefore</code> for due dates within 24 hours but more than 1 hour away, <code>OneHourBefore</code> for due dates within 1 hour but still in the future, and <code>DueNow</code> for due or overdue cards.</dd>
-      <dd>Cards are skipped when they are deleted, completed, or have no assignees. Completed status matches the app's existing status strings: <code>Completed</code>, <code>hoan_thanh</code>, and <code>hoÃ n thÃ nh</code>.</dd>
-      <dd>Changing or removing a card due date resets all reminder history for that card through both <code>UpdateDueDateAsync</code> and the broader <code>UpdateCard</code> path.</dd>
-      <dd><code>NotificationService.CreateManyInternalAsync</code> now keeps saved notification rows even if SignalR broadcast fails. This prevents the scheduler from treating a saved notification as failed only because realtime delivery failed.</dd>
-
-      <dt>Deviations</dt>
-      <dd>No Flutter code was changed for this pass because <code>NotificationTypeEnum.dueDateReminder</code> and typed card navigation already exist.</dd>
-      <dd>The scheduler does not send catch-up reminders for earlier milestones once the card is already in a later window. For example, an overdue card sends only <code>DueNow</code>, not backfilled 1-day or 1-hour reminders.</dd>
-
-      <dt>Tradeoffs</dt>
-      <dd>Using server-local time matches the existing backend date handling and the chosen plan, but it means due-date reminder behavior follows the API server timezone instead of each user's client timezone.</dd>
-      <dd>Delivery history is one row per card and milestone, not per assignee. This keeps the "once per card per milestone" rule simple, but if assignees are added after a milestone was sent, they will not receive that already-sent milestone until the due date changes and resets history.</dd>
-      <dd>The scheduler logs failures with <code>Console.WriteLine</code> to match the current service style. A production hardening pass should replace this with structured <code>ILogger</code>.</dd>
-
-      <dt>Open questions</dt>
-      <dd>Manual smoke test is still required before merge according to <code>Docs/Tests/notification-smoke-test.md</code>.</dd>
-      <dd>If product wants reminders to be per assignee rather than per card, the persistence key must change from <code>(CardUId, Milestone)</code> to include <code>RecipientId</code>.</dd>
-    </dl>
-    <p>Verification: baseline <code>dotnet test "C#\TodoAppAPI.Tests\TodoAppAPI.Tests.csproj"</code> passed 11/11 before changes. After implementation, <code>dotnet test "C#\TodoAppAPI.Tests\TodoAppAPI.Tests.csproj"</code> passed 19/19; <code>dotnet build "C#\TodoAppAPI\TodoAppAPI.csproj"</code> passed with 0 warnings and 0 errors; <code>git diff --check</code> exited 0 with only LF/CRLF warnings and no whitespace errors.</p>
-  </section>
-  <section>
-    <h2>2026-05-27 10:56:26 +07:00</h2>
-    <dl>
-      <dt>Design decisions</dt>
-      <dd>The third notification tab was changed from unread notifications to read notifications. Flutter now labels the tab <code>ÄÃ£ Ä‘á»c</code> and requests <code>tab=read</code>; the backend maps that value to <code>NotificationTab.Read</code> and filters rows where <code>Read == true</code>.</dd>
-      <dd>The backend still accepts the old <code>unread</code> tab value for compatibility, but the Flutter Activity page no longer sends it for the third tab.</dd>
-      <dd>Read-tab state handling was changed so realtime unread notifications are not inserted into the read tab, while read/read-all updates keep matching read items visible instead of removing them.</dd>
-      <dd>Delete remains optimistic in the UI: the row disappears immediately, a 3-second snackbar with inline <code>HoÃ n tÃ¡c</code> is shown, and the backend delete is confirmed when the snackbar closes if the user did not undo.</dd>
-
-      <dt>Deviations</dt>
-      <dd>No migration was added for the tab rename because tab selection is an API query/UI behavior change, not stored user state.</dd>
-      <dd>The old unread server filter was not removed. Keeping it is intentional so older clients or direct API callers do not break immediately.</dd>
-
-      <dt>Tradeoffs</dt>
-      <dd>The snackbar uses custom content with an inline button instead of <code>SnackBarAction</code>. This avoids the previous sticky behavior and guarantees the delete toast naturally times out after the configured 3 seconds unless the user taps undo.</dd>
-      <dd>Server delete is delayed until the undo window closes. This preserves undo behavior without adding a restore endpoint, but if the app process is killed during the 3-second window, the server delete may not be confirmed.</dd>
-
-      <dt>Open questions</dt>
-      <dd>None for the tab rename: the confirmed product behavior is <code>Táº¥t cáº£</code>, <code>Gá»­i tÃ´i</code>, and <code>ÄÃ£ Ä‘á»c</code>.</dd>
-      <dd>If product later wants delete to be durable immediately even when the app closes inside the undo window, add a backend restore/undelete endpoint and switch to server-delete-first undo.</dd>
-    </dl>
-    <p>Verification: <code>dotnet test "C#\TodoAppAPI.Tests\TodoAppAPI.Tests.csproj" --no-restore</code> passed 20/20; <code>dotnet build "C#\TodoAppAPI\TodoAppAPI.csproj"</code> passed with 0 warnings and 0 errors; <code>flutter test --no-pub test/notification_api_test.dart test/notification_cubit_test.dart test/notification_model_test.dart test/notification_realtime_service_test.dart test/activity_page_notification_flow_test.dart test/notification_navigation_service_test.dart -r expanded</code> passed 32/32; <code>dart analyze lib/features/activity lib/core/common_widgets/main_shell.dart lib/init_dependencies.dart</code> reported no issues; <code>git diff --check</code> exited 0 with only LF/CRLF warnings and no whitespace errors.</p>
-  </section>
-  <section>
-    <h2>2026-05-27 11:21:52 +07:00</h2>
-    <dl>
-      <dt>Design decisions</dt>
-      <dd><code>NotificationCubit.fetchNotifications</code> now treats refresh/tab-change requests as superseding requests. A newer tab request is allowed to start even while an older request is still in flight, and stale responses are ignored through a monotonically increasing fetch ID.</dd>
-      <dd>The delete snackbar remains undo-capable but is now visually smaller: floating behavior, max 320px width, reduced padding, compact inline undo button, and a 2-second duration.</dd>
-
-      <dt>Deviations</dt>
-      <dd>No backend code changed in this pass. The spinner issue was caused by Flutter request coordination, not by the backend <code>tab=read</code> query.</dd>
-
-      <dt>Tradeoffs</dt>
-      <dd>Latest-request-wins avoids the stuck spinner when users switch tabs quickly, but this keeps one shared notification list state for all tabs rather than caching each tab independently.</dd>
-      <dd>Server delete is still delayed until the undo window closes. The shorter 2-second timeout reduces how long the notification can remain only locally deleted before backend confirmation.</dd>
-
-      <dt>Open questions</dt>
-      <dd>If users later expect instant tab switching with cached results per tab, introduce separate per-tab state/cache instead of one shared cubit list.</dd>
-    </dl>
-    <p>Verification: new regression test <code>read-tab fetch is not dropped while another tab request is in flight</code> failed before the fix with final state <code>NotificationTab.all</code>, then passed after the fix. <code>flutter test --no-pub test/activity_page_notification_flow_test.dart -r expanded</code> passed 9/9; <code>flutter test --no-pub test/notification_api_test.dart test/notification_cubit_test.dart test/notification_model_test.dart test/notification_realtime_service_test.dart test/activity_page_notification_flow_test.dart test/notification_navigation_service_test.dart -r expanded</code> passed 33/33; <code>dart analyze lib/features/activity lib/core/common_widgets/main_shell.dart lib/init_dependencies.dart</code> reported no issues.</p>
-  </section>
-  <section>
-    <h2>2026-05-27 11:33:25 +07:00</h2>
-    <dl>
-      <dt>Design decisions</dt>
-      <dd>The <code>Gá»­i tÃ´i</code> tab now means direct notifications that are still unread. Once a direct notification is marked read, it is removed from <code>Gá»­i tÃ´i</code> and remains reachable through <code>ÄÃ£ Ä‘á»c</code>.</dd>
-      <dd>The backend <code>SentToMe</code> query now filters by both direct notification type and <code>Read == false</code>, so reloads do not bring read direct notifications back into <code>Gá»­i tÃ´i</code>.</dd>
-      <dd>Flutter local state mirrors the server rule: <code>markAsRead</code>, <code>NotificationRead</code>, and <code>NotificationReadAll</code> remove read items from the current <code>Gá»­i tÃ´i</code> list immediately.</dd>
-
-      <dt>Deviations</dt>
-      <dd>The old interpretation of <code>Gá»­i tÃ´i</code> as all direct notifications, read or unread, is no longer used in the app UI.</dd>
-
-      <dt>Tradeoffs</dt>
-      <dd>The current design keeps <code>Gá»­i tÃ´i</code> as an action/inbox-style tab and <code>ÄÃ£ Ä‘á»c</code> as history. This avoids duplicate read notifications across both tabs, but users must switch to <code>ÄÃ£ Ä‘á»c</code> to see direct notifications after reading them.</dd>
-
-      <dt>Open questions</dt>
-      <dd>None for the current request.</dd>
-    </dl>
-    <p>Verification: backend and Flutter RED tests failed before the fix because read direct notifications stayed in <code>SentToMe</code>. After the fix, <code>dotnet test "C#\TodoAppAPI.Tests\TodoAppAPI.Tests.csproj" --no-restore --output "D:\tmp\kabo-test-out"</code> passed 20/20; <code>dotnet build "C#\TodoAppAPI\TodoAppAPI.csproj" --no-restore --output "D:\tmp\kabo-build-out"</code> passed with 0 warnings and 0 errors; <code>flutter test --no-pub test/notification_api_test.dart test/notification_cubit_test.dart test/notification_model_test.dart test/notification_realtime_service_test.dart test/activity_page_notification_flow_test.dart test/notification_navigation_service_test.dart -r expanded</code> passed 37/37; <code>dart analyze lib/features/activity lib/core/common_widgets/main_shell.dart lib/init_dependencies.dart</code> reported no issues. Separate backend output paths were used because the running API process locked the default build output.</p>
-  </section>
-  <section>
-    <h2>2026-05-27 21:00:00 +07:00 (CI/CD Pipeline Fix)</h2>
-    <dl>
-      <dt>Design decisions</dt>
-      <dd>Added the <code>Prepare Flutter env for CI</code> step to <code>.github/workflows/sonarcloud.yml</code> to run before the Flutter tests. This step generates a placeholder <code>.env</code> file under the Flutter project root.</dd>
-      <dd>Since the <code>.env</code> file is untracked to protect development configuration and environment variables, the CI/CD pipeline on GitHub did not have the file. Flutter's build runner requires all assets specified in <code>pubspec.yaml</code> to exist, so the tests failed during asset bundling when it was missing.</dd>
-
-      <dt>Deviations</dt>
-      <dd>None. This change alignment allows the automated Flutter checks to run seamlessly in the pipeline without exposing local environment settings.</dd>
-
-      <dt>Tradeoffs</dt>
-      <dd>Using a placeholder <code>.env</code> file in CI is standard practice to satisfy the build system's dependency requirements without committing secrets. Storing a default mock API URL ensures tests resolve their initialization correctly.</dd>
-
-      <dt>Open questions</dt>
-      <dd>None.</dd>
-    </dl>
-    <p>Verification: Modified the SonarCloud workflow and pushed to <code>origin/Notification_Activity</code> to trigger the remote build and verify that the "Run Flutter tests with coverage" step passes successfully.</p>
-  </section>
-=======
-  <div class="entry">
-    <div class="timestamp">2026-06-03 11:06 Asia/Bangkok - gitignore Cleanup & .vscode untracking</div>
-    <h2>Design decisions</h2>
-    <ul>
-      <li>Bỏ qua (uncomment) thư mục <code>.vscode/</code> trong root <code>.gitignore</code> và thực hiện untrack các file Peacock settings của VS Code để tránh commit các cấu hình mang tính cá nhân của lập trình viên.</li>
-      <li>Loại bỏ luật ignore Migrations (<code>**/Migrations/*</code>) ra khỏi root <code>.gitignore</code> vì các file Migrations của Entity Framework Core cần được đưa lên git để đồng bộ cơ sở dữ liệu giữa các máy phát triển và môi trường production.</li>
-      <li>Loại bỏ <code>appsettings.json</code> khỏi danh sách ignore của <code>C#/TodoAppAPI/.gitignore</code> vì file cấu hình cơ sở này cần được theo dõi (track) với các giá trị placeholder, còn các thông tin nhạy cảm của máy cá nhân được chuyển sang file <code>appsettings.Development.json</code> đã được ignore sẵn.</li>
-    </ul>
-    <h2>Deviations</h2>
-    <ul>
-      <li>Không có.</li>
-    </ul>
-    <h2>Tradeoffs</h2>
-    <ul>
-      <li>Không có.</li>
-    </ul>
-    <h2>Open questions</h2>
-    <ul>
-      <li>Không có.</li>
-    </ul>
-  </div>
-
-  <div class="entry">
-    <div class="timestamp">2026-06-03 13:10 Asia/Bangkok - Phase 3 overall verification</div>
-    <h2>Design decisions</h2>
-    <ul>
-      <li>Chạy toàn bộ các lệnh verification tĩnh và động: backend build, backend unit tests, frontend analysis, frontend unit tests.</li>
-      <li>Thực hiện quét bảo mật thủ công trên toàn bộ repository đối với các chuỗi nhạy cảm để đảm bảo khóa Gemini API thật sự không bị lộ trên git.</li>
-      <li>Đã kiểm tra kỹ phân quyền (role-based) và endpoint contract để đảm bảo backend giữ khóa và phân quyền chính xác cho Workspace/Board/Card, còn Flutter gọi backend và kiểm tra quyền trước khi vẽ nút AI.</li>
-    </ul>
-    <h2>Deviations</h2>
-    <ul>
-      <li>Không có thay đổi về mã nguồn trong pha này do tất cả các bài test tự động và phân tích tĩnh đều vượt qua ngay trong lần chạy đầu tiên.</li>
-    </ul>
-    <h2>Tradeoffs</h2>
-    <ul>
-      <li>Việc giấu hoàn toàn nút AI Analysis đối với Viewer thay vì hiển thị nút disabled giúp giao diện sạch sẽ, nhưng Viewer có thể không biết tính năng này tồn tại trừ khi được Admin/Editor chia sẻ. Điều này được chấp nhận theo đúng đặc tả thiết kế MVP.</li>
-    </ul>
-    <h2>Open questions</h2>
-    <ul>
-      <li>Mặc dù Firebase API keys nằm trong <code>firebase_options.dart</code> không phải là Gemini API key và là cấu hình phía máy khách bình thường của Firebase, có cần đưa chúng vào cơ chế bảo mật nghiêm ngặt hơn ở các sprint sau không?</li>
+      <li>Có muốn tôi làm thêm một pass thu gọn diff, chỉ giữ các file logic cần thiết và bỏ formatting churn ngoài scope không?</li>
     </ul>
     <h2>Verification Results</h2>
     <ul>
-      <li><strong>Backend Build:</strong> Lệnh <code>dotnet build "C#\TodoAppAPI\TodoAppAPI.csproj"</code> thành công hoàn toàn (0 warnings, 0 errors).</li>
-      <li><strong>Backend Tests:</strong> Lệnh <code>dotnet test "C#\TodoAppAPI.Tests\TodoAppAPI.Tests.csproj" --no-restore</code> vượt qua toàn bộ 39 tests thành công.</li>
-      <li><strong>Frontend Analyze:</strong> Lệnh <code>flutter analyze</code> chạy trong thư mục <code>Flutter/trellon_flutter</code> thành công không có bất kỳ lỗi nào (No issues found! - 219.5s).</li>
-      <li><strong>Frontend Tests:</strong> Lệnh <code>flutter test --no-pub</code> vượt qua toàn bộ 90 tests thành công (All tests passed!).</li>
-      <li><strong>Security Check:</strong> Quét các pattern <code>AIza</code>, <code>GEMINI_API_KEY</code>, <code>GeminiSettings:ApiKey</code>, và <code>GeminiSettings__ApiKey</code>. Kết quả: Chỉ tìm thấy các Firebase API keys công khai trong <code>firebase_options.dart</code> và placeholder trong <code>appsettings.Development.json.example</code>. Không phát hiện rò rỉ Gemini API Key thật trên Git.</li>
-      <li><strong>Contract Verification:</strong> Endpoint backend đầy đủ cho workspace/board/card. Flutter gọi backend Dio remote data source. Nút AI Analysis được bảo vệ đúng vai trò tại <code>board_detail_page.dart</code> dòng 309-322.</li>
+      <li><code>dotnet test C#\TodoAppAPI.Tests\TodoAppAPI.Tests.csproj -p:OutputPath=D:\tmp\trello-invite-autocomplete-test-bin\</code>: passed 109/109.</li>
+      <li><code>flutter test test\features\member_invite</code>: passed 2/2.</li>
+      <li><code>flutter analyze lib\features\member_invite lib\features\workspace\presentation lib\features\board\presentation lib\init_dependencies.dart lib\core\constants\api_endpoints.dart</code>: no issues found.</li>
+      <li><code>git diff --check</code>: exit 0; only Git LF-to-CRLF warnings were reported.</li>
     </ul>
   </div>
   <div class="entry">
-    <div class="timestamp">2026-06-04 Asia/Bangkok - AI report metrics, charts, and force refresh improvement</div>
+    <div class="timestamp">2026-06-13 11:15 Asia/Bangkok - Centered invite dialog layout</div>
     <h2>Design decisions</h2>
     <ul>
-      <li>Không thay đổi database. Các số liệu mới được tính từ dữ liệu hiện có: <code>Cards.Status</code>, <code>Cards.DueDate</code>, checklist/todo items, lists và board.</li>
-      <li>Backend chuyển tiến độ tổng thể sang logic dựa trên tỷ lệ thẻ hoàn tất theo <code>Card.Status</code>; checklist vẫn là chỉ số phụ, không kéo lệch phần trăm header.</li>
-      <li>Thêm <code>forceRefresh</code> vào endpoint phân tích để nút refresh và pull-to-refresh bỏ cache, đọc lại dữ liệu board mới nhất rồi ghi cache mới.</li>
-      <li>Backend luôn tạo summary, risks và suggestions deterministic từ metric trước; Gemini chỉ nâng chất lượng diễn giải khi trả JSON hợp lệ.</li>
-      <li>Frontend thêm donut chart và bar chart bằng <code>CustomPainter</code>/<code>LinearProgressIndicator</code> thay vì thêm chart package mới.</li>
+      <li>Đổi <code>MemberInvitePicker</code> thành một centered <code>Dialog</code> dùng chung để workspace invite và board invite có cùng layout.</li>
+      <li>Giữ autocomplete, multi-select chips, role dropdown của board và submit flow hiện có; chỉ đổi vị trí/modal shell theo ảnh tham chiếu.</li>
+      <li>Dialog dùng <code>maxWidth: 560</code>, inset 16px ngang và danh sách gợi ý giới hạn chiều cao để vẫn dùng được trên màn hình nhỏ hoặc khi bàn phím mở.</li>
     </ul>
     <h2>Deviations</h2>
     <ul>
-      <li>Không triển khai mini timeline due-date trong lượt này để tránh mở rộng DTO danh sách card chi tiết. Thay vào đó thêm metric <code>dueSoonCards</code> và risk/suggestion tương ứng.</li>
-      <li>Không thêm report history/cloud storage trong lượt này vì yêu cầu hiện tại tập trung vào chất lượng báo cáo hiện tại và refresh dữ liệu mới.</li>
+      <li>Không thêm hàng copy-link như ảnh vì yêu cầu là lấy layout, không lấy toàn bộ giao diện hay thêm tính năng link invite.</li>
+      <li>Các entry point active trước đây dùng <code>showModalBottomSheet</code> đã đổi sang <code>showDialog</code>; các helper legacy chưa được gọi vẫn để nguyên để tránh trộn cleanup encoding/mojibake vào thay đổi layout này.</li>
     </ul>
     <h2>Tradeoffs</h2>
     <ul>
-      <li>Custom chart nhẹ giúp tránh dependency mới, nhưng khả năng tương tác chart còn giới hạn so với chart library chuyên dụng.</li>
-      <li>Status distribution dùng các nhóm ổn định <code>todo</code>, <code>inProgress</code>, <code>completed</code>, <code>other</code>; các status lạ được gom vào <code>other</code> để không làm sai tiến độ.</li>
+      <li>Đặt khung dialog trong widget dùng chung giúp workspace và board đồng bộ ngay, nhưng khiến <code>MemberInvitePicker</code> gắn với presentation dạng modal thay vì là content nhúng tự do.</li>
+      <li>Nút submit giữ ở cuối dialog và canh phải thay vì full-width dưới màn hình, phù hợp hơn với modal giữa màn hình nhưng khác bottom-sheet layout cũ.</li>
     </ul>
     <h2>Open questions</h2>
     <ul>
-      <li>Có cần chuẩn hóa danh sách giá trị <code>Card.Status</code> ở toàn app trong sprint sau không? Hiện tại feature AI chỉ phân nhóm mềm từ status hiện có.</li>
+      <li>Có muốn triển khai thêm invite-link/copy-link row sau này không, hay form này chỉ cần autocomplete user như hiện tại?</li>
+    </ul>
+  </div>
+  <div class="entry">
+    <div class="timestamp">2026-06-13 11:34 Asia/Bangkok - Legacy invite cleanup</div>
+    <h2>Design decisions</h2>
+    <ul>
+      <li>Xóa các helper invite legacy không còn được gọi sau khi workspace và board đều dùng <code>MemberInvitePicker</code>.</li>
+      <li>Giữ các bottom sheet không phải invite, ví dụ update role trong board members sheet, vì chúng là luồng UI khác và không thuộc yêu cầu đổi form mời.</li>
+    </ul>
+    <h2>Deviations</h2>
+    <ul>
+      <li>Không xóa các method tìm user theo email trong cubit/repository vì chúng có thể vẫn là API hỗ trợ hoặc còn được dùng ở luồng khác; cleanup này chỉ loại bỏ UI form invite cũ.</li>
+    </ul>
+    <h2>Tradeoffs</h2>
+    <ul>
+      <li>Xóa code UI legacy giúp tránh tình trạng có hai form mời cùng tồn tại, nhưng vẫn để lại phần domain/data cũ nếu chưa chứng minh chắc chắn không còn caller toàn repo.</li>
+    </ul>
+    <h2>Open questions</h2>
+    <ul>
+      <li>Có muốn làm thêm một pass riêng để xóa toàn bộ API tìm user theo email cũ nếu không còn caller production nào cần không?</li>
+    </ul>
+  </div>
+  <div class="entry">
+    <div class="timestamp">2026-06-13 12:05 Asia/Bangkok - Invite picker animations</div>
+    <h2>Design decisions</h2>
+    <ul>
+      <li>Thêm animation trực tiếp trong <code>MemberInvitePicker</code> để workspace và board invite cùng nhận hiệu ứng mà không phải sửa từng caller.</li>
+      <li>Dùng Flutter built-in <code>AnimatedSwitcher</code>, <code>AnimatedSize</code>, và <code>TweenAnimationBuilder</code>; không thêm package mới.</li>
+      <li>Loading query giờ fade/size transition bằng progress bar mỏng; suggestions fade/slide vào; chip được chọn fade/scale vào và fade/scale ra trước khi bị xóa khỏi state.</li>
+    </ul>
+    <h2>Deviations</h2>
+    <ul>
+      <li>Không thêm skeleton row hoặc shimmer vì invite query ngắn và hiện chưa có design system shimmer trong feature này.</li>
+    </ul>
+    <h2>Tradeoffs</h2>
+    <ul>
+      <li>Xóa chip dùng delayed removal 180ms để có exit animation. Cách này mượt hơn xóa state ngay, nhưng cần guard <code>mounted</code> trước khi cập nhật state sau delay.</li>
+    </ul>
+    <h2>Open questions</h2>
+    <ul>
+      <li>Có muốn bổ sung empty state animated khi query không có kết quả không?</li>
+    </ul>
+  </div>
+  <div class="entry">
+    <div class="timestamp">2026-06-13 12:12 Asia/Bangkok - Softer invite picker motion</div>
+    <h2>Design decisions</h2>
+    <ul>
+      <li>Làm mềm animation bằng cách tăng duration cho panel/chip, giảm biên độ slide/scale, và dùng easing nhất quán hơn cho cả chiều vào và ra.</li>
+      <li>Suggestions có stagger rất nhẹ theo index để danh sách không hiện đồng loạt quá cứng khi query trả dữ liệu.</li>
+      <li>Sửa separator role trong suggestion về ký tự bullet đúng để tránh mojibake trong UI invite.</li>
+    </ul>
+    <h2>Deviations</h2>
+    <ul>
+      <li>Không thêm physics/spring animation riêng vì Flutter built-in implicit animation đã đủ cho mức polish hiện tại và ít rủi ro hơn.</li>
+    </ul>
+    <h2>Tradeoffs</h2>
+    <ul>
+      <li>Animation dài hơn tạo cảm giác mềm hơn nhưng cũng làm thao tác xóa chip hoàn tất chậm hơn một chút; delay hiện được giữ ở mức 280ms.</li>
+    </ul>
+    <h2>Open questions</h2>
+    <ul>
+      <li>Nếu vẫn thấy cứng trên máy thật, nên kiểm tra bằng device frame rate thực tế trước khi tăng duration thêm.</li>
+    </ul>
+  </div>
+  <div class="entry">
+    <div class="timestamp">2026-06-13 12:30 Asia/Bangkok - Board rename and per-user starred boards</div>
+    <h2>Design decisions</h2>
+    <ul>
+      <li>Board star state is persisted on the backend per user with a new <code>UserStarredBoard</code> table and <code>StarredBoard</code> API, instead of storing it locally in Flutter.</li>
+      <li>Recent-board DTOs, starred-board DTOs, all-board DTOs, and workspace DTO board lists now expose <code>isStarred</code> so Flutter can render the same state in home, board list, and workspace screens.</li>
+      <li>Workspace board rename reuses the existing <code>PUT /boards/{id}</code> update path and shows a snackbar after success.</li>
+      <li>Starred boards are displayed before recent boards, and both sections paginate on the client with a maximum of 5 boards per page.</li>
+      <li>Workspace board lists sort starred boards to the top while preserving the previous relative order inside starred and non-starred groups.</li>
+      <li><code>C#/TodoAppAPI/.gitignore</code> now keeps migrations ignored by default but explicitly unignores <code>20260613123000_AddUserStarredBoard.cs</code>, because the new per-user star table needs a migration in source control.</li>
+      <li>Added <code>20260613123000_AddUserStarredBoard.Designer.cs</code> after EF CLI reported no pending migrations; the designer file supplies the <code>[Migration]</code> attribute EF uses to discover the migration.</li>
+    </ul>
+    <h2>Deviations</h2>
+    <ul>
+      <li>Pagination is currently client-side because the requirement was about visible section size, and the backend recent/starred lists are small bounded dashboard collections.</li>
+      <li>The board detail menu star icon remains a static menu affordance in this pass because the menu does not currently receive <code>isStarred</code> state; active star toggling is implemented from workspace board cards and reflected in home/list sections.</li>
+    </ul>
+    <h2>Tradeoffs</h2>
+    <ul>
+      <li>Using the existing board update endpoint avoids adding a rename-only endpoint, but required hardening <code>UpdateBoardAsync</code> so a rename request does not clear an existing background URL.</li>
+      <li>Client-side pagination keeps the API simple and matches the current dashboard usage, but backend pagination may be preferable later if users can accumulate many starred/recent boards.</li>
+    </ul>
+    <h2>Open questions</h2>
+    <ul>
+      <li>Do you want the static star button inside the board detail menu to become an active toggle too, with current star state passed into that sheet?</li>
+      <li>Should recent/starred pagination controls use text page counters as implemented, or a different visual treatment?</li>
     </ul>
     <h2>Verification Results</h2>
     <ul>
-      <li><strong>Backend Build:</strong> <code>dotnet build C#\TodoAppAPI\TodoAppAPI.csproj</code> thành công.</li>
-      <li><strong>Backend Tests:</strong> <code>dotnet test C#\TodoAppAPI.Tests\TodoAppAPI.Tests.csproj --filter GeminiAnalysis</code> pass 9/9 tests.</li>
-      <li><strong>Frontend Analyze:</strong> <code>flutter analyze</code> trong <code>Flutter/trellon_flutter</code> thành công, không có issue.</li>
-      <li><strong>Frontend Tests:</strong> <code>flutter test test\ai_analysis_remote_data_source_test.dart test\ai_analysis_cubit_test.dart</code> pass 5/5 tests.</li>
+      <li><code>dotnet test C#\TodoAppAPI.Tests\TodoAppAPI.Tests.csproj --filter "UserStarredBoardServiceTests|UpdateBoardAsync_preserves_background_when_renaming_without_background" -p:OutputPath=D:\tmp\trello-backend-feature-bin\</code>: passed 6/6.</li>
+      <li><code>flutter test test\board_model_starred_test.dart</code>: passed 1/1.</li>
+      <li><code>flutter analyze</code>: no new compile/type errors; command exits 1 because of 15 existing warning/info items outside this feature, including deprecated encrypted preferences, print usage in <code>main.dart</code>, and an unused import in <code>main_shell.dart</code>.</li>
     </ul>
   </div>
->>>>>>> b99a997132fbff90878e7a87c25feac790e238f9
+  <div class="entry">
+    <div class="timestamp">2026-06-13 13:00 Asia/Bangkok - Board section pagination animation</div>
+    <h2>Design decisions</h2>
+    <ul>
+      <li>Added <code>AnimatedSize</code> around the paged board content so the section height expands or collapses smoothly when the next page has a different number of boards.</li>
+      <li>Added <code>AnimatedSwitcher</code> with fade and slight slide transition for page content, keyed by page and board ids so each page change animates predictably.</li>
+      <li>Kept pagination controls outside the animated content block so the controls remain stable while only the list area changes height.</li>
+    </ul>
+    <h2>Deviations</h2>
+    <ul>
+      <li>The animation was applied to the board-list section widget first, covering both <code>Bảng Gắn Dấu Sao</code> and <code>Bảng Gần Đây</code> in the view shown by the user. Home overview grid animation can be handled separately if needed.</li>
+    </ul>
+    <h2>Tradeoffs</h2>
+    <ul>
+      <li>The widget test asserts the animation structure (<code>AnimatedSize</code> and <code>AnimatedSwitcher</code>) rather than pixel-perfect frame heights, because Flutter test constraints can make intrinsic height measurement brittle for this section.</li>
+    </ul>
+    <h2>Open questions</h2>
+    <ul>
+      <li>Do you want the same height/content transition applied to the Home Overview grid pagination too?</li>
+    </ul>
+    <h2>Verification Results</h2>
+    <ul>
+      <li><code>flutter test test\recent_boards_section_animation_test.dart</code>: passed 1/1.</li>
+      <li><code>flutter analyze lib\features\board\presentation\widgets\board_list\recent_boards_section.dart test\recent_boards_section_animation_test.dart</code>: no issues found.</li>
+    </ul>
+  </div>
+  <div class="entry">
+    <div class="timestamp">2026-06-13 23:05 Asia/Bangkok - Comment feature implementation start</div>
+    <h2>Design decisions</h2>
+    <ul>
+      <li>Implementing the current <code>Docs/Plans/Comment Plan.md</code> v3 design, which uses a dedicated <code>CommentAttachment</code> table instead of adding comment attachment fields to existing card-level <code>FileUrl</code>.</li>
+      <li>Working in the existing <code>Email_Noti</code> checkout because the workspace already contains user edits and no native worktree tool is available in this harness.</li>
+      <li>Comment attachment upload will reuse the existing <code>ICloudinaryService.UploadFileAsync</code> entry point from card attachments, with persistence handled by <code>CommentService</code>.</li>
+    </ul>
+    <h2>Deviations</h2>
+    <ul>
+      <li>No intentional deviations yet. Any future departure from the plan will be recorded here before or alongside the code change.</li>
+    </ul>
+    <h2>Tradeoffs</h2>
+    <ul>
+      <li>Option A adds a new table and avoids overloading <code>FileUrls</code>, at the cost of parallel attachment mapping code for comments.</li>
+    </ul>
+    <h2>Open questions</h2>
+    <ul>
+      <li>Plan v3 leaves final attachment preview behavior open; implementation will start with compact file chips and links unless a richer preview is already easy to reuse.</li>
+    </ul>
+  </div>
+  <div class="entry">
+    <div class="timestamp">2026-06-13 23:55 Asia/Bangkok - Comment feature implementation checkpoint</div>
+    <h2>Design decisions</h2>
+    <ul>
+      <li>Comment notifications now create <code>Mention</code> notifications for tagged board/card members and <code>Comment</code> notifications for assigned card members, excluding the commenter.</li>
+      <li>Users can tag by <code>@username</code>, email prefix, or full <code>@email</code>, including plus-address emails such as <code>@member+qa@example.com</code>.</li>
+      <li>Flutter uses the board member list for mention suggestions when available, falling back to assigned card members if the board member list has not been loaded.</li>
+      <li>Comment attachments are uploaded after the comment is created, then attached to the same comment in local state.</li>
+      <li>Edit/delete endpoints only update or remove the comment and broadcast the card detail realtime event; they do not call notification creation.</li>
+    </ul>
+    <h2>Deviations</h2>
+    <ul>
+      <li>Attachment UI currently renders compact file chips instead of a rich preview gallery. This keeps the first implementation generic for all file types and avoids duplicating the card attachment image editor flow.</li>
+      <li>Inbox-card comment attachments/edit/delete are disabled from the card detail UI because the implemented backend endpoints target board-card comments. Existing inbox comment creation remains unchanged.</li>
+      <li>A pre-existing ignored migration named <code>20260613152714_AddCommentAttachmentSupport</code> was left untouched because it appears to create a broad schema baseline. The source-controlled migration for this feature is <code>20260613154422_AddCommentAttachment</code>.</li>
+    </ul>
+    <h2>Tradeoffs</h2>
+    <ul>
+      <li>Uploading comment files after comment creation avoids adding a mixed multipart create-comment endpoint, but a failed file upload can leave the text comment created without some attachments.</li>
+      <li>Using a separate <code>CommentAttachment</code> table keeps comment files isolated from card-level attachments, but adds parallel DTO/model mapping on both backend and Flutter.</li>
+    </ul>
+    <h2>Open questions</h2>
+    <ul>
+      <li>Do you want edit-comment mode to reuse the full mention suggestion bottom sheet, or is the current inline edit enough?</li>
+      <li>Should comment attachment chips open the uploaded URL in-app/browser when tapped?</li>
+      <li>Should inbox comments support the same edit/delete/attachment behavior in a later backend pass?</li>
+    </ul>
+    <h2>Verification Results</h2>
+    <ul>
+      <li><code>dotnet build C#\TodoAppAPI\TodoAppAPI.csproj</code>: passed, 0 warnings, 0 errors.</li>
+      <li><code>dotnet test C#\TodoAppAPI.Tests\TodoAppAPI.Tests.csproj</code>: passed 115/115.</li>
+      <li><code>flutter test</code>: passed 129/129.</li>
+      <li><code>flutter test test/features/card/presentation/widgets/comment_mention_helper_test.dart</code>: passed 5/5.</li>
+      <li><code>flutter analyze lib/features/card test/features/card/presentation/widgets/comment_mention_helper_test.dart lib/init_dependencies.dart</code>: no issues found.</li>
+      <li><code>flutter analyze</code>: exits 1 because of 15 existing warning/info items outside this feature, including deprecated encrypted preferences, <code>print</code> usage in <code>main.dart</code>, and an unused import in <code>main_shell.dart</code>.</li>
+    </ul>
+  </div>
 </body>
 </html>
