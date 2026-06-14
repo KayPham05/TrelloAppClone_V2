@@ -12,6 +12,7 @@ import '../../domain/usecases/update_card_comment_usecase.dart';
 import '../../domain/usecases/delete_card_comment_usecase.dart';
 import '../../domain/usecases/upload_comment_attachment_usecase.dart';
 import '../../domain/usecases/delete_comment_attachment_usecase.dart';
+import '../../domain/usecases/update_attachment_name_usecase.dart';
 import '../../../../core/data_sources/user_local_data_source.dart';
 import '../../../../core/constants/card_status_values.dart';
 
@@ -30,6 +31,7 @@ class CardDetailCubit extends Cubit<CardDetailState> {
   final DeleteCardCommentUseCase deleteCardCommentUseCase;
   final UploadCommentAttachmentUseCase uploadCommentAttachmentUseCase;
   final DeleteCommentAttachmentUseCase deleteCommentAttachmentUseCase;
+  final UpdateAttachmentNameUseCase updateAttachmentNameUseCase;
 
   bool _isInboxCard = false;
 
@@ -46,6 +48,7 @@ class CardDetailCubit extends Cubit<CardDetailState> {
     this.deleteCardCommentUseCase,
     this.uploadCommentAttachmentUseCase,
     this.deleteCommentAttachmentUseCase,
+    this.updateAttachmentNameUseCase,
   ) : super(CardDetailLoading());
 
   Future<void> loadCardDetails(
@@ -190,6 +193,7 @@ class CardDetailCubit extends Cubit<CardDetailState> {
         if (filePaths.isEmpty || _isInboxCard) return;
 
         final uploadedFiles = <FileUrlEntity>[];
+        final uploadedCardAttachments = <FileUrlEntity>[];
         for (final filePath in filePaths) {
           final file = await uploadCommentAttachmentUseCase.call(
             commentId: newComment.id,
@@ -197,6 +201,15 @@ class CardDetailCubit extends Cubit<CardDetailState> {
             userUId: userUId,
           );
           uploadedFiles.add(file);
+
+          try {
+            final cardFile = await uploadAttachmentUseCase.call(
+              cardId: currentState.card.id,
+              filePath: filePath,
+              userUId: userUId,
+            );
+            uploadedCardAttachments.add(cardFile);
+          } catch (_) {}
         }
 
         final latestState = state;
@@ -207,8 +220,12 @@ class CardDetailCubit extends Cubit<CardDetailState> {
               attachments: [...comment.attachments, ...uploadedFiles],
             );
           }).toList();
+          final updatedCard = latestState.card.copyWith(
+            fileUrls: [...latestState.card.fileUrls, ...uploadedCardAttachments],
+          );
           emit(
             latestState.copyWith(
+              card: updatedCard,
               comments: comments,
               clearCommentActionError: true,
             ),
@@ -666,6 +683,43 @@ class CardDetailCubit extends Cubit<CardDetailState> {
         final updatedFiles = currentState.card.fileUrls.map((f) {
           if (f.id == fileId) {
             return f.copyWith(description: newDescription);
+          }
+          return f;
+        }).toList();
+        emit(
+          currentState.copyWith(
+            card: currentState.card.copyWith(fileUrls: updatedFiles),
+          ),
+        );
+      } catch (e) {
+        // Handle error silently
+      }
+    }
+  }
+
+  Future<void> renameAttachment(String fileId, String fileName) async {
+    final currentState = state;
+    if (currentState is CardDetailLoaded) {
+      try {
+        final userUId = await UserLocalDataSource().getUserId() ?? '';
+        if (_isInboxCard) {
+          await inboxRepository.renameAttachment(
+            cardId: currentState.card.id,
+            fileId: fileId,
+            userUId: userUId,
+            fileName: fileName,
+          );
+        } else {
+          await updateAttachmentNameUseCase.call(
+            cardId: currentState.card.id,
+            fileId: fileId,
+            userUId: userUId,
+            fileName: fileName,
+          );
+        }
+        final updatedFiles = currentState.card.fileUrls.map((f) {
+          if (f.id == fileId) {
+            return f.copyWith(fileName: fileName);
           }
           return f;
         }).toList();

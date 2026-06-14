@@ -1,17 +1,22 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:pro_image_editor/pro_image_editor.dart';
+import 'package:flutter_cached_pdfview/flutter_cached_pdfview.dart';
 import '../../../../../core/constants/app_colors.dart';
 import '../../cubit/card_detail_cubit.dart';
 import '../../cubit/card_detail_state.dart';
 import '../../../domain/entities/card_entity.dart';
+import 'attachment_download_service.dart';
 
 class CardDetailAttachments extends StatelessWidget {
-  const CardDetailAttachments({super.key});
+  final AttachmentDownloadService downloadService;
+
+  const CardDetailAttachments({
+    super.key,
+    this.downloadService = const AttachmentDownloadService(),
+  });
 
   void _showAddAttachmentBottomSheet(BuildContext context) {
     showModalBottomSheet(
@@ -74,21 +79,41 @@ class CardDetailAttachments extends StatelessWidget {
     }
   }
 
-  Future<void> _showUpdateDescriptionDialog(BuildContext context, FileUrlEntity file) async {
+  Future<void> _showRenameFileDialog(
+    BuildContext context,
+    FileUrlEntity file,
+  ) async {
     final cubit = context.read<CardDetailCubit>();
-    String newDescription = file.description ?? '';
+
+    final lastDotIndex = file.fileName.lastIndexOf('.');
+    final hasExtension =
+        lastDotIndex != -1 && lastDotIndex < file.fileName.length - 1;
+    final baseName = hasExtension
+        ? file.fileName.substring(0, lastDotIndex)
+        : file.fileName;
+    final extension = hasExtension ? file.fileName.substring(lastDotIndex) : '';
+
+    String newBaseName = baseName;
+    final controller = TextEditingController(text: newBaseName);
+
     await showDialog(
       context: context,
       builder: (ctx) {
         return AlertDialog(
-          title: const Text('Bình luận/Mô tả ảnh'),
+          title: const Text('Đổi tên tệp'),
           content: TextField(
-            controller: TextEditingController(text: newDescription),
-            decoration: const InputDecoration(hintText: 'Nhập mô tả cho ảnh...'),
-            onChanged: (val) => newDescription = val,
+            controller: controller,
+            decoration: InputDecoration(
+              hintText: 'Nhập tên tệp mới...',
+              suffixText: extension,
+            ),
+            onChanged: (val) => newBaseName = val,
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Hủy')),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Hủy'),
+            ),
             ElevatedButton(
               onPressed: () {
                 Navigator.pop(ctx);
@@ -99,11 +124,17 @@ class CardDetailAttachments extends StatelessWidget {
         );
       },
     );
-    // if newDescription differs manually
-    cubit.updateAttachmentDescription(file.id, newDescription);
+
+    if (newBaseName.trim().isNotEmpty && newBaseName != baseName) {
+      final finalName = '${newBaseName.trim()}$extension';
+      cubit.renameAttachment(file.id, finalName);
+    }
   }
 
-  Future<void> _showDescriptionDialog(BuildContext context, String filePath) async {
+  Future<void> _showDescriptionDialog(
+    BuildContext context,
+    String filePath,
+  ) async {
     final cubit = context.read<CardDetailCubit>();
     String? description;
     await showDialog(
@@ -112,11 +143,16 @@ class CardDetailAttachments extends StatelessWidget {
         return AlertDialog(
           title: const Text('Thêm mô tả cho tệp'),
           content: TextField(
-            decoration: const InputDecoration(hintText: 'Nhập mô tả (không bắt buộc)'),
+            decoration: const InputDecoration(
+              hintText: 'Nhập mô tả (không bắt buộc)',
+            ),
             onChanged: (val) => description = val,
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Bỏ qua')),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Bỏ qua'),
+            ),
             ElevatedButton(
               onPressed: () {
                 Navigator.pop(ctx);
@@ -129,30 +165,123 @@ class CardDetailAttachments extends StatelessWidget {
     );
     cubit.uploadAttachment(filePath, description: description);
   }
-  
-  void _editImage(BuildContext context, FileUrlEntity file) async {
-    final cubit = context.read<CardDetailCubit>();
-    if (!_isImage(file.url)) return;
 
-    await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => ProImageEditor.network(
-          file.url,
-          callbacks: ProImageEditorCallbacks(
-            onImageEditingComplete: (bytes) async {
-              // Convert bytes back to file temporarily
-              final tempDir = Directory.systemTemp;
-              final tempFile = File('${tempDir.path}/edited_${file.fileName}');
-              await tempFile.writeAsBytes(bytes);
-              
-              if (context.mounted) {
-                Navigator.pop(context); // pop editor
-                // Re-upload as new attachment
-                cubit.uploadAttachment(tempFile.path, description: 'Edited from ${file.fileName}');
-              }
-            },
+  void _openFile(BuildContext context, FileUrlEntity file) async {
+    final isImg = _isImage(file.url);
+    final ext = _getFileExt(file.fileName);
+    final isPdf = ext == 'PDF';
+
+    if (isImg) {
+      showDialog(
+        context: context,
+        builder: (ctx) => Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.all(8),
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              InteractiveViewer(child: Image.network(file.url)),
+              Positioned(
+                top: 0,
+                right: 0,
+                child: IconButton(
+                  icon: const Icon(Icons.close, color: Colors.white, size: 30),
+                  onPressed: () => Navigator.pop(ctx),
+                ),
+              ),
+              _buildFileInfoOverlay(file, true),
+            ],
           ),
+        ),
+      );
+    } else if (isPdf) {
+      showDialog(
+        context: context,
+        builder: (ctx) => Dialog(
+          insetPadding: const EdgeInsets.all(16),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: Stack(
+              children: [
+                const PDF().cachedFromUrl(
+                  file.url,
+                  placeholder: (progress) => Center(child: Text('$progress %')),
+                  errorWidget: (error) => Center(child: Text(error.toString())),
+                ),
+                Positioned(
+                  top: 0,
+                  right: 0,
+                  child: IconButton(
+                    icon: const Icon(
+                      Icons.close,
+                      color: Colors.black54,
+                      size: 30,
+                    ),
+                    onPressed: () => Navigator.pop(ctx),
+                  ),
+                ),
+                _buildFileInfoOverlay(file, false),
+              ],
+            ),
+          ),
+        ),
+      );
+    } else {
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          content: const Text(
+            'Không có bản xem trước nào cho tệp đính kèm này.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Đóng'),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
+  Widget _buildFileInfoOverlay(FileUrlEntity file, bool isTransparentBg) {
+    return Positioned(
+      bottom: 0,
+      left: 0,
+      right: 0,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.black.withValues(alpha: 0.7),
+          borderRadius: isTransparentBg
+              ? BorderRadius.zero
+              : const BorderRadius.vertical(bottom: Radius.circular(8)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              file.fileName,
+              style: GoogleFonts.inter(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            if (file.description != null && file.description!.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  file.description!,
+                  style: GoogleFonts.inter(color: Colors.white70, fontSize: 13),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+          ],
         ),
       ),
     );
@@ -167,7 +296,9 @@ class CardDetailAttachments extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocConsumer<CardDetailCubit, CardDetailState>(
       listenWhen: (prev, current) {
-        if (current is CardDetailLoaded && current.attachmentError != null) return true;
+        if (current is CardDetailLoaded && current.attachmentError != null) {
+          return true;
+        }
         return false;
       },
       listener: (context, state) {
@@ -199,12 +330,17 @@ class CardDetailAttachments extends StatelessWidget {
                       width: 18,
                       height: 18,
                       child: CircularProgressIndicator(
-                          strokeWidth: 2, color: Color(0xFF1D4ED8)),
+                        strokeWidth: 2,
+                        color: Color(0xFF1D4ED8),
+                      ),
                     )
                   : GestureDetector(
                       onTap: () => _showAddAttachmentBottomSheet(context),
-                      child: const Icon(Icons.add_rounded,
-                          size: 22, color: Color(0xFF1D4ED8)),
+                      child: const Icon(
+                        Icons.add_rounded,
+                        size: 22,
+                        color: Color(0xFF1D4ED8),
+                      ),
                     ),
             ),
 
@@ -213,10 +349,12 @@ class CardDetailAttachments extends StatelessWidget {
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
                 child: Column(
                   children: files
-                      .map((f) => Padding(
-                            padding: const EdgeInsets.only(bottom: 10),
-                            child: _buildAttachmentItem(context, f),
-                          ))
+                      .map(
+                        (f) => Padding(
+                          padding: const EdgeInsets.only(bottom: 10),
+                          child: _buildAttachmentItem(context, f),
+                        ),
+                      )
                       .toList(),
                 ),
               ),
@@ -226,20 +364,25 @@ class CardDetailAttachments extends StatelessWidget {
               const SizedBox(height: 8),
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                child: Text('Các ảnh đính kèm',
-                    style: GoogleFonts.inter(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.black87)),
+                child: Text(
+                  'Các ảnh đính kèm',
+                  style: GoogleFonts.inter(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.black87,
+                  ),
+                ),
               ),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Column(
                   children: images
-                      .map((f) => Padding(
-                            padding: const EdgeInsets.only(bottom: 10),
-                            child: _buildAttachmentItem(context, f),
-                          ))
+                      .map(
+                        (f) => Padding(
+                          padding: const EdgeInsets.only(bottom: 10),
+                          child: _buildAttachmentItem(context, f),
+                        ),
+                      )
                       .toList(),
                 ),
               ),
@@ -260,7 +403,9 @@ class CardDetailAttachments extends StatelessWidget {
   Color _getColorForExt(String fileName) {
     final ext = _getFileExt(fileName);
     if (ext == 'PDF') return const Color(0xFF3B82F6);
-    if (['JPG', 'PNG', 'JPE', 'WEBP'].contains(ext)) return const Color(0xFF10B981);
+    if (['JPG', 'PNG', 'JPE', 'WEBP'].contains(ext)) {
+      return const Color(0xFF10B981);
+    }
     if (['DOC', 'DOCX'].contains(ext)) return const Color(0xFF2563EB);
     return const Color(0xFFF97316);
   }
@@ -271,7 +416,7 @@ class CardDetailAttachments extends StatelessWidget {
     final color = _getColorForExt(file.fileName);
 
     return InkWell(
-      onTap: isImg ? () => _editImage(context, file) : null,
+      onTap: () => _openFile(context, file),
       borderRadius: BorderRadius.circular(16),
       child: Container(
         padding: const EdgeInsets.all(12),
@@ -287,20 +432,25 @@ class CardDetailAttachments extends StatelessWidget {
               decoration: BoxDecoration(
                 color: color.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(12),
-                image: isImg 
-                  ? DecorationImage(image: NetworkImage(file.url), fit: BoxFit.cover)
-                  : null,
+                image: isImg
+                    ? DecorationImage(
+                        image: NetworkImage(file.url),
+                        fit: BoxFit.cover,
+                      )
+                    : null,
               ),
-              child: isImg ? null : Center(
-                child: Text(
-                  ext,
-                  style: GoogleFonts.inter(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w800,
-                    color: color,
-                  ),
-                ),
-              ),
+              child: isImg
+                  ? null
+                  : Center(
+                      child: Text(
+                        ext,
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                          color: color,
+                        ),
+                      ),
+                    ),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -337,7 +487,9 @@ class CardDetailAttachments extends StatelessWidget {
                         'Cloudinary URL',
                         style: GoogleFonts.inter(
                           fontSize: 11,
-                          color: AppColors.onSurfaceVariant.withValues(alpha: 0.5),
+                          color: AppColors.onSurfaceVariant.withValues(
+                            alpha: 0.5,
+                          ),
                         ),
                       ),
                     ),
@@ -345,39 +497,116 @@ class CardDetailAttachments extends StatelessWidget {
               ),
             ),
             PopupMenuButton<String>(
-              icon: const Icon(Icons.more_vert, color: AppColors.onSurfaceVariant, size: 20),
-              onSelected: (value) {
-                if (value == 'edit_image') {
-                  _editImage(context, file);
-                } else if (value == 'edit_description') {
-                  _showUpdateDescriptionDialog(context, file);
+              icon: const Icon(
+                Icons.more_vert,
+                color: AppColors.onSurfaceVariant,
+                size: 20,
+              ),
+              onSelected: (value) async {
+                if (value == 'rename') {
+                  _showRenameFileDialog(context, file);
+                } else if (value == 'download') {
+                  final messenger = ScaffoldMessenger.of(context);
+                  try {
+                    final savedFile = await downloadService.download(
+                      url: file.url,
+                      fileName: file.fileName,
+                    );
+                    if (!context.mounted) return;
+                    messenger.showSnackBar(
+                      SnackBar(content: Text('Đã tải về: ${savedFile.path}')),
+                    );
+                  } catch (_) {
+                    if (!context.mounted) return;
+                    messenger.showSnackBar(
+                      const SnackBar(
+                        content: Text('Không thể tải tệp. Vui lòng thử lại.'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
                 } else if (value == 'delete') {
-                  context.read<CardDetailCubit>().deleteAttachment(file.id);
+                  final confirm = await showDialog<bool>(
+                    context: context,
+                    builder: (ctx) => AlertDialog(
+                      title: const Text('Xác nhận xóa'),
+                      content: const Text(
+                        'Bạn có chắc chắn muốn xóa tệp đính kèm này không?',
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(ctx, false),
+                          child: const Text('Hủy'),
+                        ),
+                        ElevatedButton(
+                          onPressed: () => Navigator.pop(ctx, true),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red,
+                          ),
+                          child: const Text(
+                            'Xóa',
+                            style: TextStyle(color: Colors.white),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                  if (confirm == true && context.mounted) {
+                    context.read<CardDetailCubit>().deleteAttachment(file.id);
+                  }
                 }
               },
+              constraints: const BoxConstraints(minWidth: 148, maxWidth: 176),
+              padding: EdgeInsets.zero,
               itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-                if (isImg)
-                  const PopupMenuItem<String>(
-                    value: 'edit_image',
-                    child: ListTile(
-                      leading: Icon(Icons.edit_outlined, color: Colors.blue),
-                      title: Text('Xem và chỉnh sửa ảnh'),
-                      contentPadding: EdgeInsets.zero,
-                    ),
-                  ),
                 const PopupMenuItem<String>(
-                  value: 'edit_description',
+                  value: 'download',
+                  height: 40,
                   child: ListTile(
-                    leading: Icon(Icons.comment_outlined, color: Colors.green),
-                    title: Text('Thêm bình luận cho ảnh'),
+                    dense: true,
+                    visualDensity: VisualDensity(horizontal: -4, vertical: -4),
+                    minLeadingWidth: 20,
+                    horizontalTitleGap: 10,
+                    leading: Icon(
+                      Icons.download_outlined,
+                      color: Colors.blue,
+                      size: 19,
+                    ),
+                    title: Text('Tải về'),
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                ),
+                const PopupMenuItem<String>(
+                  value: 'rename',
+                  height: 40,
+                  child: ListTile(
+                    dense: true,
+                    visualDensity: VisualDensity(horizontal: -4, vertical: -4),
+                    minLeadingWidth: 20,
+                    horizontalTitleGap: 10,
+                    leading: Icon(
+                      Icons.edit_outlined,
+                      color: Colors.green,
+                      size: 19,
+                    ),
+                    title: Text('Chỉnh sửa'),
                     contentPadding: EdgeInsets.zero,
                   ),
                 ),
                 const PopupMenuItem<String>(
                   value: 'delete',
+                  height: 40,
                   child: ListTile(
-                    leading: Icon(Icons.delete_outline, color: Colors.red),
-                    title: Text('Xóa ảnh'),
+                    dense: true,
+                    visualDensity: VisualDensity(horizontal: -4, vertical: -4),
+                    minLeadingWidth: 20,
+                    horizontalTitleGap: 10,
+                    leading: Icon(
+                      Icons.delete_outline,
+                      color: Colors.red,
+                      size: 19,
+                    ),
+                    title: Text('Xóa tệp'),
                     contentPadding: EdgeInsets.zero,
                   ),
                 ),
@@ -395,7 +624,11 @@ class _SectionHeader extends StatelessWidget {
   final IconData icon;
   final String title;
   final Widget? trailing;
-  const _SectionHeader({required this.icon, required this.title, this.trailing});
+  const _SectionHeader({
+    required this.icon,
+    required this.title,
+    this.trailing,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -411,7 +644,10 @@ class _SectionHeader extends StatelessWidget {
               child: Text(
                 title,
                 style: const TextStyle(
-                    fontSize: 14, fontWeight: FontWeight.w500, color: Colors.black87),
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.black87,
+                ),
               ),
             ),
             ?trailing,

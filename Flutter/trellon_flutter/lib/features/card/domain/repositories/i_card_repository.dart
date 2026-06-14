@@ -27,6 +27,7 @@ abstract class ICardRepository {
   Future<String> uploadCardCover({required String cardId, required String filePath, required String userUId});
   Future<void> deleteAttachment({required String cardId, required String fileId, required String userUId});
   Future<void> updateAttachmentDescription({required String cardId, required String fileId, required String userUId, String? description});
+  Future<void> renameAttachment({required String cardId, required String fileId, required String userUId, required String fileName});
 
   // Labels
   Future<CardLabelEntity> addCardLabel({required String cardId, required String title, required String colorCode});

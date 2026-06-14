@@ -39,6 +39,7 @@ import 'features/card/domain/usecases/update_card_comment_usecase.dart';
 import 'features/card/domain/usecases/delete_card_comment_usecase.dart';
 import 'features/card/domain/usecases/upload_comment_attachment_usecase.dart';
 import 'features/card/domain/usecases/delete_comment_attachment_usecase.dart';
+import 'features/card/domain/usecases/update_attachment_name_usecase.dart';
 import 'features/card/presentation/cubit/card_detail_cubit.dart';
 import 'features/board/data/datasources/board_remote_data_source.dart';
 import 'features/board/data/repositories/board_repository_impl.dart';
@@ -304,6 +305,9 @@ void _initCard() {
     () => DeleteCommentAttachmentUseCase(serviceLocator()),
   );
   serviceLocator.registerLazySingleton(
+    () => UpdateAttachmentNameUseCase(serviceLocator()),
+  );
+  serviceLocator.registerLazySingleton(
     () => UpdateCardDueDateUseCase(serviceLocator()),
   );
   serviceLocator.registerLazySingleton(
@@ -313,6 +317,7 @@ void _initCard() {
   // Cubit
   serviceLocator.registerFactory(
     () => CardDetailCubit(
+      serviceLocator(),
       serviceLocator(),
       serviceLocator(),
       serviceLocator(),

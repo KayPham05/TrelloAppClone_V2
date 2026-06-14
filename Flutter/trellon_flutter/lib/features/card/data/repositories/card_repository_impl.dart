@@ -510,6 +510,26 @@ class CardRepositoryImpl implements ICardRepository {
   }
 
   @override
+  Future<void> renameAttachment({
+    required String cardId,
+    required String fileId,
+    required String userUId,
+    required String fileName,
+  }) async {
+    try {
+      final queryParam = 'userUId=$userUId&fileName=${Uri.encodeQueryComponent(fileName)}';
+      final response = await dio.put(
+        '${ApiEndpoints.card}/$cardId/attachments/$fileId/rename?$queryParam',
+      );
+      if (response.statusCode != 200) {
+        throw Exception('Lỗi khi cập nhật tên tệp đính kèm');
+      }
+    } catch (e) {
+      throw Exception('Lỗi kết nối server: $e');
+    }
+  }
+
+  @override
   Future<CardLabelEntity> addCardLabel({
     required String cardId,
     required String title,
