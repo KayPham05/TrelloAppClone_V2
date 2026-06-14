@@ -30,5 +30,12 @@ namespace TodoAppAPI.Interfaces
         Task<bool> SendChangeEmailOtpAsync(string userUId, string newEmail, string currentPassword, string? twoFactorCode);
         Task<bool> ConfirmChangeEmailAsync(string userUId, string newEmail, string otpCode);
         Task<bool> LockAccountAsync(string token);
+        Task<List<UserInviteSuggestionDTO>> GetInviteSuggestionsAsync(
+            string query,
+            string scope,
+            string requesterUId,
+            string? workspaceId,
+            string? boardId,
+            int limit = 10);
     }
 }

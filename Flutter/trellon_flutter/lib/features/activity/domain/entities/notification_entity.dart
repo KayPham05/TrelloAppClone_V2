@@ -16,7 +16,12 @@ enum NotificationTypeEnum {
   workspaceMemberRemoved(12),
   workspaceRoleChanged(13),
   dueDateChanged(14),
-  dueDateReminder(15);
+  dueDateReminder(15),
+  cardArchived(16),
+  attachmentAdded(17),
+  attachmentRemoved(18),
+  cardRenamed(19),
+  workspaceRenamed(20);
 
   final int value;
   const NotificationTypeEnum(this.value);
@@ -111,22 +116,22 @@ class NotificationEntity extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        recipientId,
-        actorId,
-        actorName,
-        type,
-        title,
-        message,
-        link,
-        workspaceId,
-        boardId,
-        listId,
-        cardId,
-        createdAt,
-        isRead,
-        readAt,
-      ];
+    id,
+    recipientId,
+    actorId,
+    actorName,
+    type,
+    title,
+    message,
+    link,
+    workspaceId,
+    boardId,
+    listId,
+    cardId,
+    createdAt,
+    isRead,
+    readAt,
+  ];
 }
 
 class NotificationPageEntity extends Equatable {

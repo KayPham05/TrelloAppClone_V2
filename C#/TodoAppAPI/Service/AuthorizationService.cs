@@ -22,9 +22,14 @@ namespace TodoAppAPI.Service
             var member = await _context.WorkspaceMembers
                 .FirstOrDefaultAsync(m => m.WorkspaceUId == workspaceId && m.UserUId == userId);
 
-            if (member == null) return false;
+            if (member != null &&
+                (member.Role == RoleConstants.WorkspaceOwner || member.Role == RoleConstants.WorkspaceAdmin))
+            {
+                return true;
+            }
 
-            return member.Role == RoleConstants.WorkspaceOwner || member.Role == RoleConstants.WorkspaceAdmin;
+            return await _context.Workspaces
+                .AnyAsync(w => w.WorkspaceUId == workspaceId && w.OwnerUId == userId);
         }
 
         public async Task<bool> CanCreateBoardInWorkspaceAsync(string workspaceId, string userId)
@@ -32,11 +37,15 @@ namespace TodoAppAPI.Service
             var member = await _context.WorkspaceMembers
                 .FirstOrDefaultAsync(m => m.WorkspaceUId == workspaceId && m.UserUId == userId);
 
-            if (member == null) return false;
+            if (member != null)
+            {
+                return member.Role == RoleConstants.WorkspaceOwner ||
+                       member.Role == RoleConstants.WorkspaceAdmin ||
+                       member.Role == RoleConstants.WorkspaceMember;
+            }
 
-            return member.Role == RoleConstants.WorkspaceOwner || 
-                   member.Role == RoleConstants.WorkspaceAdmin || 
-                   member.Role == RoleConstants.WorkspaceMember;
+            return await _context.Workspaces
+                .AnyAsync(w => w.WorkspaceUId == workspaceId && w.OwnerUId == userId);
         }
 
         public async Task<bool> CanManageWorkspaceMembersAsync(string workspaceId, string userId)
@@ -44,9 +53,14 @@ namespace TodoAppAPI.Service
             var member = await _context.WorkspaceMembers
                 .FirstOrDefaultAsync(m => m.WorkspaceUId == workspaceId && m.UserUId == userId);
 
-            if (member == null) return false;
+            if (member != null &&
+                (member.Role == RoleConstants.WorkspaceOwner || member.Role == RoleConstants.WorkspaceAdmin))
+            {
+                return true;
+            }
 
-            return member.Role == RoleConstants.WorkspaceOwner || member.Role == RoleConstants.WorkspaceAdmin;
+            return await _context.Workspaces
+                .AnyAsync(w => w.WorkspaceUId == workspaceId && w.OwnerUId == userId);
         }
 
         public async Task<bool> CanUpdateMemberRoleAsync(string workspaceId, string userId, string targetRole)

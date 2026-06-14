@@ -1,6 +1,6 @@
 ﻿<a id="readme-top"></a>
 
-# ðŸ“‹ Kabo - Trello Clone Mobile App
+# 📋 Kabo - Trello Clone Mobile App
 
 <!-- PROJECT SHIELDS -->
 
@@ -17,93 +17,93 @@
 
 <!-- TABLE OF CONTENTS -->
 <details>
-  <summary>Má»¥c lá»¥c</summary>
+  <summary>Mục lục</summary>
   <ol>
-    <li><a href="#architecture">Kiáº¿n trÃºc dá»± Ã¡n</a></li>
-    <li><a href="#directory-structure">PhÃ¢n tÃ­ch cáº¥u trÃºc thÆ° má»¥c</a></li>
-    <li><a href="#tech-stack">CÃ´ng nghá»‡ sá»­ dá»¥ng</a></li>
-    <li><a href="#workflow">Luá»“ng hoáº¡t Ä‘á»™ng</a></li>
-    <li><a href="#getting-started">HÆ°á»›ng dáº«n cÃ i Ä‘áº·t & Cháº¡y dá»± Ã¡n</a></li>
+    <li><a href="#architecture">Kiến trúc dự án</a></li>
+    <li><a href="#directory-structure">Phân tích cấu trúc thư mục</a></li>
+    <li><a href="#tech-stack">Công nghệ sử dụng</a></li>
+    <li><a href="#workflow">Luồng hoạt động</a></li>
+    <li><a href="#getting-started">Hướng dẫn cài đặt & Chạy dự án</a></li>
   </ol>
 </details>
 
 <!-- ARCHITECTURE -->
 
-## ðŸ—ï¸ Kiáº¿n trÃºc dá»± Ã¡n (Architecture)
+## 🏗️ Kiến trúc dự án (Architecture)
 
-Dá»± Ã¡n Ã¡p dá»¥ng kiáº¿n trÃºc **Clean Architecture** káº¿t há»£p vá»›i cÃ¡ch phÃ¢n chia thÆ° má»¥c theo **Feature-first Layering**. CÃ¡ch tiáº¿p cáº­n nÃ y giÃºp mÃ£ nguá»“n dá»… báº£o trÃ¬, má»Ÿ rá»™ng vÃ  kiá»ƒm thá»­ Ä‘á»™c láº­p.
+Dự án áp dụng kiến trúc **Clean Architecture** kết hợp với cách phân chia thư mục theo **Feature-first Layering**. Cách tiếp cận này giúp mã nguồn dễ bảo trì, mở rộng và kiểm thử độc lập.
 
-Má»—i tÃ­nh nÄƒng (Feature) Ä‘Æ°á»£c chia thÃ nh 3 lá»›p chÃ­nh:
+Mỗi tính năng (Feature) được chia thành 3 lớp chính:
 
-- **Presentation**: UI (Widgets) vÃ  Quáº£n lÃ½ tráº¡ng thÃ¡i (BLoC).
-- **Domain**: Chá»©a nghiá»‡p vá»¥ (Entities, UseCases, Repository Interfaces). ÄÃ¢y lÃ  trung tÃ¢m cá»§a á»©ng dá»¥ng.
-- **Data**: Hiá»‡n thá»±c hÃ³a Repository, gá»i API (Data Sources) vÃ  chuyá»ƒn Ä‘á»•i dá»¯ liá»‡u (Models).
+- **Presentation**: UI (Widgets) và Quản lý trạng thái (BLoC).
+- **Domain**: Chứa nghiệp vụ (Entities, UseCases, Repository Interfaces). Đây là trung tâm của ứng dụng.
+- **Data**: Hiện thực hóa Repository, gọi API (Data Sources) và chuyển đổi dữ liệu (Models).
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 <!-- DIRECTORY STRUCTURE -->
 
-## ðŸ“‚ PhÃ¢n tÃ­ch cáº¥u trÃºc thÆ° má»¥c
+## 📂 Phân tích cấu trúc thư mục
 
-Dá»±a trÃªn cáº¥u trÃºc thá»±c táº¿ cá»§a dá»± Ã¡n:
+Dựa trên cấu trúc thực tế của dự án:
 
-| ThÆ° má»¥c                      | MÃ´ táº£ Ã½ nghÄ©a                                                                                                                 |
+| Thư mục                      | Mô tả ý nghĩa                                                                                                                 |
 | :--------------------------- | :---------------------------------------------------------------------------------------------------------------------------- |
-| `lib/core/network`           | Cáº¥u hÃ¬nh **DioClient** (tÆ°Æ¡ng tá»± Axios). Xá»­ lÃ½ BaseUrl, Timeout vÃ  **Interceptors** Ä‘á»ƒ tá»± Ä‘á»™ng Ä‘Ã­nh kÃ¨m JWT Token vÃ o Header. |
-| `lib/features/auth`          | Module xÃ¡c thá»±c: Xá»­ lÃ½ ÄÄƒng nháº­p, ÄÄƒng kÃ½ vÃ  quáº£n lÃ½ tráº¡ng thÃ¡i phiÃªn lÃ m viá»‡c cá»§a ngÆ°á»i dÃ¹ng.                                |
-| `lib/features/board`         | Module quáº£n lÃ½ báº£ng: Hiá»ƒn thá»‹ danh sÃ¡ch cÃ¡c khÃ´ng gian lÃ m viá»‡c vÃ  cÃ¡c báº£ng (Boards) cá»§a ngÆ°á»i dÃ¹ng.                          |
-| `lib/features/board_detail`  | **Module quan trá»ng nháº¥t**: Xá»­ lÃ½ logic kÃ©o tháº£ (Drag & Drop) Ä‘á»ƒ sáº¯p xáº¿p láº¡i cÃ¡c List vÃ  Card bÃªn trong má»™t Board.            |
-| `lib/init_dependencies.dart` | NÆ¡i cáº¥u hÃ¬nh Dependency Injection (DI) toÃ n cá»¥c.                                                                              |
+| `lib/core/network`           | Cấu hình **DioClient** (tương tự Axios). Xử lý BaseUrl, Timeout và **Interceptors** để tự động đính kèm JWT Token vào Header. |
+| `lib/features/auth`          | Module xác thực: Xử lý Đăng nhập, Đăng ký và quản lý trạng thái phiên làm việc của người dùng.                                |
+| `lib/features/board`         | Module quản lý bảng: Hiển thị danh sách các không gian làm việc và các bảng (Boards) của người dùng.                          |
+| `lib/features/board_detail`  | **Module quan trọng nhất**: Xử lý logic kéo thả (Drag & Drop) để sắp xếp lại các List và Card bên trong một Board.            |
+| `lib/init_dependencies.dart` | Nơi cấu hình Dependency Injection (DI) toàn cục.                                                                              |
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 <!-- TECH STACK -->
 
-## ðŸ› ï¸ Tech Stack (CÃ´ng nghá»‡ sá»­ dá»¥ng)
+## 🛠️ Tech Stack (Công nghệ sử dụng)
 
-Dá»± Ã¡n sá»­ dá»¥ng cÃ¡c thÆ° viá»‡n máº¡nh máº½ vÃ  phá»• biáº¿n nháº¥t trong há»‡ sinh thÃ¡i Flutter:
+Dự án sử dụng các thư viện mạnh mẽ và phổ biến nhất trong hệ sinh thái Flutter:
 
-- ðŸŒ **[dio](https://pub.dev/packages/dio)**: Xá»­ lÃ½ cÃ¡c yÃªu cáº§u HTTP/Network (tÆ°Æ¡ng tá»± Axios trong JS).
-- ðŸ§  **[flutter_bloc](https://pub.dev/packages/flutter_bloc)**: Quáº£n lÃ½ tráº¡ng thÃ¡i (State Management) theo luá»“ng sá»± kiá»‡n.
-- ðŸ’‰ **[get_it](https://pub.dev/packages/get_it)**: Service Locator cho Dependency Injection.
-- ðŸ” **[flutter_secure_storage](https://pub.dev/packages/flutter_secure_storage)**: LÆ°u trá»¯ nháº¡y cáº£m (JWT Token) an toÃ n trÃªn thiáº¿t bá»‹.
+- 🌐 **[dio](https://pub.dev/packages/dio)**: Xử lý các yêu cầu HTTP/Network (tương tự Axios trong JS).
+- 🧠 **[flutter_bloc](https://pub.dev/packages/flutter_bloc)**: Quản lý trạng thái (State Management) theo luồng sự kiện.
+- 💉 **[get_it](https://pub.dev/packages/get_it)**: Service Locator cho Dependency Injection.
+- 🔐 **[flutter_secure_storage](https://pub.dev/packages/flutter_secure_storage)**: Lưu trữ nhạy cảm (JWT Token) an toàn trên thiết bị.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 <!-- WORKFLOW -->
 
-## ðŸ”„ Luá»“ng hoáº¡t Ä‘á»™ng (Workflow)
+## 🔄 Luồng hoạt động (Workflow)
 
-Má»i yÃªu cáº§u dá»¯ liá»‡u Ä‘á»u tuÃ¢n thá»§ luá»“ng má»™t chiá»u nghiÃªm ngáº·t:
+Mọi yêu cầu dữ liệu đều tuân thủ luồng một chiều nghiêm ngặt:
 
-1.  **UI (Page/Widget)**: NgÆ°á»i dÃ¹ng tÆ°Æ¡ng tÃ¡c (vÃ­ dá»¥: nháº¥n nÃºt Login).
-2.  **BLoC (Presentation)**: Nháº­n sá»± kiá»‡n tá»« UI, phÃ¡t ra tráº¡ng thÃ¡i `Loading`, vÃ  gá»i Ä‘áº¿n UseCase tÆ°Æ¡ng á»©ng.
-3.  **UseCase (Domain)**: Thá»±c hiá»‡n logic nghiá»‡p vá»¥ cá»¥ thá»ƒ.
-4.  **Repository (Data/Domain)**: Trung gian quyáº¿t Ä‘á»‹nh láº¥y dá»¯ liá»‡u tá»« Remote (API) hay Local (Cache).
-5.  **Data Source (Data)**: Sá»­ dá»¥ng **Dio** Ä‘á»ƒ thá»±c hiá»‡n call API thá»±c táº¿.
-6.  **Result**: Dá»¯ liá»‡u tráº£ ngÆ°á»£c láº¡i theo luá»“ng: `Data Source -> Repository -> UseCase -> BLoC -> UI` Ä‘á»ƒ cáº­p nháº­t giao diá»‡n.
+1.  **UI (Page/Widget)**: Người dùng tương tác (ví dụ: nhấn nút Login).
+2.  **BLoC (Presentation)**: Nhận sự kiện từ UI, phát ra trạng thái `Loading`, và gọi đến UseCase tương ứng.
+3.  **UseCase (Domain)**: Thực hiện logic nghiệp vụ cụ thể.
+4.  **Repository (Data/Domain)**: Trung gian quyết định lấy dữ liệu từ Remote (API) hay Local (Cache).
+5.  **Data Source (Data)**: Sử dụng **Dio** để thực hiện call API thực tế.
+6.  **Result**: Dữ liệu trả ngược lại theo luồng: `Data Source -> Repository -> UseCase -> BLoC -> UI` để cập nhật giao diện.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 <!-- GETTING STARTED -->
 
-## ðŸš€ HÆ°á»›ng dáº«n cÃ i Ä‘áº·t & Cháº¡y dá»± Ã¡n
+## 🚀 Hướng dẫn cài đặt & Chạy dự án
 
-Äá»ƒ báº¯t Ä‘áº§u vá»›i dá»± Ã¡n, hÃ£y Ä‘áº£m báº£o báº¡n Ä‘Ã£ cÃ i Ä‘áº·t Flutter SDK vÃ  thá»±c hiá»‡n cÃ¡c bÆ°á»›c sau:
+Để bắt đầu với dự án, hãy đảm bảo bạn đã cài đặt Flutter SDK và thực hiện các bước sau:
 
-**BÆ°á»›c 1: Táº£i cÃ¡c thÆ° viá»‡n phá»¥ thuá»™c**
+**Bước 1: Tải các thư viện phụ thuộc**
 
 ```bash
 flutter pub get
 ```
 
-**BÆ°á»›c 2: Cháº¡y dá»± Ã¡n (Debug Mode)**
+**Bước 2: Chạy dự án (Debug Mode)**
 
 ```bash
 flutter run
 ```
 
-**LÆ°u Ã½:** Náº¿u báº¡n thÃªm má»›i cÃ¡c Model JSON, hÃ£y cháº¡y lá»‡nh sau Ä‘á»ƒ generate code (náº¿u sá»­ dá»¥ng `json_serializable`):
+**Lưu ý:** Nếu bạn thêm mới các Model JSON, hãy chạy lệnh sau để generate code (nếu sử dụng `json_serializable`):
 
 ```bash
 dart run build_runner build --delete-conflicting-outputs
@@ -111,7 +111,7 @@ dart run build_runner build --delete-conflicting-outputs
 
 ---
 
-âœï¸ _Dá»± Ã¡n Ä‘Æ°á»£c duy trÃ¬ vÃ  phÃ¡t triá»ƒn bá»Ÿi Ä‘á»™i ngÅ© Kabo Team._
+✍️ _Dự án được duy trì và phát triển bởi đội ngũ Kabo Team._
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 

@@ -12,9 +12,9 @@ namespace TodoAppAPI.Service
     {
         private readonly TodoDbContext _context;
         private readonly IJwtService _jwtService;
-        private readonly EmailService _emailService;
+        private readonly IEmailService _emailService;
 
-        public AuthService(TodoDbContext context, IJwtService jwtService, EmailService emailService)
+        public AuthService(TodoDbContext context, IJwtService jwtService, IEmailService emailService)
         {
             _context = context;
             _jwtService = jwtService;

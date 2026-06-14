@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/data_sources/user_local_data_source.dart';
+import '../../../member_invite/domain/entities/invite_batch_result.dart';
 import '../../data/datasources/board_remote_data_source.dart';
 import '../../domain/entities/board_member.dart';
 
@@ -7,12 +8,15 @@ import '../../domain/entities/board_member.dart';
 abstract class BoardMemberState {}
 
 class BoardMemberInitial extends BoardMemberState {}
+
 class BoardMemberLoading extends BoardMemberState {}
+
 class BoardMemberLoaded extends BoardMemberState {
   final List<BoardMember> members;
   final String currentUserRole;
   BoardMemberLoaded({required this.members, required this.currentUserRole});
 }
+
 class BoardMemberError extends BoardMemberState {
   final String message;
   BoardMemberError(this.message);
@@ -26,23 +30,29 @@ class BoardMemberCubit extends Cubit<BoardMemberState> {
   BoardMemberCubit({
     required BoardRemoteDataSource dataSource,
     required UserLocalDataSource userLocalDataSource,
-  })  : _dataSource = dataSource,
-        _userLocalDataSource = userLocalDataSource,
-        super(BoardMemberInitial());
+  }) : _dataSource = dataSource,
+       _userLocalDataSource = userLocalDataSource,
+       super(BoardMemberInitial());
 
   Future<void> loadMembers(String boardId) async {
     emit(BoardMemberLoading());
     try {
       final currentUserUId = await _userLocalDataSource.getUserId() ?? '';
       final data = await _dataSource.getBoardMembers(boardId);
-      final members = data.map((e) => BoardMember.fromJson(e as Map<String, dynamic>)).toList();
+      final members = data
+          .map((e) => BoardMember.fromJson(e as Map<String, dynamic>))
+          .toList();
       final currentRole = members
-              .firstWhere(
-                (m) => m.userUId == currentUserUId,
-                orElse: () => const BoardMember(
-                  userUId: '', userName: '', email: '', role: 'Viewer'),
-              )
-              .role;
+          .firstWhere(
+            (m) => m.userUId == currentUserUId,
+            orElse: () => const BoardMember(
+              userUId: '',
+              userName: '',
+              email: '',
+              role: 'Viewer',
+            ),
+          )
+          .role;
       emit(BoardMemberLoaded(members: members, currentUserRole: currentRole));
     } catch (e) {
       emit(BoardMemberError(e.toString()));
@@ -70,6 +80,40 @@ class BoardMemberCubit extends Cubit<BoardMemberState> {
     } catch (_) {
       return false;
     }
+  }
+
+  Future<InviteBatchResult> addMembers({
+    required String boardId,
+    required List<String> userIds,
+    required String role,
+  }) async {
+    var success = 0;
+    var failure = 0;
+    final requesterUId = await _userLocalDataSource.getUserId() ?? '';
+
+    for (final userId in userIds) {
+      try {
+        final ok = await _dataSource.addBoardMember(
+          boardId: boardId,
+          userId: userId,
+          role: role,
+          requesterUId: requesterUId,
+        );
+        if (ok) {
+          success++;
+        } else {
+          failure++;
+        }
+      } catch (_) {
+        failure++;
+      }
+    }
+
+    if (success > 0) {
+      await loadMembers(boardId);
+    }
+
+    return InviteBatchResult(successCount: success, failureCount: failure);
   }
 
   Future<bool> updateRole({

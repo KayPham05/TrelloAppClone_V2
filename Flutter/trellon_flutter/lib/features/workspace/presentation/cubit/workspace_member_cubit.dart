@@ -2,18 +2,22 @@ import 'package:dio/dio.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/api_endpoints.dart';
 import '../../../../core/data_sources/user_local_data_source.dart';
+import '../../../member_invite/domain/entities/invite_batch_result.dart';
 import '../../domain/entities/workspace_member.dart';
 
 // ── States ──────────────────────────────────────────────────────────────────
 abstract class WorkspaceMemberState {}
 
 class WorkspaceMemberInitial extends WorkspaceMemberState {}
+
 class WorkspaceMemberLoading extends WorkspaceMemberState {}
+
 class WorkspaceMemberLoaded extends WorkspaceMemberState {
   final List<WorkspaceMember> members;
   final String currentUserRole;
   WorkspaceMemberLoaded({required this.members, required this.currentUserRole});
 }
+
 class WorkspaceMemberError extends WorkspaceMemberState {
   final String message;
   WorkspaceMemberError(this.message);
@@ -27,9 +31,9 @@ class WorkspaceMemberCubit extends Cubit<WorkspaceMemberState> {
   WorkspaceMemberCubit({
     required Dio client,
     required UserLocalDataSource userLocalDataSource,
-  })  : _client = client,
-        _userLocalDataSource = userLocalDataSource,
-        super(WorkspaceMemberInitial());
+  }) : _client = client,
+       _userLocalDataSource = userLocalDataSource,
+       super(WorkspaceMemberInitial());
 
   /// Lấy danh sách thành viên workspace
   Future<void> loadMembers(String workspaceId) async {
@@ -41,15 +45,23 @@ class WorkspaceMemberCubit extends Cubit<WorkspaceMemberState> {
       );
       if (response.statusCode == 200) {
         final List data = response.data as List;
-        final members = data.map((e) => WorkspaceMember.fromJson(e as Map<String, dynamic>)).toList();
+        final members = data
+            .map((e) => WorkspaceMember.fromJson(e as Map<String, dynamic>))
+            .toList();
         final currentRole = members
-                .firstWhere(
-                  (m) => m.userUId == currentUserUId,
-                  orElse: () => const WorkspaceMember(
-                    userUId: '', userName: '', email: '', role: 'Member'),
-                )
-                .role;
-        emit(WorkspaceMemberLoaded(members: members, currentUserRole: currentRole));
+            .firstWhere(
+              (m) => m.userUId == currentUserUId,
+              orElse: () => const WorkspaceMember(
+                userUId: '',
+                userName: '',
+                email: '',
+                role: 'Member',
+              ),
+            )
+            .role;
+        emit(
+          WorkspaceMemberLoaded(members: members, currentUserRole: currentRole),
+        );
       } else {
         emit(WorkspaceMemberError('Không thể tải danh sách thành viên.'));
       }
@@ -81,6 +93,41 @@ class WorkspaceMemberCubit extends Cubit<WorkspaceMemberState> {
   }
 
   /// Cập nhật role của thành viên
+  Future<InviteBatchResult> inviteMembers({
+    required String workspaceId,
+    required List<String> userIds,
+  }) async {
+    var success = 0;
+    var failure = 0;
+    final requesterUId = await _userLocalDataSource.getUserId() ?? '';
+
+    for (final userId in userIds) {
+      try {
+        final response = await _client.post(
+          '${ApiEndpoints.workspaceMember}/$workspaceId/invite',
+          data: {
+            'userId': userId,
+            'requesterUId': requesterUId,
+            'role': 'Member',
+          },
+        );
+        if (response.statusCode == 200 || response.statusCode == 201) {
+          success++;
+        } else {
+          failure++;
+        }
+      } catch (_) {
+        failure++;
+      }
+    }
+
+    if (success > 0) {
+      await loadMembers(workspaceId);
+    }
+
+    return InviteBatchResult(successCount: success, failureCount: failure);
+  }
+
   Future<bool> updateRole({
     required String workspaceId,
     required String userId,

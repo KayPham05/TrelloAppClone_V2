@@ -60,6 +60,9 @@ appsettings.*.local.json
 .agents/
 .agent
 .codegraph/
+.claude/
+skills-lock.json
+
 
 # -----------------------------
 # Common dependencies / bundles
@@ -113,3 +116,4 @@ coverage/
 .sonarqube/
 SonarQube.Analysis.xml
 .sonar/
+.sonarlint/

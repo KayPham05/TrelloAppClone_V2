@@ -18,7 +18,7 @@ abstract class BoardDragData {
 class CardDragData extends BoardDragData {
   final String sourceListId;
   final CardEntity card;
-  
+
   const CardDragData({
     required super.id,
     required super.boardId,

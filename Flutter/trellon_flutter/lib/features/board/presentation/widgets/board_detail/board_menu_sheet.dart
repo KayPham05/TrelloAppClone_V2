@@ -15,11 +15,13 @@ import 'board_settings_sheet.dart';
 class BoardMenuSheet extends StatelessWidget {
   final String boardId;
   final String boardName;
+  final String? workspaceId;
 
   const BoardMenuSheet({
     super.key,
     required this.boardId,
     required this.boardName,
+    this.workspaceId,
   });
 
   @override
@@ -29,7 +31,11 @@ class BoardMenuSheet extends StatelessWidget {
         dataSource: serviceLocator<BoardRemoteDataSource>(),
         userLocalDataSource: serviceLocator<UserLocalDataSource>(),
       )..loadMembers(boardId),
-      child: _BoardMenuSheetView(boardId: boardId, boardName: boardName),
+      child: _BoardMenuSheetView(
+        boardId: boardId,
+        boardName: boardName,
+        workspaceId: workspaceId,
+      ),
     );
   }
 }
@@ -37,10 +43,12 @@ class BoardMenuSheet extends StatelessWidget {
 class _BoardMenuSheetView extends StatefulWidget {
   final String boardId;
   final String boardName;
+  final String? workspaceId;
 
   const _BoardMenuSheetView({
     required this.boardId,
     required this.boardName,
+    this.workspaceId,
   });
 
   @override
@@ -127,7 +135,13 @@ class _BoardMenuSheetViewState extends State<_BoardMenuSheetView> {
                   children: [
                     const Icon(Icons.person_outline),
                     const SizedBox(width: 16),
-                    Text('Thành viên', style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w500)),
+                    Text(
+                      'Thành viên',
+                      style: GoogleFonts.inter(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 16),
@@ -154,12 +168,24 @@ class _BoardMenuSheetViewState extends State<_BoardMenuSheetView> {
                           CircleAvatar(
                             radius: 16,
                             backgroundColor: Colors.grey[300],
-                            child: Text('+${state.members.length - 3}', style: const TextStyle(fontSize: 12, color: Colors.black)),
+                            child: Text(
+                              '+${state.members.length - 3}',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: Colors.black,
+                              ),
+                            ),
                           ),
                         );
                       }
                     } else if (state is BoardMemberLoading) {
-                      avatarWidgets.add(const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)));
+                      avatarWidgets.add(
+                        const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      );
                     }
 
                     return Row(
@@ -173,14 +199,21 @@ class _BoardMenuSheetViewState extends State<_BoardMenuSheetView> {
                                 context: context,
                                 isScrollControlled: true,
                                 backgroundColor: Colors.transparent,
-                                builder: (_) => BoardMembersManageSheet(boardId: boardId, boardName: boardName),
+                                builder: (_) => BoardMembersManageSheet(
+                                  boardId: boardId,
+                                  boardName: boardName,
+                                  workspaceId: widget.workspaceId,
+                                ),
                               );
                             },
                             child: Row(
                               children: [
                                 ...avatarWidgets,
                                 const Spacer(),
-                                const Icon(Icons.chevron_right, color: Colors.grey),
+                                const Icon(
+                                  Icons.chevron_right,
+                                  color: Colors.grey,
+                                ),
                               ],
                             ),
                           ),
@@ -205,13 +238,19 @@ class _BoardMenuSheetViewState extends State<_BoardMenuSheetView> {
                             context: context,
                             isScrollControlled: true,
                             backgroundColor: Colors.transparent,
-                            builder: (_) => BoardMembersManageSheet(boardId: boardId, boardName: boardName),
+                            builder: (_) => BoardMembersManageSheet(
+                              boardId: boardId,
+                              boardName: boardName,
+                              workspaceId: widget.workspaceId,
+                            ),
                           );
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.blue,
                           foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
                           minimumSize: const Size(double.infinity, 40),
                         ),
                         child: const Text('Mời...'),
@@ -224,8 +263,8 @@ class _BoardMenuSheetViewState extends State<_BoardMenuSheetView> {
                 // Other Options
                 _buildListTile(Icons.info_outline, 'Về bảng này'),
                 _buildListTile(
-                  Icons.settings, 
-                  'Thiết lập bảng', 
+                  Icons.settings,
+                  'Thiết lập bảng',
                   onTap: () {
                     final cubit = context.read<BoardDetailCubit>();
                     Navigator.pop(context);
@@ -246,7 +285,9 @@ class _BoardMenuSheetViewState extends State<_BoardMenuSheetView> {
                 // canManage-gated: allow join card toggle
                 BlocBuilder<BoardDetailCubit, BoardDetailState>(
                   builder: (context, boardState) {
-                    final role = boardState is BoardDetailLoaded ? (boardState.boardRole ?? '') : '';
+                    final role = boardState is BoardDetailLoaded
+                        ? (boardState.boardRole ?? '')
+                        : '';
                     final canManage = role == 'Owner' || role == 'Admin';
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -255,27 +296,38 @@ class _BoardMenuSheetViewState extends State<_BoardMenuSheetView> {
                           ListTile(
                             contentPadding: EdgeInsets.zero,
                             leading: const Icon(Icons.person_add_alt_1_rounded),
-                            title: const Text('Cho phép tham gia thẻ trực tiếp'),
+                            title: const Text(
+                              'Cho phép tham gia thẻ trực tiếp',
+                            ),
                             subtitle: const Text(
                               'Thành viên có thể tự thêm mình vào thẻ',
-                              style: TextStyle(fontSize: 12, color: Colors.grey),
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey,
+                              ),
                             ),
                             trailing: Switch(
                               value: _allowJoinCard,
-                              onChanged: (v) => setState(() => _allowJoinCard = v),
+                              onChanged: (v) =>
+                                  setState(() => _allowJoinCard = v),
                             ),
                           ),
                         ListTile(
                           contentPadding: EdgeInsets.zero,
                           leading: const Icon(Icons.checklist),
-                          title: const Text('Trạng thái hoàn tất ở mặt trước thẻ'),
+                          title: const Text(
+                            'Trạng thái hoàn tất ở mặt trước thẻ',
+                          ),
                           trailing: Switch(value: true, onChanged: (v) {}),
                         ),
                         ListTile(
                           contentPadding: EdgeInsets.zero,
                           leading: const Icon(Icons.archive_outlined),
                           title: const Text('Lưu trữ các thẻ đã hoàn thành'),
-                          trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+                          trailing: const Icon(
+                            Icons.chevron_right,
+                            color: Colors.grey,
+                          ),
                           onTap: () async {
                             final confirmed = await showDialog<bool>(
                               context: context,
@@ -291,8 +343,10 @@ class _BoardMenuSheetViewState extends State<_BoardMenuSheetView> {
                                   ),
                                   TextButton(
                                     onPressed: () => Navigator.pop(ctx, true),
-                                    child: const Text('Lưu trữ',
-                                        style: TextStyle(color: Colors.orange)),
+                                    child: const Text(
+                                      'Lưu trữ',
+                                      style: TextStyle(color: Colors.orange),
+                                    ),
                                   ),
                                 ],
                               ),
@@ -305,7 +359,10 @@ class _BoardMenuSheetViewState extends State<_BoardMenuSheetView> {
                                 Navigator.pop(context);
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
-                                      content: Text('Đã lưu trữ $count thẻ đã hoàn thành.')),
+                                    content: Text(
+                                      'Đã lưu trữ $count thẻ đã hoàn thành.',
+                                    ),
+                                  ),
                                 );
                               }
                             }
@@ -316,13 +373,23 @@ class _BoardMenuSheetViewState extends State<_BoardMenuSheetView> {
                   },
                 ),
                 const Divider(),
-                _buildListTile(Icons.power_outlined, 'Power-Ups', subtitle: 'Bình chọn, Thẻ bị "bỏ quên"...'),
+                _buildListTile(
+                  Icons.power_outlined,
+                  'Power-Ups',
+                  subtitle: 'Bình chọn, Thẻ bị "bỏ quên"...',
+                ),
                 Padding(
                   padding: const EdgeInsets.only(left: 40),
                   child: ListTile(
                     contentPadding: EdgeInsets.zero,
-                    title: const Text('Quản lý Power-Ups', style: TextStyle(color: Colors.grey)),
-                    trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+                    title: const Text(
+                      'Quản lý Power-Ups',
+                      style: TextStyle(color: Colors.grey),
+                    ),
+                    trailing: const Icon(
+                      Icons.chevron_right,
+                      color: Colors.grey,
+                    ),
                     onTap: () {},
                   ),
                 ),
@@ -352,15 +419,24 @@ class _BoardMenuSheetViewState extends State<_BoardMenuSheetView> {
     );
   }
 
-  Widget _buildListTile(IconData icon, String title, {String? subtitle, VoidCallback? onTap}) {
+  Widget _buildListTile(
+    IconData icon,
+    String title, {
+    String? subtitle,
+    VoidCallback? onTap,
+  }) {
     return ListTile(
       contentPadding: EdgeInsets.zero,
       leading: Icon(icon),
       title: Text(title),
-      subtitle: subtitle != null ? Text(subtitle, style: const TextStyle(color: Colors.grey, fontSize: 12)) : null,
+      subtitle: subtitle != null
+          ? Text(
+              subtitle,
+              style: const TextStyle(color: Colors.grey, fontSize: 12),
+            )
+          : null,
       trailing: const Icon(Icons.chevron_right, color: Colors.grey),
       onTap: onTap ?? () {},
     );
   }
-
 }

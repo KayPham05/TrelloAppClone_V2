@@ -16,23 +16,25 @@ namespace TodoAppAPI.Service
         public async Task<List<BoardDTO>> GetRecentBoardByUserUId(string userUId)
         {
             return await _context.UserRecentBoards
-                    .Where(x => x.UserUId == userUId)
-                    .OrderByDescending(x => x.LastVisitedAt)
-                    .Include(x => x.Board)
-                    .Take(10)
-                    .Select(x => new TodoAppAPI.DTOs.BoardDTO
-                    {
-                        BoardUId = x.Board.BoardUId,
-                        BoardName = x.Board.BoardName,
-                        CreatedAt = x.Board.CreatedAt,
-                        IsPersonal = x.Board.IsPersonal,
-                        Visibility = x.Board.Visibility,
-                        Status = x.Board.Status,
-                        UserUId = x.Board.UserUId,
-                        WorkspaceUId = x.Board.WorkspaceUId,
-                        BackgroundUrl = x.Board.BackgroundUrl
-                    })
-                    .ToListAsync();
+                .Where(x => x.UserUId == userUId)
+                .OrderByDescending(x => x.LastVisitedAt)
+                .Include(x => x.Board)
+                .Take(20)
+                .Select(x => new TodoAppAPI.DTOs.BoardDTO
+                {
+                    BoardUId = x.Board!.BoardUId,
+                    BoardName = x.Board.BoardName,
+                    CreatedAt = x.Board.CreatedAt,
+                    IsPersonal = x.Board.IsPersonal,
+                    Visibility = x.Board.Visibility,
+                    Status = x.Board.Status,
+                    UserUId = x.Board.UserUId,
+                    WorkspaceUId = x.Board.WorkspaceUId,
+                    BackgroundUrl = x.Board.BackgroundUrl,
+                    IsStarred = _context.UserStarredBoards.Any(s =>
+                        s.UserUId == userUId && s.BoardUId == x.BoardUId)
+                })
+                .ToListAsync();
             
         }
 
@@ -62,9 +64,9 @@ namespace TodoAppAPI.Service
                     .Where(x => x.UserUId == userUId)
                     .OrderByDescending(x => x.LastVisitedAt)
                     .ToListAsync();
-                if (all.Count > 4)
+                if (all.Count > 20)
                 {
-                    var toRemove = all.Skip(4).ToList();
+                    var toRemove = all.Skip(20).ToList();
                     _context.UserRecentBoards.RemoveRange(toRemove);
                     await _context.SaveChangesAsync();
                 }

@@ -18,7 +18,10 @@ class WorkspaceRepositoryImpl implements WorkspaceRepository {
   }
 
   @override
-  Future<List<BoardEntity>> getWorkspaceBoards(String workspaceId, String userUid) async {
+  Future<List<BoardEntity>> getWorkspaceBoards(
+    String workspaceId,
+    String userUid,
+  ) async {
     try {
       return await remoteDataSource.getWorkspaceBoards(workspaceId, userUid);
     } catch (e) {
@@ -72,7 +75,10 @@ class WorkspaceRepositoryImpl implements WorkspaceRepository {
     required String userUId,
   }) async {
     try {
-      await remoteDataSource.deleteWorkspace(workspaceId: workspaceId, userUId: userUId);
+      await remoteDataSource.deleteWorkspace(
+        workspaceId: workspaceId,
+        userUId: userUId,
+      );
     } catch (e) {
       throw Exception('Workspace Repository Error: $e');
     }
@@ -81,16 +87,37 @@ class WorkspaceRepositoryImpl implements WorkspaceRepository {
   @override
   Future<void> addWorkspaceMember({
     required String workspaceId,
-    required String email,
+    required String userId,
     required String role,
     required String requesterUId,
   }) async {
     try {
       await remoteDataSource.addWorkspaceMember(
         workspaceId: workspaceId,
-        email: email,
+        userId: userId,
         role: role,
         requesterUId: requesterUId,
+      );
+    } catch (e) {
+      throw Exception('Workspace Repository Error: $e');
+    }
+  }
+
+  @override
+  Future<void> updateBoardVisibility({
+    required String boardId,
+    required String boardName,
+    required String workspaceId,
+    required String visibility,
+    required String userUId,
+  }) async {
+    try {
+      await remoteDataSource.updateBoardVisibility(
+        boardId: boardId,
+        boardName: boardName,
+        workspaceId: workspaceId,
+        visibility: visibility,
+        userUId: userUId,
       );
     } catch (e) {
       throw Exception('Workspace Repository Error: $e');

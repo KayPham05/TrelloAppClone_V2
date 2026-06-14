@@ -279,7 +279,7 @@ class NotificationCubit extends Cubit<NotificationState> {
     if (s is NotificationLoaded) {
       emit(s.copyWith(isLogoutRequested: true));
     } else {
-      emit(NotificationLoaded(notifications: [], isLogoutRequested: true));
+      emit(const NotificationLoaded(notifications: [], isLogoutRequested: true));
     }
   }
 
@@ -352,8 +352,14 @@ class NotificationCubit extends Cubit<NotificationState> {
       NotificationTypeEnum.workspaceMemberAdded,
       NotificationTypeEnum.workspaceMemberRemoved,
       NotificationTypeEnum.workspaceRoleChanged,
+      NotificationTypeEnum.move,
       NotificationTypeEnum.dueDateChanged,
       NotificationTypeEnum.dueDateReminder,
+      NotificationTypeEnum.cardArchived,
+      NotificationTypeEnum.attachmentAdded,
+      NotificationTypeEnum.attachmentRemoved,
+      NotificationTypeEnum.cardRenamed,
+      NotificationTypeEnum.workspaceRenamed,
     }.contains(type);
   }
 

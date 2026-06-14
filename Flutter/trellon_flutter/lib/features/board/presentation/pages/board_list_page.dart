@@ -176,11 +176,13 @@ class _BoardListViewState extends State<_BoardListView> {
                               boardState is BoardInitial ||
                               boardState is BoardLoading;
                           List<BoardEntity> recentBoards = [];
+                          List<BoardEntity> starredBoards = [];
                           List<BoardEntity> personalBoards = [];
                           List<WorkspaceEntity> guestWs = [];
 
                           if (boardState is BoardLoaded) {
                             recentBoards = boardState.recentBoards;
+                            starredBoards = boardState.starredBoards;
                             personalBoards = boardState.personalBoards;
                             guestWs = boardState.guestWorkspaces;
                           }
@@ -198,6 +200,13 @@ class _BoardListViewState extends State<_BoardListView> {
                           return Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
+                              RecentBoardsSection(
+                                boards: starredBoards,
+                                title: 'Bảng Gắn Dấu Sao',
+                                icon: Icons.star_rounded,
+                                emptyMessage:
+                                    'Chưa có bảng nào được gắn dấu sao.',
+                              ),
                               RecentBoardsSection(boards: recentBoards),
                               const SectionLabel(
                                 label: 'KHÔNG GIAN LÀM VIỆC CỦA BẠN',

@@ -10,7 +10,8 @@ class CreatePersonalBoardSheet extends StatefulWidget {
   const CreatePersonalBoardSheet({super.key});
 
   @override
-  State<CreatePersonalBoardSheet> createState() => _CreatePersonalBoardSheetState();
+  State<CreatePersonalBoardSheet> createState() =>
+      _CreatePersonalBoardSheetState();
 }
 
 class _CreatePersonalBoardSheetState extends State<CreatePersonalBoardSheet> {
@@ -33,23 +34,25 @@ class _CreatePersonalBoardSheetState extends State<CreatePersonalBoardSheet> {
     try {
       if (_selectedWorkspaceId == null) {
         await context.read<BoardCubit>().createPersonalBoard(
-              name: name,
-              visibility: _visibility,
-            );
+          name: name,
+          visibility: _visibility,
+        );
       } else {
         final state = context.read<BoardCubit>().state;
         bool isPersonal = false;
         if (state is BoardLoaded) {
-          final ws = state.allWorkspaces.firstWhere((w) => w.id == _selectedWorkspaceId);
+          final ws = state.allWorkspaces.firstWhere(
+            (w) => w.id == _selectedWorkspaceId,
+          );
           isPersonal = ws.type == WorkspaceType.personal;
         }
 
         await context.read<BoardCubit>().createBoard(
-              name: name,
-              workspaceId: _selectedWorkspaceId!,
-              isPersonal: isPersonal,
-              visibility: _visibility,
-            );
+          name: name,
+          workspaceId: _selectedWorkspaceId!,
+          isPersonal: isPersonal,
+          visibility: _visibility,
+        );
       }
       if (mounted) Navigator.pop(context);
     } catch (_) {
@@ -148,13 +151,13 @@ class _CreatePersonalBoardSheetState extends State<CreatePersonalBoardSheet> {
               builder: (context, state) {
                 List<WorkspaceEntity> workspaces = [];
                 if (state is BoardLoaded) {
-                  workspaces = state.allWorkspaces; 
+                  workspaces = state.allWorkspaces;
                 }
 
                 return Theme(
-                  data: Theme.of(context).copyWith(
-                    canvasColor: AppColors.surfaceContainerLow,
-                  ),
+                  data: Theme.of(
+                    context,
+                  ).copyWith(canvasColor: AppColors.surfaceContainerLow),
                   child: DropdownButtonFormField<String?>(
                     initialValue: _selectedWorkspaceId,
                     decoration: InputDecoration(
@@ -164,19 +167,25 @@ class _CreatePersonalBoardSheetState extends State<CreatePersonalBoardSheet> {
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide.none,
                       ),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
                     ),
                     items: [
                       const DropdownMenuItem<String?>(
                         value: null,
                         child: Text('Cá nhân (Không thuộc workspace)'),
                       ),
-                      ...workspaces.map((ws) => DropdownMenuItem<String?>(
-                            value: ws.id,
-                            child: Text(ws.name),
-                          )),
+                      ...workspaces.map(
+                        (ws) => DropdownMenuItem<String?>(
+                          value: ws.id,
+                          child: Text(ws.name),
+                        ),
+                      ),
                     ],
-                    onChanged: (val) => setState(() => _selectedWorkspaceId = val),
+                    onChanged: (val) =>
+                        setState(() => _selectedWorkspaceId = val),
                   ),
                 );
               },
@@ -188,12 +197,24 @@ class _CreatePersonalBoardSheetState extends State<CreatePersonalBoardSheet> {
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
                 elevation: 0,
               ),
               child: _isCreating
-                  ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                  : const Text('Tạo bảng', style: TextStyle(fontWeight: FontWeight.w700)),
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : const Text(
+                      'Tạo bảng',
+                      style: TextStyle(fontWeight: FontWeight.w700),
+                    ),
             ),
           ],
         ),
@@ -201,7 +222,11 @@ class _CreatePersonalBoardSheetState extends State<CreatePersonalBoardSheet> {
     );
   }
 
-  Widget _buildVisibilityOption({required String value, required IconData icon, required String label}) {
+  Widget _buildVisibilityOption({
+    required String value,
+    required IconData icon,
+    required String label,
+  }) {
     final isSelected = _visibility == value;
     return InkWell(
       onTap: () => setState(() => _visibility = value),
@@ -210,7 +235,9 @@ class _CreatePersonalBoardSheetState extends State<CreatePersonalBoardSheet> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
           border: Border.all(
-            color: isSelected ? AppColors.primary : AppColors.outlineVariant.withValues(alpha: 0.5),
+            color: isSelected
+                ? AppColors.primary
+                : AppColors.outlineVariant.withValues(alpha: 0.5),
             width: isSelected ? 2 : 1,
           ),
           borderRadius: BorderRadius.circular(12),
@@ -218,7 +245,13 @@ class _CreatePersonalBoardSheetState extends State<CreatePersonalBoardSheet> {
         ),
         child: Row(
           children: [
-            Icon(icon, size: 20, color: isSelected ? AppColors.primary : AppColors.onSurfaceVariant),
+            Icon(
+              icon,
+              size: 20,
+              color: isSelected
+                  ? AppColors.primary
+                  : AppColors.onSurfaceVariant,
+            ),
             const SizedBox(width: 12),
             Text(
               label,
@@ -228,7 +261,12 @@ class _CreatePersonalBoardSheetState extends State<CreatePersonalBoardSheet> {
               ),
             ),
             const Spacer(),
-            if (isSelected) const Icon(Icons.check_circle_rounded, color: AppColors.primary, size: 18),
+            if (isSelected)
+              const Icon(
+                Icons.check_circle_rounded,
+                color: AppColors.primary,
+                size: 18,
+              ),
           ],
         ),
       ),

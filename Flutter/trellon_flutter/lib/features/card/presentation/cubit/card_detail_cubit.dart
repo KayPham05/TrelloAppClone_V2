@@ -8,6 +8,10 @@ import '../../domain/usecases/get_attachments_usecase.dart';
 import '../../domain/usecases/delete_attachment_usecase.dart';
 import '../../domain/usecases/update_attachment_description_usecase.dart';
 import '../../domain/usecases/upload_card_cover_usecase.dart';
+import '../../domain/usecases/update_card_comment_usecase.dart';
+import '../../domain/usecases/delete_card_comment_usecase.dart';
+import '../../domain/usecases/upload_comment_attachment_usecase.dart';
+import '../../domain/usecases/delete_comment_attachment_usecase.dart';
 import '../../../../core/data_sources/user_local_data_source.dart';
 import '../../../../core/constants/card_status_values.dart';
 
@@ -22,6 +26,10 @@ class CardDetailCubit extends Cubit<CardDetailState> {
   final DeleteAttachmentUseCase deleteAttachmentUseCase;
   final UpdateAttachmentDescriptionUseCase updateAttachmentDescriptionUseCase;
   final UploadCardCoverUseCase uploadCardCoverUseCase;
+  final UpdateCardCommentUseCase updateCardCommentUseCase;
+  final DeleteCardCommentUseCase deleteCardCommentUseCase;
+  final UploadCommentAttachmentUseCase uploadCommentAttachmentUseCase;
+  final DeleteCommentAttachmentUseCase deleteCommentAttachmentUseCase;
 
   bool _isInboxCard = false;
 
@@ -34,9 +42,17 @@ class CardDetailCubit extends Cubit<CardDetailState> {
     this.deleteAttachmentUseCase,
     this.updateAttachmentDescriptionUseCase,
     this.uploadCardCoverUseCase,
+    this.updateCardCommentUseCase,
+    this.deleteCardCommentUseCase,
+    this.uploadCommentAttachmentUseCase,
+    this.deleteCommentAttachmentUseCase,
   ) : super(CardDetailLoading());
 
-  Future<void> loadCardDetails(CardEntity card, {bool isInboxCard = false, String? boardId}) async {
+  Future<void> loadCardDetails(
+    CardEntity card, {
+    bool isInboxCard = false,
+    String? boardId,
+  }) async {
     _isInboxCard = isInboxCard;
     emit(CardDetailLoading());
     try {
@@ -48,26 +64,45 @@ class CardDetailCubit extends Cubit<CardDetailState> {
         latestCard = fetched.copyWith(
           boardName: fetched.boardName ?? card.boardName,
           listName: fetched.listName ?? card.listName,
-          boardBackgroundUrl: fetched.boardBackgroundUrl ?? card.boardBackgroundUrl,
+          boardBackgroundUrl:
+              fetched.boardBackgroundUrl ?? card.boardBackgroundUrl,
           boardId: fetched.boardId ?? card.boardId,
         );
       }
-      
+
       final futures = await Future.wait([
-        isInboxCard ? inboxRepository.getTodoItems(cardId: card.id) : repository.getTodoItems(cardId: card.id),
-        if (!isInboxCard) repository.getCardMembers(cardId: card.id) else Future.value(<CardMemberEntity>[]),
-        isInboxCard ? inboxRepository.getComments(cardId: card.id) : repository.getComments(cardId: card.id),
-        isInboxCard ? inboxRepository.getAttachments(cardId: card.id) : repository.getAttachments(cardId: card.id),
-        if (boardId != null) repository.getBoardMembers(boardId: boardId) else Future.value(<CardMemberEntity>[]),
+        isInboxCard
+            ? inboxRepository.getTodoItems(cardId: card.id)
+            : repository.getTodoItems(cardId: card.id),
+        if (!isInboxCard)
+          repository.getCardMembers(cardId: card.id)
+        else
+          Future.value(<CardMemberEntity>[]),
+        isInboxCard
+            ? inboxRepository.getComments(cardId: card.id)
+            : repository.getComments(cardId: card.id),
+        isInboxCard
+            ? inboxRepository.getAttachments(cardId: card.id)
+            : repository.getAttachments(cardId: card.id),
+        if (boardId != null)
+          repository.getBoardMembers(boardId: boardId)
+        else
+          Future.value(<CardMemberEntity>[]),
       ]);
 
-      emit(CardDetailLoaded(
-        card: latestCard.copyWith(fileUrls: futures[3] as List<FileUrlEntity>),
-        todos: futures[0] as List<TodoItemEntity>,
-        members: futures[1] as List<CardMemberEntity>,
-        comments: futures[2] as List<CommentEntity>,
-        potentialMembers: futures.length > 4 ? futures[4] as List<CardMemberEntity> : const [],
-      ));
+      emit(
+        CardDetailLoaded(
+          card: latestCard.copyWith(
+            fileUrls: futures[3] as List<FileUrlEntity>,
+          ),
+          todos: futures[0] as List<TodoItemEntity>,
+          members: futures[1] as List<CardMemberEntity>,
+          comments: futures[2] as List<CommentEntity>,
+          potentialMembers: futures.length > 4
+              ? futures[4] as List<CardMemberEntity>
+              : const [],
+        ),
+      );
     } catch (e) {
       emit(CardDetailError(e.toString()));
     }
@@ -78,12 +113,26 @@ class CardDetailCubit extends Cubit<CardDetailState> {
     if (currentState is CardDetailLoaded) {
       try {
         if (_isInboxCard) {
-          await inboxRepository.updateTodoItem(cardId: currentState.card.id, todoId: todoId, isCompleted: isCompleted);
+          await inboxRepository.updateTodoItem(
+            cardId: currentState.card.id,
+            todoId: todoId,
+            isCompleted: isCompleted,
+          );
         } else {
-          await repository.updateTodoItem(cardId: currentState.card.id, todoId: todoId, isCompleted: isCompleted);
+          await repository.updateTodoItem(
+            cardId: currentState.card.id,
+            todoId: todoId,
+            isCompleted: isCompleted,
+          );
         }
         final updatedTodos = currentState.todos.map((t) {
-          if (t.id == todoId) return TodoItemEntity(id: t.id, title: t.title, isCompleted: isCompleted);
+          if (t.id == todoId) {
+            return TodoItemEntity(
+              id: t.id,
+              title: t.title,
+              isCompleted: isCompleted,
+            );
+          }
           return t;
         }).toList();
         emit(currentState.copyWith(todos: updatedTodos));
@@ -93,12 +142,26 @@ class CardDetailCubit extends Cubit<CardDetailState> {
     }
   }
 
-  Future<void> addComment(String content) async {
+  Future<void> addComment(
+    String content, {
+    List<String> filePaths = const [],
+  }) async {
     final currentState = state;
     if (currentState is CardDetailLoaded) {
       try {
+        emit(currentState.copyWith(clearCommentActionError: true));
         final userUId = await UserLocalDataSource().getUserId();
         if (userUId == null) return;
+
+        if (_isInboxCard && filePaths.isNotEmpty) {
+          emit(
+            currentState.copyWith(
+              commentActionError:
+                  'Inbox card comments do not support file attachments yet.',
+            ),
+          );
+          return;
+        }
 
         late CommentEntity newComment;
         if (_isInboxCard) {
@@ -115,10 +178,173 @@ class CardDetailCubit extends Cubit<CardDetailState> {
           );
         }
 
-        final updatedComments = List<CommentEntity>.from(currentState.comments)..add(newComment);
-        emit(currentState.copyWith(comments: updatedComments));
+        final updatedComments = List<CommentEntity>.from(currentState.comments)
+          ..add(newComment);
+        emit(
+          currentState.copyWith(
+            comments: updatedComments,
+            clearCommentActionError: true,
+          ),
+        );
+
+        if (filePaths.isEmpty || _isInboxCard) return;
+
+        final uploadedFiles = <FileUrlEntity>[];
+        for (final filePath in filePaths) {
+          final file = await uploadCommentAttachmentUseCase.call(
+            commentId: newComment.id,
+            filePath: filePath,
+            userUId: userUId,
+          );
+          uploadedFiles.add(file);
+        }
+
+        final latestState = state;
+        if (latestState is CardDetailLoaded) {
+          final comments = latestState.comments.map((comment) {
+            if (comment.id != newComment.id) return comment;
+            return comment.copyWith(
+              attachments: [...comment.attachments, ...uploadedFiles],
+            );
+          }).toList();
+          emit(
+            latestState.copyWith(
+              comments: comments,
+              clearCommentActionError: true,
+            ),
+          );
+        }
       } catch (e) {
-        // Handle error silently or surface
+        final latestState = state;
+        if (latestState is CardDetailLoaded) {
+          emit(latestState.copyWith(commentActionError: e.toString()));
+        }
+      }
+    }
+  }
+
+  void startEditComment(String commentId) {
+    final currentState = state;
+    if (currentState is CardDetailLoaded) {
+      emit(
+        currentState.copyWith(
+          editingCommentId: commentId,
+          clearCommentActionError: true,
+        ),
+      );
+    }
+  }
+
+  void cancelEditComment() {
+    final currentState = state;
+    if (currentState is CardDetailLoaded) {
+      emit(
+        currentState.copyWith(
+          clearEditingComment: true,
+          clearCommentActionError: true,
+        ),
+      );
+    }
+  }
+
+  Future<void> updateComment(String commentId, String content) async {
+    final currentState = state;
+    if (currentState is CardDetailLoaded) {
+      try {
+        final userUId = await UserLocalDataSource().getUserId();
+        if (userUId == null) return;
+        if (_isInboxCard) {
+          emit(
+            currentState.copyWith(
+              commentActionError:
+                  'Inbox card comments cannot be edited from this view yet.',
+            ),
+          );
+          return;
+        }
+        final updated = await updateCardCommentUseCase.call(
+          commentId: commentId,
+          content: content,
+          userUId: userUId,
+        );
+        final comments = currentState.comments.map((comment) {
+          return comment.id == commentId ? updated : comment;
+        }).toList();
+        emit(
+          currentState.copyWith(
+            comments: comments,
+            clearEditingComment: true,
+            clearCommentActionError: true,
+          ),
+        );
+      } catch (e) {
+        emit(currentState.copyWith(commentActionError: e.toString()));
+      }
+    }
+  }
+
+  Future<void> deleteComment(String commentId) async {
+    final currentState = state;
+    if (currentState is CardDetailLoaded) {
+      try {
+        final userUId = await UserLocalDataSource().getUserId();
+        if (userUId == null) return;
+        if (_isInboxCard) {
+          emit(
+            currentState.copyWith(
+              commentActionError:
+                  'Inbox card comments cannot be deleted from this view yet.',
+            ),
+          );
+          return;
+        }
+        await deleteCardCommentUseCase.call(
+          commentId: commentId,
+          userUId: userUId,
+        );
+        final comments = currentState.comments
+            .where((comment) => comment.id != commentId)
+            .toList();
+        emit(
+          currentState.copyWith(
+            comments: comments,
+            clearEditingComment: true,
+            clearCommentActionError: true,
+          ),
+        );
+      } catch (e) {
+        emit(currentState.copyWith(commentActionError: e.toString()));
+      }
+    }
+  }
+
+  Future<void> deleteCommentAttachment(String commentId, String fileId) async {
+    final currentState = state;
+    if (currentState is CardDetailLoaded) {
+      try {
+        final userUId = await UserLocalDataSource().getUserId();
+        if (userUId == null) return;
+        await deleteCommentAttachmentUseCase.call(
+          commentId: commentId,
+          fileId: fileId,
+          userUId: userUId,
+        );
+        final comments = currentState.comments.map((comment) {
+          if (comment.id != commentId) return comment;
+          return comment.copyWith(
+            attachments: comment.attachments
+                .where((file) => file.id != fileId)
+                .toList(),
+          );
+        }).toList();
+        emit(
+          currentState.copyWith(
+            comments: comments,
+            clearCommentActionError: true,
+          ),
+        );
+      } catch (e) {
+        emit(currentState.copyWith(commentActionError: e.toString()));
       }
     }
   }
@@ -129,17 +355,21 @@ class CardDetailCubit extends Cubit<CardDetailState> {
       try {
         if (_isInboxCard) {
           await inboxRepository.addTodoItem(
-            cardId: currentState.card.id, 
+            cardId: currentState.card.id,
             todoTitle: content,
           );
-          final updatedTodos = await inboxRepository.getTodoItems(cardId: currentState.card.id);
+          final updatedTodos = await inboxRepository.getTodoItems(
+            cardId: currentState.card.id,
+          );
           emit(currentState.copyWith(todos: updatedTodos));
         } else {
           await repository.addTodoItem(
-            cardId: currentState.card.id, 
+            cardId: currentState.card.id,
             todoTitle: content,
           );
-          final updatedTodos = await repository.getTodoItems(cardId: currentState.card.id);
+          final updatedTodos = await repository.getTodoItems(
+            cardId: currentState.card.id,
+          );
           emit(currentState.copyWith(todos: updatedTodos));
         }
       } catch (e) {
@@ -175,7 +405,11 @@ class CardDetailCubit extends Cubit<CardDetailState> {
             listId: currentState.card.listId,
           );
         }
-        emit(currentState.copyWith(card: currentState.card.copyWith(description: newDescription)));
+        emit(
+          currentState.copyWith(
+            card: currentState.card.copyWith(description: newDescription),
+          ),
+        );
       } catch (e) {
         // Handle error silently or surface
       }
@@ -185,7 +419,9 @@ class CardDetailCubit extends Cubit<CardDetailState> {
   Future<void> updateTitle(String newTitle) async {
     final currentState = state;
     if (currentState is CardDetailLoaded) {
-      if (newTitle.trim().isEmpty || newTitle == currentState.card.title) return;
+      if (newTitle.trim().isEmpty || newTitle == currentState.card.title) {
+        return;
+      }
       try {
         final userUId = await UserLocalDataSource().getUserId() ?? '';
         if (_isInboxCard) {
@@ -210,7 +446,11 @@ class CardDetailCubit extends Cubit<CardDetailState> {
             listId: currentState.card.listId,
           );
         }
-        emit(currentState.copyWith(card: currentState.card.copyWith(title: newTitle)));
+        emit(
+          currentState.copyWith(
+            card: currentState.card.copyWith(title: newTitle),
+          ),
+        );
       } catch (e) {
         // Handle error silently or surface
       }
@@ -244,7 +484,11 @@ class CardDetailCubit extends Cubit<CardDetailState> {
             listId: currentState.card.listId,
           );
         }
-        emit(currentState.copyWith(card: currentState.card.copyWith(backgroundUrl: newBackgroundUrl)));
+        emit(
+          currentState.copyWith(
+            card: currentState.card.copyWith(backgroundUrl: newBackgroundUrl),
+          ),
+        );
       } catch (e) {
         // Handle error silently or surface
       }
@@ -276,11 +520,14 @@ class CardDetailCubit extends Cubit<CardDetailState> {
         final normalizedStatus = CardStatusValues.normalize(newStatus);
         final statusToSave = CardStatusValues.isCompleted(normalizedStatus)
             ? CardStatusValues.completed
-            : CardStatusValues.calculate(CardStatusValues.toDo, currentState.card.dueDate);
+            : CardStatusValues.calculate(
+                CardStatusValues.toDo,
+                currentState.card.dueDate,
+              );
 
         if (_isInboxCard) {
           await inboxRepository.updateInboxCard(
-            cardId: currentState.card.id, 
+            cardId: currentState.card.id,
             userUId: userUId,
             status: statusToSave,
             title: currentState.card.title,
@@ -288,10 +535,22 @@ class CardDetailCubit extends Cubit<CardDetailState> {
             dueDate: currentState.card.dueDate,
             backgroundUrl: currentState.card.backgroundUrl,
           );
-          emit(currentState.copyWith(card: currentState.card.copyWith(status: statusToSave)));
+          emit(
+            currentState.copyWith(
+              card: currentState.card.copyWith(status: statusToSave),
+            ),
+          );
         } else {
-          await repository.updateStatus(cardId: currentState.card.id, newStatus: statusToSave, userUId: userUId);
-          emit(currentState.copyWith(card: currentState.card.copyWith(status: statusToSave)));
+          await repository.updateStatus(
+            cardId: currentState.card.id,
+            newStatus: statusToSave,
+            userUId: userUId,
+          );
+          emit(
+            currentState.copyWith(
+              card: currentState.card.copyWith(status: statusToSave),
+            ),
+          );
         }
       } catch (e) {
         // Handle error silently or surface
@@ -303,7 +562,12 @@ class CardDetailCubit extends Cubit<CardDetailState> {
     final currentState = state;
     if (currentState is CardDetailLoaded) {
       try {
-        emit(currentState.copyWith(isUploadingAttachment: true, clearAttachmentError: true));
+        emit(
+          currentState.copyWith(
+            isUploadingAttachment: true,
+            clearAttachmentError: true,
+          ),
+        );
         final userUId = await UserLocalDataSource().getUserId() ?? '';
         late FileUrlEntity fileUrl;
         if (_isInboxCard) {
@@ -322,15 +586,24 @@ class CardDetailCubit extends Cubit<CardDetailState> {
           );
         }
         final updatedCard = currentState.card.copyWith(
-          fileUrls: List<FileUrlEntity>.from(currentState.card.fileUrls)..add(fileUrl),
+          fileUrls: List<FileUrlEntity>.from(currentState.card.fileUrls)
+            ..add(fileUrl),
         );
-        emit(currentState.copyWith(card: updatedCard, isUploadingAttachment: false, clearAttachmentError: true));
+        emit(
+          currentState.copyWith(
+            card: updatedCard,
+            isUploadingAttachment: false,
+            clearAttachmentError: true,
+          ),
+        );
       } catch (e) {
         final isDuplicate = e.toString().contains('DUPLICATE');
-        emit(currentState.copyWith(
-          isUploadingAttachment: false,
-          attachmentError: isDuplicate ? 'duplicate' : null,
-        ));
+        emit(
+          currentState.copyWith(
+            isUploadingAttachment: false,
+            attachmentError: isDuplicate ? 'duplicate' : null,
+          ),
+        );
       }
     }
   }
@@ -341,19 +614,36 @@ class CardDetailCubit extends Cubit<CardDetailState> {
       try {
         final userUId = await UserLocalDataSource().getUserId() ?? '';
         if (_isInboxCard) {
-          await inboxRepository.deleteAttachment(cardId: currentState.card.id, fileId: fileId, userUId: userUId);
+          await inboxRepository.deleteAttachment(
+            cardId: currentState.card.id,
+            fileId: fileId,
+            userUId: userUId,
+          );
         } else {
-          await deleteAttachmentUseCase.call(cardId: currentState.card.id, fileId: fileId, userUId: userUId);
+          await deleteAttachmentUseCase.call(
+            cardId: currentState.card.id,
+            fileId: fileId,
+            userUId: userUId,
+          );
         }
-        final updatedFiles = currentState.card.fileUrls.where((f) => f.id != fileId).toList();
-        emit(currentState.copyWith(card: currentState.card.copyWith(fileUrls: updatedFiles)));
+        final updatedFiles = currentState.card.fileUrls
+            .where((f) => f.id != fileId)
+            .toList();
+        emit(
+          currentState.copyWith(
+            card: currentState.card.copyWith(fileUrls: updatedFiles),
+          ),
+        );
       } catch (e) {
         // Handle error silently
       }
     }
   }
 
-  Future<void> updateAttachmentDescription(String fileId, String? newDescription) async {
+  Future<void> updateAttachmentDescription(
+    String fileId,
+    String? newDescription,
+  ) async {
     final currentState = state;
     if (currentState is CardDetailLoaded) {
       try {
@@ -379,7 +669,11 @@ class CardDetailCubit extends Cubit<CardDetailState> {
           }
           return f;
         }).toList();
-        emit(currentState.copyWith(card: currentState.card.copyWith(fileUrls: updatedFiles)));
+        emit(
+          currentState.copyWith(
+            card: currentState.card.copyWith(fileUrls: updatedFiles),
+          ),
+        );
       } catch (e) {
         // Handle error silently
       }
@@ -412,7 +706,9 @@ class CardDetailCubit extends Cubit<CardDetailState> {
           boardId: boardId,
         );
         // Refresh members
-        final members = await repository.getCardMembers(cardId: currentState.card.id);
+        final members = await repository.getCardMembers(
+          cardId: currentState.card.id,
+        );
         emit(currentState.copyWith(members: members));
       } catch (e) {
         // Handle error silently
@@ -439,7 +735,9 @@ class CardDetailCubit extends Cubit<CardDetailState> {
           boardId: boardId,
         );
         // Refresh members
-        final members = await repository.getCardMembers(cardId: currentState.card.id);
+        final members = await repository.getCardMembers(
+          cardId: currentState.card.id,
+        );
         emit(currentState.copyWith(members: members));
       } catch (e) {
         // Handle error
@@ -461,7 +759,9 @@ class CardDetailCubit extends Cubit<CardDetailState> {
           boardId: boardId,
         );
         // Refresh members
-        final members = await repository.getCardMembers(cardId: currentState.card.id);
+        final members = await repository.getCardMembers(
+          cardId: currentState.card.id,
+        );
         emit(currentState.copyWith(members: members));
       } catch (e) {
         // Handle error silently
@@ -472,19 +772,32 @@ class CardDetailCubit extends Cubit<CardDetailState> {
   Future<void> toggleLabel(String title, String colorCode) async {
     final currentState = state;
     if (currentState is CardDetailLoaded) {
-      final currentLabels = List<CardLabelEntity>.from(currentState.card.labels);
-      final existingIndex = currentLabels.indexWhere((l) => l.title == title && l.colorCode.toUpperCase() == colorCode.toUpperCase());
+      final currentLabels = List<CardLabelEntity>.from(
+        currentState.card.labels,
+      );
+      final existingIndex = currentLabels.indexWhere(
+        (l) =>
+            l.title == title &&
+            l.colorCode.toUpperCase() == colorCode.toUpperCase(),
+      );
 
       if (existingIndex != -1) {
         // Label exists, delete it
         final labelToRemove = currentLabels[existingIndex];
         currentLabels.removeAt(existingIndex);
-        
+
         // Update local state first (Optimistic)
-        emit(currentState.copyWith(card: currentState.card.copyWith(labels: currentLabels)));
-        
+        emit(
+          currentState.copyWith(
+            card: currentState.card.copyWith(labels: currentLabels),
+          ),
+        );
+
         try {
-          await repository.deleteCardLabel(cardId: currentState.card.id, labelId: labelToRemove.id);
+          await repository.deleteCardLabel(
+            cardId: currentState.card.id,
+            labelId: labelToRemove.id,
+          );
         } catch (e) {
           // Revert or surface error
         }
@@ -498,7 +811,11 @@ class CardDetailCubit extends Cubit<CardDetailState> {
             colorCode: colorCode,
           );
           currentLabels.add(newLabel);
-          emit(currentState.copyWith(card: currentState.card.copyWith(labels: currentLabels)));
+          emit(
+            currentState.copyWith(
+              card: currentState.card.copyWith(labels: currentLabels),
+            ),
+          );
         } catch (e) {
           // Revert or handle error
         }
@@ -528,9 +845,17 @@ class CardDetailCubit extends Cubit<CardDetailState> {
             status: currentState.card.status,
           );
         } else {
-          await repository.updateDueDate(cardId: currentState.card.id, dueDate: dueDate, userUId: userUId);
+          await repository.updateDueDate(
+            cardId: currentState.card.id,
+            dueDate: dueDate,
+            userUId: userUId,
+          );
         }
-        emit(currentState.copyWith(card: currentState.card.copyWith(dueDate: dueDate)));
+        emit(
+          currentState.copyWith(
+            card: currentState.card.copyWith(dueDate: dueDate),
+          ),
+        );
       } catch (e) {
         // Handle error silently
       }
@@ -594,7 +919,10 @@ class CardDetailCubit extends Cubit<CardDetailState> {
     if (currentState is! CardDetailLoaded) return;
     try {
       final userUId = await UserLocalDataSource().getUserId() ?? '';
-      await repository.archiveCard(cardId: currentState.card.id, userUId: userUId);
+      await repository.archiveCard(
+        cardId: currentState.card.id,
+        userUId: userUId,
+      );
       emit(CardDetailArchived());
     } catch (e) {
       emit(CardDetailError('Không thể lưu trữ thẻ: ${e.toString()}'));
@@ -607,7 +935,10 @@ class CardDetailCubit extends Cubit<CardDetailState> {
     if (currentState is! CardDetailLoaded) return;
     try {
       final userUId = await UserLocalDataSource().getUserId() ?? '';
-      await repository.unarchiveCard(cardId: currentState.card.id, userUId: userUId);
+      await repository.unarchiveCard(
+        cardId: currentState.card.id,
+        userUId: userUId,
+      );
       // Stay on the same state, just UI will be updated via boolean callback in UI layer
     } catch (e) {
       emit(CardDetailError('Không thể khôi phục thẻ: ${e.toString()}'));
@@ -620,7 +951,10 @@ class CardDetailCubit extends Cubit<CardDetailState> {
     if (currentState is! CardDetailLoaded) return;
     try {
       final userUId = await UserLocalDataSource().getUserId() ?? '';
-      await repository.deleteCard(cardId: currentState.card.id, userUId: userUId);
+      await repository.deleteCard(
+        cardId: currentState.card.id,
+        userUId: userUId,
+      );
       emit(CardDetailDeleted());
     } catch (e) {
       emit(CardDetailError('Không thể xóa thẻ: ${e.toString()}'));
@@ -639,7 +973,9 @@ class CardDetailCubit extends Cubit<CardDetailState> {
         boardId: boardId,
       );
       // Refresh members
-      final members = await repository.getCardMembers(cardId: currentState.card.id);
+      final members = await repository.getCardMembers(
+        cardId: currentState.card.id,
+      );
       emit(currentState.copyWith(members: members));
     } catch (_) {}
   }
