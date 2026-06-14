@@ -76,15 +76,13 @@ namespace TodoAppAPI.Services
 
                 if (userUId != requesterUId)
                 {
-                    var actorName = await GetUserDisplayNameAsync(requesterUId);
-                    var boardName = boardInfo?.BoardName ?? boardUId;
                     await _notificationService.TryCreateInternalAsync(new NotificationDTO
                     {
                         RecipientId = userUId,
                         ActorId = requesterUId,
                         Type = NotificationType.BoardMemberAdded,
-                        Title = "Bạn đã được thêm vào bảng",
-                        Message = $"Bạn đã được {actorName} thêm vào {boardName}.",
+                        Title = "You were added to a board",
+                        Message = $"You were added to board '{boardInfo?.BoardName ?? boardUId}' as {role}.",
                         BoardId = boardUId,
                         Link = $"/board-detail/{boardUId}"
                     }, "board member add");
@@ -126,15 +124,13 @@ namespace TodoAppAPI.Services
                 if (userUId != requesterUId)
                 {
                     var board = await _context.Boards.AsNoTracking().FirstOrDefaultAsync(b => b.BoardUId == boardUId);
-                    var actorName = await GetUserDisplayNameAsync(requesterUId);
-                    var boardName = board?.BoardName ?? boardUId;
                     await _notificationService.TryCreateInternalAsync(new NotificationDTO
                     {
                         RecipientId = userUId,
                         ActorId = requesterUId,
                         Type = NotificationType.BoardRoleChanged,
-                        Title = "Vai trò trong bảng đã thay đổi",
-                        Message = $"{actorName} đã thay đổi vai trò của bạn trong {boardName} từ {ToVietnameseRoleLabel(oldRole)} -> {ToVietnameseRoleLabel(newRole)}",
+                        Title = "Your board role changed",
+                        Message = $"Your role in board '{board?.BoardName ?? boardUId}' changed from {oldRole} to {newRole}.",
                         BoardId = boardUId,
                         Link = $"/board-detail/{boardUId}"
                     }, "board member role update");
@@ -192,15 +188,13 @@ namespace TodoAppAPI.Services
                 if (userUId != requesterUId)
                 {
                     var board = await _context.Boards.AsNoTracking().FirstOrDefaultAsync(b => b.BoardUId == boardUId);
-                    var actorName = await GetUserDisplayNameAsync(requesterUId);
-                    var boardName = board?.BoardName ?? boardUId;
                     await _notificationService.TryCreateInternalAsync(new NotificationDTO
                     {
                         RecipientId = userUId,
                         ActorId = requesterUId,
                         Type = NotificationType.BoardMemberRemoved,
-                        Title = "Bạn đã bị xóa khỏi bảng",
-                        Message = $"Bạn đã bị {actorName} xóa khỏi {boardName}.",
+                        Title = "You were removed from a board",
+                        Message = $"You were removed from board '{board?.BoardName ?? boardUId}'.",
                         BoardId = boardUId,
                         Link = $"/board-detail/{boardUId}"
                     }, "board member remove");
@@ -224,9 +218,9 @@ namespace TodoAppAPI.Services
                 .Select(bm => new MemberDTO
                 {
                     UserUId   = bm.UserUId,
-                    UserName  = bm.User != null ? bm.User.UserName : string.Empty,
-                    Email     = bm.User != null ? bm.User.Email : string.Empty,
-                    AvatarUrl = bm.User != null ? bm.User.AvatarUrl : null,
+                    UserName  = bm.User.UserName,
+                    Email     = bm.User.Email,
+                    AvatarUrl = bm.User.AvatarUrl,
                     Role      = bm.BoardRole
                 })
                 .ToListAsync();
@@ -321,32 +315,6 @@ namespace TodoAppAPI.Services
                 Console.WriteLine($"Error transferring board workspace: {ex.Message}");
                 return (false, "Đã xảy ra lỗi khi chuyển workspace.");
             }
-        }
-
-        private async Task<string> GetUserDisplayNameAsync(string userUId)
-        {
-            var name = await _context.Users
-                .AsNoTracking()
-                .Where(u => u.UserUId == userUId)
-                .Select(u => u.UserName)
-                .FirstOrDefaultAsync();
-
-            return string.IsNullOrWhiteSpace(name) ? userUId : name;
-        }
-
-        private static string ToVietnameseRoleLabel(string? role)
-        {
-            return role switch
-            {
-                "Owner" => "Chủ sở hữu",
-                "Admin" => "Quản trị viên",
-                "Member" => "Thành viên",
-                "Viewer" => "Người xem",
-                "Editor" => "Biên tập viên",
-                "Assignee" => "Người thực hiện",
-                "Observer" => "Người theo dõi",
-                _ => string.IsNullOrWhiteSpace(role) ? "Không xác định" : role
-            };
         }
     }
 }

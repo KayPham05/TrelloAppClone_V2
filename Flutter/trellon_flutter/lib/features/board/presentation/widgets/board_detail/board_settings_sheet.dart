@@ -72,10 +72,9 @@ class _BoardSettingsSheetState extends State<BoardSettingsSheet> {
       builder: (_) => BlocProvider.value(
         value: ctx.read<BoardDetailCubit>(),
         child: BoardTransferWorkspaceSheet(
-          currentWorkspaceId: state.workspaceId ?? '',
-          isCurrentlyPersonal:
-              (state.workspaceId == null || state.workspaceId!.isEmpty),
-        ),
+                  currentWorkspaceId: state.workspaceId ?? '',
+                  isCurrentlyPersonal: (state.workspaceId == null || state.workspaceId!.isEmpty),
+                ),
       ),
     );
   }
@@ -99,9 +98,7 @@ class _BoardSettingsSheetState extends State<BoardSettingsSheet> {
       backgroundColor: Colors.transparent,
       builder: (_) => BlocProvider.value(
         value: ctx.read<BoardDetailCubit>(),
-        child: BoardVisibilitySheet(
-          currentVisibility: state.boardVisibility ?? 'Private',
-        ),
+        child: BoardVisibilitySheet(currentVisibility: state.boardVisibility ?? 'Private'),
       ),
     );
   }
@@ -111,19 +108,14 @@ class _BoardSettingsSheetState extends State<BoardSettingsSheet> {
       context: ctx,
       builder: (dialogCtx) => AlertDialog(
         title: const Text('Xóa bảng'),
-        content: const Text(
-          'Bạn có chắc chắn muốn xóa bảng này không? Hành động này không thể hoàn tác.',
-        ),
+        content: const Text('Bạn có chắc chắn muốn xóa bảng này không? Hành động này không thể hoàn tác.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogCtx),
             child: const Text('Hủy'),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
-            ),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
             onPressed: () {
               Navigator.pop(dialogCtx);
               Navigator.pop(ctx);
@@ -137,16 +129,11 @@ class _BoardSettingsSheetState extends State<BoardSettingsSheet> {
     );
   }
 
-  static const _thanhVienLabel = 'Thành viên';
-
   String _visibilityLabel(String? v) {
     switch (v) {
-      case 'Public':
-        return 'Công khai';
-      case 'Workspace':
-        return 'Không gian làm việc';
-      default:
-        return _thanhVienLabel;
+      case 'Public': return 'Công khai';
+      case 'Workspace': return 'Không gian làm việc';
+      default: return 'Thành viên';
     }
   }
 
@@ -174,8 +161,7 @@ class _BoardSettingsSheetState extends State<BoardSettingsSheet> {
               const SizedBox(height: 12),
               // Drag handle
               Container(
-                width: 40,
-                height: 4,
+                width: 40, height: 4,
                 decoration: BoxDecoration(
                   color: Colors.grey.withValues(alpha: 0.5),
                   borderRadius: BorderRadius.circular(2),
@@ -195,10 +181,7 @@ class _BoardSettingsSheetState extends State<BoardSettingsSheet> {
                       child: Text(
                         'Thiết lập bảng',
                         textAlign: TextAlign.center,
-                        style: GoogleFonts.inter(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
+                        style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600),
                       ),
                     ),
                     const SizedBox(width: 48),
@@ -209,10 +192,7 @@ class _BoardSettingsSheetState extends State<BoardSettingsSheet> {
 
               Expanded(
                 child: ListView(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
-                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   children: [
                     // ── Group 1: Core settings ──────────────────────────
                     // Tên
@@ -221,79 +201,42 @@ class _BoardSettingsSheetState extends State<BoardSettingsSheet> {
                       title: const Text('Tên'),
                       subtitle: canEdit
                           ? _editingName
-                                ? Row(
-                                    children: [
-                                      Expanded(
-                                        child: TextField(
-                                          controller: _nameController,
-                                          autofocus: true,
-                                          style: GoogleFonts.inter(
-                                            fontSize: 14,
-                                          ),
-                                          decoration: const InputDecoration(
-                                            isDense: true,
-                                            contentPadding:
-                                                EdgeInsets.symmetric(
-                                                  horizontal: 8,
-                                                  vertical: 6,
-                                                ),
-                                            border: OutlineInputBorder(),
-                                          ),
-                                          onSubmitted: (v) {
-                                            setState(
-                                              () => _editingName = false,
-                                            );
-                                            if (v.trim().isNotEmpty) {
-                                              ctx
-                                                  .read<BoardDetailCubit>()
-                                                  .updateBoardName(v.trim());
-                                            }
-                                          },
-                                        ),
+                              ? Row(children: [
+                                  Expanded(
+                                    child: TextField(
+                                      controller: _nameController,
+                                      autofocus: true,
+                                      style: GoogleFonts.inter(fontSize: 14),
+                                      decoration: const InputDecoration(
+                                        isDense: true,
+                                        contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                                        border: OutlineInputBorder(),
                                       ),
-                                      TextButton(
-                                        onPressed: () {
-                                          setState(() => _editingName = false);
-                                          final v = _nameController.text.trim();
-                                          if (v.isNotEmpty) {
-                                            ctx
-                                                .read<BoardDetailCubit>()
-                                                .updateBoardName(v);
-                                          }
-                                        },
-                                        child: const Text('Lưu'),
-                                      ),
-                                    ],
-                                  )
-                                : GestureDetector(
-                                    onTap: () =>
-                                        setState(() => _editingName = true),
-                                    child: Row(
-                                      children: [
-                                        Expanded(
-                                          child: Text(
-                                            state.boardName,
-                                            style: GoogleFonts.inter(
-                                              fontSize: 14,
-                                              color: AppColors.onSurfaceVariant,
-                                            ),
-                                          ),
-                                        ),
-                                        const Icon(
-                                          Icons.edit_outlined,
-                                          size: 16,
-                                          color: AppColors.outlineVariant,
-                                        ),
-                                      ],
+                                      onSubmitted: (v) {
+                                        setState(() => _editingName = false);
+                                        if (v.trim().isNotEmpty) {
+                                          ctx.read<BoardDetailCubit>().updateBoardName(v.trim());
+                                        }
+                                      },
                                     ),
-                                  )
-                          : Text(
-                              state.boardName,
-                              style: GoogleFonts.inter(
-                                fontSize: 14,
-                                color: AppColors.onSurfaceVariant,
-                              ),
-                            ),
+                                  ),
+                                  TextButton(
+                                    onPressed: () {
+                                      setState(() => _editingName = false);
+                                      final v = _nameController.text.trim();
+                                      if (v.isNotEmpty) ctx.read<BoardDetailCubit>().updateBoardName(v);
+                                    },
+                                    child: const Text('Lưu'),
+                                  ),
+                                ])
+                              : GestureDetector(
+                                  onTap: () => setState(() => _editingName = true),
+                                  child: Row(children: [
+                                    Expanded(child: Text(state.boardName, style: GoogleFonts.inter(fontSize: 14, color: AppColors.onSurfaceVariant))),
+                                    const Icon(Icons.edit_outlined, size: 16, color: AppColors.outlineVariant),
+                                  ]),
+                                )
+                          : Text(state.boardName, style: GoogleFonts.inter(fontSize: 14, color: AppColors.onSurfaceVariant)),
                     ),
                     const Divider(),
 
@@ -301,19 +244,9 @@ class _BoardSettingsSheetState extends State<BoardSettingsSheet> {
                     ListTile(
                       contentPadding: EdgeInsets.zero,
                       title: const Text('Không gian làm việc'),
-                      subtitle: Text(
-                        state.workspaceName ?? 'Cá nhân',
-                        style: GoogleFonts.inter(
-                          fontSize: 12,
-                          color: AppColors.onSurfaceVariant,
-                        ),
-                      ),
-                      trailing: isOwner
-                          ? const Icon(Icons.chevron_right, color: Colors.grey)
-                          : null,
-                      onTap: isOwner
-                          ? () => _openTransferWorkspace(ctx, state)
-                          : null,
+                      subtitle: Text(state.workspaceName ?? 'Cá nhân', style: GoogleFonts.inter(fontSize: 12, color: AppColors.onSurfaceVariant)),
+                      trailing: isOwner ? const Icon(Icons.chevron_right, color: Colors.grey) : null,
+                      onTap: isOwner ? () => _openTransferWorkspace(ctx, state) : null,
                     ),
                     const Divider(),
 
@@ -325,8 +258,7 @@ class _BoardSettingsSheetState extends State<BoardSettingsSheet> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           _buildBgPreview(state.backgroundUrl),
-                          if (canEdit)
-                            const Icon(Icons.chevron_right, color: Colors.grey),
+                          if (canEdit) const Icon(Icons.chevron_right, color: Colors.grey),
                         ],
                       ),
                       onTap: canEdit ? () => _openBackground(ctx) : null,
@@ -349,10 +281,7 @@ class _BoardSettingsSheetState extends State<BoardSettingsSheet> {
                     ListTile(
                       contentPadding: EdgeInsets.zero,
                       title: const Text('Chỉnh sửa nhãn'),
-                      trailing: const Icon(
-                        Icons.chevron_right,
-                        color: Colors.grey,
-                      ),
+                      trailing: const Icon(Icons.chevron_right, color: Colors.grey),
                       onTap: _showComingSoon,
                     ),
                     const Divider(),
@@ -373,10 +302,7 @@ class _BoardSettingsSheetState extends State<BoardSettingsSheet> {
                     ListTile(
                       contentPadding: EdgeInsets.zero,
                       title: const Text('Cài đặt thêm thẻ qua email'),
-                      trailing: const Icon(
-                        Icons.chevron_right,
-                        color: Colors.grey,
-                      ),
+                      trailing: const Icon(Icons.chevron_right, color: Colors.grey),
                       onTap: _showComingSoon,
                     ),
                     const Divider(),
@@ -385,10 +311,7 @@ class _BoardSettingsSheetState extends State<BoardSettingsSheet> {
                     ListTile(
                       contentPadding: EdgeInsets.zero,
                       title: const Text('Lưu trữ'),
-                      trailing: const Icon(
-                        Icons.chevron_right,
-                        color: Colors.grey,
-                      ),
+                      trailing: const Icon(Icons.chevron_right, color: Colors.grey),
                       onTap: () => _openArchive(ctx, state),
                     ),
                     const Divider(),
@@ -398,70 +321,35 @@ class _BoardSettingsSheetState extends State<BoardSettingsSheet> {
                     ListTile(
                       contentPadding: EdgeInsets.zero,
                       title: const Text('Hiển thị'),
-                      subtitle: Text(
-                        _visibilityLabel(state.boardVisibility),
-                        style: GoogleFonts.inter(
-                          fontSize: 12,
-                          color: AppColors.onSurfaceVariant,
-                        ),
-                      ),
-                      trailing: canEdit
-                          ? const Icon(Icons.chevron_right, color: Colors.grey)
-                          : null,
+                      subtitle: Text(_visibilityLabel(state.boardVisibility), style: GoogleFonts.inter(fontSize: 12, color: AppColors.onSurfaceVariant)),
+                      trailing: canEdit ? const Icon(Icons.chevron_right, color: Colors.grey) : null,
                       onTap: canEdit ? () => _openVisibility(ctx, state) : null,
                     ),
                     const Divider(),
-
+                    
                     ListTile(
                       contentPadding: EdgeInsets.zero,
                       title: const Text('Quyền bình luận'),
-                      subtitle: Text(
-                        _thanhVienLabel,
-                        style: GoogleFonts.inter(
-                          fontSize: 12,
-                          color: AppColors.onSurfaceVariant,
-                        ),
-                      ),
-                      trailing: const Icon(
-                        Icons.chevron_right,
-                        color: Colors.grey,
-                      ),
+                      subtitle: Text('Thành viên', style: GoogleFonts.inter(fontSize: 12, color: AppColors.onSurfaceVariant)),
+                      trailing: const Icon(Icons.chevron_right, color: Colors.grey),
                       onTap: _showComingSoon,
                     ),
                     const Divider(),
-
+                    
                     ListTile(
                       contentPadding: EdgeInsets.zero,
                       title: const Text('Bình chọn'),
-                      subtitle: Text(
-                        'Đã tắt',
-                        style: GoogleFonts.inter(
-                          fontSize: 12,
-                          color: AppColors.onSurfaceVariant,
-                        ),
-                      ),
-                      trailing: const Icon(
-                        Icons.chevron_right,
-                        color: Colors.grey,
-                      ),
+                      subtitle: Text('Đã tắt', style: GoogleFonts.inter(fontSize: 12, color: AppColors.onSurfaceVariant)),
+                      trailing: const Icon(Icons.chevron_right, color: Colors.grey),
                       onTap: _showComingSoon,
                     ),
                     const Divider(),
-
+                    
                     ListTile(
                       contentPadding: EdgeInsets.zero,
                       title: const Text('Thêm thành viên'),
-                      subtitle: Text(
-                        _thanhVienLabel,
-                        style: GoogleFonts.inter(
-                          fontSize: 12,
-                          color: AppColors.onSurfaceVariant,
-                        ),
-                      ),
-                      trailing: const Icon(
-                        Icons.chevron_right,
-                        color: Colors.grey,
-                      ),
+                      subtitle: Text('Thành viên', style: GoogleFonts.inter(fontSize: 12, color: AppColors.onSurfaceVariant)),
+                      trailing: const Icon(Icons.chevron_right, color: Colors.grey),
                       onTap: _showComingSoon,
                     ),
 
@@ -469,24 +357,13 @@ class _BoardSettingsSheetState extends State<BoardSettingsSheet> {
                       const Divider(),
                       ListTile(
                         contentPadding: EdgeInsets.zero,
-                        title: Text(
-                          'Xóa bảng',
-                          style: GoogleFonts.inter(
-                            color: Colors.red.shade400,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        trailing: const Icon(
-                          Icons.delete_outline_rounded,
-                          color: Colors.red,
-                        ),
+                        title: Text('Xóa bảng', style: GoogleFonts.inter(color: Colors.red.shade400, fontWeight: FontWeight.w600)),
+                        trailing: const Icon(Icons.delete_outline_rounded, color: Colors.red),
                         onTap: () => _confirmDeleteBoard(ctx, state),
                       ),
                     ],
 
-                    SizedBox(
-                      height: MediaQuery.of(context).padding.bottom + 16,
-                    ),
+                    SizedBox(height: MediaQuery.of(context).padding.bottom + 16),
                   ],
                 ),
               ),
@@ -500,8 +377,7 @@ class _BoardSettingsSheetState extends State<BoardSettingsSheet> {
   Widget _buildBgPreview(String? url) {
     if (url == null) {
       return Container(
-        width: 32,
-        height: 32,
+        width: 32, height: 32,
         margin: const EdgeInsets.symmetric(horizontal: 8),
         decoration: BoxDecoration(
           color: AppColors.surfaceContainerHigh,
@@ -511,8 +387,7 @@ class _BoardSettingsSheetState extends State<BoardSettingsSheet> {
     }
     final isColor = url.startsWith('#');
     return Container(
-      width: 32,
-      height: 32,
+      width: 32, height: 32,
       margin: const EdgeInsets.symmetric(horizontal: 8),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(6),

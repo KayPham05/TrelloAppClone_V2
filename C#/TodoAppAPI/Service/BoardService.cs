@@ -224,9 +224,7 @@ namespace TodoAppAPI.Service
                 Status = b.Status,
                 UserUId = b.UserUId,
                 WorkspaceUId = b.WorkspaceUId,
-                BackgroundUrl = b.BackgroundUrl,
-                IsStarred = _context.UserStarredBoards.Any(s =>
-                    s.UserUId == userUId && s.BoardUId == b.BoardUId)
+                BackgroundUrl = b.BackgroundUrl
             })
             .ToListAsync();
         }
@@ -264,17 +262,11 @@ namespace TodoAppAPI.Service
                 }
                 var boardUpdate = _context.Boards.FirstOrDefault(b => b.BoardUId == board.BoardUId);
                 if (boardUpdate == null) return false;
-                if (!string.IsNullOrWhiteSpace(board.BoardName))
-                {
-                    boardUpdate.BoardName = board.BoardName.Trim();
-                }
+                boardUpdate.BoardName = board.BoardName;
                 boardUpdate.Visibility = string.IsNullOrEmpty(board.Visibility) 
                     ? boardUpdate.Visibility
                     : board.Visibility;
-                if (board.BackgroundUrl != null)
-                {
-                    boardUpdate.BackgroundUrl = board.BackgroundUrl;
-                }
+                boardUpdate.BackgroundUrl = board.BackgroundUrl;
                 _context.Boards.Update(boardUpdate);
                 await _context.SaveChangesAsync();
                 return true;

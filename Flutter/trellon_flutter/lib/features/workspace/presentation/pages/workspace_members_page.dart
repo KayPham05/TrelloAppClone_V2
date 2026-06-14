@@ -10,8 +10,6 @@ import '../../../../init_dependencies.dart';
 import '../cubit/workspace_member_cubit.dart';
 import '../../domain/entities/workspace_member.dart';
 import '../../../../core/services/authorization_service.dart';
-import '../../../member_invite/domain/usecases/search_invite_suggestions_usecase.dart';
-import '../../../member_invite/presentation/widgets/member_invite_picker.dart';
 
 class WorkspaceMembersPage extends StatelessWidget {
   final String workspaceId;
@@ -81,8 +79,7 @@ class _WorkspaceMembersView extends StatelessWidget {
         actions: [
           BlocBuilder<WorkspaceMemberCubit, WorkspaceMemberState>(
             builder: (context, state) {
-              final canInvite =
-                  state is WorkspaceMemberLoaded &&
+              final canInvite = state is WorkspaceMemberLoaded &&
                   _authService.canInviteToWorkspace(state.currentUserRole);
               if (!canInvite) return const SizedBox.shrink();
               return IconButton(
@@ -105,21 +102,15 @@ class _WorkspaceMembersView extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(
-                    Icons.error_outline_rounded,
-                    size: 48,
-                    color: AppColors.outline,
-                  ),
+                  const Icon(Icons.error_outline_rounded,
+                      size: 48, color: AppColors.outline),
                   const SizedBox(height: 12),
-                  Text(
-                    state.message,
-                    style: GoogleFonts.inter(color: AppColors.onSurfaceVariant),
-                  ),
+                  Text(state.message,
+                      style: GoogleFonts.inter(color: AppColors.onSurfaceVariant)),
                   const SizedBox(height: 12),
                   FilledButton(
-                    onPressed: () => context
-                        .read<WorkspaceMemberCubit>()
-                        .loadMembers(workspaceId),
+                    onPressed: () =>
+                        context.read<WorkspaceMemberCubit>().loadMembers(workspaceId),
                     child: const Text('Thử lại'),
                   ),
                 ],
@@ -133,10 +124,9 @@ class _WorkspaceMembersView extends StatelessWidget {
               separatorBuilder: (_, _) => const SizedBox(height: 8),
               itemBuilder: (context, index) {
                 final member = state.members[index];
-                final canManage = _authService.canManageWorkspace(
-                  state.currentUserRole,
-                );
-
+                final canManage =
+                    _authService.canManageWorkspace(state.currentUserRole);
+                
                 // Only Admin/Owner can change roles or remove members (except they can't remove themselves or owners via this UI)
                 final canModifyThisMember = canManage && member.role != 'Owner';
 
@@ -162,25 +152,85 @@ class _WorkspaceMembersView extends StatelessWidget {
   // ── Invite Dialog ──────────────────────────────────────────────────────────
   void _showInviteDialog(BuildContext context) {
     final cubit = context.read<WorkspaceMemberCubit>();
-    final searchUseCase = serviceLocator<SearchInviteSuggestionsUseCase>();
+    final emailCtrl = TextEditingController();
+    String selectedRole = 'Member';
 
-    showDialog<void>(
+    showDialog(
       context: context,
-      builder: (dialogContext) => MemberInvitePicker(
-        title: 'Mời thành viên',
-        searchSuggestions: ({required query, required selected}) async {
-          final requesterUId =
-              await serviceLocator<UserLocalDataSource>().getUserId() ?? '';
-          return searchUseCase(
-            query: query,
-            scope: 'workspace',
-            requesterUId: requesterUId,
-            workspaceId: workspaceId,
-          );
-        },
-        onSubmit: (selected) => cubit.inviteMembers(
-          workspaceId: workspaceId,
-          userIds: selected.map((user) => user.userUId).toList(),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDState) => AlertDialog(
+          title: Text(
+            'Mời thành viên',
+            style: GoogleFonts.inter(fontWeight: FontWeight.w700),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: emailCtrl,
+                keyboardType: TextInputType.emailAddress,
+                decoration: InputDecoration(
+                  labelText: 'Email',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<String>(
+                initialValue: selectedRole,
+                decoration: InputDecoration(
+                  labelText: 'Vai trò',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                items: MemberRoleHelper.rolesForScope(MemberScope.workspace)
+                    .where((r) => r != 'Owner')
+                    .map((r) => DropdownMenuItem(value: r, child: Text(MemberRoleHelper.translateRole(r))))
+                    .toList(),
+                onChanged: (v) => setDState(() => selectedRole = v ?? selectedRole),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Hủy'),
+            ),
+            FilledButton(
+              onPressed: () async {
+                final email = emailCtrl.text.trim();
+                if (email.isEmpty) return;
+                Navigator.pop(ctx);
+                // Tìm user theo email, rồi mời
+                final userData = await cubit.findUserByEmail(email);
+                if (userData != null && context.mounted) {
+                  final userId = userData['userUId'] as String? ?? '';
+                  if (userId.isNotEmpty) {
+                    final ok = await cubit.inviteMember(
+                      workspaceId: workspaceId,
+                      userId: userId,
+                      role: selectedRole,
+                    );
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                        content: Text(ok
+                            ? 'Đã mời $email thành công!'
+                            : 'Không thể mời (đã tồn tại hoặc không có quyền)'),
+                      ));
+                    }
+                  }
+                } else if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Không tìm thấy người dùng với email này.')),
+                  );
+                }
+              },
+              child: const Text('Mời'),
+            ),
+          ],
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         ),
       ),
     );
@@ -188,10 +238,7 @@ class _WorkspaceMembersView extends StatelessWidget {
 
   // ── Change Role Dialog ─────────────────────────────────────────────────────
   void _showChangeRoleDialog(
-    BuildContext context,
-    WorkspaceMember member,
-    WorkspaceMemberLoaded state,
-  ) {
+      BuildContext context, WorkspaceMember member, WorkspaceMemberLoaded state) {
     String selectedRole = member.role;
     showDialog(
       context: context,
@@ -204,18 +251,11 @@ class _WorkspaceMembersView extends StatelessWidget {
           content: DropdownButtonFormField<String>(
             initialValue: selectedRole,
             decoration: InputDecoration(
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
             ),
             items: MemberRoleHelper.rolesForScope(MemberScope.workspace)
                 .where((r) => r != 'Owner')
-                .map(
-                  (r) => DropdownMenuItem(
-                    value: r,
-                    child: Text(MemberRoleHelper.translateRole(r)),
-                  ),
-                )
+                .map((r) => DropdownMenuItem(value: r, child: Text(MemberRoleHelper.translateRole(r))))
                 .toList(),
             onChanged: (v) => setDState(() => selectedRole = v ?? selectedRole),
           ),
@@ -234,23 +274,15 @@ class _WorkspaceMembersView extends StatelessWidget {
                   newRole: selectedRole,
                 );
                 if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        ok
-                            ? 'Đã cập nhật vai trò'
-                            : 'Không thể cập nhật vai trò',
-                      ),
-                    ),
-                  );
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                    content: Text(ok ? 'Đã cập nhật vai trò' : 'Không thể cập nhật vai trò'),
+                  ));
                 }
               },
               child: const Text('Lưu'),
             ),
           ],
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         ),
       ),
     );
@@ -278,13 +310,9 @@ class _WorkspaceMembersView extends StatelessWidget {
                 userId: member.userUId,
               );
               if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      ok ? 'Đã xóa thành viên' : 'Không thể xóa thành viên',
-                    ),
-                  ),
-                );
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                  content: Text(ok ? 'Đã xóa thành viên' : 'Không thể xóa thành viên'),
+                ));
               }
             },
             child: const Text('Xóa'),
@@ -333,10 +361,7 @@ class _MemberCard extends StatelessWidget {
         ),
         subtitle: Text(
           member.email,
-          style: GoogleFonts.inter(
-            fontSize: 11,
-            color: AppColors.onSurfaceVariant,
-          ),
+          style: GoogleFonts.inter(fontSize: 11, color: AppColors.onSurfaceVariant),
         ),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
@@ -387,24 +412,16 @@ class _MemberCard extends StatelessWidget {
                       value: 'remove',
                       child: ListTile(
                         dense: true,
-                        leading: Icon(
-                          Icons.remove_circle_outline_rounded,
-                          size: 16,
-                          color: Colors.red.shade400,
-                        ),
-                        title: Text(
-                          'Xóa khỏi workspace',
-                          style: TextStyle(color: Colors.red.shade400),
-                        ),
+                        leading: Icon(Icons.remove_circle_outline_rounded,
+                            size: 16, color: Colors.red.shade400),
+                        title: Text('Xóa khỏi workspace',
+                            style: TextStyle(color: Colors.red.shade400)),
                         contentPadding: EdgeInsets.zero,
                       ),
                     ),
                 ],
-                icon: const Icon(
-                  Icons.more_vert_rounded,
-                  size: 18,
-                  color: AppColors.onSurfaceVariant,
-                ),
+                icon: const Icon(Icons.more_vert_rounded,
+                    size: 18, color: AppColors.onSurfaceVariant),
               ),
           ],
         ),

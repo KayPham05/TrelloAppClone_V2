@@ -46,9 +46,7 @@ class CreateBoardMainPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       controller: scrollController,
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom,
-      ),
+      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -77,11 +75,7 @@ class CreateBoardMainPage extends StatelessWidget {
                       shape: BoxShape.circle,
                       color: AppColors.surfaceContainerLow,
                     ),
-                    child: const Icon(
-                      Icons.close_rounded,
-                      size: 18,
-                      color: Colors.grey,
-                    ),
+                    child: const Icon(Icons.close_rounded, size: 18, color: Colors.grey),
                   ),
                 ),
                 Expanded(
@@ -99,24 +93,16 @@ class CreateBoardMainPage extends StatelessWidget {
                 GestureDetector(
                   onTap: isCreating ? null : onSubmit,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
-                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     decoration: BoxDecoration(
-                      color: isCreating
-                          ? AppColors.outlineVariant
-                          : const Color(0xFF2563EB),
+                      color: isCreating ? AppColors.outlineVariant : const Color(0xFF2563EB),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: isCreating
                         ? const SizedBox(
                             width: 16,
                             height: 16,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
+                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                           )
                         : Text(
                             'Tạo mới',
@@ -141,10 +127,7 @@ class CreateBoardMainPage extends StatelessWidget {
               ),
               child: TextField(
                 controller: nameController,
-                style: GoogleFonts.inter(
-                  fontSize: 15,
-                  color: AppColors.onSurface,
-                ),
+                style: GoogleFonts.inter(fontSize: 15, color: AppColors.onSurface),
                 decoration: InputDecoration(
                   hintText: 'Bảng Mới',
                   hintStyle: GoogleFonts.inter(
@@ -152,10 +135,7 @@ class CreateBoardMainPage extends StatelessWidget {
                     color: AppColors.onSurfaceVariant,
                   ),
                   border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 14,
-                  ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 ),
               ),
             ),
@@ -186,11 +166,7 @@ class CreateBoardMainPage extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(width: 4),
-                        const Icon(
-                          Icons.chevron_right_rounded,
-                          size: 18,
-                          color: Colors.grey,
-                        ),
+                        const Icon(Icons.chevron_right_rounded, size: 18, color: Colors.grey),
                       ],
                     ),
                     onTap: onTapWorkspace,
@@ -209,11 +185,7 @@ class CreateBoardMainPage extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(width: 4),
-                        const Icon(
-                          Icons.chevron_right_rounded,
-                          size: 18,
-                          color: Colors.grey,
-                        ),
+                        const Icon(Icons.chevron_right_rounded, size: 18, color: Colors.grey),
                       ],
                     ),
                     onTap: onTapVisibility,
@@ -232,27 +204,25 @@ class CreateBoardMainPage extends StatelessWidget {
                           ),
                         ),
                         const Spacer(),
-                        ...presetColors.map(
-                          (c) => GestureDetector(
-                            onTap: () => onSelectColor(c),
-                            child: Container(
-                              width: 26,
-                              height: 26,
-                              margin: const EdgeInsets.only(left: 6),
-                              decoration: BoxDecoration(
-                                color: c,
-                                shape: BoxShape.rectangle,
-                                borderRadius: BorderRadius.circular(4),
-                                border: selectedColor == c
-                                    ? Border.all(
-                                        color: AppColors.onSurface,
-                                        width: 2,
-                                      )
-                                    : null,
+                        ...presetColors.map((c) => GestureDetector(
+                              onTap: () => onSelectColor(c),
+                              child: Container(
+                                width: 26,
+                                height: 26,
+                                margin: const EdgeInsets.only(left: 6),
+                                decoration: BoxDecoration(
+                                  color: c,
+                                  shape: BoxShape.rectangle,
+                                  borderRadius: BorderRadius.circular(4),
+                                  border: selectedColor == c
+                                      ? Border.all(
+                                          color: AppColors.onSurface,
+                                          width: 2,
+                                        )
+                                      : null,
+                                ),
                               ),
-                            ),
-                          ),
-                        ),
+                            )),
                       ],
                     ),
                   ),

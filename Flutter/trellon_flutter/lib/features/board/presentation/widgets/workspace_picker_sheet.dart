@@ -83,11 +83,7 @@ class WorkspacePickerSheet extends StatelessWidget {
                   ),
                 ),
                 if (selectedWorkspace == null)
-                  const Icon(
-                    Icons.check_rounded,
-                    color: Color(0xFF2563EB),
-                    size: 20,
-                  ),
+                  const Icon(Icons.check_rounded, color: Color(0xFF2563EB), size: 20),
               ],
             ),
           ),
@@ -110,10 +106,7 @@ class WorkspacePickerSheet extends StatelessWidget {
             return InkWell(
               onTap: () => onSelected(ws),
               child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 14,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 child: Row(
                   children: [
                     Container(
@@ -145,11 +138,7 @@ class WorkspacePickerSheet extends StatelessWidget {
                       ),
                     ),
                     if (isSelected)
-                      const Icon(
-                        Icons.check_rounded,
-                        color: Color(0xFF2563EB),
-                        size: 20,
-                      ),
+                      const Icon(Icons.check_rounded, color: Color(0xFF2563EB), size: 20),
                   ],
                 ),
               ),

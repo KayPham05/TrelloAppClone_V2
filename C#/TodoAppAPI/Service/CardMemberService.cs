@@ -75,15 +75,13 @@ namespace TodoAppAPI.Service
 
                 if (userUId != requesterUId)
                 {
-                    var actorName = await GetUserDisplayNameAsync(requesterUId);
-                    var cardTitle = card.Title ?? card.CardUId;
                     await _notificationService.TryCreateInternalAsync(new NotificationDTO
                     {
                         RecipientId = userUId,
                         ActorId = requesterUId,
                         Type = NotificationType.Assign,
-                        Title = "Bạn đã được phân công vào thẻ",
-                        Message = $"Bạn đã được {actorName} phân công vào {cardTitle}.",
+                        Title = "You were assigned to a card",
+                        Message = $"You were added to card '{card.Title ?? card.CardUId}'.",
                         BoardId = boardUId,
                         CardId = cardUId,
                         Link = $"/card-detail/{cardUId}"
@@ -155,15 +153,13 @@ namespace TodoAppAPI.Service
 
                 if (userUId != requesterUId)
                 {
-                    var actorName = await GetUserDisplayNameAsync(requesterUId);
-                    var cardTitle = card?.Title ?? cardUId;
                     await _notificationService.TryCreateInternalAsync(new NotificationDTO
                     {
                         RecipientId = userUId,
                         ActorId = requesterUId,
                         Type = NotificationType.CardUnassigned,
-                        Title = "Bạn đã bị xóa khỏi thẻ",
-                        Message = $"Bạn đã bị {actorName} xóa khỏi {cardTitle}.",
+                        Title = "You were removed from a card",
+                        Message = $"You were removed from card '{card?.Title ?? cardUId}'.",
                         BoardId = boardUId,
                         CardId = cardUId,
                         Link = $"/card-detail/{cardUId}"
@@ -213,17 +209,6 @@ namespace TodoAppAPI.Service
                 Console.WriteLine($"Lỗi khi cập nhật role CardMember: {ex.Message}");
                 return false;
             }
-        }
-
-        private async Task<string> GetUserDisplayNameAsync(string userUId)
-        {
-            var name = await _dbContext.Users
-                .AsNoTracking()
-                .Where(u => u.UserUId == userUId)
-                .Select(u => u.UserName)
-                .FirstOrDefaultAsync();
-
-            return string.IsNullOrWhiteSpace(name) ? userUId : name;
         }
     }
 }

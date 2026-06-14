@@ -4,6 +4,7 @@ import '../../../../core/utils/color_utils.dart';
 import '../../../board/domain/entities/board_entity.dart';
 import '../../domain/entities/workspace_entity.dart';
 
+
 class WorkspaceSectionWidget extends StatelessWidget {
   final WorkspaceEntity workspace;
   final bool isExpanded;
@@ -34,29 +35,18 @@ class WorkspaceSectionWidget extends StatelessWidget {
                     color: AppColors.primary.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(6),
                   ),
-                  child: const Icon(
-                    Icons.people_outline,
-                    color: AppColors.primary,
-                    size: 18,
-                  ),
+                  child: const Icon(Icons.people_outline, color: AppColors.primary, size: 18),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
                     workspace.name,
-                    style: const TextStyle(
-                      color: AppColors.textPrimary,
-                      fontWeight: FontWeight.w500,
-                      fontSize: 15,
-                    ),
+                    style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w500, fontSize: 15),
                   ),
                 ),
                 Text(
                   'Bảng',
-                  style: TextStyle(
-                    color: AppColors.primary.withValues(alpha: 0.8),
-                    fontSize: 13,
-                  ),
+                  style: TextStyle(color: AppColors.primary.withValues(alpha: 0.8), fontSize: 13),
                 ),
                 const SizedBox(width: 4),
                 Icon(
@@ -86,17 +76,13 @@ class BoardRowWidget extends StatelessWidget {
     final color = ColorUtils.hexToColor(board.coverColor ?? '#0079BF');
     return InkWell(
       onTap: () {
-        Navigator.pushNamed(
-          context,
-          '/board-detail',
-          arguments: {
-            'boardId': board.id,
-            'boardName': board.name,
-            'backgroundUrl': board.backgroundUrl,
-            'workspaceId': board.workspaceId,
-            'workspaceName': board.workspaceName,
-          },
-        );
+        Navigator.pushNamed(context, '/board-detail', arguments: {
+          'boardId': board.id,
+          'boardName': board.name,
+          'backgroundUrl': board.backgroundUrl,
+          'workspaceId': board.workspaceId,
+          'workspaceName': board.workspaceName,
+        });
       },
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -114,10 +100,7 @@ class BoardRowWidget extends StatelessWidget {
             Expanded(
               child: Text(
                 board.name,
-                style: const TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 14,
-                ),
+                style: const TextStyle(color: AppColors.textPrimary, fontSize: 14),
               ),
             ),
           ],

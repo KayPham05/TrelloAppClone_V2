@@ -51,10 +51,7 @@ class _AddListFormWidgetState extends State<AddListFormWidget> {
             decoration: InputDecoration(
               hintText: 'Nhập tên danh sách...',
               hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.6)),
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 10,
-                vertical: 8,
-              ),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
               filled: true,
               fillColor: Colors.white.withValues(alpha: 0.1),
               border: OutlineInputBorder(
@@ -70,10 +67,7 @@ class _AddListFormWidgetState extends State<AddListFormWidget> {
                 const SizedBox(
                   width: 20,
                   height: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Colors.white,
-                  ),
+                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                 )
               else
                 ElevatedButton(
@@ -81,10 +75,7 @@ class _AddListFormWidgetState extends State<AddListFormWidget> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.white,
                     foregroundColor: AppColors.primary,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
-                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     minimumSize: Size.zero,
                   ),
                   child: const Text('Thêm', style: TextStyle(fontSize: 13)),

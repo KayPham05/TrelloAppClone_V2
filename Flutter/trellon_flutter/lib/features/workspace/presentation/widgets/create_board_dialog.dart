@@ -32,9 +32,8 @@ class _CreateBoardDialogState extends State<CreateBoardDialog> {
                 labelText: 'Tên bảng',
                 hintText: 'Nhập tên bảng...',
               ),
-              validator: (value) => value == null || value.isEmpty
-                  ? 'Vui lòng nhập tên bảng'
-                  : null,
+              validator: (value) =>
+                  value == null || value.isEmpty ? 'Vui lòng nhập tên bảng' : null,
             ),
           ],
         ),

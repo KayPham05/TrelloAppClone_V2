@@ -75,11 +75,7 @@ class BoardDetailSubBarWidget extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(
-                    Icons.group_rounded,
-                    color: Colors.white,
-                    size: 16,
-                  ),
+                  const Icon(Icons.group_rounded, color: Colors.white, size: 16),
                   const SizedBox(width: 4),
                   Text(
                     'Thành viên',
@@ -107,7 +103,11 @@ class BoardIconButton extends StatelessWidget {
   final IconData icon;
   final VoidCallback? onTap;
 
-  const BoardIconButton({super.key, required this.icon, this.onTap});
+  const BoardIconButton({
+    super.key,
+    required this.icon,
+    this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {

@@ -21,13 +21,7 @@ class AddListButtonWidget extends StatelessWidget {
             children: [
               Icon(Icons.add, color: Colors.white, size: 18),
               SizedBox(width: 8),
-              Text(
-                'Thêm danh sách khác',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
+              Text('Thêm danh sách khác', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w500)),
             ],
           ),
         ),

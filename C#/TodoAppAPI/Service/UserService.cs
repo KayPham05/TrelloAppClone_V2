@@ -15,13 +15,13 @@ namespace TodoAppAPI.Service
     public class UserService : IUserService
     {
         private readonly TodoDbContext _context;
-        private readonly IEmailService _emailService;
+        private readonly EmailService _emailService;
         private readonly IJwtService _jwtService;
         private readonly ILogger<UserService> _logger;
         private readonly IHubContext<NotificationHub> _notificationHubContext;
         private readonly IMemoryCache _memoryCache;
 
-        public UserService(TodoDbContext context, IEmailService emailService, IJwtService jwtService, ILogger<UserService> logger, IMemoryCache memoryCache, IHubContext<NotificationHub> notificationHubContext)
+        public UserService(TodoDbContext context, EmailService emailService, IJwtService jwtService, ILogger<UserService> logger, IMemoryCache memoryCache, IHubContext<NotificationHub> notificationHubContext)
         {
             _context = context;
             _emailService = emailService;
@@ -67,98 +67,6 @@ namespace TodoAppAPI.Service
         {
             return await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
             
-        }
-
-        public async Task<List<UserInviteSuggestionDTO>> GetInviteSuggestionsAsync(
-            string query,
-            string scope,
-            string requesterUId,
-            string? workspaceId,
-            string? boardId,
-            int limit = 10)
-        {
-            var normalizedQuery = (query ?? string.Empty).Trim().ToLowerInvariant();
-            if (normalizedQuery.Length < 2)
-                return new List<UserInviteSuggestionDTO>();
-
-            limit = Math.Clamp(limit, 1, 20);
-            var normalizedScope = (scope ?? string.Empty).Trim().ToLowerInvariant();
-
-            var usersQuery = _context.Users
-                .AsNoTracking()
-                .Where(u => u.UserUId != requesterUId)
-                .Where(u => u.StatusAccount != "Locked")
-                .Where(u => u.Email.ToLower().Contains(normalizedQuery) || u.UserName.ToLower().Contains(normalizedQuery));
-
-            if (normalizedScope == "board")
-                return await GetBoardInviteSuggestionsAsync(usersQuery, workspaceId, boardId, limit);
-
-            if (normalizedScope == "workspace")
-                return await GetWorkspaceInviteSuggestionsAsync(usersQuery, workspaceId, limit);
-
-            return new List<UserInviteSuggestionDTO>();
-        }
-
-        private async Task<List<UserInviteSuggestionDTO>> GetBoardInviteSuggestionsAsync(IQueryable<User> usersQuery, string? workspaceId, string? boardId, int limit)
-        {
-            if (string.IsNullOrWhiteSpace(workspaceId) || string.IsNullOrWhiteSpace(boardId))
-                return new List<UserInviteSuggestionDTO>();
-
-            var boardBelongsToWorkspace = await _context.Boards.AsNoTracking().AnyAsync(b => b.BoardUId == boardId && b.WorkspaceUId == workspaceId);
-            if (!boardBelongsToWorkspace)
-                return new List<UserInviteSuggestionDTO>();
-
-            var workspace = await _context.Workspaces.AsNoTracking().FirstOrDefaultAsync(w => w.WorkspaceUId == workspaceId);
-            if (workspace == null)
-                return new List<UserInviteSuggestionDTO>();
-
-            var workspaceMemberRoles = await _context.WorkspaceMembers.AsNoTracking().Where(wm => wm.WorkspaceUId == workspaceId).Select(wm => new { wm.UserUId, wm.Role }).ToListAsync();
-            var allowedUserIds = workspaceMemberRoles.Select(wm => wm.UserUId).Append(workspace.OwnerUId).Where(id => !string.IsNullOrWhiteSpace(id)).Distinct().ToHashSet();
-
-            var existingBoardMemberIds = await _context.BoardMembers.AsNoTracking().Where(bm => bm.BoardUId == boardId).Select(bm => bm.UserUId).ToListAsync();
-            var existingBoardMemberSet = existingBoardMemberIds.ToHashSet();
-
-            var users = await usersQuery
-                .Where(u => allowedUserIds.Contains(u.UserUId))
-                .Where(u => !existingBoardMemberSet.Contains(u.UserUId))
-                .OrderBy(u => u.UserName)
-                .ThenBy(u => u.Email)
-                .Take(limit)
-                .ToListAsync();
-
-            var roleLookup = workspaceMemberRoles.ToDictionary(wm => wm.UserUId, wm => wm.Role);
-            return users.Select(u => new UserInviteSuggestionDTO
-            {
-                UserUId = u.UserUId,
-                UserName = u.UserName,
-                Email = u.Email,
-                AvatarUrl = u.AvatarUrl,
-                WorkspaceRole = u.UserUId == workspace.OwnerUId ? "Owner" : roleLookup.GetValueOrDefault(u.UserUId)
-            }).ToList();
-        }
-
-        private async Task<List<UserInviteSuggestionDTO>> GetWorkspaceInviteSuggestionsAsync(IQueryable<User> usersQuery, string? workspaceId, int limit)
-        {
-            if (!string.IsNullOrWhiteSpace(workspaceId))
-            {
-                var existingWorkspaceMemberIds = await _context.WorkspaceMembers.AsNoTracking().Where(wm => wm.WorkspaceUId == workspaceId).Select(wm => wm.UserUId).ToListAsync();
-                var workspaceOwnerId = await _context.Workspaces.AsNoTracking().Where(w => w.WorkspaceUId == workspaceId).Select(w => w.OwnerUId).FirstOrDefaultAsync();
-                var excludedIds = existingWorkspaceMemberIds.Append(workspaceOwnerId).Where(id => !string.IsNullOrWhiteSpace(id)).ToHashSet();
-                usersQuery = usersQuery.Where(u => !excludedIds.Contains(u.UserUId));
-            }
-
-            return await usersQuery
-                .OrderBy(u => u.UserName)
-                .ThenBy(u => u.Email)
-                .Take(limit)
-                .Select(u => new UserInviteSuggestionDTO
-                {
-                    UserUId = u.UserUId,
-                    UserName = u.UserName,
-                    Email = u.Email,
-                    AvatarUrl = u.AvatarUrl
-                })
-                .ToListAsync();
         }
 
 

@@ -18,9 +18,4 @@ appsettings.Development.json
 appsettings.Local.json
 appsettings.*.local.json
 
-Migrations/*
-!Migrations/20260613123000_AddUserStarredBoard.cs
-!Migrations/20260613123000_AddUserStarredBoard.Designer.cs
-!Migrations/20260613161825_AddCommentAttachmentSupport.cs
-!Migrations/20260613161825_AddCommentAttachmentSupport.Designer.cs
-!Migrations/TodoDbContextModelSnapshot.cs
+Migrations/

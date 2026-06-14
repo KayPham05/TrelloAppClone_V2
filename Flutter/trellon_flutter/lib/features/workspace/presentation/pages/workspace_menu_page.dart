@@ -8,6 +8,7 @@ import '../cubit/workspace_cubit.dart';
 import '../widgets/dashed_create_board_card.dart';
 import '../widgets/workspace_board_item_widget.dart';
 import '../widgets/create_workspace_dialog.dart';
+import '../widgets/add_member_dialog.dart';
 import '../widgets/create_board_dialog.dart';
 import 'workspace_members_page.dart';
 import '../../../board/domain/entities/board_entity.dart';
@@ -15,8 +16,6 @@ import '../../../../core/services/authorization_service.dart';
 import '../../../../init_dependencies.dart';
 import '../../../../core/data_sources/user_local_data_source.dart';
 import '../../../search/presentation/delegates/global_search_delegate.dart';
-import '../../../member_invite/domain/usecases/search_invite_suggestions_usecase.dart';
-import '../../../member_invite/presentation/widgets/member_invite_picker.dart';
 
 class WorkspaceMenuPage extends StatefulWidget {
   final WorkspaceEntity workspace;
@@ -66,13 +65,13 @@ class _WorkspaceMenuPageState extends State<WorkspaceMenuPage> {
     );
 
     if (result != null && mounted) {
-      final updated = await context.read<WorkspaceCubit>().updateWorkspace(
+      context.read<WorkspaceCubit>().updateWorkspace(
         _currentWorkspace.id,
         result['name'],
         result['description'],
         result['type'],
       );
-      if (!mounted || !updated) return;
+      // Update local state temporarily if needed or wait for rebuild
       setState(() {
         _currentWorkspace = _currentWorkspace.copyWith(
           name: result['name'],
@@ -80,7 +79,6 @@ class _WorkspaceMenuPageState extends State<WorkspaceMenuPage> {
           type: result['type'],
         );
       });
-      _showSnack('Đã cập nhật không gian làm việc');
     }
   }
 
@@ -91,10 +89,7 @@ class _WorkspaceMenuPageState extends State<WorkspaceMenuPage> {
         title: const Text('Xóa không gian'),
         content: Text('Bạn có chắc chắn muốn xóa "${_currentWorkspace.name}"?'),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Hủy'),
-          ),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Hủy')),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             child: const Text('Xóa', style: TextStyle(color: Colors.red)),
@@ -109,30 +104,16 @@ class _WorkspaceMenuPageState extends State<WorkspaceMenuPage> {
     }
   }
 
-  void _showAddMember() {
-    final searchUseCase = serviceLocator<SearchInviteSuggestionsUseCase>();
-
-    showDialog<void>(
+  void _showAddMember() async {
+    final email = await showDialog<String>(
       context: context,
-      builder: (dialogContext) => MemberInvitePicker(
-        title: 'Mời thành viên',
-        searchSuggestions: ({required query, required selected}) async {
-          final requesterUId =
-              await serviceLocator<UserLocalDataSource>().getUserId() ?? '';
-          return searchUseCase(
-            query: query,
-            scope: 'workspace',
-            requesterUId: requesterUId,
-            workspaceId: _currentWorkspace.id,
-          );
-        },
-        onSubmit: (selected) =>
-            context.read<WorkspaceCubit>().addMembersByUserIds(
-              workspaceId: _currentWorkspace.id,
-              userIds: selected.map((user) => user.userUId).toList(),
-            ),
-      ),
+      builder: (context) => const AddMemberDialog(),
     );
+
+    if (email != null && mounted) {
+      context.read<WorkspaceCubit>().addMember(_currentWorkspace.id, email);
+      _showSnack('Đã gửi lời mời tới $email');
+    }
   }
 
   void _showCreateBoard() async {
@@ -142,11 +123,7 @@ class _WorkspaceMenuPageState extends State<WorkspaceMenuPage> {
     );
 
     if (boardName != null && mounted) {
-      context.read<WorkspaceCubit>().createBoard(
-        _currentWorkspace.id,
-        boardName,
-        null,
-      );
+      context.read<WorkspaceCubit>().createBoard(_currentWorkspace.id, boardName, null);
     }
   }
 
@@ -155,10 +132,8 @@ class _WorkspaceMenuPageState extends State<WorkspaceMenuPage> {
     final newName = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(
-          'Đổi tên board',
-          style: GoogleFonts.inter(fontWeight: FontWeight.w700),
-        ),
+        title: Text('Đổi tên board',
+            style: GoogleFonts.inter(fontWeight: FontWeight.w700)),
         content: TextField(
           controller: ctrl,
           decoration: InputDecoration(
@@ -169,44 +144,17 @@ class _WorkspaceMenuPageState extends State<WorkspaceMenuPage> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Hủy'),
-          ),
+              onPressed: () => Navigator.pop(ctx), child: const Text('Hủy')),
           FilledButton(
-            onPressed: () => Navigator.pop(ctx, ctrl.text.trim()),
-            child: const Text('Lưu'),
-          ),
+              onPressed: () => Navigator.pop(ctx, ctrl.text.trim()),
+              child: const Text('Lưu')),
         ],
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
     );
     if (newName != null && newName.isNotEmpty && mounted) {
-      final updated = await context.read<WorkspaceCubit>().renameBoard(
-        boardId: board.id,
-        boardName: newName,
-        workspaceId: _currentWorkspace.id,
-        visibility: board.visibility,
-      );
-      if (mounted && updated) {
-        _showSnack('Đã đổi tên bảng thành "$newName"');
-      }
-      return;
+      _showSnack('Tính năng đổi tên board sẽ sớm được cập nhật');
     }
-  }
-
-  Future<void> _toggleBoardStar(BoardEntity board) async {
-    final shouldStar = !board.isStarred;
-    final updated = await context.read<WorkspaceCubit>().setBoardStarred(
-      boardId: board.id,
-      isStarred: shouldStar,
-    );
-    if (!mounted || !updated) return;
-
-    _showSnack(
-      shouldStar
-          ? 'Đã gắn dấu sao cho "${board.name}"'
-          : 'Đã bỏ dấu sao khỏi "${board.name}"',
-    );
   }
 
   void _showDeleteBoard(BoardEntity board) async {
@@ -217,9 +165,8 @@ class _WorkspaceMenuPageState extends State<WorkspaceMenuPage> {
         content: Text('Xóa "${board.name}"? Hành động này không thể hoàn tác.'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Hủy'),
-          ),
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Hủy')),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () => Navigator.pop(ctx, true),
@@ -234,38 +181,27 @@ class _WorkspaceMenuPageState extends State<WorkspaceMenuPage> {
     }
   }
 
-  void _showToggleVisibility(BoardEntity board) async {
+  void _showToggleVisibility(BoardEntity board) {
     final newVis = board.visibility == 'Public' ? 'Private' : 'Public';
-    final newLabel = newVis == 'Public' ? 'Công khai' : 'Riêng tư';
-    final confirm = await showDialog<bool>(
+    showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Thay đổi hiển thị'),
-        content: Text('Chuyển "${board.name}" thành $newLabel?'),
+        content: Text(
+            'Chuyển "${board.name}" thành $newVis?'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Hủy'),
-          ),
+              onPressed: () => Navigator.pop(ctx), child: const Text('Hủy')),
           FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text('Chuyển thành $newLabel'),
-          ),
+              onPressed: () {
+                Navigator.pop(ctx);
+                _showSnack('Tính năng đổi visibility sẽ có trong phiên bản tiếp theo');
+              },
+              child: Text('Chuyển thành $newVis')),
         ],
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
     );
-    if (confirm != true || !mounted) return;
-
-    final updated = await context.read<WorkspaceCubit>().updateBoardVisibility(
-      boardId: board.id,
-      boardName: board.name,
-      workspaceId: _currentWorkspace.id,
-      visibility: newVis,
-    );
-    if (mounted && updated) {
-      _showSnack('Đã chuyển "${board.name}" thành $newLabel');
-    }
   }
 
   void _navigateToMembers() {
@@ -280,6 +216,7 @@ class _WorkspaceMenuPageState extends State<WorkspaceMenuPage> {
     );
   }
 
+
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<WorkspaceCubit, WorkspaceState>(
@@ -289,17 +226,14 @@ class _WorkspaceMenuPageState extends State<WorkspaceMenuPage> {
         }
         if (state is WorkspaceLoaded) {
           // Update _currentWorkspace to the one currently being viewed
-          final updated = [
-            ...state.personal,
-            ...state.team,
-          ].where((w) => w.id == _currentWorkspace.id).firstOrNull;
+          final updated = [...state.personal, ...state.team]
+              .where((w) => w.id == _currentWorkspace.id)
+              .firstOrNull;
           if (updated != null && mounted) {
             setState(() {
               _currentWorkspace = updated;
               if (_currentUserUId != null) {
-                _currentUserRole = _currentWorkspace.getUserRole(
-                  _currentUserUId!,
-                );
+                _currentUserRole = _currentWorkspace.getUserRole(_currentUserUId!);
               }
             });
           }
@@ -416,17 +350,13 @@ class _WorkspaceMenuPageState extends State<WorkspaceMenuPage> {
                       Row(
                         children: [
                           Icon(
-                            _currentWorkspace.type == WorkspaceType.personal
-                                ? Icons.person_rounded
-                                : Icons.group_rounded,
+                            _currentWorkspace.type == WorkspaceType.personal ? Icons.person_rounded : Icons.group_rounded,
                             size: 12,
                             color: AppColors.onSurfaceVariant,
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            _currentWorkspace.type == WorkspaceType.personal
-                                ? 'Cá nhân'
-                                : 'Nhóm',
+                            _currentWorkspace.type == WorkspaceType.personal ? 'Cá nhân' : 'Nhóm',
                             style: GoogleFonts.inter(
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
@@ -495,14 +425,9 @@ class _WorkspaceMenuPageState extends State<WorkspaceMenuPage> {
       onTap: () {
         debugPrint('Search tapped in WorkspaceMenuPage. UID: $_currentUserUId');
         if (_currentUserUId != null) {
-          showSearch(
-            context: context,
-            delegate: GlobalSearchDelegate(userUId: _currentUserUId!),
-          );
+          showSearch(context: context, delegate: GlobalSearchDelegate(userUId: _currentUserUId!));
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Lỗi: Không tìm thấy User ID!')),
-          );
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Lỗi: Không tìm thấy User ID!')));
         }
       },
       style: GoogleFonts.inter(
@@ -638,34 +563,23 @@ class _WorkspaceMenuPageState extends State<WorkspaceMenuPage> {
           ],
         ),
         const SizedBox(height: 8),
-        ...(_currentWorkspace.boards.asMap().entries.toList()..sort((a, b) {
-              if (a.value.isStarred != b.value.isStarred) {
-                return b.value.isStarred ? 1 : -1;
-              }
-              return a.key.compareTo(b.key);
-            }))
-            .map((entry) {
-              final board = entry.value;
-              final canManageBoard = _authService.canManageBoard(
-                null,
-                _currentUserRole,
-              );
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: WorkspaceBoardItemWidget(
-                  board: board,
-                  isStarred: board.isStarred,
-                  onToggleStar: () => _toggleBoardStar(board),
-                  onRename: () => _showRenameBoard(board),
-                  onDelete: () => _showDeleteBoard(board),
-                  onToggleVisibility: canManageBoard
-                      ? () => _showToggleVisibility(board)
-                      : null,
-                ),
-              );
-            }),
+        ..._currentWorkspace.boards.asMap().entries.map((entry) {
+          final board = entry.value;
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: WorkspaceBoardItemWidget(
+              board: board,
+              onToggleStar: () => _showSnack('Tính năng đánh dấu bảng sẽ sớm được cập nhật'),
+              onRename:           () => _showRenameBoard(board),
+              onDelete:           () => _showDeleteBoard(board),
+              onToggleVisibility: () => _showToggleVisibility(board),
+            ),
+          );
+        }),
         if (_authService.canManageBoard(null, _currentUserRole))
-          DashedCreateBoardCard(onTap: _showCreateBoard),
+          DashedCreateBoardCard(
+            onTap: _showCreateBoard,
+          ),
       ],
     );
   }

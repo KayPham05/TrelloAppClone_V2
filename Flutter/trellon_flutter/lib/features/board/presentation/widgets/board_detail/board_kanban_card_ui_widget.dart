@@ -30,8 +30,8 @@ class KanbanCardUiWidget extends StatelessWidget {
     final dueStatusColor = CardStatusValues.isOverdue(displayStatus)
         ? Colors.red
         : CardStatusValues.isDueSoon(displayStatus)
-        ? Colors.amber
-        : null;
+            ? Colors.amber
+            : null;
 
     return GestureDetector(
       onTap: onTap,
@@ -210,18 +210,14 @@ class KanbanCardUiWidget extends StatelessWidget {
                                 Icon(
                                   Icons.schedule_rounded,
                                   size: 12 * scale,
-                                  color:
-                                      dueStatusColor ??
-                                      AppColors.onSurfaceVariant,
+                                  color: dueStatusColor ?? AppColors.onSurfaceVariant,
                                 ),
                                 SizedBox(width: 4 * scale),
                                 Text(
                                   '${card.dueDate!.day}/${card.dueDate!.month}',
                                   style: GoogleFonts.inter(
                                     fontSize: 11 * scale,
-                                    color:
-                                        dueStatusColor ??
-                                        AppColors.onSurfaceVariant,
+                                    color: dueStatusColor ?? AppColors.onSurfaceVariant,
                                   ),
                                 ),
                               ],

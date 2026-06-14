@@ -92,9 +92,9 @@ class _CreateBoardBottomSheetContentState
   Future<void> _submit() async {
     final name = _nameController.text.trim();
     if (name.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Vui lòng nhập tên bảng')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Vui lòng nhập tên bảng')),
+      );
       return;
     }
 
@@ -130,9 +130,9 @@ class _CreateBoardBottomSheetContentState
         if (state is BoardCreated) Navigator.pop(ctx);
         if (state is BoardError && _isCreating) {
           setState(() => _isCreating = false);
-          ScaffoldMessenger.of(
-            ctx,
-          ).showSnackBar(SnackBar(content: Text(state.message)));
+          ScaffoldMessenger.of(ctx).showSnackBar(
+            SnackBar(content: Text(state.message)),
+          );
         }
       },
       child: DraggableScrollableSheet(
@@ -144,9 +144,7 @@ class _CreateBoardBottomSheetContentState
           return Container(
             decoration: BoxDecoration(
               color: AppColors.surfaceContainerLowest,
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(20),
-              ),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withValues(alpha: 0.18),

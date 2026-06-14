@@ -92,9 +92,6 @@ namespace TodoAppAPI.Controllers
                     if (list != null)
                     {
                         await _boardHubContext.Clients.Group(BoardHub.BoardGroup(list.BoardUId)).SendAsync("CardAdded", card);
-                        
-                        await _notificationHubContext.Clients.Group($"Board_{list.BoardUId}")
-                            .SendAsync("CardAdded", card);
                     }
                 }
 
@@ -145,9 +142,6 @@ namespace TodoAppAPI.Controllers
                     if (list != null)
                     {
                         await _boardHubContext.Clients.Group(BoardHub.BoardGroup(list.BoardUId)).SendAsync("CardUpdated", existingCard);
-                        
-                        await _notificationHubContext.Clients.Group($"Board_{list.BoardUId}")
-                            .SendAsync("CardUpdated", existingCard);
                     }
                 }
 
@@ -199,9 +193,6 @@ namespace TodoAppAPI.Controllers
                     if (list != null)
                     {
                         await _boardHubContext.Clients.Group(BoardHub.BoardGroup(list.BoardUId)).SendAsync("CardDeleted", new { cardUId = id, boardUId = list.BoardUId });
-                        
-                        await _notificationHubContext.Clients.Group($"Board_{list.BoardUId}")
-                            .SendAsync("CardDeleted", new { cardUId = id });
                     }
                 }
 
@@ -248,9 +239,6 @@ namespace TodoAppAPI.Controllers
                 {
                     await _boardHubContext.Clients.Group(BoardHub.BoardGroup(list.BoardUId))
                         .SendAsync("CardMoved", new { cardUId = CardUId, newListUId = body.ListUId, position = body.Position, boardUId = list.BoardUId });
-                        
-                    await _notificationHubContext.Clients.Group($"Board_{list.BoardUId}")
-                        .SendAsync("CardMoved", new { cardUId = CardUId, newListUId = body.ListUId, position = body.Position });
                 }
             }
 
@@ -281,9 +269,6 @@ namespace TodoAppAPI.Controllers
                 {
                     await _boardHubContext.Clients.Group(BoardHub.BoardGroup(list.BoardUId))
                         .SendAsync("CardStatusUpdated", new { cardUId = CardUId, newStatus = updatedStatus, boardUId = list.BoardUId });
-                        
-                    await _notificationHubContext.Clients.Group($"Board_{list.BoardUId}")
-                        .SendAsync("CardStatusUpdated", new { cardUId = CardUId, newStatus = updatedStatus });
                 }
             }
 

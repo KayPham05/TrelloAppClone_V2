@@ -11,6 +11,5 @@ namespace TodoAppAPI.DTOs
         public string UserUId { get; set; } = string.Empty;
         public string? WorkspaceUId { get; set; }
         public string? BackgroundUrl { get; set; }
-        public bool IsStarred { get; set; }
     }
 }

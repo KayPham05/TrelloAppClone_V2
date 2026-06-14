@@ -22,74 +22,43 @@ class NotificationNavigationService {
     required this.loadWorkspaces,
   });
 
-  Future<NotificationNavigationTarget?> resolve(
-    NotificationEntity notification,
-  ) async {
+  Future<NotificationNavigationTarget?> resolve(NotificationEntity notification) async {
     final boardId = _blankToNull(notification.boardId);
     final cardId = _blankToNull(notification.cardId);
     final workspaceId = _blankToNull(notification.workspaceId);
 
     if (boardId != null && cardId != null) {
-      final boardTarget = await _resolveAccessibleBoard(boardId, workspaceId);
-      if (boardTarget == null) return null;
-
       final cards = await loadCardsByBoard(boardId);
       final card = _firstOrNull(cards.where((c) => c.id == cardId));
       if (card == null) return null;
       return NotificationNavigationTarget(
         routeName: AppRoutes.cardDetail,
-        arguments: {'card': card, 'boardId': boardId},
+        arguments: {
+          'card': card,
+          'boardId': boardId,
+        },
       );
     }
 
     if (boardId != null) {
-      final boardTarget = await _resolveAccessibleBoard(boardId, workspaceId);
-      if (boardTarget == null) return null;
-
       return NotificationNavigationTarget(
         routeName: AppRoutes.boardDetail,
         arguments: {
           'boardId': boardId,
-          'boardName': boardTarget.name,
-          'workspaceId': boardTarget.workspaceId,
+          'boardName': _fallbackTitle(notification),
+          'workspaceId': workspaceId,
         },
       );
     }
 
     if (workspaceId != null) {
       final workspaces = await loadWorkspaces();
-      final workspace = _firstOrNull(
-        workspaces.where((w) => w.id == workspaceId),
-      );
+      final workspace = _firstOrNull(workspaces.where((w) => w.id == workspaceId));
       if (workspace == null) return null;
       return NotificationNavigationTarget(
         routeName: AppRoutes.workspaceMenu,
         arguments: workspace,
       );
-    }
-
-    return null;
-  }
-
-  Future<_AccessibleBoardTarget?> _resolveAccessibleBoard(
-    String boardId,
-    String? workspaceId,
-  ) async {
-    final workspaces = await loadWorkspaces();
-    final visibleWorkspaces = workspaceId == null
-        ? workspaces
-        : workspaces.where((workspace) => workspace.id == workspaceId);
-
-    for (final workspace in visibleWorkspaces) {
-      final board = _firstOrNull(
-        workspace.boards.where((b) => b.id == boardId),
-      );
-      if (board != null) {
-        return _AccessibleBoardTarget(
-          name: board.name,
-          workspaceId: board.workspaceId ?? workspace.id,
-        );
-      }
     }
 
     return null;
@@ -104,11 +73,9 @@ class NotificationNavigationService {
     if (value == null || value.trim().isEmpty) return null;
     return value;
   }
-}
 
-class _AccessibleBoardTarget {
-  final String name;
-  final String? workspaceId;
-
-  const _AccessibleBoardTarget({required this.name, required this.workspaceId});
+  static String _fallbackTitle(NotificationEntity notification) {
+    final title = notification.title.trim();
+    return title.isNotEmpty ? title : 'Board';
+  }
 }

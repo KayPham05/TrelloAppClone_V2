@@ -12,7 +12,6 @@ namespace TodoAppAPI.Service
     {
         private static readonly HashSet<NotificationType> SentToMeTypes = new()
         {
-            NotificationType.Comment,
             NotificationType.Assign,
             NotificationType.CardUnassigned,
             NotificationType.Mention,
@@ -22,14 +21,8 @@ namespace TodoAppAPI.Service
             NotificationType.WorkspaceMemberAdded,
             NotificationType.WorkspaceMemberRemoved,
             NotificationType.WorkspaceRoleChanged,
-            NotificationType.Move,
             NotificationType.DueDateChanged,
-            NotificationType.DueDateReminder,
-            NotificationType.CardArchived,
-            NotificationType.AttachmentAdded,
-            NotificationType.AttachmentRemoved,
-            NotificationType.CardRenamed,
-            NotificationType.WorkspaceRenamed
+            NotificationType.DueDateReminder
         };
 
         private readonly TodoDbContext _context;

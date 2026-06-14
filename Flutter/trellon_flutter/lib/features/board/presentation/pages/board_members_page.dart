@@ -10,19 +10,15 @@ import '../cubit/board_member_cubit.dart';
 import '../../domain/entities/board_member.dart';
 import '../../../../core/services/authorization_service.dart';
 import '../../data/datasources/board_remote_data_source.dart';
-import '../../../member_invite/domain/usecases/search_invite_suggestions_usecase.dart';
-import '../../../member_invite/presentation/widgets/member_invite_picker.dart';
 
 class BoardMembersPage extends StatelessWidget {
   final String boardId;
   final String boardName;
-  final String? workspaceId;
 
   const BoardMembersPage({
     super.key,
     required this.boardId,
     required this.boardName,
-    this.workspaceId,
   });
 
   @override
@@ -35,7 +31,6 @@ class BoardMembersPage extends StatelessWidget {
       child: _BoardMembersView(
         boardId: boardId,
         boardName: boardName,
-        workspaceId: workspaceId,
       ),
     );
   }
@@ -44,12 +39,10 @@ class BoardMembersPage extends StatelessWidget {
 class _BoardMembersView extends StatelessWidget {
   final String boardId;
   final String boardName;
-  final String? workspaceId;
   final _authService = AuthorizationService();
   _BoardMembersView({
     required this.boardId,
     required this.boardName,
-    this.workspaceId,
   });
 
   @override
@@ -86,8 +79,7 @@ class _BoardMembersView extends StatelessWidget {
         actions: [
           BlocBuilder<BoardMemberCubit, BoardMemberState>(
             builder: (context, state) {
-              final canInvite =
-                  state is BoardMemberLoaded &&
+              final canInvite = state is BoardMemberLoaded &&
                   _authService.canInviteToBoard(state.currentUserRole, null);
               if (!canInvite) return const SizedBox.shrink();
               return IconButton(
@@ -114,13 +106,10 @@ class _BoardMembersView extends StatelessWidget {
               separatorBuilder: (_, _) => const SizedBox(height: 8),
               itemBuilder: (context, index) {
                 final member = state.members[index];
-                final canManageThisBoard = _authService.canManageBoard(
-                  state.currentUserRole,
-                  null,
-                );
-
-                final canModifyThisMember =
-                    canManageThisBoard && member.role != 'Owner';
+                final canManageThisBoard =
+                    _authService.canManageBoard(state.currentUserRole, null);
+                
+                final canModifyThisMember = canManageThisBoard && member.role != 'Owner';
 
                 return _MemberListItem(
                   member: member,
@@ -143,44 +132,52 @@ class _BoardMembersView extends StatelessWidget {
 
   void _showAddMemberDialog(BuildContext context) {
     final cubit = context.read<BoardMemberCubit>();
-    final searchUseCase = serviceLocator<SearchInviteSuggestionsUseCase>();
+    final emailCtrl = TextEditingController();
     String selectedRole = 'Editor';
 
-    showDialog<void>(
+    showDialog(
       context: context,
-      builder: (dialogContext) => StatefulBuilder(
-        builder: (context, setSheetState) => MemberInvitePicker(
-          title: 'Mời thành viên vào bảng',
-          roleControl: DropdownButtonFormField<String>(
-            initialValue: selectedRole,
-            decoration: const InputDecoration(
-              labelText: 'Vai trò',
-              border: OutlineInputBorder(),
+      builder: (ctx) => AlertDialog(
+        title: const Text('Thêm thành viên vào board'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: emailCtrl,
+              decoration: const InputDecoration(labelText: 'Email'),
             ),
-            items: MemberRoleHelper.rolesForScope(MemberScope.board)
-                .where((role) => role != 'Owner')
-                .map((role) => DropdownMenuItem(value: role, child: Text(role)))
-                .toList(),
-            onChanged: (value) =>
-                setSheetState(() => selectedRole = value ?? selectedRole),
-          ),
-          searchSuggestions: ({required query, required selected}) async {
-            final requesterUId =
-                await serviceLocator<UserLocalDataSource>().getUserId() ?? '';
-            return searchUseCase(
-              query: query,
-              scope: 'board',
-              requesterUId: requesterUId,
-              workspaceId: workspaceId,
-              boardId: boardId,
-            );
-          },
-          onSubmit: (selected) => cubit.addMembers(
-            boardId: boardId,
-            userIds: selected.map((user) => user.userUId).toList(),
-            role: selectedRole,
-          ),
+            const SizedBox(height: 12),
+            StatefulBuilder(
+              builder: (ctx, setS) => DropdownButtonFormField<String>(
+                initialValue: selectedRole,
+                items: MemberRoleHelper.rolesForScope(MemberScope.board)
+                    .where((r) => r != 'Owner')
+                    .map((r) => DropdownMenuItem(value: r, child: Text(r)))
+                    .toList(),
+                onChanged: (v) => setS(() => selectedRole = v ?? selectedRole),
+              ),
+            ),
+          ],
         ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Hủy')),
+          FilledButton(
+            onPressed: () async {
+              final email = emailCtrl.text.trim();
+              if (email.isEmpty) return;
+              Navigator.pop(ctx);
+              final user = await cubit.findUserByEmail(email);
+              if (user != null) {
+                await cubit.addMember(
+                  boardId: boardId,
+                  userId: user['userUId'],
+                  role: selectedRole,
+                );
+              }
+            },
+            child: const Text('Thêm'),
+          ),
+        ],
       ),
     );
   }
@@ -204,10 +201,7 @@ class _BoardMembersView extends StatelessWidget {
           ),
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Hủy'),
-          ),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Hủy')),
           FilledButton(
             onPressed: () async {
               Navigator.pop(ctx);
@@ -231,18 +225,15 @@ class _BoardMembersView extends StatelessWidget {
         title: const Text('Xóa thành viên'),
         content: Text('Xóa "${member.userName}" khỏi board này?'),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Hủy'),
-          ),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Hủy')),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () async {
               Navigator.pop(ctx);
               await context.read<BoardMemberCubit>().removeMember(
-                boardId: boardId,
-                userId: member.userUId,
-              );
+                    boardId: boardId,
+                    userId: member.userUId,
+                  );
             },
             child: const Text('Xóa'),
           ),
@@ -274,18 +265,13 @@ class _MemberListItem extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surfaceContainerLowest,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: AppColors.outlineVariant.withValues(alpha: 0.5),
-        ),
+        border: Border.all(color: AppColors.outlineVariant.withValues(alpha: 0.5)),
       ),
       child: ListTile(
         leading: CircleAvatar(
           backgroundImage: CachedNetworkImageProvider(member.resolvedAvatarUrl),
         ),
-        title: Text(
-          member.userName,
-          style: GoogleFonts.inter(fontWeight: FontWeight.w600),
-        ),
+        title: Text(member.userName, style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
         subtitle: Text(member.email, style: GoogleFonts.inter(fontSize: 12)),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
@@ -319,18 +305,11 @@ class _MemberListItem extends StatelessWidget {
                 },
                 itemBuilder: (_) => [
                   if (onUpdateRole != null)
-                    const PopupMenuItem(
-                      value: 'role',
-                      child: Text('Đổi quyền'),
-                    ),
+                    const PopupMenuItem(value: 'role', child: Text('Đổi quyền')),
                   if (onRemove != null)
                     const PopupMenuItem(
-                      value: 'remove',
-                      child: Text(
-                        'Xóa khỏi board',
-                        style: TextStyle(color: Colors.red),
-                      ),
-                    ),
+                        value: 'remove',
+                        child: Text('Xóa khỏi board', style: TextStyle(color: Colors.red))),
                 ],
               ),
           ],

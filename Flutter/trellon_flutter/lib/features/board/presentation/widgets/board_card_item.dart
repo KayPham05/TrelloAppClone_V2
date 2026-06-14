@@ -24,11 +24,7 @@ class BoardCardItem extends StatelessWidget {
           children: [
             Text(
               board.name,
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 14,
-              ),
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
@@ -37,9 +33,7 @@ class BoardCardItem extends StatelessWidget {
               children: [
                 const Spacer(),
                 Icon(
-                  board.visibility == 'Private'
-                      ? Icons.lock_outline
-                      : Icons.public,
+                  board.visibility == 'Private' ? Icons.lock_outline : Icons.public,
                   color: Colors.white.withValues(alpha: 0.7),
                   size: 14,
                 ),
@@ -50,4 +44,5 @@ class BoardCardItem extends StatelessWidget {
       ),
     );
   }
+
 }

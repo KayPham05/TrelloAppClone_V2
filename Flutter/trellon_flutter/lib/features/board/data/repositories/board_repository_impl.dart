@@ -17,15 +17,6 @@ class BoardRepositoryImpl implements BoardRepository {
   }
 
   @override
-  Future<List<BoardEntity>> getStarredBoards(String userUid) async {
-    try {
-      return await remoteDataSource.getStarredBoards(userUid);
-    } catch (e) {
-      throw Exception('Repository error: $e');
-    }
-  }
-
-  @override
   Future<List<BoardEntity>> getAllBoards(String userUid) async {
     try {
       return await remoteDataSource.getAllBoards(userUid);
@@ -88,46 +79,6 @@ class BoardRepositoryImpl implements BoardRepository {
   }
 
   @override
-  Future<void> setBoardStarred({
-    required String userUid,
-    required String boardId,
-    required bool isStarred,
-  }) async {
-    try {
-      await remoteDataSource.setBoardStarred(
-        userUid: userUid,
-        boardId: boardId,
-        isStarred: isStarred,
-      );
-    } catch (e) {
-      throw Exception('Repository error: $e');
-    }
-  }
-
-  @override
-  Future<void> updateBoard({
-    required String boardId,
-    required String boardName,
-    required String userUId,
-    String? backgroundUrl,
-    String? visibility,
-    String? workspaceUId,
-  }) async {
-    try {
-      await remoteDataSource.updateBoard(
-        boardId: boardId,
-        boardName: boardName,
-        userUId: userUId,
-        backgroundUrl: backgroundUrl,
-        visibility: visibility,
-        workspaceUId: workspaceUId,
-      );
-    } catch (e) {
-      throw Exception('Repository error: $e');
-    }
-  }
-
-  @override
   Future<List<dynamic>> getLists(String boardId) async {
     try {
       return await remoteDataSource.getLists(boardId);
@@ -139,10 +90,7 @@ class BoardRepositoryImpl implements BoardRepository {
   @override
   Future<String?> getUserRoleInBoard(String boardId, String userUId) async {
     try {
-      return await remoteDataSource.getUserRoleInBoard(
-        boardId: boardId,
-        userUId: userUId,
-      );
+      return await remoteDataSource.getUserRoleInBoard(boardId: boardId, userUId: userUId);
     } catch (e) {
       return null;
     }

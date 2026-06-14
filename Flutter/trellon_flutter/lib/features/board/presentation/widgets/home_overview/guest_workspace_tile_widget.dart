@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../../../core/constants/app_colors.dart';
 import '../../../../workspace/domain/entities/workspace_entity.dart';
 
+
 class GuestWorkspaceTileWidget extends StatelessWidget {
   final WorkspaceEntity workspace;
   final VoidCallback onTap;
@@ -62,11 +63,7 @@ class GuestWorkspaceTileWidget extends StatelessWidget {
                 ],
               ),
             ),
-            const Icon(
-              Icons.chevron_right_rounded,
-              color: AppColors.outlineVariant,
-              size: 20,
-            ),
+            const Icon(Icons.chevron_right_rounded, color: AppColors.outlineVariant, size: 20),
           ],
         ),
       ),

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/constants/app_colors.dart';
-import '../../domain/entities/board_entity.dart';
 import '../cubit/board_cubit.dart';
 import '../widgets/home_overview/home_app_bar_widget.dart';
 import '../widgets/home_overview/home_board_grid_widget.dart';
@@ -20,9 +19,6 @@ class HomeOverviewPage extends StatefulWidget {
 
 class _HomeOverviewPageState extends State<HomeOverviewPage> {
   String _searchQuery = '';
-  int _starredPage = 0;
-  int _recentPage = 0;
-  static const int _boardPageSize = 5;
 
   void _showCreateBoardBottomSheet() {
     showModalBottomSheet(
@@ -76,20 +72,14 @@ class _HomeOverviewPageState extends State<HomeOverviewPage> {
     final filteredPersonal = _searchQuery.isEmpty
         ? state.personalBoards
         : state.personalBoards
-              .where(
-                (b) =>
-                    b.name.toLowerCase().contains(_searchQuery.toLowerCase()),
-              )
-              .toList();
+            .where((b) => b.name.toLowerCase().contains(_searchQuery.toLowerCase()))
+            .toList();
 
     final filteredGuest = _searchQuery.isEmpty
         ? state.guestWorkspaces
         : state.guestWorkspaces
-              .where(
-                (w) =>
-                    w.name.toLowerCase().contains(_searchQuery.toLowerCase()),
-              )
-              .toList();
+            .where((w) => w.name.toLowerCase().contains(_searchQuery.toLowerCase()))
+            .toList();
 
     return CustomScrollView(
       slivers: [
@@ -97,26 +87,6 @@ class _HomeOverviewPageState extends State<HomeOverviewPage> {
           padding: const EdgeInsets.fromLTRB(20, 8, 20, 120),
           sliver: SliverList(
             delegate: SliverChildListDelegate([
-              if (state.starredBoards.isNotEmpty && _searchQuery.isEmpty) ...[
-                const HomeSectionHeaderWidget(
-                  icon: Icons.star_rounded,
-                  iconColor: Color(0xFFF59E0B),
-                  title: 'Bảng gắn dấu sao',
-                ),
-                const SizedBox(height: 12),
-                HomeBoardGridWidget(
-                  boards: _pagedBoards(state.starredBoards, _starredPage),
-                  isStarredGroup: true,
-                  onCreateBoard: _showCreateBoardBottomSheet,
-                ),
-                _buildPager(
-                  totalItems: state.starredBoards.length,
-                  page: _starredPage,
-                  onPageChanged: (page) => setState(() => _starredPage = page),
-                ),
-                const SizedBox(height: 28),
-              ],
-
               // Recent boards (horizontal grid)
               if (state.recentBoards.isNotEmpty && _searchQuery.isEmpty) ...[
                 const HomeSectionHeaderWidget(
@@ -126,14 +96,9 @@ class _HomeOverviewPageState extends State<HomeOverviewPage> {
                 ),
                 const SizedBox(height: 12),
                 HomeBoardGridWidget(
-                  boards: _pagedBoards(state.recentBoards, _recentPage),
+                  boards: state.recentBoards,
                   isStarredGroup: true,
                   onCreateBoard: _showCreateBoardBottomSheet,
-                ),
-                _buildPager(
-                  totalItems: state.recentBoards.length,
-                  page: _recentPage,
-                  onPageChanged: (page) => setState(() => _recentPage = page),
                 ),
                 const SizedBox(height: 28),
               ],
@@ -148,19 +113,17 @@ class _HomeOverviewPageState extends State<HomeOverviewPage> {
               if (filteredPersonal.isEmpty && _searchQuery.isEmpty)
                 _buildEmptyPersonal()
               else
-                ...filteredPersonal.map(
-                  (board) => Padding(
-                    padding: const EdgeInsets.only(bottom: 10),
-                    child: PersonalBoardTileWidget(
-                      board: board,
-                      onTap: () => Navigator.pushNamed(
-                        context,
-                        '/board-detail',
-                        arguments: board,
+                ...filteredPersonal.map((board) => Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: PersonalBoardTileWidget(
+                        board: board,
+                        onTap: () => Navigator.pushNamed(
+                          context,
+                          '/board-detail',
+                          arguments: board,
+                        ),
                       ),
-                    ),
-                  ),
-                ),
+                    )),
 
               const SizedBox(height: 28),
 
@@ -174,72 +137,21 @@ class _HomeOverviewPageState extends State<HomeOverviewPage> {
               if (filteredGuest.isEmpty && _searchQuery.isEmpty)
                 _buildEmptyGuest()
               else
-                ...filteredGuest.map(
-                  (ws) => Padding(
-                    padding: const EdgeInsets.only(bottom: 10),
-                    child: GuestWorkspaceTileWidget(
-                      workspace: ws,
-                      onTap: () => Navigator.pushNamed(
-                        context,
-                        '/workspace-detail',
-                        arguments: ws,
+                ...filteredGuest.map((ws) => Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: GuestWorkspaceTileWidget(
+                        workspace: ws,
+                        onTap: () => Navigator.pushNamed(
+                          context,
+                          '/workspace-detail',
+                          arguments: ws,
+                        ),
                       ),
-                    ),
-                  ),
-                ),
+                    )),
             ]),
           ),
         ),
       ],
-    );
-  }
-
-  List<BoardEntity> _pagedBoards(List<BoardEntity> boards, int page) {
-    final pageCount = boards.isEmpty
-        ? 1
-        : ((boards.length - 1) ~/ _boardPageSize) + 1;
-    final safePage = page.clamp(0, pageCount - 1);
-    final start = safePage * _boardPageSize;
-    return boards.skip(start).take(_boardPageSize).toList();
-  }
-
-  Widget _buildPager({
-    required int totalItems,
-    required int page,
-    required ValueChanged<int> onPageChanged,
-  }) {
-    if (totalItems <= _boardPageSize) return const SizedBox.shrink();
-
-    final pageCount = ((totalItems - 1) ~/ _boardPageSize) + 1;
-    final safePage = page.clamp(0, pageCount - 1);
-
-    return Padding(
-      padding: const EdgeInsets.only(top: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          IconButton(
-            visualDensity: VisualDensity.compact,
-            onPressed: safePage == 0 ? null : () => onPageChanged(safePage - 1),
-            icon: const Icon(Icons.chevron_left_rounded),
-          ),
-          Text(
-            '${safePage + 1}/$pageCount',
-            style: GoogleFonts.inter(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: AppColors.onSurfaceVariant,
-            ),
-          ),
-          IconButton(
-            visualDensity: VisualDensity.compact,
-            onPressed: safePage >= pageCount - 1
-                ? null
-                : () => onPageChanged(safePage + 1),
-            icon: const Icon(Icons.chevron_right_rounded),
-          ),
-        ],
-      ),
     );
   }
 
@@ -248,11 +160,8 @@ class _HomeOverviewPageState extends State<HomeOverviewPage> {
       padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 8),
       child: Column(
         children: [
-          Icon(
-            Icons.dashboard_customize_outlined,
-            size: 40,
-            color: AppColors.outlineVariant.withValues(alpha: 0.5),
-          ),
+          Icon(Icons.dashboard_customize_outlined,
+              size: 40, color: AppColors.outlineVariant.withValues(alpha: 0.5)),
           const SizedBox(height: 10),
           Text(
             'Bạn chưa có bảng cá nhân nào',
@@ -265,10 +174,7 @@ class _HomeOverviewPageState extends State<HomeOverviewPage> {
           const SizedBox(height: 4),
           Text(
             'Nhấn + để tạo bảng đầu tiên của bạn.',
-            style: GoogleFonts.inter(
-              fontSize: 12,
-              color: AppColors.onSurfaceVariant.withValues(alpha: 0.7),
-            ),
+            style: GoogleFonts.inter(fontSize: 12, color: AppColors.onSurfaceVariant.withValues(alpha: 0.7)),
           ),
         ],
       ),
@@ -280,11 +186,8 @@ class _HomeOverviewPageState extends State<HomeOverviewPage> {
       padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 8),
       child: Column(
         children: [
-          Icon(
-            Icons.group_add_outlined,
-            size: 40,
-            color: AppColors.outlineVariant.withValues(alpha: 0.5),
-          ),
+          Icon(Icons.group_add_outlined,
+              size: 40, color: AppColors.outlineVariant.withValues(alpha: 0.5)),
           const SizedBox(height: 10),
           Text(
             'Bạn chưa được mời vào workspace nào',

@@ -43,11 +43,8 @@ class CreateBoardSubPage extends StatelessWidget {
                     shape: BoxShape.circle,
                     color: AppColors.surfaceContainerLow,
                   ),
-                  child: const Icon(
-                    Icons.arrow_back_ios_new_rounded,
-                    size: 16,
-                    color: AppColors.onSurface,
-                  ),
+                  child: const Icon(Icons.arrow_back_ios_new_rounded,
+                      size: 16, color: AppColors.onSurface),
                 ),
               ),
               Expanded(

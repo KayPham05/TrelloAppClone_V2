@@ -45,3 +45,4 @@ class BoardDetailTopBarWidget extends StatelessWidget {
     );
   }
 }
+

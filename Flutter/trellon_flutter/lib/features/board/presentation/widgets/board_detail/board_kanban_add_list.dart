@@ -46,10 +46,7 @@ class AddListSectionWidget extends StatelessWidget {
                   borderRadius: BorderRadius.circular(8),
                   borderSide: BorderSide.none,
                 ),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 10,
-                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               ),
             ),
             SizedBox(height: 8 * scale),
@@ -67,17 +64,12 @@ class AddListSectionWidget extends StatelessWidget {
                       backgroundColor: AppColors.primary,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 8),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                       elevation: 0,
                     ),
                     child: Text(
                       'Thêm',
-                      style: GoogleFonts.inter(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                      ),
+                      style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600),
                     ),
                   ),
                 ),
@@ -105,17 +97,11 @@ class AddListSectionWidget extends StatelessWidget {
       child: Container(
         width: 200 * scale,
         margin: EdgeInsets.only(left: 8 * scale),
-        padding: EdgeInsets.symmetric(
-          horizontal: 14 * scale,
-          vertical: 12 * scale,
-        ),
+        padding: EdgeInsets.symmetric(horizontal: 14 * scale, vertical: 12 * scale),
         decoration: BoxDecoration(
           color: Colors.white.withValues(alpha: 0.18),
           borderRadius: BorderRadius.circular(12 * scale),
-          border: Border.all(
-            color: Colors.white.withValues(alpha: 0.3),
-            width: 1 * scale,
-          ),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.3), width: 1 * scale),
         ),
         child: Row(
           children: [

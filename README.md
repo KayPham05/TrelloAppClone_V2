@@ -1,6 +1,6 @@
 ﻿<a id="readme-top"></a>
 
-# 📋 Kabo - Trello App Clone 
+# ðŸ“‹ Kabo - Trello App Clone 
 
 <!-- PROJECT SHIELDS -->
 [![Contributors][contributors-shield]][contributors-url]
@@ -21,16 +21,16 @@
   <h2 align="center">Kabo - Task Management System</h2>
 
   <p align="center">
-    Kabo là một hệ thống quản lý công việc hoàn chỉnh, giúp tổ chức boards, lists, cards và tasks một cách hiệu quả và dễ dàng!
+    Kabo lÃ  má»™t há»‡ thá»‘ng quáº£n lÃ½ cÃ´ng viá»‡c hoÃ n chá»‰nh, giÃºp tá»• chá»©c boards, lists, cards vÃ  tasks má»™t cÃ¡ch hiá»‡u quáº£ vÃ  dá»… dÃ ng!
     <br />
-    <a href="https://github.com/KayPham05/TrelloAppClone_V2"><strong>Khám phá tài liệu »</strong></a>
+    <a href="https://github.com/KayPham05/TrelloAppClone_V2"><strong>KhÃ¡m phÃ¡ tÃ i liá»‡u Â»</strong></a>
     <br />
     <br />
     <a href="https://github.com/KayPham05/TrelloAppClone_V2">Xem Demo</a>
     &middot;
-    <a href="https://github.com/KayPham05/TrelloAppClone_V2/issues/new?labels=bug&template=bug-report---.md">Báo lỗi</a>
+    <a href="https://github.com/KayPham05/TrelloAppClone_V2/issues/new?labels=bug&template=bug-report---.md">BÃ¡o lá»—i</a>
     &middot;
-    <a href="https://github.com/KayPham05/TrelloAppClone_V2/issues/new?labels=enhancement&template=feature-request---.md">Yêu cầu tính năng</a>
+    <a href="https://github.com/KayPham05/TrelloAppClone_V2/issues/new?labels=enhancement&template=feature-request---.md">YÃªu cáº§u tÃ­nh nÄƒng</a>
   </p>
 </div>
 
@@ -38,60 +38,60 @@
 
 <!-- TABLE OF CONTENTS -->
 <details>
-  <summary>Mục lục</summary>
+  <summary>Má»¥c lá»¥c</summary>
   <ol>
     <li>
-      <a href="#about-the-project">Về dự án</a>
+      <a href="#about-the-project">Vá» dá»± Ã¡n</a>
       <ul>
-        <li><a href="#built-with">Công nghệ sử dụng</a></li>
+        <li><a href="#built-with">CÃ´ng nghá»‡ sá»­ dá»¥ng</a></li>
       </ul>
     </li>
     <li>
-      <a href="#getting-started">Bắt đầu</a>
+      <a href="#getting-started">Báº¯t Ä‘áº§u</a>
       <ul>
-        <li><a href="#prerequisites">Yêu cầu</a></li>
-        <li><a href="#installation">Cài đặt</a></li>
+        <li><a href="#prerequisites">YÃªu cáº§u</a></li>
+        <li><a href="#installation">CÃ i Ä‘áº·t</a></li>
       </ul>
     </li>
-    <li><a href="#usage">Sử dụng</a></li>
-    <li><a href="#contributing">Đóng góp</a></li>
-    <li><a href="#license">Giấy phép</a></li>
-    <li><a href="#contact">Liên hệ</a></li>
-    <li><a href="#acknowledgments">Lời cảm ơn</a></li>
+    <li><a href="#usage">Sá»­ dá»¥ng</a></li>
+    <li><a href="#contributing">ÄÃ³ng gÃ³p</a></li>
+    <li><a href="#license">Giáº¥y phÃ©p</a></li>
+    <li><a href="#contact">LiÃªn há»‡</a></li>
+    <li><a href="#acknowledgments">Lá»i cáº£m Æ¡n</a></li>
   </ol>
 </details>
 
 
 
 <!-- ABOUT THE PROJECT -->
-## 🎯 Về dự án
+## ðŸŽ¯ Vá» dá»± Ã¡n
 
 [![Product Name Screen Shot][product-screenshot]](https://github.com/KayPham05/TrelloAppClone_V2)
 
-Kabo là một nền tảng quản lý công việc và dự án, sao chép lại các tính năng cốt lõi của Trello. Dự án bao gồm **Backend Web API** linh hoạt và ứng dụng **Mobile (Flutter)** mạnh mẽ, hỗ trợ quản lý theo mô hình **Workspace → Board → List → Card → TodoItem**.
+Kabo lÃ  má»™t ná»n táº£ng quáº£n lÃ½ cÃ´ng viá»‡c vÃ  dá»± Ã¡n, sao chÃ©p láº¡i cÃ¡c tÃ­nh nÄƒng cá»‘t lÃµi cá»§a Trello. Dá»± Ã¡n bao gá»“m **Backend Web API** linh hoáº¡t vÃ  á»©ng dá»¥ng **Mobile (Flutter)** máº¡nh máº½, há»— trá»£ quáº£n lÃ½ theo mÃ´ hÃ¬nh **Workspace â†’ Board â†’ List â†’ Card â†’ TodoItem**.
 
-Cấu trúc chính của hệ thống:
-* **Backend:** ASP.NET Core 8 Web API chuẩn RESTful, xác thực JWT, phân quyền, và quản lý cộng tác.
-* **Mobile App:** Phát triển bằng Flutter theo Clean Architecture, giao diện hiện đại và mượt mà.
-* **Web App:** (Đang lên kế hoạch) Phát triển bằng React để đồng bộ trải nghiệm trên trình duyệt.
+Cáº¥u trÃºc chÃ­nh cá»§a há»‡ thá»‘ng:
+* **Backend:** ASP.NET Core 8 Web API chuáº©n RESTful, xÃ¡c thá»±c JWT, phÃ¢n quyá»n, vÃ  quáº£n lÃ½ cá»™ng tÃ¡c.
+* **Mobile App:** PhÃ¡t triá»ƒn báº±ng Flutter theo Clean Architecture, giao diá»‡n hiá»‡n Ä‘áº¡i vÃ  mÆ°á»£t mÃ .
+* **Web App:** (Äang lÃªn káº¿ hoáº¡ch) PhÃ¡t triá»ƒn báº±ng React Ä‘á»ƒ Ä‘á»“ng bá»™ tráº£i nghiá»‡m trÃªn trÃ¬nh duyá»‡t.
 
-Các chức năng chính:
-* **Xác thực:** Đăng ký, đăng nhập, Google OAuth, Email OTP (6 số), và 2FA.
-* **Workspace:** Quản lý không gian làm việc chung, mời thành viên và phân quyền.
-* **Board:** Quản lý bảng dự án (Công khai, Workspace, hoặc Cá nhân).
-* **List & Card:** Tổ chức công việc theo cột và thẻ bài với khả năng kéo thả (trên App).
-* **Todo & Checklist:** Quản lý các subtasks chi tiết bên trong mỗi Card.
-* **Tương tác:** Bình luận (Comment), Gắn nhãn (Label), và Gán người thực hiện (Assignee).
-* **Thông báo:** Hệ thống Activity Log và Notification thời gian thực cho người dùng.
+CÃ¡c chá»©c nÄƒng chÃ­nh:
+* **XÃ¡c thá»±c:** ÄÄƒng kÃ½, Ä‘Äƒng nháº­p, Google OAuth, Email OTP (6 sá»‘), vÃ  2FA.
+* **Workspace:** Quáº£n lÃ½ khÃ´ng gian lÃ m viá»‡c chung, má»i thÃ nh viÃªn vÃ  phÃ¢n quyá»n.
+* **Board:** Quáº£n lÃ½ báº£ng dá»± Ã¡n (CÃ´ng khai, Workspace, hoáº·c CÃ¡ nhÃ¢n).
+* **List & Card:** Tá»• chá»©c cÃ´ng viá»‡c theo cá»™t vÃ  tháº» bÃ i vá»›i kháº£ nÄƒng kÃ©o tháº£ (trÃªn App).
+* **Todo & Checklist:** Quáº£n lÃ½ cÃ¡c subtasks chi tiáº¿t bÃªn trong má»—i Card.
+* **TÆ°Æ¡ng tÃ¡c:** BÃ¬nh luáº­n (Comment), Gáº¯n nhÃ£n (Label), vÃ  GÃ¡n ngÆ°á»i thá»±c hiá»‡n (Assignee).
+* **ThÃ´ng bÃ¡o:** Há»‡ thá»‘ng Activity Log vÃ  Notification thá»i gian thá»±c cho ngÆ°á»i dÃ¹ng.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 
 
 <!-- BUILT WITH -->
-## 🧱 Công nghệ sử dụng
+## ðŸ§± CÃ´ng nghá»‡ sá»­ dá»¥ng
 
-Dự án này được phát triển sử dụng các framework, thư viện và công nghệ sau:
+Dá»± Ã¡n nÃ y Ä‘Æ°á»£c phÃ¡t triá»ƒn sá»­ dá»¥ng cÃ¡c framework, thÆ° viá»‡n vÃ  cÃ´ng nghá»‡ sau:
 
 **Backend (C# ASP.NET Core):**
 * [![.NET][dotnet]][dotnet-url]
@@ -115,55 +115,55 @@ Dự án này được phát triển sử dụng các framework, thư viện và
 
 
 <!-- GETTING STARTED -->
-## 🚀 Bắt đầu
+## ðŸš€ Báº¯t Ä‘áº§u
 
-Làm theo các bước sau để thiết lập dự án trên máy local.
+LÃ m theo cÃ¡c bÆ°á»›c sau Ä‘á»ƒ thiáº¿t láº­p dá»± Ã¡n trÃªn mÃ¡y local.
 
-### Yêu cầu
+### YÃªu cáº§u
 
-Đảm bảo bạn đã cài đặt các phần mềm sau:
+Äáº£m báº£o báº¡n Ä‘Ã£ cÃ i Ä‘áº·t cÃ¡c pháº§n má»m sau:
 
 * **Backend:** [.NET SDK 8.0](https://dotnet.microsoft.com/en-us/download/dotnet) & [SQL Server](https://www.microsoft.com/sql-server).
-* **Mobile:** [Flutter SDK](https://docs.flutter.dev/get-started/install) (phiên bản > 3.11.0).
-* **IDE:** Visual Studio 2022 (cho C#) và VS Code hoặc Android Studio (cho Flutter).
+* **Mobile:** [Flutter SDK](https://docs.flutter.dev/get-started/install) (phiÃªn báº£n > 3.11.0).
+* **IDE:** Visual Studio 2022 (cho C#) vÃ  VS Code hoáº·c Android Studio (cho Flutter).
 
-### Cài đặt
+### CÃ i Ä‘áº·t
 
 #### 1. Backend (ASP.NET Core API)
-1. Di chuyển vào thư mục backend:
+1. Di chuyá»ƒn vÃ o thÆ° má»¥c backend:
    ```sh
    cd "C#/TodoAppAPI"
    ```
-2. Khôi phục packages:
+2. KhÃ´i phá»¥c packages:
    ```sh
    dotnet restore
    ```
-3. Cấu hình connection string trong `appsettings.json` (thay đổi Server name cho phù hợp):
+3. Cáº¥u hÃ¬nh connection string trong `appsettings.json` (thay Ä‘á»•i Server name cho phÃ¹ há»£p):
    ```json
    "ConnectionStrings": {
      "DefaultConnection": "Server=YOUR_SERVER_NAME;Database=KaboDB;Trusted_Connection=True;TrustServerCertificate=True;"
    }
    ```
-4. Chạy migrations để tạo database:
+4. Cháº¡y migrations Ä‘á»ƒ táº¡o database:
    ```sh
    dotnet ef database update
    ```
-5. Chạy dự án:
+5. Cháº¡y dá»± Ã¡n:
    ```sh
    dotnet run
    ```
 
 #### 2. Mobile App (Flutter)
-1. Di chuyển vào thư mục app:
+1. Di chuyá»ƒn vÃ o thÆ° má»¥c app:
    ```sh
    cd "Flutter/kabo_flutter"
    ```
-2. Cài đặt các thư viện Dart:
+2. CÃ i Ä‘áº·t cÃ¡c thÆ° viá»‡n Dart:
    ```sh
    flutter pub get
    ```
-3. Cấu hình Base URL trong `lib/core/network/dio_client.dart` (trỏ về IP của máy chạy Backend).
-4. Chạy ứng dụng trên Emulator hoặc thiết bị thật:
+3. Cáº¥u hÃ¬nh Base URL trong `lib/core/network/dio_client.dart` (trá» vá» IP cá»§a mÃ¡y cháº¡y Backend).
+4. Cháº¡y á»©ng dá»¥ng trÃªn Emulator hoáº·c thiáº¿t bá»‹ tháº­t:
    ```sh
    flutter run
    ```
@@ -173,35 +173,35 @@ Làm theo các bước sau để thiết lập dự án trên máy local.
 
 
 <!-- USAGE EXAMPLES -->
-## 🖥️ Sử dụng
+## ðŸ–¥ï¸ Sá»­ dá»¥ng
 
-Sau khi cài đặt, bạn có thể truy cập Swagger UI để kiểm tra API: `https://localhost:PORT/swagger/index.html`.
+Sau khi cÃ i Ä‘áº·t, báº¡n cÃ³ thá»ƒ truy cáº­p Swagger UI Ä‘á»ƒ kiá»ƒm tra API: `https://localhost:PORT/swagger/index.html`.
 
-**Các Endpoint API chính:**
+**CÃ¡c Endpoint API chÃ­nh:**
 
-| Nhóm | Endpoint chính | Mô tả |
+| NhÃ³m | Endpoint chÃ­nh | MÃ´ táº£ |
 |------|----------------|-------|
-| **Auth** | `/v1/api/login/*` | Đăng ký, Đăng nhập, OTP, 2FA |
+| **Auth** | `/v1/api/login/*` | ÄÄƒng kÃ½, ÄÄƒng nháº­p, OTP, 2FA |
 | **Workspace** | `/v1/api/workspace/*` | CRUD Workspace, Invite members |
-| **Board** | `/v1/api/boards/*` | Quản lý bảng và thành viên bảng |
-| **Card** | `/v1/api/cards/*` | Quản lý thẻ, trạng thái, vị trí |
-| **Checklist** | `/v1/api/todoItem/*` | Quản lý subtasks bên trong Card |
-| **Inbox** | `/v1/api/user-inbox/*` | Thẻ được gán cho người dùng |
+| **Board** | `/v1/api/boards/*` | Quáº£n lÃ½ báº£ng vÃ  thÃ nh viÃªn báº£ng |
+| **Card** | `/v1/api/cards/*` | Quáº£n lÃ½ tháº», tráº¡ng thÃ¡i, vá»‹ trÃ­ |
+| **Checklist** | `/v1/api/todoItem/*` | Quáº£n lÃ½ subtasks bÃªn trong Card |
+| **Inbox** | `/v1/api/user-inbox/*` | Tháº» Ä‘Æ°á»£c gÃ¡n cho ngÆ°á»i dÃ¹ng |
 
-Chi tiết hơn về kiến trúc và sơ đồ dữ liệu, vui lòng xem tại [Kabo.md](Kabo.md).
+Chi tiáº¿t hÆ¡n vá» kiáº¿n trÃºc vÃ  sÆ¡ Ä‘á»“ dá»¯ liá»‡u, vui lÃ²ng xem táº¡i [Kabo.md](Kabo.md).
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 <!-- CONTRIBUTING -->
-## 🤝 Đóng góp
+## ðŸ¤ ÄÃ³ng gÃ³p
 
-Đóng góp là điều làm cho cộng đồng open source trở thành một nơi tuyệt vời. Mọi đóng góp đều được trân trọng!
+ÄÃ³ng gÃ³p lÃ  Ä‘iá»u lÃ m cho cá»™ng Ä‘á»“ng open source trá»Ÿ thÃ nh má»™t nÆ¡i tuyá»‡t vá»i. Má»i Ä‘Ã³ng gÃ³p Ä‘á»u Ä‘Æ°á»£c trÃ¢n trá»ng!
 
-1. Fork dự án
-2. Tạo Branch chức năng (`git checkout -b feature/AmazingFeature`)
-3. Commit thay đổi (`git commit -m 'Add some AmazingFeature'`)
-4. Push lên Branch (`git push origin feature/AmazingFeature`)
-5. Mở Pull Request
+1. Fork dá»± Ã¡n
+2. Táº¡o Branch chá»©c nÄƒng (`git checkout -b feature/AmazingFeature`)
+3. Commit thay Ä‘á»•i (`git commit -m 'Add some AmazingFeature'`)
+4. Push lÃªn Branch (`git push origin feature/AmazingFeature`)
+5. Má»Ÿ Pull Request
 
 ### Top contributors:
 
@@ -214,33 +214,33 @@ Chi tiết hơn về kiến trúc và sơ đồ dữ liệu, vui lòng xem tại
 
 
 <!-- LICENSE -->
-## 📜 Giấy phép
+## ðŸ“œ Giáº¥y phÃ©p
 
-Được phân phối theo giấy phép MIT. Xem `LICENSE.txt` để biết thêm thông tin.
+ÄÆ°á»£c phÃ¢n phá»‘i theo giáº¥y phÃ©p MIT. Xem `LICENSE.txt` Ä‘á»ƒ biáº¿t thÃªm thÃ´ng tin.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 
 
 <!-- CONTACT -->
-## 📬 Liên hệ
+## ðŸ“¬ LiÃªn há»‡
 
-**Phạm Tấn Kha** - [KayPham05](https://github.com/KayPham05)
+**Pháº¡m Táº¥n Kha** - [KayPham05](https://github.com/KayPham05)
 
-Link dự án: [https://github.com/KayPham05/TrelloAppClone_V2](https://github.com/KayPham05/TrelloAppClone_V2)
+Link dá»± Ã¡n: [https://github.com/KayPham05/TrelloAppClone_V2](https://github.com/KayPham05/TrelloAppClone_V2)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 
 
 <!-- ACKNOWLEDGMENTS -->
-## 🙌 Lời cảm ơn
+## ðŸ™Œ Lá»i cáº£m Æ¡n
 
-Các tài nguyên và công cụ hữu ích trong quá trình phát triển dự án:
+CÃ¡c tÃ i nguyÃªn vÃ  cÃ´ng cá»¥ há»¯u Ã­ch trong quÃ¡ trÃ¬nh phÃ¡t triá»ƒn dá»± Ã¡n:
 
 * [Microsoft Docs](https://learn.microsoft.com/)
 * [Flutter Documentation](https://docs.flutter.dev/)
-* [Trello](https://trello.com/) - Nguồn cảm hứng chính.
+* [Trello](https://trello.com/) - Nguá»“n cáº£m há»©ng chÃ­nh.
 * [Shields.io](https://shields.io) & [Contrib.rocks](https://contrib.rocks).
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>

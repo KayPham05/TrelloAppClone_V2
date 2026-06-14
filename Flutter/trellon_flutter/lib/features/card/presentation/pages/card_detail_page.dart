@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/constants/app_colors.dart';
-import '../../../../core/data_sources/user_local_data_source.dart';
 import '../../../../init_dependencies.dart';
 import '../../domain/entities/card_entity.dart';
 import '../cubit/card_detail_cubit.dart';
@@ -45,7 +44,6 @@ class _CardDetailPageState extends State<CardDetailPage> {
   late CardDetailCubit _cubit;
   bool _quickActionsExpanded = true;
   late bool _isArchived;
-  String? _currentUserId;
 
   @override
   void initState() {
@@ -57,9 +55,6 @@ class _CardDetailPageState extends State<CardDetailPage> {
         isInboxCard: widget.isInboxCard,
         boardId: widget.boardId,
       );
-    UserLocalDataSource().getUserId().then((userId) {
-      if (mounted) setState(() => _currentUserId = userId);
-    });
   }
 
   @override
@@ -67,6 +62,7 @@ class _CardDetailPageState extends State<CardDetailPage> {
     _cubit.close();
     super.dispose();
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -90,19 +86,14 @@ class _CardDetailPageState extends State<CardDetailPage> {
             );
             Navigator.of(context).pop(true);
           } else if (state is CardDetailDeleted) {
-            ScaffoldMessenger.of(
-              context,
-            ).showSnackBar(const SnackBar(content: Text('Thẻ đã bị xóa.')));
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Thẻ đã bị xóa.')),
+            );
             Navigator.of(context).pop('deleted');
           } else if (state is CardDetailError) {
-            ScaffoldMessenger.of(
-              context,
-            ).showSnackBar(SnackBar(content: Text(state.message)));
-          } else if (state is CardDetailLoaded &&
-              state.commentActionError != null) {
-            ScaffoldMessenger.of(
-              context,
-            ).showSnackBar(SnackBar(content: Text(state.commentActionError!)));
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(state.message)),
+            );
           }
         },
         child: Scaffold(
@@ -114,10 +105,8 @@ class _CardDetailPageState extends State<CardDetailPage> {
                 if (args != null &&
                     (args.containsKey('boardRole') ||
                         args.containsKey('workspaceRole'))) {
-                  canEdit = AuthorizationService().canManageCards(
-                    boardRole,
-                    workspaceRole,
-                  );
+                  canEdit = AuthorizationService()
+                      .canManageCards(boardRole, workspaceRole);
                 } else {
                   canEdit = true;
                 }
@@ -129,10 +118,8 @@ class _CardDetailPageState extends State<CardDetailPage> {
                   children: [
                     if (state is CardDetailError)
                       Center(
-                        child: Text(
-                          state.message,
-                          style: const TextStyle(color: AppColors.error),
-                        ),
+                        child: Text(state.message,
+                            style: const TextStyle(color: AppColors.error)),
                       )
                     else
                       const Center(child: CircularProgressIndicator()),
@@ -145,8 +132,7 @@ class _CardDetailPageState extends State<CardDetailPage> {
                         child: Container(
                           color: Colors.black.withValues(alpha: 0.04),
                           child: CardDetailTopBar(
-                            boardId: widget.boardId ?? '',
-                          ),
+                              boardId: widget.boardId ?? ''),
                         ),
                       ),
                     ),
@@ -190,18 +176,10 @@ class _CardDetailPageState extends State<CardDetailPage> {
                               CardDetailTitle(
                                 title: state.card.title,
                                 status: state.card.status,
-                                boardName:
-                                    widget.boardName ??
-                                    boardName ??
-                                    state.card.boardName,
-                                listName:
-                                    widget.listName ??
-                                    listName ??
-                                    state.card.listName,
+                                boardName: widget.boardName ?? boardName ?? state.card.boardName,
+                                listName: widget.listName ?? listName ?? state.card.listName,
                                 boardBackgroundUrl:
-                                    widget.boardBackgroundUrl ??
-                                    boardBackgroundUrl ??
-                                    state.card.boardBackgroundUrl,
+                                    widget.boardBackgroundUrl ?? boardBackgroundUrl ?? state.card.boardBackgroundUrl,
                                 boardId: widget.boardId ?? state.card.boardId,
                                 cubit: _cubit,
                                 isArchived: _isArchived,
@@ -213,19 +191,13 @@ class _CardDetailPageState extends State<CardDetailPage> {
                                 onStatusToggle: (s) => _cubit.updateStatus(s),
                               ),
 
-                              const Divider(
-                                height: 24,
-                                indent: 16,
-                                endIndent: 16,
-                              ),
+                              const Divider(height: 24, indent: 16, endIndent: 16),
 
                               // ── Các thao tác nhanh (quick actions) ──
                               _QuickActionsSection(
                                 expanded: _quickActionsExpanded,
                                 onToggle: () => setState(
-                                  () => _quickActionsExpanded =
-                                      !_quickActionsExpanded,
-                                ),
+                                    () => _quickActionsExpanded = !_quickActionsExpanded),
                                 canEdit: canEdit,
                                 onChecklistTap: () {},
                                 onAttachmentTap: () {
@@ -240,29 +212,20 @@ class _CardDetailPageState extends State<CardDetailPage> {
                                     canManage: canEdit,
                                     onMemberToggled: (member) {
                                       final isAssigned = state.members.any(
-                                        (m) => m.userUId == member.userUId,
-                                      );
+                                          (m) => m.userUId == member.userUId);
                                       if (isAssigned) {
                                         _cubit.removeMember(
-                                          member.userUId,
-                                          widget.boardId!,
-                                        );
+                                            member.userUId, widget.boardId!);
                                       } else {
                                         _cubit.addMember(
-                                          member.userUId,
-                                          widget.boardId!,
-                                        );
+                                            member.userUId, widget.boardId!);
                                       }
                                     },
                                   );
                                 },
                               ),
 
-                              const Divider(
-                                height: 1,
-                                indent: 16,
-                                endIndent: 16,
-                              ),
+                              const Divider(height: 1, indent: 16, endIndent: 16),
 
                               // ── Description ──────────────────────────
                               CardDetailDescription(
@@ -271,11 +234,7 @@ class _CardDetailPageState extends State<CardDetailPage> {
                                     ? (v) => _cubit.updateDescription(v)
                                     : null,
                               ),
-                              const Divider(
-                                height: 1,
-                                indent: 16,
-                                endIndent: 16,
-                              ),
+                              const Divider(height: 1, indent: 16, endIndent: 16),
 
                               // ── Labels / Members / Dates ─────────────
                               CardDetailMetaGrid(
@@ -293,21 +252,16 @@ class _CardDetailPageState extends State<CardDetailPage> {
                                           canManage: canEdit,
                                           onMemberToggled: (member) {
                                             final isAssigned = state.members
-                                                .any(
-                                                  (m) =>
-                                                      m.userUId ==
-                                                      member.userUId,
-                                                );
+                                                .any((m) =>
+                                                    m.userUId == member.userUId);
                                             if (isAssigned) {
                                               _cubit.removeMember(
-                                                member.userUId,
-                                                widget.boardId!,
-                                              );
+                                                  member.userUId,
+                                                  widget.boardId!);
                                             } else {
                                               _cubit.addMember(
-                                                member.userUId,
-                                                widget.boardId!,
-                                              );
+                                                  member.userUId,
+                                                  widget.boardId!);
                                             }
                                           },
                                         );
@@ -317,93 +271,67 @@ class _CardDetailPageState extends State<CardDetailPage> {
                                     ? (m, r) {
                                         if (widget.boardId == null) return;
                                         _cubit.updateMemberRole(
-                                          userUId: m.userUId,
-                                          newRole: r,
-                                          boardId: widget.boardId!,
-                                        );
+                                            userUId: m.userUId,
+                                            newRole: r,
+                                            boardId: widget.boardId!);
                                       }
                                     : (m, r) {},
                                 onRemoveMember: canEdit
                                     ? (m) {
                                         if (widget.boardId == null) return;
                                         _cubit.removeMember(
-                                          m.userUId,
-                                          widget.boardId!,
-                                        );
+                                            m.userUId, widget.boardId!);
                                       }
                                     : (m) {},
                                 onAddLabel: canEdit
                                     ? () => LabelPickerSheet.show(
-                                        context,
-                                        selectedLabels: state.card.labels,
-                                        onLabelToggled: (l, c) =>
-                                            _cubit.toggleLabel(l, c),
-                                      )
+                                          context,
+                                          selectedLabels: state.card.labels,
+                                          onLabelToggled: (l, c) =>
+                                              _cubit.toggleLabel(l, c),
+                                        )
                                     : () {},
                                 onDateChanged: canEdit
                                     ? (d) => _cubit.updateDueDate(d)
                                     : (d) {},
                               ),
-                              const Divider(
-                                height: 1,
-                                indent: 16,
-                                endIndent: 16,
-                              ),
+                              const Divider(height: 1, indent: 16, endIndent: 16),
 
                               // ── Checklist ─────────────────────────────
                               CardDetailChecklist(
                                 initialItems: state.todos
-                                    .map(
-                                      (t) => CardDetailChecklistItem(
-                                        id: t.id,
-                                        title: t.title,
-                                        checked: t.isCompleted,
-                                      ),
-                                    )
+                                    .map((t) => CardDetailChecklistItem(
+                                          id: t.id,
+                                          title: t.title,
+                                          checked: t.isCompleted,
+                                        ))
                                     .toList(),
                                 onCheckChanged: canEdit
-                                    ? (id, v) => _cubit.toggleTodoItem(id, v)
+                                    ? (id, v) =>
+                                        _cubit.toggleTodoItem(id, v)
                                     : null,
                                 onAddTodo: canEdit
                                     ? (c) => _cubit.addTodoItem(c)
                                     : null,
                               ),
-                              const Divider(
-                                height: 1,
-                                indent: 16,
-                                endIndent: 16,
-                              ),
+                              const Divider(height: 1, indent: 16, endIndent: 16),
 
                               // ── Attachments ────────────────────────────
                               const CardDetailAttachments(),
-                              const Divider(
-                                height: 1,
-                                indent: 16,
-                                endIndent: 16,
-                              ),
+                              const Divider(height: 1, indent: 16, endIndent: 16),
 
                               // ── Activity ───────────────────────────────
                               const SizedBox(height: 4),
                               CardDetailActivityList(
                                 activities: state.comments
-                                    .map(
-                                      (c) => CardActivityItemData(
-                                        commentId: c.id,
-                                        userUId: c.userUId,
-                                        authorName: c.authorName ?? 'User',
-                                        avatarUrl: c.avatarUrl,
-                                        initial: _initialFor(c.authorName),
-                                        time: _formatTime(c.createdAt),
-                                        content: c.content,
-                                        updatedAt: c.updatedAt,
-                                        isCurrentUser:
-                                            _currentUserId != null &&
-                                            c.userUId == _currentUserId,
-                                        isEditing:
-                                            state.editingCommentId == c.id,
-                                        attachments: c.attachments,
-                                      ),
-                                    )
+                                    .map((c) => CardActivityItemData(
+                                          authorName:
+                                              c.authorName ?? 'User',
+                                          initial: (c.authorName ?? 'U')
+                                              .substring(0, 1),
+                                          time: _formatTime(c.createdAt),
+                                          content: c.content,
+                                        ))
                                     .toList(),
                               ),
                               const SizedBox(height: 80),
@@ -423,11 +351,8 @@ class _CardDetailPageState extends State<CardDetailPage> {
                                     boardId: widget.boardId ?? '',
                                     allowJoinCard: false,
                                     canManage: canEdit,
-                                    onMembersTap: () => _openMemberPicker(
-                                      context,
-                                      state,
-                                      canEdit,
-                                    ),
+                                    onMembersTap: () =>
+                                        _openMemberPicker(context, state, canEdit),
                                     onChecklistTap: () {},
                                     onAttachmentTap: () {},
                                   )
@@ -435,20 +360,15 @@ class _CardDetailPageState extends State<CardDetailPage> {
                                     decoration: BoxDecoration(
                                       color: Colors.white,
                                       border: Border(
-                                        bottom: BorderSide(
-                                          color: Colors.grey.shade200,
-                                        ),
-                                      ),
+                                          bottom: BorderSide(
+                                              color: Colors.grey.shade200)),
                                     ),
                                     child: CardDetailTopBar(
                                       boardId: widget.boardId ?? '',
                                       allowJoinCard: false,
                                       canManage: canEdit,
-                                      onMembersTap: () => _openMemberPicker(
-                                        context,
-                                        state,
-                                        canEdit,
-                                      ),
+                                      onMembersTap: () =>
+                                          _openMemberPicker(context, state, canEdit),
                                       onChecklistTap: () {},
                                       onAttachmentTap: () {},
                                     ),
@@ -462,12 +382,7 @@ class _CardDetailPageState extends State<CardDetailPage> {
                   // ── Sticky comment bar ──────────────────────────────
                   SafeArea(
                     top: false,
-                    child: CardDetailCommentBar(
-                      mentionMembers: state.potentialMembers.isNotEmpty
-                          ? state.potentialMembers
-                          : state.members,
-                      allowAttachments: !widget.isInboxCard,
-                    ),
+                    child: const CardDetailCommentBar(),
                   ),
                 ],
               );
@@ -478,11 +393,7 @@ class _CardDetailPageState extends State<CardDetailPage> {
     );
   }
 
-  void _openMemberPicker(
-    BuildContext context,
-    CardDetailLoaded state,
-    bool canEdit,
-  ) {
+  void _openMemberPicker(BuildContext context, CardDetailLoaded state, bool canEdit) {
     if (widget.boardId == null) return;
     CardMemberPickerSheet.show(
       context,
@@ -490,9 +401,8 @@ class _CardDetailPageState extends State<CardDetailPage> {
       currentCardMembers: state.members,
       canManage: canEdit,
       onMemberToggled: (member) {
-        final isAssigned = state.members.any(
-          (m) => m.userUId == member.userUId,
-        );
+        final isAssigned =
+            state.members.any((m) => m.userUId == member.userUId);
         if (isAssigned) {
           _cubit.removeMember(member.userUId, widget.boardId!);
         } else {
@@ -509,12 +419,6 @@ class _CardDetailPageState extends State<CardDetailPage> {
     if (diff.inMinutes < 60) return '${diff.inMinutes} phút trước';
     if (diff.inHours < 24) return '${diff.inHours} giờ trước';
     return '${dt.day}/${dt.month}/${dt.year}';
-  }
-
-  String _initialFor(String? name) {
-    final trimmed = name?.trim() ?? '';
-    if (trimmed.isEmpty) return 'U';
-    return trimmed.substring(0, 1);
   }
 }
 
@@ -546,21 +450,17 @@ class _QuickActionsSection extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(16, 4, 8, 4),
           child: Row(
             children: [
-              Text(
-                'Các thao tác nhanh',
-                style: GoogleFonts.inter(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black87,
-                ),
-              ),
+              Text('Các thao tác nhanh',
+                  style: GoogleFonts.inter(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87)),
               const Spacer(),
               IconButton(
                 icon: Icon(
-                  expanded ? Icons.expand_less : Icons.expand_more,
-                  size: 22,
-                  color: Colors.grey.shade600,
-                ),
+                    expanded ? Icons.expand_less : Icons.expand_more,
+                    size: 22,
+                    color: Colors.grey.shade600),
                 onPressed: onToggle,
               ),
             ],
@@ -632,14 +532,11 @@ class _QuickChip extends StatelessWidget {
               child: Icon(icon, size: 16, color: Colors.white),
             ),
             const SizedBox(width: 8),
-            Text(
-              label,
-              style: GoogleFonts.inter(
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-                color: Colors.black87,
-              ),
-            ),
+            Text(label,
+                style: GoogleFonts.inter(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.black87)),
           ],
         ),
       ),

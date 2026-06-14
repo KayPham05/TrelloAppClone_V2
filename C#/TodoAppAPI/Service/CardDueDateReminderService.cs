@@ -135,19 +135,19 @@ namespace TodoAppAPI.Service
         private static string ReminderTitle(DueDateReminderMilestone milestone) =>
             milestone switch
             {
-                DueDateReminderMilestone.OneDayBefore => "Thẻ sắp đến hạn trong 1 ngày",
-                DueDateReminderMilestone.OneHourBefore => "Thẻ sắp đến hạn trong 1 giờ",
-                DueDateReminderMilestone.DueNow => "Thẻ đã đến hạn",
-                _ => "Nhắc hạn thẻ"
+                DueDateReminderMilestone.OneDayBefore => "Card is due in 1 day",
+                DueDateReminderMilestone.OneHourBefore => "Card is due in 1 hour",
+                DueDateReminderMilestone.DueNow => "Card is due now",
+                _ => "Card due reminder"
             };
 
         private static string ReminderMessage(string title, DateTime dueDate, DueDateReminderMilestone milestone) =>
             milestone switch
             {
-                DueDateReminderMilestone.OneDayBefore => $"Thẻ '{title}' sẽ đến hạn vào {dueDate:yyyy-MM-dd HH:mm}.",
-                DueDateReminderMilestone.OneHourBefore => $"Thẻ '{title}' sẽ đến hạn lúc {dueDate:yyyy-MM-dd HH:mm}.",
-                DueDateReminderMilestone.DueNow => $"Thẻ '{title}' đã đến hạn hoặc quá hạn.",
-                _ => $"Thẻ '{title}' có hạn sắp tới."
+                DueDateReminderMilestone.OneDayBefore => $"Card '{title}' is due on {dueDate:yyyy-MM-dd HH:mm}.",
+                DueDateReminderMilestone.OneHourBefore => $"Card '{title}' is due at {dueDate:yyyy-MM-dd HH:mm}.",
+                DueDateReminderMilestone.DueNow => $"Card '{title}' is due now or overdue.",
+                _ => $"Card '{title}' has an upcoming due date."
             };
 
         private static DueDateReminderMilestone? ResolveMilestone(DateTime dueDate, DateTime now)

@@ -338,7 +338,6 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
                                       child: BoardMenuSheet(
                                         boardId: boardId,
                                         boardName: bName,
-                                        workspaceId: loadedState?.workspaceId,
                                       ),
                                     ),
                                   );
@@ -789,8 +788,9 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
           },
         ),
       ),
-      onReorderItem: (oldIndex, newIndex) {
-        final targetIdx = newIndex;
+      onReorder: (oldIndex, newIndex) {
+        // ReorderableListView calls onReorder with newIndex adjusted
+        final targetIdx = newIndex > oldIndex ? newIndex - 1 : newIndex;
         final list = listsToRender[oldIndex];
 
         setState(() {

@@ -35,21 +35,14 @@ import 'features/card/domain/usecases/delete_attachment_usecase.dart';
 import 'features/card/domain/usecases/update_attachment_description_usecase.dart';
 import 'features/card/domain/usecases/upload_card_cover_usecase.dart';
 import 'features/card/domain/usecases/update_card_due_date_usecase.dart';
-import 'features/card/domain/usecases/update_card_comment_usecase.dart';
-import 'features/card/domain/usecases/delete_card_comment_usecase.dart';
-import 'features/card/domain/usecases/upload_comment_attachment_usecase.dart';
-import 'features/card/domain/usecases/delete_comment_attachment_usecase.dart';
 import 'features/card/presentation/cubit/card_detail_cubit.dart';
 import 'features/board/data/datasources/board_remote_data_source.dart';
 import 'features/board/data/repositories/board_repository_impl.dart';
 import 'features/board/domain/repositories/board_repository.dart';
 import 'features/board/domain/usecases/get_recent_boards_usecase.dart';
-import 'features/board/domain/usecases/get_starred_boards_usecase.dart';
 import 'features/board/domain/usecases/create_board_usecase.dart';
 import 'features/board/domain/usecases/get_personal_boards_usecase.dart';
 import 'features/board/domain/usecases/save_recent_board_usecase.dart';
-import 'features/board/domain/usecases/set_board_starred_usecase.dart';
-import 'features/board/domain/usecases/update_board_usecase.dart';
 import 'features/board/domain/usecases/delete_board_usecase.dart';
 import 'features/board/presentation/cubit/board_cubit.dart';
 import 'features/board/presentation/cubit/board_detail_cubit.dart';
@@ -63,12 +56,7 @@ import 'features/workspace/domain/usecases/update_workspace_usecase.dart';
 import 'features/workspace/domain/usecases/delete_workspace_usecase.dart';
 import 'features/workspace/domain/usecases/add_workspace_member_usecase.dart';
 import 'features/workspace/domain/usecases/get_workspace_boards_usecase.dart';
-import 'features/workspace/domain/usecases/update_workspace_board_visibility_usecase.dart';
 import 'features/workspace/presentation/cubit/workspace_cubit.dart';
-import 'features/member_invite/data/datasources/invite_suggestion_remote_data_source.dart';
-import 'features/member_invite/data/repositories/invite_suggestion_repository_impl.dart';
-import 'features/member_invite/domain/repositories/invite_suggestion_repository.dart';
-import 'features/member_invite/domain/usecases/search_invite_suggestions_usecase.dart';
 import 'features/card/domain/usecases/update_list_uid_usecase.dart';
 import 'features/planner/data/datasources/planner_remote_data_source.dart';
 import 'features/planner/data/repositories/planner_repository_impl.dart';
@@ -114,14 +102,15 @@ Future<void> initDependencies() async {
   serviceLocator.registerLazySingleton<UserLocalDataSource>(
     () => UserLocalDataSource(),
   );
-  serviceLocator.registerLazySingleton<SessionManager>(() => SessionManager());
+  serviceLocator.registerLazySingleton<SessionManager>(
+    () => SessionManager(),
+  );
 
   _initAuth();
   _initInbox();
   _initCard();
   _initBoard();
   _initWorkspace();
-  _initMemberInvite();
   _initPlanner();
   _initNotification();
   _initAiAnalysis();
@@ -159,9 +148,6 @@ void _initWorkspace() {
   serviceLocator.registerLazySingleton(
     () => GetWorkspaceBoardsUseCase(serviceLocator()),
   );
-  serviceLocator.registerLazySingleton(
-    () => UpdateWorkspaceBoardVisibilityUseCase(serviceLocator()),
-  );
 
   // Cubit
   serviceLocator.registerLazySingleton(
@@ -171,25 +157,10 @@ void _initWorkspace() {
       updateWorkspaceUseCase: serviceLocator(),
       deleteWorkspaceUseCase: serviceLocator(),
       addWorkspaceMemberUseCase: serviceLocator(),
-      updateWorkspaceBoardVisibilityUseCase: serviceLocator(),
       createBoardUseCase: serviceLocator(),
       deleteBoardUseCase: serviceLocator(),
-      setBoardStarredUseCase: serviceLocator(),
-      updateBoardUseCase: serviceLocator(),
       userLocalDataSource: serviceLocator(),
     ),
-  );
-}
-
-void _initMemberInvite() {
-  serviceLocator.registerLazySingleton<InviteSuggestionRemoteDataSource>(
-    () => InviteSuggestionRemoteDataSource(client: serviceLocator<Dio>()),
-  );
-  serviceLocator.registerLazySingleton<InviteSuggestionRepository>(
-    () => InviteSuggestionRepositoryImpl(remoteDataSource: serviceLocator()),
-  );
-  serviceLocator.registerLazySingleton(
-    () => SearchInviteSuggestionsUseCase(serviceLocator()),
   );
 }
 
@@ -211,9 +182,6 @@ void _initBoard() {
     () => GetRecentBoardsUseCase(serviceLocator()),
   );
   serviceLocator.registerLazySingleton(
-    () => GetStarredBoardsUseCase(serviceLocator()),
-  );
-  serviceLocator.registerLazySingleton(
     () => CreateBoardUseCase(serviceLocator()),
   );
   serviceLocator.registerLazySingleton(
@@ -221,12 +189,6 @@ void _initBoard() {
   );
   serviceLocator.registerLazySingleton(
     () => SaveRecentBoardUseCase(serviceLocator()),
-  );
-  serviceLocator.registerLazySingleton(
-    () => SetBoardStarredUseCase(serviceLocator()),
-  );
-  serviceLocator.registerLazySingleton(
-    () => UpdateBoardUseCase(serviceLocator()),
   );
   serviceLocator.registerLazySingleton(
     () => DeleteBoardUseCase(serviceLocator()),
@@ -238,10 +200,7 @@ void _initBoard() {
       getPersonalBoardsUseCase: serviceLocator(),
       getWorkspacesUseCase: serviceLocator(),
       getRecentBoardsUseCase: serviceLocator(),
-      getStarredBoardsUseCase: serviceLocator(),
       createBoardUseCase: serviceLocator(),
-      setBoardStarredUseCase: serviceLocator(),
-      updateBoardUseCase: serviceLocator(),
       userLocalDataSource: serviceLocator(),
     ),
   );
@@ -257,7 +216,9 @@ void _initBoard() {
     ),
   );
 
-  serviceLocator.registerLazySingleton(() => BoardRealtimeService());
+  serviceLocator.registerLazySingleton(
+    () => BoardRealtimeService(),
+  );
 }
 
 void _initCard() {
@@ -292,18 +253,6 @@ void _initCard() {
     () => UploadCardCoverUseCase(serviceLocator()),
   );
   serviceLocator.registerLazySingleton(
-    () => UpdateCardCommentUseCase(serviceLocator()),
-  );
-  serviceLocator.registerLazySingleton(
-    () => DeleteCardCommentUseCase(serviceLocator()),
-  );
-  serviceLocator.registerLazySingleton(
-    () => UploadCommentAttachmentUseCase(serviceLocator()),
-  );
-  serviceLocator.registerLazySingleton(
-    () => DeleteCommentAttachmentUseCase(serviceLocator()),
-  );
-  serviceLocator.registerLazySingleton(
     () => UpdateCardDueDateUseCase(serviceLocator()),
   );
   serviceLocator.registerLazySingleton(
@@ -313,10 +262,6 @@ void _initCard() {
   // Cubit
   serviceLocator.registerFactory(
     () => CardDetailCubit(
-      serviceLocator(),
-      serviceLocator(),
-      serviceLocator(),
-      serviceLocator(),
       serviceLocator(),
       serviceLocator(),
       serviceLocator(),

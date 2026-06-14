@@ -30,10 +30,9 @@ Khong dung `localhost` hoac `10.0.2.2` khi chay tren dien thoai that.
 
 ## 3. Chay backend
 
-//dotnet ef database update
-
 ```powershell
 cd "C#\TodoAppAPI"
+dotnet ef database update
 dotnet run --launch-profile http
 ```
 
@@ -44,7 +43,7 @@ Backend can listen o `http://0.0.0.0:5293`.
 Bat USB debugging, cam dien thoai vao may tinh, roi chay:
 
 ```powershell
-cd "Flutter\trellon_flutter"
+cd "Flutter\kabo_flutter"
 flutter devices
 flutter run
 ```

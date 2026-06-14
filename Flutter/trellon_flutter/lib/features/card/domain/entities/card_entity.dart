@@ -140,39 +140,16 @@ class CommentEntity {
   final String id;
   final String content;
   final DateTime createdAt;
-  final DateTime? updatedAt;
   final String userUId;
   final String? authorName; // Mapped later from local DB or backend response
-  final String? avatarUrl;
-  final List<FileUrlEntity> attachments;
 
   const CommentEntity({
     required this.id,
     required this.content,
     required this.createdAt,
-    this.updatedAt,
     required this.userUId,
     this.authorName,
-    this.avatarUrl,
-    this.attachments = const [],
   });
-
-  CommentEntity copyWith({
-    String? content,
-    DateTime? updatedAt,
-    List<FileUrlEntity>? attachments,
-  }) {
-    return CommentEntity(
-      id: id,
-      content: content ?? this.content,
-      createdAt: createdAt,
-      updatedAt: updatedAt ?? this.updatedAt,
-      userUId: userUId,
-      authorName: authorName,
-      avatarUrl: avatarUrl,
-      attachments: attachments ?? this.attachments,
-    );
-  }
 }
 
 class CardMemberEntity {

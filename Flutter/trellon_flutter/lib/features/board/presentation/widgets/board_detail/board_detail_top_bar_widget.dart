@@ -5,6 +5,7 @@ import '../../../../../init_dependencies.dart';
 import '../../../../../core/data_sources/user_local_data_source.dart';
 import '../../../../search/presentation/delegates/global_search_delegate.dart';
 
+
 class BoardDetailTopBarWidget extends StatelessWidget {
   final String boardName;
   final VoidCallback onBack;
@@ -25,17 +26,10 @@ class BoardDetailTopBarWidget extends StatelessWidget {
       child: Row(
         children: [
           IconButton(
-            icon: const Icon(
-              Icons.arrow_back_rounded,
-              color: Color(0xFF1D4ED8),
-            ),
+            icon: const Icon(Icons.arrow_back_rounded, color: Color(0xFF1D4ED8)),
             onPressed: onBack,
           ),
-          const Icon(
-            Icons.grid_view_rounded,
-            color: Color(0xFF1D4ED8),
-            size: 22,
-          ),
+          const Icon(Icons.grid_view_rounded, color: Color(0xFF1D4ED8), size: 22),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
@@ -51,27 +45,18 @@ class BoardDetailTopBarWidget extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.search_rounded, color: Color(0xFF64748B)),
             onPressed: () async {
-              final uid = await serviceLocator<UserLocalDataSource>()
-                  .getUserId();
+              final uid = await serviceLocator<UserLocalDataSource>().getUserId();
               if (!context.mounted) return;
               debugPrint('Search tapped in BoardDetailTopBar. UID: $uid');
               if (uid != null) {
-                showSearch(
-                  context: context,
-                  delegate: GlobalSearchDelegate(userUId: uid),
-                );
+                showSearch(context: context, delegate: GlobalSearchDelegate(userUId: uid));
               } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Lỗi: Không tìm thấy User ID!')),
-                );
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Lỗi: Không tìm thấy User ID!')));
               }
             },
           ),
           IconButton(
-            icon: const Icon(
-              Icons.more_horiz_rounded,
-              color: Color(0xFF64748B),
-            ),
+            icon: const Icon(Icons.more_horiz_rounded, color: Color(0xFF64748B)),
             onPressed: onSettingsTap,
           ),
           const AvatarChipWidget(),

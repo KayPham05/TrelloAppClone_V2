@@ -3,11 +3,9 @@ using MailKit.Net.Smtp;
 using MailKit.Security;
 using MimeKit;
 
-using TodoAppAPI.Interfaces;
-
 namespace TodoAppAPI.Service
 {
-    public class EmailService : IEmailService
+    public class EmailService
     {
         private readonly IConfiguration _configuration;
 
@@ -37,7 +35,11 @@ namespace TodoAppAPI.Service
             <p>Mã này sẽ hết hạn sau 5 phút.</p>"
             };
 
-            await SendEmailMessageAsync(message, smtpServer, smtpPort, senderEmail, senderPassword);
+            using var client = new SmtpClient();
+            await client.ConnectAsync(smtpServer, smtpPort, SecureSocketOptions.StartTls);
+            await client.AuthenticateAsync(senderEmail, senderPassword);
+            await client.SendAsync(message);
+            await client.DisconnectAsync(true);
         }
 
         public async Task SendTwoFactorOtpEmailAsync(string toEmail, string code)
@@ -61,7 +63,11 @@ namespace TodoAppAPI.Service
             <p>Mã này chỉ có hiệu lực trong <b>2 phút</b>.</p>"
             };
 
-            await SendEmailMessageAsync(message, smtpServer, smtpPort, senderEmail, senderPassword);
+            using var client = new SmtpClient();
+            await client.ConnectAsync(smtpServer, smtpPort, SecureSocketOptions.StartTls);
+            await client.AuthenticateAsync(senderEmail, senderPassword);
+            await client.SendAsync(message);
+            await client.DisconnectAsync(true);
         }
 
         public async Task SendChangePasswordNotificationEmailAsync(string toEmail, string lockToken)
@@ -88,7 +94,11 @@ namespace TodoAppAPI.Service
             <a href='{lockUrl}' style='display:inline-block;padding:10px 20px;background-color:red;color:white;text-decoration:none;border-radius:5px;'>Khóa tài khoản</a>"
             };
 
-            await SendEmailMessageAsync(message, smtpServer, smtpPort, senderEmail, senderPassword);
+            using var client = new SmtpClient();
+            await client.ConnectAsync(smtpServer, smtpPort, SecureSocketOptions.StartTls);
+            await client.AuthenticateAsync(senderEmail, senderPassword);
+            await client.SendAsync(message);
+            await client.DisconnectAsync(true);
         }
         public async Task SendEmailChangeOtpAsync(string toEmail, string code)
         {
@@ -111,7 +121,11 @@ namespace TodoAppAPI.Service
             <p>Mã này chỉ có hiệu lực trong <b>15 phút</b>.</p>"
             };
 
-            await SendEmailMessageAsync(message, smtpServer, smtpPort, senderEmail, senderPassword);
+            using var client = new SmtpClient();
+            await client.ConnectAsync(smtpServer, smtpPort, SecureSocketOptions.StartTls);
+            await client.AuthenticateAsync(senderEmail, senderPassword);
+            await client.SendAsync(message);
+            await client.DisconnectAsync(true);
         }
 
         public async Task SendEmailChangeWarningAsync(string toEmail, string newEmail, string lockToken)
@@ -144,7 +158,11 @@ namespace TodoAppAPI.Service
             <a href='{lockUrl}' style='display:inline-block;padding:10px 20px;background-color:red;color:white;text-decoration:none;border-radius:5px;'>Khóa tài khoản</a>"
             };
 
-            await SendEmailMessageAsync(message, smtpServer, smtpPort, senderEmail, senderPassword);
+            using var client = new SmtpClient();
+            await client.ConnectAsync(smtpServer, smtpPort, SecureSocketOptions.StartTls);
+            await client.AuthenticateAsync(senderEmail, senderPassword);
+            await client.SendAsync(message);
+            await client.DisconnectAsync(true);
         }
 
         public async Task SendPasswordResetOtpEmailAsync(string toEmail, string code)
@@ -169,11 +187,6 @@ namespace TodoAppAPI.Service
             <p>Nếu bạn không yêu cầu khôi phục mật khẩu, vui lòng bỏ qua email này.</p>"
             };
 
-            await SendEmailMessageAsync(message, smtpServer, smtpPort, senderEmail, senderPassword);
-        }
-
-        protected virtual async Task SendEmailMessageAsync(MimeMessage message, string smtpServer, int smtpPort, string senderEmail, string senderPassword)
-        {
             using var client = new SmtpClient();
             await client.ConnectAsync(smtpServer, smtpPort, SecureSocketOptions.StartTls);
             await client.AuthenticateAsync(senderEmail, senderPassword);

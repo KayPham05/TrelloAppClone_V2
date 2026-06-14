@@ -8,13 +8,7 @@ import '../../../card/data/models/card_model.dart';
 abstract class BoardRemoteDataSource {
   // Board CRUD
   Future<List<BoardModel>> getRecentBoards(String userUid);
-  Future<List<BoardModel>> getStarredBoards(String userUid);
   Future<void> saveRecentBoard(String userUid, String boardId);
-  Future<void> setBoardStarred({
-    required String userUid,
-    required String boardId,
-    required bool isStarred,
-  });
   Future<List<BoardModel>> getAllBoards(String userUid);
   Future<BoardModel?> getBoardById(String boardId);
   Future<void> deleteBoard({required String boardId, required String userUId});
@@ -58,10 +52,7 @@ abstract class BoardRemoteDataSource {
   Future<List<CardModel>> filterCardsByBoard(String boardId, BoardCardFilterRequest request);
   Future<List<CardModel>> getArchivedCards(String boardId, String userUId);
   Future<void> restoreCard({required String cardId, required String userUId});
-  Future<int> archiveAllCompleted({
-    required String boardId,
-    required String userUId,
-  });
+  Future<int> archiveAllCompleted({required String boardId, required String userUId});
   Future<ListModel> createList({
     required String boardId,
     required String name,
@@ -88,10 +79,7 @@ abstract class BoardRemoteDataSource {
 
   // Board Members
   Future<List<dynamic>> getBoardMembers(String boardId);
-  Future<String?> getUserRoleInBoard({
-    required String boardId,
-    required String userUId,
-  });
+  Future<String?> getUserRoleInBoard({required String boardId, required String userUId});
   Future<bool> addBoardMember({
     required String boardId,
     required String userId,
@@ -148,26 +136,6 @@ class BoardRemoteDataSourceImpl implements BoardRemoteDataSource {
   }
 
   @override
-  Future<List<BoardModel>> getStarredBoards(String userUid) async {
-    try {
-      final response = await client.get(
-        ApiEndpoints.starredBoards,
-        queryParameters: {'userUId': userUid},
-      );
-      if (response.statusCode == 200) {
-        final List data = response.data;
-        return data.map((json) => BoardModel.fromJson(json)).toList();
-      }
-      return [];
-    } on DioException catch (e) {
-      if (e.response?.statusCode == 404) return [];
-      rethrow;
-    } catch (e) {
-      throw Exception('Failed to load starred boards: $e');
-    }
-  }
-
-  @override
   Future<void> saveRecentBoard(String userUid, String boardId) async {
     try {
       await client.post(
@@ -176,22 +144,6 @@ class BoardRemoteDataSourceImpl implements BoardRemoteDataSource {
       );
     } catch (e) {
       throw Exception('Failed to save recent board: $e');
-    }
-  }
-
-  @override
-  Future<void> setBoardStarred({
-    required String userUid,
-    required String boardId,
-    required bool isStarred,
-  }) async {
-    try {
-      await client.put(
-        '${ApiEndpoints.starredBoards}/$userUid',
-        queryParameters: {'boardUId': boardId, 'isStarred': isStarred},
-      );
-    } catch (e) {
-      throw Exception('Failed to update starred board: $e');
     }
   }
 
@@ -229,10 +181,7 @@ class BoardRemoteDataSourceImpl implements BoardRemoteDataSource {
   }
 
   @override
-  Future<void> deleteBoard({
-    required String boardId,
-    required String userUId,
-  }) async {
+  Future<void> deleteBoard({required String boardId, required String userUId}) async {
     try {
       await client.delete(
         '${ApiEndpoints.boards}/$boardId',
@@ -280,7 +229,10 @@ class BoardRemoteDataSourceImpl implements BoardRemoteDataSource {
     String? visibility,
     String? workspaceUId,
   }) async {
-    final body = <String, dynamic>{'boardUId': boardId, 'boardName': boardName};
+    final body = <String, dynamic>{
+      'boardUId': boardId,
+      'boardName': boardName,
+    };
     if (backgroundUrl != null) body['backgroundUrl'] = backgroundUrl;
     if (visibility != null) body['visibility'] = visibility;
     if (workspaceUId != null) body['workspaceUId'] = workspaceUId;
@@ -392,7 +344,10 @@ class BoardRemoteDataSourceImpl implements BoardRemoteDataSource {
     try {
       final response = await client.get(
         '${ApiEndpoints.card}/archived',
-        queryParameters: {'boardUId': boardId, 'userUId': userUId},
+        queryParameters: {
+          'boardUId': boardId,
+          'userUId': userUId,
+        },
       );
       if (response.statusCode == 200) {
         final List data = response.data;
@@ -405,10 +360,7 @@ class BoardRemoteDataSourceImpl implements BoardRemoteDataSource {
   }
 
   @override
-  Future<void> restoreCard({
-    required String cardId,
-    required String userUId,
-  }) async {
+  Future<void> restoreCard({required String cardId, required String userUId}) async {
     await client.patch(
       '${ApiEndpoints.card}/$cardId/unarchive',
       queryParameters: {'userUId': userUId},
@@ -416,10 +368,7 @@ class BoardRemoteDataSourceImpl implements BoardRemoteDataSource {
   }
 
   @override
-  Future<int> archiveAllCompleted({
-    required String boardId,
-    required String userUId,
-  }) async {
+  Future<int> archiveAllCompleted({required String boardId, required String userUId}) async {
     try {
       final response = await client.post(
         '${ApiEndpoints.boards}/$boardId/archive-completed',
@@ -458,10 +407,7 @@ class BoardRemoteDataSourceImpl implements BoardRemoteDataSource {
   }
 
   @override
-  Future<void> deleteList({
-    required String listId,
-    required String userUId,
-  }) async {
+  Future<void> deleteList({required String listId, required String userUId}) async {
     await client.put(
       '${ApiEndpoints.lists}/$listId',
       queryParameters: {'newStatus': 'Deleted', 'userUId': userUId},
@@ -474,13 +420,17 @@ class BoardRemoteDataSourceImpl implements BoardRemoteDataSource {
     required List<ListModel> lists,
     required String userUId,
   }) async {
-    final order = lists
-        .map((l) => {'listUId': l.id, 'position': l.position})
-        .toList();
+    final order = lists.map((l) => {
+      'listUId': l.id,
+      'position': l.position,
+    }).toList();
 
     final response = await client.put(
       '${ApiEndpoints.lists}/reorder',
-      data: {'boardUId': boardId, 'order': order},
+      data: {
+        'boardUId': boardId,
+        'order': order,
+      },
       queryParameters: {'userUId': userUId},
     );
     if (response.statusCode != 200) {
@@ -526,7 +476,10 @@ class BoardRemoteDataSourceImpl implements BoardRemoteDataSource {
   }) async {
     final response = await client.put(
       '${ApiEndpoints.card}/$cardId/update-list',
-      data: {'listUId': newListId, 'userUId': userUId},
+      data: {
+        'listUId': newListId,
+        'userUId': userUId,
+      },
     );
     if (response.statusCode != 200) {
       throw Exception('Failed to move card');
@@ -545,10 +498,7 @@ class BoardRemoteDataSourceImpl implements BoardRemoteDataSource {
   }
 
   @override
-  Future<String?> getUserRoleInBoard({
-    required String boardId,
-    required String userUId,
-  }) async {
+  Future<String?> getUserRoleInBoard({required String boardId, required String userUId}) async {
     try {
       final response = await client.get(
         '${ApiEndpoints.boardMember}/$boardId/role',
@@ -631,9 +581,7 @@ class BoardRemoteDataSourceImpl implements BoardRemoteDataSource {
   @override
   Future<List<dynamic>> getWorkspaceMembers(String workspaceId) async {
     try {
-      final response = await client.get(
-        '${ApiEndpoints.workspaceMember}/$workspaceId',
-      );
+      final response = await client.get('${ApiEndpoints.workspaceMember}/$workspaceId');
       if (response.statusCode == 200) {
         return response.data as List;
       }

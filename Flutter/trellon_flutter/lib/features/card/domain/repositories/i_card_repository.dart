@@ -15,10 +15,6 @@ abstract class ICardRepository {
 
   Future<List<CommentEntity>> getComments({required String cardId});
   Future<CommentEntity> addComment({required String cardId, required String content, required String userUId});
-  Future<CommentEntity> updateComment({required String commentId, required String content, required String userUId});
-  Future<void> deleteComment({required String commentId, required String userUId});
-  Future<FileUrlEntity> uploadCommentAttachment({required String commentId, required String filePath, required String userUId});
-  Future<void> deleteCommentAttachment({required String commentId, required String fileId, required String userUId});
   Future<List<CardMemberEntity>> getCardMembers({required String cardId});
   Future<List<TodoItemEntity>> getTodoItems({required String cardId});
   

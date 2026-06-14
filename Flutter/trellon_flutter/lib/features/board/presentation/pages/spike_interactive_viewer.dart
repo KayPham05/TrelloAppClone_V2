@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 
 /// SPIKE: InteractiveViewer + LongPressDraggable + Auto-scroll
 /// Phase 1: Đánh giá rủi ro
-///
+/// 
 /// Mục tiêu test:
-/// 1. InteractiveViewer có chặn gesture của LongPressDraggable không?
+/// 1. InteractiveViewer có chặn gesture của LongPressDraggable không? 
 ///    -> Có thể giải quyết bằng cách dùng cờ `panEnabled: !isDragging`
 /// 2. Auto-scroll khi kéo component ra rìa màn hình.
 ///    -> Có thể dùng Listener/Timer để cuốn ScrollController nếu offset bị vượt giới hạn.
@@ -17,10 +17,9 @@ class SpikeInteractiveViewer extends StatefulWidget {
 }
 
 class _SpikeInteractiveViewerState extends State<SpikeInteractiveViewer> {
-  final TransformationController _transformationController =
-      TransformationController();
+  final TransformationController _transformationController = TransformationController();
   final ScrollController _scrollController = ScrollController();
-
+  
   bool _isDragging = false;
   final List<String> _items = List.generate(10, (index) => 'List ${index + 1}');
 
@@ -73,9 +72,7 @@ class _SpikeInteractiveViewerState extends State<SpikeInteractiveViewer> {
                     onDragStarted: _onDragStarted,
                     onDragEnd: _onDragEnded,
                     onDraggableCanceled: (velocity, offset) {
-                      _onDragEnded(
-                        DraggableDetails(velocity: velocity, offset: offset),
-                      );
+                      _onDragEnded(DraggableDetails(velocity: velocity, offset: offset));
                     },
                     feedback: Material(
                       elevation: 8,
@@ -86,10 +83,7 @@ class _SpikeInteractiveViewerState extends State<SpikeInteractiveViewer> {
                         child: Center(
                           child: Text(
                             item,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 24,
-                            ),
+                            style: const TextStyle(color: Colors.white, fontSize: 24),
                           ),
                         ),
                       ),
@@ -112,9 +106,7 @@ class _SpikeInteractiveViewerState extends State<SpikeInteractiveViewer> {
                         return Container(
                           width: 280,
                           height: 400,
-                          color: candidateData.isNotEmpty
-                              ? Colors.green[200]
-                              : Colors.white,
+                          color: candidateData.isNotEmpty ? Colors.green[200] : Colors.white,
                           child: Center(
                             child: Text(
                               item,

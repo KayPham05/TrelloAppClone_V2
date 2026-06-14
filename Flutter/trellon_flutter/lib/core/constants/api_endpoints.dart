@@ -18,10 +18,8 @@ class ApiEndpoints {
   static const String boards = 'boards';
   static const String workspace = 'workspace';
   static const String recentBoards = 'RecentBoard';
-  static const String starredBoards = 'StarredBoard';
   static const String workspaceMember = 'workspaceMember';
   static const String boardMember = 'boardMember';
-  static const String inviteSuggestions = 'users/invite-suggestions';
   static const String notifications = 'notifications';
   static const String search = 'search';
   static const String googleLogin = 'auth/Google-login';
