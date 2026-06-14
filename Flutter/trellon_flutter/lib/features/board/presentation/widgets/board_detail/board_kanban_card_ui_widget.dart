@@ -302,7 +302,10 @@ class KanbanCardUiWidget extends StatelessWidget {
                               backgroundImage:
                                   (m.avatarUrl != null &&
                                       m.avatarUrl!.isNotEmpty)
-                                  ? CachedNetworkImageProvider(m.avatarUrl!)
+                                  ? CachedNetworkImageProvider(
+                                      m.avatarUrl!,
+                                      errorListener: (err) => debugPrint('Error loading avatar: $err'),
+                                    )
                                   : null,
                               child:
                                   (m.avatarUrl == null || m.avatarUrl!.isEmpty)
