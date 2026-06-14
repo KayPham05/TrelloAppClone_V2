@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
+using System.Security.Claims;
 using TodoAppAPI.Constants;
 using TodoAppAPI.Hubs;
 using TodoAppAPI.DTOs;
@@ -47,6 +48,28 @@ namespace TodoAppAPI.Controllers
         {
             var cards = _cardService.GetCardsByBoardId(boardUId);
             return Ok(cards);
+        }
+
+        [HttpPost("by-board/{boardUId}/filter")]
+        public async Task<IActionResult> FilterByBoard(string boardUId, [FromBody] BoardCardFilterRequest? request)
+        {
+            var userUId = User.FindFirstValue("UserUId");
+            if (string.IsNullOrWhiteSpace(userUId))
+                return Unauthorized(new { message = "UserUId claim is required" });
+
+            var result = await _cardService.FilterCardsByBoardAsync(
+                boardUId,
+                request ?? new BoardCardFilterRequest(),
+                userUId);
+
+            return result.Status switch
+            {
+                BoardCardFilterResultStatus.Success => Ok(result.Cards),
+                BoardCardFilterResultStatus.BadRequest => BadRequest(new { message = result.Message }),
+                BoardCardFilterResultStatus.Forbidden => StatusCode(403, new { message = result.Message }),
+                BoardCardFilterResultStatus.NotFound => NotFound(new { message = result.Message }),
+                _ => StatusCode(500, new { message = "KhÃ´ng thá»ƒ lá»c card." })
+            };
         }
 
         // GET api/<TodosController>/5

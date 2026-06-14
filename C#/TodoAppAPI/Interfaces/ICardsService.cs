@@ -6,6 +6,7 @@ namespace TodoAppAPI.Interfaces
     public interface ICardsService
     {
         List<Card> GetCardsByBoardId(string boardUId);
+        Task<BoardCardFilterResult> FilterCardsByBoardAsync(string boardUId, BoardCardFilterRequest request, string userUId);
         Task<bool> AddCard(Card card);
         Task<bool> UpdateCard(Card card, string userUId);
         Task<bool> DeleteCard(string Uid, string userUId);

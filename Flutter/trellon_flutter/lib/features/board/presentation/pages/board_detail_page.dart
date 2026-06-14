@@ -44,9 +44,6 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
 
   // ── Filter state ─────────────────────────────────────────────────────────
   /// When non-null, the board shows only the cards that passed the filter.
-  List<ListEntity>? _filteredLists;
-  bool get _isFilterActive => _filteredLists != null;
-
   bool _isDragging = false;
   final TextEditingController _addListController = TextEditingController();
   String? _joinedBoardId;
@@ -380,42 +377,24 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
         IconButton(
           icon: Icon(
             Icons.filter_list,
-            color: _isFilterActive ? AppColors.blueLight : Colors.white,
+            color: (loadedState?.activeFilter.isActive ?? false)
+                ? AppColors.blueLight
+                : Colors.white,
           ),
           onPressed: () async {
             if (loadedState == null) return;
-            final lists = _localLists ?? loadedState.lists;
-            final result = await BoardFilterSheet.show(
+            final lists = loadedState.unfilteredLists ?? loadedState.lists;
+            await BoardFilterSheet.show(
               context,
               boardId: loadedState.boardId,
               lists: lists,
+              initialState: loadedState.activeFilter,
+              onChanged: (filter) => _cubit?.applyBoardFilter(filter),
+              onClear: () => _cubit?.clearBoardFilter(),
             );
-            if (!mounted) return;
-            // null means dismissed without applying (user closed)
-            // An empty result means "show nothing" (legitimate 0-match state)
-            setState(() {
-              if (result == null) {
-                // No change — keep existing filter
-              } else {
-                // Check if the result is a full-clear (all cards == original)
-                final totalOriginal = lists.fold<int>(
-                  0,
-                  (s, l) => s + l.cards.length,
-                );
-                final totalResult = result.fold<int>(
-                  0,
-                  (s, l) => s + l.cards.length,
-                );
-                _filteredLists =
-                    (totalResult == totalOriginal &&
-                        result.length == lists.length)
-                    ? null
-                    : result;
-              }
-            });
           },
         ),
-        if (_isFilterActive)
+        if (loadedState?.activeFilter.isActive ?? false)
           Positioned(
             right: 8,
             top: 8,
@@ -452,7 +431,7 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
 
   // ── Zoom / Swipe view ────────────────────────────────────────────────────
   Widget _buildZoomSwipeView(BoardDetailLoaded state) {
-    final lists = _filteredLists ?? _localLists ?? state.lists;
+    final lists = _localLists ?? state.lists;
     if (lists.isEmpty) {
       return const Center(
         child: Text('Chưa có cột nào.', style: TextStyle(color: Colors.white)),
@@ -655,7 +634,30 @@ class _BoardDetailPageState extends State<BoardDetailPage> {
   }
 
   Widget _buildKanban(BoardDetailLoaded state) {
-    final listsToRender = _filteredLists ?? _localLists ?? state.lists;
+    final listsToRender = _localLists ?? state.lists;
+    final visibleCardCount = listsToRender.fold<int>(
+      0,
+      (sum, list) => sum + list.cards.length,
+    );
+    if (state.isFiltering) {
+      return const Center(child: CircularProgressIndicator(color: Colors.white));
+    }
+    if (state.filterError != null) {
+      return Center(
+        child: Text(
+          state.filterError!,
+          style: const TextStyle(color: Colors.white),
+        ),
+      );
+    }
+    if (state.activeFilter.isActive && visibleCardCount == 0) {
+      return const Center(
+        child: Text(
+          'Khong co card phu hop.',
+          style: TextStyle(color: Colors.white),
+        ),
+      );
+    }
     return ReorderableListView.builder(
       scrollDirection: Axis.horizontal,
       padding: EdgeInsets.fromLTRB(16 * _s, 100, 16 * _s, 120),

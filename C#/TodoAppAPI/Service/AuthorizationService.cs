@@ -101,6 +101,30 @@ namespace TodoAppAPI.Service
             return member.BoardRole == RoleConstants.BoardOwner || member.BoardRole == RoleConstants.BoardAdmin;
         }
 
+        public async Task<bool> CanViewBoardAsync(string boardId, string userId)
+        {
+            var board = await _context.Boards
+                .AsNoTracking()
+                .FirstOrDefaultAsync(b => b.BoardUId == boardId && b.Status != "Deleted");
+            if (board == null) return false;
+
+            if (board.UserUId == userId) return true;
+
+            var isBoardMember = await _context.BoardMembers
+                .AsNoTracking()
+                .AnyAsync(m => m.BoardUId == boardId && m.UserUId == userId);
+            if (isBoardMember) return true;
+
+            if (!string.IsNullOrEmpty(board.WorkspaceUId))
+            {
+                return await _context.WorkspaceMembers
+                    .AsNoTracking()
+                    .AnyAsync(m => m.WorkspaceUId == board.WorkspaceUId && m.UserUId == userId);
+            }
+
+            return false;
+        }
+
         public async Task<bool> CanEditBoardAsync(string boardId, string userId)
         {
             var member = await _context.BoardMembers

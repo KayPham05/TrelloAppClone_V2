@@ -1,184 +1,270 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../domain/entities/list_entity.dart';
-import '../../../card/domain/entities/card_entity.dart';
+import '../../../../core/constants/card_status_values.dart';
+import '../../data/models/board_card_filter_request.dart';
 
-// ── Due-date quick filters ───────────────────────────────────────────────────
-enum DueDateFilter { none, overdue, today, thisWeek, thisMonth }
+enum DueDateFilter { overdue, noDate, nextWeek, nextMonth }
 
 extension DueDateFilterLabel on DueDateFilter {
   String get label {
     switch (this) {
-      case DueDateFilter.none:
-        return '';
       case DueDateFilter.overdue:
         return 'Quá hạn';
-      case DueDateFilter.today:
-        return 'Hết hạn hôm nay';
-      case DueDateFilter.thisWeek:
-        return 'Hết hạn trong tuần';
-      case DueDateFilter.thisMonth:
-        return 'Hết hạn trong tháng';
+      case DueDateFilter.noDate:
+        return 'Không có thời hạn';
+      case DueDateFilter.nextWeek:
+        return 'Hết hạn trong tuần tới';
+      case DueDateFilter.nextMonth:
+        return 'Hết hạn trong tháng tới';
+    }
+  }
+
+  String get apiValue {
+    switch (this) {
+      case DueDateFilter.overdue:
+        return 'overdue';
+      case DueDateFilter.noDate:
+        return 'no_due_date';
+      case DueDateFilter.nextWeek:
+        return 'next_week';
+      case DueDateFilter.nextMonth:
+        return 'next_month';
     }
   }
 }
 
-// ── State ────────────────────────────────────────────────────────────────────
+enum BoardCompletionFilter { completed, incomplete }
+
+extension BoardCompletionFilterLabel on BoardCompletionFilter {
+  String get label => this == BoardCompletionFilter.completed
+      ? 'Hoàn thành'
+      : 'Chưa hoàn thành';
+
+  String get apiValue => this == BoardCompletionFilter.completed
+      ? CardStatusValues.completed
+      : 'incomplete';
+}
+
+enum BoardFilterMatchMode { exact, any }
+
+extension BoardFilterMatchModeLabel on BoardFilterMatchMode {
+  String get label =>
+      this == BoardFilterMatchMode.exact ? 'Khớp chính xác' : 'Khớp bất kỳ';
+
+  String get apiValue => this == BoardFilterMatchMode.exact ? 'exact' : 'any';
+}
+
 class BoardFilterState extends Equatable {
   final String query;
-  final Set<String> selectedMemberUIds; // userUId
-  final Set<String> selectedLabelIds; // label id
-  final DueDateFilter dueDateFilter;
+  final bool noMembers;
+  final bool assignedToMe;
+  final Set<String> selectedMemberUIds;
+  final Set<String> selectedLabelIds;
+  final Set<String> selectedLabelGroupKeys;
+  final List<BoardCardLabelFilterGroupRequest> selectedLabelGroups;
+  final BoardCompletionFilter? completionFilter;
+  final Set<DueDateFilter> dueDateFilters;
+  final bool noLabels;
+  final BoardFilterMatchMode matchMode;
 
   const BoardFilterState({
     this.query = '',
+    this.noMembers = false,
+    this.assignedToMe = false,
     this.selectedMemberUIds = const {},
     this.selectedLabelIds = const {},
-    this.dueDateFilter = DueDateFilter.none,
+    this.selectedLabelGroupKeys = const {},
+    this.selectedLabelGroups = const [],
+    this.completionFilter,
+    this.dueDateFilters = const {},
+    this.noLabels = false,
+    this.matchMode = BoardFilterMatchMode.exact,
   });
 
   bool get isActive =>
-      query.isNotEmpty ||
+      query.trim().isNotEmpty ||
+      noMembers ||
+      assignedToMe ||
       selectedMemberUIds.isNotEmpty ||
       selectedLabelIds.isNotEmpty ||
-      dueDateFilter != DueDateFilter.none;
+      selectedLabelGroupKeys.isNotEmpty ||
+      completionFilter != null ||
+      dueDateFilters.isNotEmpty ||
+      noLabels;
+
+  BoardCardFilterRequest toRequest() {
+    return BoardCardFilterRequest(
+      keyword: query.trim(),
+      noMembers: noMembers,
+      assignedToMe: assignedToMe,
+      memberUIds: selectedMemberUIds,
+      completionStatus: completionFilter?.apiValue,
+      dueDateFilters: dueDateFilters.map((f) => f.apiValue).toSet(),
+      noLabels: noLabels,
+      labelUIds: selectedLabelIds,
+      selectedLabelGroups: selectedLabelGroups,
+      matchMode: matchMode.apiValue,
+    );
+  }
 
   BoardFilterState copyWith({
     String? query,
+    bool? noMembers,
+    bool? assignedToMe,
     Set<String>? selectedMemberUIds,
     Set<String>? selectedLabelIds,
-    DueDateFilter? dueDateFilter,
+    Set<String>? selectedLabelGroupKeys,
+    List<BoardCardLabelFilterGroupRequest>? selectedLabelGroups,
+    BoardCompletionFilter? completionFilter,
+    bool clearCompletionFilter = false,
+    Set<DueDateFilter>? dueDateFilters,
+    bool? noLabels,
+    BoardFilterMatchMode? matchMode,
   }) {
     return BoardFilterState(
       query: query ?? this.query,
+      noMembers: noMembers ?? this.noMembers,
+      assignedToMe: assignedToMe ?? this.assignedToMe,
       selectedMemberUIds: selectedMemberUIds ?? this.selectedMemberUIds,
       selectedLabelIds: selectedLabelIds ?? this.selectedLabelIds,
-      dueDateFilter: dueDateFilter ?? this.dueDateFilter,
+      selectedLabelGroupKeys:
+          selectedLabelGroupKeys ?? this.selectedLabelGroupKeys,
+      selectedLabelGroups: selectedLabelGroups ?? this.selectedLabelGroups,
+      completionFilter: clearCompletionFilter
+          ? null
+          : (completionFilter ?? this.completionFilter),
+      dueDateFilters: dueDateFilters ?? this.dueDateFilters,
+      noLabels: noLabels ?? this.noLabels,
+      matchMode: matchMode ?? this.matchMode,
     );
   }
 
   @override
   List<Object?> get props => [
     query,
+    noMembers,
+    assignedToMe,
     selectedMemberUIds,
     selectedLabelIds,
-    dueDateFilter,
+    selectedLabelGroupKeys,
+    selectedLabelGroups,
+    completionFilter,
+    dueDateFilters,
+    noLabels,
+    matchMode,
   ];
 }
 
-// ── Cubit ────────────────────────────────────────────────────────────────────
 class BoardFilterCubit extends Cubit<BoardFilterState> {
-  BoardFilterCubit() : super(const BoardFilterState());
+  BoardFilterCubit([super.initialState = const BoardFilterState()]);
 
   void setQuery(String q) => emit(state.copyWith(query: q));
 
+  void toggleNoMembers() => emit(state.copyWith(noMembers: !state.noMembers));
+
+  void toggleAssignedToMe() =>
+      emit(state.copyWith(assignedToMe: !state.assignedToMe));
+
   void toggleMember(String userUId) {
     final updated = Set<String>.from(state.selectedMemberUIds);
-    if (updated.contains(userUId)) {
-      updated.remove(userUId);
-    } else {
-      updated.add(userUId);
-    }
+    updated.contains(userUId) ? updated.remove(userUId) : updated.add(userUId);
     emit(state.copyWith(selectedMemberUIds: updated));
+  }
+
+  void selectMembers(Iterable<String> userUIds) {
+    emit(state.copyWith(selectedMemberUIds: userUIds.toSet()));
   }
 
   void toggleLabel(String labelId) {
     final updated = Set<String>.from(state.selectedLabelIds);
-    if (updated.contains(labelId)) {
-      updated.remove(labelId);
-    } else {
-      updated.add(labelId);
-    }
+    updated.contains(labelId) ? updated.remove(labelId) : updated.add(labelId);
     emit(state.copyWith(selectedLabelIds: updated));
   }
 
-  void setDueDate(DueDateFilter filter) {
-    final next = state.dueDateFilter == filter ? DueDateFilter.none : filter;
-    emit(state.copyWith(dueDateFilter: next));
+  void selectLabels(Iterable<String> labelIds) {
+    emit(state.copyWith(selectedLabelIds: labelIds.toSet()));
+  }
+
+  void toggleLabelGroup(String key, Iterable<String> cardLabelUIds) {
+    final updatedKeys = Set<String>.from(state.selectedLabelGroupKeys);
+    final updatedGroups = <String, BoardCardLabelFilterGroupRequest>{};
+    var groupIndex = 0;
+    for (final groupKey in state.selectedLabelGroupKeys) {
+      if (groupIndex < state.selectedLabelGroups.length) {
+        updatedGroups[groupKey] = state.selectedLabelGroups[groupIndex];
+      }
+      groupIndex++;
+    }
+
+    if (updatedKeys.contains(key)) {
+      updatedKeys.remove(key);
+      updatedGroups.remove(key);
+    } else {
+      updatedKeys.add(key);
+      updatedGroups[key] = BoardCardLabelFilterGroupRequest(
+        cardLabelUIds: _normalizeGroupIds(cardLabelUIds),
+      );
+    }
+
+    emit(
+      state.copyWith(
+        selectedLabelGroupKeys: updatedKeys,
+        selectedLabelGroups: updatedKeys
+            .map((groupKey) => updatedGroups[groupKey])
+            .whereType<BoardCardLabelFilterGroupRequest>()
+            .toList(growable: false),
+        selectedLabelIds: const {},
+      ),
+    );
+  }
+
+  void selectLabelGroups(Map<String, Iterable<String>> groups) {
+    final keys = groups.keys.toSet();
+    emit(
+      state.copyWith(
+        selectedLabelGroupKeys: keys,
+        selectedLabelGroups: groups.values
+            .map(
+              (ids) => BoardCardLabelFilterGroupRequest(
+                cardLabelUIds: _normalizeGroupIds(ids),
+              ),
+            )
+            .toList(growable: false),
+        selectedLabelIds: const {},
+      ),
+    );
+  }
+
+  void setCompletionFilter(BoardCompletionFilter filter) {
+    if (state.completionFilter == filter) {
+      emit(state.copyWith(clearCompletionFilter: true));
+    } else {
+      emit(state.copyWith(completionFilter: filter));
+    }
+  }
+
+  void toggleDueDate(DueDateFilter filter) {
+    final updated = Set<DueDateFilter>.from(state.dueDateFilters);
+    updated.contains(filter) ? updated.remove(filter) : updated.add(filter);
+    emit(state.copyWith(dueDateFilters: updated));
+  }
+
+  void toggleNoLabels() => emit(state.copyWith(noLabels: !state.noLabels));
+
+  void setMatchMode(BoardFilterMatchMode mode) {
+    emit(state.copyWith(matchMode: mode));
   }
 
   void clearAll() => emit(const BoardFilterState());
 
-  // ── Core filter logic ──────────────────────────────────────────────────────
-  /// Returns a copy of [lists] with only matching cards.
-  /// Lists that end up empty are retained (so columns still show).
-  List<ListEntity> applyFilter(List<ListEntity> lists) {
-    if (!state.isActive) return lists;
-
-    return lists.map((list) {
-      final filteredCards = list.cards
-          .where((card) => _cardMatches(card, list))
-          .toList();
-      return list.copyWith(cards: filteredCards);
-    }).toList();
-  }
-
-  /// Total matching cards count across all lists
-  int countMatches(List<ListEntity> lists) {
-    if (!state.isActive) return lists.fold(0, (sum, l) => sum + l.cards.length);
-    return lists.fold(
-      0,
-      (sum, l) => sum + l.cards.where((c) => _cardMatches(c, l)).length,
-    );
-  }
-
-  bool _cardMatches(CardEntity card, ListEntity list) {
-    if (!_matchesQuery(card, list)) return false;
-    if (!_matchesMembers(card)) return false;
-    if (!_matchesLabels(card)) return false;
-    if (!_matchesDueDate(card)) return false;
-    return true;
-  }
-
-  bool _matchesQuery(CardEntity card, ListEntity list) {
-    if (state.query.isEmpty) return true;
-    final q = state.query.toLowerCase();
-    
-    if (card.title.toLowerCase().contains(q)) return true;
-    if ((card.description ?? '').toLowerCase().contains(q)) return true;
-    if (list.name.toLowerCase().contains(q)) return true;
-    if (card.todoItems.any((t) => t.title.toLowerCase().contains(q))) return true;
-    if (card.labels.any((l) => l.title.toLowerCase().contains(q))) return true;
-    if (card.members.any((m) => m.userName.toLowerCase().contains(q))) return true;
-    
-    return false;
-  }
-
-  bool _matchesMembers(CardEntity card) {
-    if (state.selectedMemberUIds.isEmpty) return true;
-    final cardMemberIds = card.members.map((m) => m.userUId).toSet();
-    return state.selectedMemberUIds.every((id) => cardMemberIds.contains(id));
-  }
-
-  bool _matchesLabels(CardEntity card) {
-    if (state.selectedLabelIds.isEmpty) return true;
-    final cardLabelIds = card.labels.map((l) => l.id).toSet();
-    return state.selectedLabelIds.any((id) => cardLabelIds.contains(id));
-  }
-
-  bool _matchesDueDate(CardEntity card) {
-    if (state.dueDateFilter == DueDateFilter.none) return true;
-    
-    final due = card.dueDate;
-    if (due == null) return false;
-    
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final dueDay = DateTime(due.year, due.month, due.day);
-
-    switch (state.dueDateFilter) {
-      case DueDateFilter.overdue:
-        return dueDay.isBefore(today);
-      case DueDateFilter.today:
-        return dueDay == today;
-      case DueDateFilter.thisWeek:
-        final endOfWeek = today.add(Duration(days: 7 - today.weekday));
-        return !dueDay.isBefore(today) && !dueDay.isAfter(endOfWeek);
-      case DueDateFilter.thisMonth:
-        final endOfMonth = DateTime(now.year, now.month + 1, 0);
-        return !dueDay.isBefore(today) && !dueDay.isAfter(endOfMonth);
-      case DueDateFilter.none:
-        return true;
+  static List<String> _normalizeGroupIds(Iterable<String> ids) {
+    final normalized = <String>[];
+    for (final id in ids) {
+      final trimmed = id.trim();
+      if (trimmed.isNotEmpty && !normalized.contains(trimmed)) {
+        normalized.add(trimmed);
+      }
     }
+    return normalized;
   }
 }
