@@ -17,6 +17,10 @@ namespace TodoAppAPI.Controllers
     [Authorize]
     public class TodosController : ControllerBase
     {
+        private const string CardNotFoundMessage = "Card không tồn tại";
+        private const string CardNotFoundOrNoPermissionMessage = "Card không tồn tại hoặc bạn không có quyền";
+        private const string CardUpdatedEvent = "CardUpdated";
+
         private readonly ICardsService _cardService;
         private readonly IActivity _activity;
         private readonly ICloudinaryService _cloudinaryService;
@@ -38,6 +42,7 @@ namespace TodoAppAPI.Controllers
 
         // GET: api/<TodosController>
         [HttpGet("by-board/{boardUId}")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<Card>))]
         public IActionResult GetByBoard(string boardUId)
         {
             var cards = _cardService.GetCardsByBoardId(boardUId);
@@ -46,10 +51,11 @@ namespace TodoAppAPI.Controllers
 
         // GET api/<TodosController>/5
         [HttpGet("{id}")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Card))]
         public IActionResult Get(string id)
         {
             var card = _cardService.GetById(id);
-            if (card == null) return NotFound("Card không tồn tại");
+            if (card == null) return NotFound(CardNotFoundMessage);
             return Ok(card);
         }
 
@@ -121,21 +127,21 @@ namespace TodoAppAPI.Controllers
                     var list = await _listService.GetListByIdAsync(existingCard.ListUId);
                     if (list != null)
                     {
-                        await _boardHubContext.Clients.Group(BoardHub.BoardGroup(list.BoardUId)).SendAsync("CardUpdated", existingCard);
+                        await _boardHubContext.Clients.Group(BoardHub.BoardGroup(list.BoardUId)).SendAsync(CardUpdatedEvent, existingCard);
                         
                         await _notificationHubContext.Clients.Group($"Board_{list.BoardUId}")
-                            .SendAsync("CardUpdated", existingCard);
+                            .SendAsync(CardUpdatedEvent, existingCard);
                     }
                 }
 
                 // Thông báo cho Planner
                 await _notificationHubContext.Clients.Group(NotificationHub.UserGroup(userUId))
-                    .SendAsync("CardUpdated", existingCard);
+                    .SendAsync(CardUpdatedEvent, existingCard);
 
                 return Ok("Cập nhật card thành công");
             }
                 
-            return NotFound("Card không tồn tại hoặc bạn không có quyền");
+            return NotFound(CardNotFoundOrNoPermissionMessage);
         }
 
         [HttpPut("inbox/{id}")]
@@ -150,7 +156,7 @@ namespace TodoAppAPI.Controllers
                 
                 // Thông báo cho Planner
                 await _notificationHubContext.Clients.Group(NotificationHub.UserGroup(userUId))
-                    .SendAsync("CardUpdated", card);
+                    .SendAsync(CardUpdatedEvent, card);
 
                 return Ok("Cập nhật card inbox thành công");
             }
@@ -163,14 +169,14 @@ namespace TodoAppAPI.Controllers
         {
             var card = _cardService.GetById(id);
             if (card == null)
-                return NotFound("Card không tồn tại");
+                return NotFound(CardNotFoundMessage);
 
             var cardName = card.Title;
 
             if (await _cardService.DeleteCard(id, userUId))
             {
                 _ = _activity.AddActivity(userUId, $"deleted a card with id '{cardName}'");
-                if (card != null && !string.IsNullOrEmpty(card.ListUId))
+                if (!string.IsNullOrEmpty(card.ListUId))
                 {
                     var list = await _listService.GetListByIdAsync(card.ListUId);
                     if (list != null)
@@ -189,10 +195,11 @@ namespace TodoAppAPI.Controllers
                 return Ok("Xóa card thành công");
             }
                 
-            return NotFound("Card không tồn tại hoặc bạn không có quyền");
+            return NotFound(CardNotFoundOrNoPermissionMessage);
         }
 
         [HttpGet("{id}/description")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(object))]
         public IActionResult GetDescription(string id)
         {
             var card = _cardService.GetById(id);
@@ -207,9 +214,7 @@ namespace TodoAppAPI.Controllers
         {
             var card = _cardService.GetById(CardUId);
             if (card == null)
-                return NotFound("Card không tồn tại");
-
-            var oldListUId = card.ListUId;
+                return NotFound(CardNotFoundMessage);
 
             var success = await _cardService.UpdateListUid(CardUId, body.ListUId, body.UserUId, body.Position);
             if (!success)
@@ -243,7 +248,7 @@ namespace TodoAppAPI.Controllers
         {
             var card = _cardService.GetById(CardUId);
             if (card == null)
-                return NotFound("Card không tồn tại");
+                return NotFound(CardNotFoundMessage);
 
             var updatedStatus = await _cardService.UpdateStatus(CardUId, newStatus, userUId);
             if (updatedStatus == null)
@@ -276,7 +281,7 @@ namespace TodoAppAPI.Controllers
         {
             var card = _cardService.GetById(cardUId);
             if (card == null)
-                return NotFound("Card không tồn tại");
+                return NotFound(CardNotFoundMessage);
 
             if (CardStatusValues.IsDueDateInPast(request.DueDate))
                 return BadRequest(new { message = CardStatusValues.DueDateInPastMessage });
@@ -333,6 +338,18 @@ namespace TodoAppAPI.Controllers
             if (!success) return NotFound("Không tìm thấy tệp đính kèm hoặc bạn không có quyền.");
             _ = _activity.AddActivity(userUId, $"updated description for attachment '{fileUId}' in card '{cardUId}'");
             return Ok(new { message = "Đã cập nhật mô tả tệp đính kèm." });
+        }
+
+        [HttpPut("{cardUId}/attachments/{fileUId}/rename")]
+        public async Task<IActionResult> UpdateAttachmentName(string cardUId, string fileUId, [FromQuery] string userUId, [FromQuery] string fileName)
+        {
+            if (string.IsNullOrWhiteSpace(fileName))
+                return BadRequest("Tên tệp không được để trống.");
+
+            var success = await _cardService.UpdateAttachmentNameAsync(fileUId, userUId, fileName);
+            if (!success) return NotFound("Không tìm thấy tệp đính kèm hoặc bạn không có quyền.");
+            _ = _activity.AddActivity(userUId, $"updated name for attachment '{fileUId}' in card '{cardUId}'");
+            return Ok(new { message = "Đã cập nhật tên tệp đính kèm." });
         }
 
         public class AddFileRequest

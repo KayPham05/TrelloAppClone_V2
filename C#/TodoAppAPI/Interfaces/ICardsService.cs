@@ -6,7 +6,7 @@ namespace TodoAppAPI.Interfaces
     public interface ICardsService
     {
         List<Card> GetCardsByBoardId(string boardUId);
-        Task<bool> AddCard(Card todo);
+        Task<bool> AddCard(Card card);
         Task<bool> UpdateCard(Card card, string userUId);
         Task<bool> DeleteCard(string Uid, string userUId);
         Card? GetById(string cardUId);
@@ -16,6 +16,7 @@ namespace TodoAppAPI.Interfaces
         Task<List<FileUrl>> GetAttachmentsByCardAsync(string cardUId);
         Task<bool> DeleteAttachmentAsync(string fileUId, string userUId);
         Task<bool> UpdateAttachmentDescriptionAsync(string fileUId, string userUId, string? description);
+        Task<bool> UpdateAttachmentNameAsync(string fileUId, string userUId, string fileName);
         Task<bool> UpdateDueDateAsync(string cardUId, DateTime? dueDate, string userUId);
 
         // Archive

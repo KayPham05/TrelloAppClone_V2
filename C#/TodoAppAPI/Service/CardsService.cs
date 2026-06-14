@@ -33,11 +33,8 @@ namespace TodoAppAPI.Service
                 if (!string.IsNullOrEmpty(card.ListUId))
                 {
                     var list = await _dbContext.Lists.FindAsync(card.ListUId);
-                    if (list != null)
-                    {
-                        if (!await _authService.CanCreateCardAsync(list.BoardUId, card.UserUId))
-                            return false;
-                    }
+                    if (list != null && !await _authService.CanCreateCardAsync(list.BoardUId, card.UserUId))
+                        return false;
                 }
 
                 card.CardUId = Guid.NewGuid().ToString();
@@ -439,6 +436,30 @@ namespace TodoAppAPI.Service
             catch (Exception ex)
             {
                 Console.WriteLine($"Lỗi khi cập nhật mô tả attachment: {ex.Message}");
+                return false;
+            }
+        }
+
+        public async Task<bool> UpdateAttachmentNameAsync(string fileUId, string userUId, string fileName)
+        {
+            try
+            {
+                var file = await _dbContext.FileUrls
+                    .Include(f => f.Card)
+                    .FirstOrDefaultAsync(f => f.FileUId == fileUId);
+                if (file == null) return false;
+
+                if (!await _authService.CanEditCardAsync(file.CardUId, userUId))
+                    return false;
+
+                file.FileName = fileName;
+                _dbContext.FileUrls.Update(file);
+                await _dbContext.SaveChangesAsync();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Lỗi khi cập nhật tên attachment: {ex.Message}");
                 return false;
             }
         }
